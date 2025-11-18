@@ -19,14 +19,12 @@ const ForgetPassword = ({ onOTPSent, onBackToLogin }) => {
       setSuccessMessage(result.message);
 
       localStorage.setItem("resetEmail", email);
-      // الانتقال لصفحة إدخال الـ reset token أو OTP
+
       setTimeout(() => {
         onOTPSent(email);
-      }, 3000);
+      }, 2000);
     } else {
-      setError(
-        result.message || "Failed to send reset link. Please try again."
-      );
+      setError(result.errors.email);
     }
 
     setIsLoading(false);
@@ -48,6 +46,7 @@ const ForgetPassword = ({ onOTPSent, onBackToLogin }) => {
             onChange={(e) => setEmail(e.target.value)}
             required
             className={error ? "error" : ""}
+            disabled={isLoading}
           />
         </div>
 
@@ -64,14 +63,15 @@ const ForgetPassword = ({ onOTPSent, onBackToLogin }) => {
               textAlign: "center",
             }}
           >
-            ✓ {successMessage}
+            {successMessage}
           </div>
         )}
         <button
           type="submit"
           className={`btn-primary ${isLoading ? "loading" : ""}`}
+          disabled={isLoading}
         >
-          {!isLoading && "Send Verification Code"}
+          {isLoading ? "Sending..." : "Send Verification Code"}
         </button>
       </form>
 
@@ -80,7 +80,13 @@ const ForgetPassword = ({ onOTPSent, onBackToLogin }) => {
           href="#"
           onClick={(e) => {
             e.preventDefault();
-            onBackToLogin();
+            if (!isLoading) {
+              onBackToLogin();
+            }
+          }}
+          style={{
+            cursor: isLoading ? "not-allowed" : "pointer",
+            opacity: isLoading ? 0.5 : 1,
           }}
         >
           <svg

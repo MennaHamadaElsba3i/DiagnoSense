@@ -164,12 +164,10 @@ body {
      justify-content: space-between;
      padding: 35px 30px 0 30px;
      overflow: visible;
-     /* السماح للصورة بالظهور */
 }
 
 
 
-/* Medical-themed Visual Elements */
 .left-visual-elements {
      position: absolute;
      width: 100%;
@@ -380,10 +378,9 @@ body {
      }
 }
 
-/* Right Section - Form Area with Tabs */
 .right-section {
      background: #FFFFFF;
-     padding: 0 40px;
+     padding: 40px 40px;
      display: flex;
      flex-direction: column;
      justify-content: center;
@@ -396,7 +393,6 @@ body {
      flex-direction: column;
 }
 
-/* Updated Tabs with Gradient */
 .tabs-container {
      display: flex;
      gap: 12px;
@@ -450,7 +446,6 @@ body {
 }
 
 
-/* Tab Content */
 .tab-content {
      display: none;
      animation: fadeIn 0.3s ease;
@@ -675,14 +670,12 @@ input:focus {
      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-/* Register Form Specific */
 .name-row {
      display: grid;
      grid-template-columns: 1fr 1fr;
      gap: 12px;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
      .main-container {
           grid-template-columns: 1fr;
@@ -761,7 +754,6 @@ input:focus {
      }
 }
 
-/* Success Icon */
 .success-icon {
      display: flex;
      justify-content: center;
@@ -781,7 +773,6 @@ input:focus {
      }
 }
 
-/* Back to Login Link */
 .back-to-login {
      text-align: center;
      margin-top: 20px;
@@ -803,7 +794,6 @@ input:focus {
      gap: 8px;
 }
 
-/* Resend Link */
 .resend-link {
      text-align: center;
      margin-top: 16px;
@@ -822,7 +812,6 @@ input:focus {
      text-decoration: underline;
 }
 
-/* Password Input Wrapper */
 .password-input-wrapper {
      position: relative;
      width: 100%;
@@ -852,7 +841,6 @@ input:focus {
      color: #2563eb;
 }
 
-/* Password Hint */
 .password-hint {
      display: block;
      margin-top: 6px;
@@ -860,7 +848,6 @@ input:focus {
      color: #9CA3AF;
 }
 
-/* Password Requirements */
 .password-requirements {
      margin-top: 24px;
      padding: 16px;
@@ -898,7 +885,6 @@ input:focus {
      font-weight: bold;
 }
 
-/* OTP Icon */
 .otp-icon {
      display: flex;
      justify-content: center;
@@ -906,7 +892,6 @@ input:focus {
      animation: scaleIn 0.5s ease;
 }
 
-/* OTP Container */
 .otp-container {
      display: flex;
      gap: 12px;
@@ -956,7 +941,6 @@ input:focus {
      }
 }
 
-/* Error Message */
 .error-message {
      background: #FEE2E2;
      border: 1px solid #FCA5A5;
@@ -993,7 +977,6 @@ input.error {
      animation: shake 0.4s ease;
 }
 
-/* OTP Footer */
 .otp-footer {
      text-align: center;
      margin-top: 20px;
@@ -1027,7 +1010,6 @@ input.error {
      color: #3b82f6;
 }
 
-/* Responsive OTP */
 @media (max-width: 480px) {
      .otp-input {
           width: 42px;
@@ -1040,7 +1022,6 @@ input.error {
      }
 }
 
-/* Field Error (تحت كل Input) */
 .field-error {
      display: block;
      color: #DC2626;
@@ -1049,7 +1030,6 @@ input.error {
      animation: slideDown 0.3s ease;
 }
 
-/* Success Icon */
 .success-icon {
      display: flex;
      justify-content: center;
@@ -1069,7 +1049,6 @@ input.error {
      }
 }
 
-/* Back to Login Link */
 .back-to-login {
      text-align: center;
      margin-top: 20px;
@@ -1091,7 +1070,6 @@ input.error {
      gap: 8px;
 }
 
-/* Resend Link */
 .resend-link {
      text-align: center;
      margin-top: 16px;
@@ -1110,7 +1088,6 @@ input.error {
      text-decoration: underline;
 }
 
-/* Password Input Wrapper */
 .password-input-wrapper {
      position: relative;
      width: 100%;
@@ -1140,7 +1117,6 @@ input.error {
      color: #2563eb;
 }
 
-/* Password Hint */
 .password-hint {
      display: block;
      margin-top: 6px;
@@ -1148,7 +1124,6 @@ input.error {
      color: #9CA3AF;
 }
 
-/* Password Requirements */
 .password-requirements {
      margin-top: 24px;
      padding: 16px;
@@ -1186,7 +1161,6 @@ input.error {
      font-weight: bold;
 }
 
-/* Disabled Button State */
 button:disabled {
      opacity: 0.6;
      cursor: not-allowed;
@@ -1196,5 +1170,3 @@ button:disabled:hover {
      transform: none;
      box-shadow: none;
 }
-
-

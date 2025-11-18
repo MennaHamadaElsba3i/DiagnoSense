@@ -19,11 +19,6 @@ const Login = ({ onForgotPassword }) => {
     const result = await loginAPI(email, password);
 
     if (result.success) {
-      // alert("Login successful! Redirecting to dashboard...");
-      // console.log("User data:", result.data);
-      // localStorage.setItem("user", JSON.stringify(result.data.user));
-      // localStorage.setItem("user_token", result.data.token); // حفظ الـ token
-      // localStorage.setItem("isAuthenticated", "true");
       console.log(result.data);
       setCookie("user_token", result.data.token, 7);
       setJsonCookie("user", result.data.user, 7);
@@ -36,13 +31,6 @@ const Login = ({ onForgotPassword }) => {
     setIsLoading(false);
   };
 
-  // const handleGoogleLogin = async () => {
-  //   const result = await googleLoginAPI();
-  //   if (result.success) {
-  //     alert("Google login successful!");
-  //     console.log("User data:", result.data);
-  //   }
-  // };
   const handleGoogleLogin = async () => {
     const result = await googleLoginAPI();
     if (result.success) {

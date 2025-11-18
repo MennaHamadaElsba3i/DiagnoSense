@@ -3,219 +3,13 @@ import Login from '../components/Login.jsx';
 import Register from '../components/Register.jsx';
 import ForgetPassword from '../components/ForgetPassword.jsx';
 import ResetPassword from '../components/ResetPassword.jsx';
-import OTPVerification from '../components/OTPVerification.jsx';
 import logo from "../assets/Logo_Diagnoo.png"
 import '../css/auth.css';
 
 const AuthPage = () => {
-  // const [activeTab, setActiveTab] = useState('login');
-  // const [currentView, setCurrentView] = useState('auth'); // 'auth', 'forget', 'otp', 'reset'
-  // const [userEmail, setUserEmail] = useState('');
-  // const [doctorImage, setDoctorImage] = useState('https://i.postimg.cc/MpcnGfzB/About-Us-Team-Photo-14.png');
-
-  // const handleTabChange = (tab) => {
-  //   setActiveTab(tab);
-  //   setCurrentView('auth');
-  //   if (tab === 'register') {
-  //     setDoctorImage('https://i.postimg.cc/63zCzm6K/About-Us-Team-Photo-13.png');
-  //   } else {
-  //     setDoctorImage('https://i.postimg.cc/MpcnGfzB/About-Us-Team-Photo-14.png');
-  //   }
-  // };
-
-  // const handleForgotPassword = () => {
-  //   setCurrentView('forget');
-  // };
-
-  // const handleOTPSent = (email) => {
-  //   setUserEmail(email);
-  //   setCurrentView('otp');
-  // };
-
-  // const handleOTPVerified = () => {
-  //   setCurrentView('reset');
-  // };
-
-  // const handleResendOTP = async () => {
-  //   // هنا تعملي API call تاني لإعادة إرسال الـ OTP
-  //   try {
-  //     await fetch('YOUR_API_ENDPOINT/resend-otp', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify({ email: userEmail }),
-  //     });
-  //     alert('Code resent successfully!');
-  //   } 
-  //   catch (error) {
-  //     alert('Failed to resend code. Please try again.');
-  //   }
-  // };
-
-  // const handleBackToLogin = () => {
-  //   setCurrentView('auth');
-  //   setActiveTab('login');
-  //   setUserEmail('');
-  //   setDoctorImage('https://i.postimg.cc/MpcnGfzB/About-Us-Team-Photo-14.png');
-  // };
-
-  // const handleBackToForget = () => {
-  //   setCurrentView('forget');
-  // };
-
-  // const handleResetSuccess = () => {
-  //   handleBackToLogin();
-  // };
-
-  // const renderContent = () => {
-  //   switch (currentView) {
-  //     case 'forget':
-  //       return <ForgetPassword onOTPSent={handleOTPSent} onBackToLogin={handleBackToLogin} />;
-  //     case 'otp':
-  //       return (
-  //         <OTPVerification 
-  //           email={userEmail}
-  //           onVerifySuccess={handleOTPVerified}
-  //           onResend={handleResendOTP}
-  //           onBackToForget={handleBackToForget}
-  //         />
-  //       );
-  //     case 'reset':
-  //       return <ResetPassword email={userEmail} onResetSuccess={handleResetSuccess} />;
-  //     default:
-  //       return activeTab === 'login' ? 
-  //         <Login onForgotPassword={handleForgotPassword} /> : 
-  //         <Register />;
-  //   }
-  // };
-
-  // return (
-  //   <div style={{ minHeight: '100vh', display:'flex', justifyContent:'center', alignItems:'center' }}>
-  //     <div className="background-elements">
-  //       <div className="data-grid"></div>
-  //       <div className="glow-orb blue"></div>
-  //       <div className="glow-orb cyan"></div>
-
-  //       <div className="floating-icon icon-1">
-  //         <svg viewBox="0 0 24 24">
-  //           <path d="M12 2v20M2 12h20" />
-  //         </svg>
-  //       </div>
-  //       <div className="floating-icon icon-2">
-  //         <svg viewBox="0 0 24 24">
-  //           <circle cx="12" cy="12" r="10" />
-  //           <path d="M12 6v12M8 12h8" />
-  //         </svg>
-  //       </div>
-  //       <div className="floating-icon icon-3">
-  //         <svg viewBox="0 0 24 24">
-  //           <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-  //         </svg>
-  //       </div>
-  //       <div className="floating-icon icon-4">
-  //         <svg viewBox="0 0 24 24">
-  //           <circle cx="12" cy="12" r="3" />
-  //           <path d="M12 1v6m0 6v6M1 12h6m6 0h6" />
-  //         </svg>
-  //       </div>
-  //     </div>
-
-  //     <div className="main-container">
-  //       <div className="left-section">
-  //         <div className="left-visual-elements">
-  //           <div className="medical-icon med-icon-1">
-  //             <svg viewBox="0 0 24 24">
-  //               <path d="M22 12h-4l-3 9L9 3l-3 9H2" strokeLinecap="round" strokeLinejoin="round" />
-  //             </svg>
-  //           </div>
-
-  //           <div className="medical-icon med-icon-2">
-  //             <svg viewBox="0 0 24 24">
-  //               <path
-  //                 d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"
-  //                 strokeLinecap="round"
-  //                 strokeLinejoin="round"
-  //               />
-  //               <path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4" strokeLinecap="round" strokeLinejoin="round" />
-  //               <circle cx="20" cy="10" r="2" />
-  //             </svg>
-  //           </div>
-
-  //           <div className="medical-icon med-icon-3">
-  //             <svg viewBox="0 0 24 24">
-  //               <path d="M12 2v20M17 7H7v10h10V7z" strokeLinecap="round" strokeLinejoin="round" />
-  //               <path d="M9 12h6M12 9v6" strokeLinecap="round" strokeLinejoin="round" />
-  //             </svg>
-  //           </div>
-
-  //           <div className="pulse-ring ring-1"></div>
-  //           <div className="pulse-ring ring-2"></div>
-
-  //           <div className="dna-helix">
-  //             <div className="dna-strand">
-  //               <div className="dna-line"></div>
-  //               <div className="dna-line"></div>
-  //             </div>
-  //           </div>
-  //         </div>
-
-  //         <div className="left-content">
-  //           <div className="logo">
-  //             <span className="logo-text">
-  //               <img src={logo} alt="DiagnoSense Logo" onError={(e) => e.target.style.display='none'} />
-  //             </span>
-  //           </div>
-
-  //           <div className="welcome-text">
-  //             <h1>Welcome back, Doctor.</h1>
-  //             <p>Login to access your DiagnoSense dashboard.</p>
-  //           </div>
-  //         </div>
-
-  //         <div className="doctor-image-container">
-  //           <img
-  //             src={doctorImage}
-  //             alt="Doctor"
-  //             className="doctor-image"
-  //             onError={(e) => e.target.style.display='none'}
-  //           />
-  //         </div>
-  //       </div>
-
-  //       <div className="right-section">
-  //         <div className="form-wrapper">
-  //           {currentView === 'auth' && (
-  //             <div className="tabs-container">
-  //               <button
-  //                 className={`tab ${activeTab === 'login' ? 'active' : ''}`}
-  //                 onClick={() => handleTabChange('login')}
-  //               >
-  //                 Login
-  //               </button>
-  //               <button
-  //                 className={`tab ${activeTab === 'register' ? 'active' : ''}`}
-  //                 onClick={() => handleTabChange('register')}
-  //               >
-  //                 Register
-  //               </button>
-  //             </div>
-  //           )}
-
-  //           {renderContent()}
-  //         </div>
-  //       </div>
-  //     </div>
-  //   </div>
-  // );
-
-  
   const [activeTab, setActiveTab] = useState('login');
-  const [currentView, setCurrentView] = useState('auth'); // 'auth', 'forget', 'otp', 'reset'
+  const [currentView, setCurrentView] = useState('auth'); 
   const [userEmail, setUserEmail] = useState('');
-    // const [resetEmail, setResetEmail] = useState("");
-
-  const [resetToken, setResetToken] = useState(''); // للـ reset password token
   const [doctorImage, setDoctorImage] = useState('https://i.postimg.cc/MpcnGfzB/About-Us-Team-Photo-14.png');
 
   const handleTabChange = (tab) => {
@@ -234,15 +28,7 @@ const AuthPage = () => {
 
   const handleOTPSent = (email) => {
     setUserEmail(email);
-    // لو الباك إند بيستخدم OTP
-    setCurrentView('otp');
-    
-    // لو الباك إند بيبعت reset link بس، ممكن تعملي:
-    // alert('Password reset link sent to your email!');
-  };
 
-  const handleOTPVerified = (token) => {
-    setResetToken(token); // حفظ الـ token اللي جاي من OTP verification
     setCurrentView('reset');
   };
 
@@ -250,7 +36,6 @@ const AuthPage = () => {
     setCurrentView('auth');
     setActiveTab('login');
     setUserEmail('');
-    setResetToken('');
     setDoctorImage('https://i.postimg.cc/MpcnGfzB/About-Us-Team-Photo-14.png');
   };
 
@@ -266,20 +51,12 @@ const AuthPage = () => {
     switch (currentView) {
       case 'forget':
         return <ForgetPassword onOTPSent={handleOTPSent} onBackToLogin={handleBackToLogin} />;
-      case 'otp':
-        return (
-          <OTPVerification 
-            email={userEmail}
-            onVerifySuccess={handleOTPVerified}
-            onBackToForget={handleBackToForget}
-          />
-        );
       case 'reset':
         return (
           <ResetPassword 
             email={userEmail} 
-            resetToken={resetToken}
-            onResetSuccess={handleResetSuccess} 
+            onResetSuccess={handleResetSuccess}
+            onBackToForget={handleBackToForget}
           />
         );
       default:

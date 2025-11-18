@@ -1,8 +1,12 @@
 import React, { useState } from "react";
-import { resetPasswordAPI } from "./mockAPI";
+import { resetPasswordAPI, forgetPasswordAPI } from "./mockAPI";
 
-const ResetPassword = ({ email, resetToken, onResetSuccess, }) => {
+const ResetPassword = ({ email, onResetSuccess, onBackToForget }) => {
+  const [otp, setOtp] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -12,25 +16,10 @@ const ResetPassword = ({ email, resetToken, onResetSuccess, }) => {
     e.preventDefault();
     const savedEmail = localStorage.getItem("resetEmail");
 
-    const otp = e.target.otp;
-    const password = e.target.password.value;
-    const confirmPassword = e.target.confirm_password.value;
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match!");
-      return;
-    }
-
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters");
-      return;
-    }
-
     setIsLoading(true);
     setError("");
     setSuccessMessage("");
 
-    // const result = await resetPasswordAPI(email, password);
     const result = await resetPasswordAPI(
       otp,
       savedEmail,
@@ -39,40 +28,93 @@ const ResetPassword = ({ email, resetToken, onResetSuccess, }) => {
     );
 
     if (result.success) {
-      setSuccessMessage(result.message || "Password reset successful!");
+      setSuccessMessage(result.message);
 
-      // ✅ الرجوع للوجين بعد ثانيتين
       setTimeout(() => {
         onResetSuccess();
       }, 2000);
     } else {
-      setError(result.message || "Failed to reset password. Please try again.");
+      setError(result.message);
     }
 
     setIsLoading(false);
+  };
+
+  const handleResendOTP = async () => {
+    const savedEmail = localStorage.getItem("resetEmail");
+
+    if (!savedEmail) {
+      setError("Email not found. Please go back and enter your email again.");
+      return;
+    }
+
+    setIsResending(true);
+    setError("");
+    setSuccessMessage("");
+
+    const result = await forgetPasswordAPI(savedEmail);
+
+    if (result.success) {
+      setSuccessMessage("A new OTP has been sent to your email.");
+      setOtp("");
+    } else {
+      setError(result.message);
+    }
+
+    setIsResending(false);
   };
 
   return (
     <div className="tab-content active">
       <div className="form-header">
         <h2>Reset Password</h2>
-        <p>Enter your new password below</p>
+        <p>Enter the 6-digit OTP sent to {email}</p>
       </div>
 
       <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <input
+            type="text"
+            placeholder="Enter 6 digit OTP"
+            value={otp}
+            onChange={(e) => {
+              const value = e.target.value.replace(/\D/g, "");
+              if (value.length <= 6) {
+                setOtp(value);
+                setError("");
+              }
+            }}
+            required
+            
+            className={error ? "error" : ""}
+            style={{
+              textAlign: "center",
+              fontSize: "20px",
+              letterSpacing: "2px",
+              fontWeight: "bold",
+            }}
+            autoFocus
+            disabled={isLoading}
+          />
+        </div>
+
         <div className="form-group">
           <div className="password-input-wrapper">
             <input
               type={passwordVisible ? "text" : "password"}
               placeholder="New Password"
               name="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required
-              minLength="8"
+              
+              disabled={isLoading}
             />
             <button
               type="button"
               className="password-toggle"
               onClick={() => setPasswordVisible(!passwordVisible)}
+              disabled={isLoading}
             >
               {passwordVisible ? (
                 <svg
@@ -125,13 +167,17 @@ const ResetPassword = ({ email, resetToken, onResetSuccess, }) => {
               type={confirmPasswordVisible ? "text" : "password"}
               placeholder="Confirm New Password"
               name="confirm_password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               required
               minLength="8"
+              disabled={isLoading}
             />
             <button
               type="button"
               className="password-toggle"
               onClick={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
+              disabled={isLoading}
             >
               {confirmPasswordVisible ? (
                 <svg
@@ -190,26 +236,57 @@ const ResetPassword = ({ email, resetToken, onResetSuccess, }) => {
               textAlign: "center",
             }}
           >
-            ✓ {successMessage}
+            {successMessage}
           </div>
         )}
+
         <button
           type="submit"
           className={`btn-primary ${isLoading ? "loading" : ""}`}
+          disabled={isLoading || otp.length !== 6}
         >
-          {!isLoading && "Reset Password"}
+          {isLoading ? "Resetting..." : "Reset Password"}
         </button>
-      </form>
 
-      <div className="password-requirements">
-        <p className="requirements-title">Password must contain:</p>
-        <ul>
-          <li>At least 8 characters</li>
-          <li>One uppercase letter</li>
-          <li>One lowercase letter</li>
-          <li>One number</li>
-        </ul>
-      </div>
+        <div style={{ textAlign: "center", marginTop: "20px" }}>
+          <button
+            type="button"
+            onClick={handleResendOTP}
+            disabled={isResending || isLoading}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#667eea",
+              cursor: isResending || isLoading ? "not-allowed" : "pointer",
+              fontSize: "14px",
+              textDecoration: "underline",
+            }}
+          >
+            {isResending ? "Sending..." : "Didn't receive code? Resend"}
+          </button>
+        </div>
+
+        <div style={{ textAlign: "center", marginTop: "10px" }}>
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              if (!isLoading) {
+                onBackToForget();
+              }
+            }}
+            style={{
+              color: "#667eea",
+              textDecoration: "none",
+              fontSize: "14px",
+              cursor: isLoading ? "not-allowed" : "pointer",
+              opacity: isLoading ? 0.5 : 1,
+            }}
+          >
+            ← Change Email
+          </a>
+        </div>
+      </form>
     </div>
   );
 };

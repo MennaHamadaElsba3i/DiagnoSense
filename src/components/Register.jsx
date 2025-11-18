@@ -7,6 +7,8 @@ const Register = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [emailErrors, setEmailErrors] = useState([]);
+  const [passwordErrors, setPasswordErrors] = useState([]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,13 +18,11 @@ const Register = () => {
     const password = e.target.password.value;
     const confirmPassword = e.target.password_confirmation.value;
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match!");
-      return;
-    }
-
     setIsLoading(true);
     setError("");
+    setEmailErrors([]);
+    setPasswordErrors([]);
+
     const fullName = `${firstName} ${lastName}`.trim();
 
     const result = await registerAPI({
@@ -33,28 +33,32 @@ const Register = () => {
     });
 
     if (result.success) {
-      // alert("Account created successfully! Redirecting to dashboard...");
-      // console.log("User data:", result.data);
       console.log(result.data);
-      
-      
-
-      // localStorage.setItem("user", JSON.stringify(result.data.user));
-      // localStorage.setItem("user_token", result.data.token);
-      // localStorage.setItem("isAuthenticated", "true");
       setCookie("user_token", result.data.token, 7);
       setJsonCookie("user", result.data.user, 7);
       setCookie("isAuthenticated", "true", 7);
 
       navigate("/dashboard");
     } else {
-      // عرض الـ error - لو في validation errors
+
       if (result.errors) {
-        // عرض أول error من الـ validation errors
-        const firstError = Object.values(result.errors)[0][0];
-        setError(firstError);
+
+        if (result.errors.email) {
+          setEmailErrors(result.errors.email);
+        }
+
+        if (result.errors.password) {
+          setPasswordErrors(result.errors.password);
+        }
+
+        const otherErrors = Object.keys(result.errors).filter(
+          (key) => key !== "email" && key !== "password"
+        );
+        if (otherErrors.length > 0) {
+          setError(result.errors[otherErrors[0]][0]);
+        }
       } else {
-        setError(result.message || "Registration failed. Please try again.");
+        setError(result.message);
       }
     }
 
@@ -94,8 +98,21 @@ const Register = () => {
             placeholder="Email address"
             name="email"
             required
-            className={error ? "error" : ""}
+            className={emailErrors.length > 0 ? "error" : ""}
           />
+          {emailErrors.length > 0 && (
+            <div className="field-errors">
+              {emailErrors.map((error, index) => (
+                <div
+                  key={index}
+                  className="error-message"
+                  style={{ marginTop: "5px", marginBottom: "0" }}
+                >
+                  {error}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="form-group">
@@ -104,7 +121,8 @@ const Register = () => {
             placeholder="Password"
             name="password"
             required
-            minLength="8"
+            
+            className={passwordErrors.length > 0 ? "error" : ""}
           />
         </div>
 
@@ -114,8 +132,22 @@ const Register = () => {
             placeholder="Confirm Password"
             name="password_confirmation"
             required
-            minLength="8"
+            
+            className={passwordErrors.length > 0 ? "error" : ""}
           />
+          {passwordErrors.length > 0 && (
+            <div className="field-errors">
+              {passwordErrors.map((error, index) => (
+                <div
+                  key={index}
+                  className="error-message"
+                  style={{ marginTop: "5px", marginBottom: "0" }}
+                >
+                  {error}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {error && <div className="error-message">{error}</div>}

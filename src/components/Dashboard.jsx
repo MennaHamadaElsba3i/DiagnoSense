@@ -178,7 +178,6 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      {/* Decision Support Modal */}
       <div
         className={`modal-overlay ${isModalOpen ? "active" : ""}`}
         onClick={(e) =>
@@ -260,7 +259,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Logout Confirmation Modal */}
       <LogoutConfirmation 
         isOpen={isLogoutModalOpen} 
         onClose={closeLogoutModal} 
@@ -270,7 +268,7 @@ export default function Dashboard() {
         <div className="dashboard-grid">
           <div className="card welcome-panel">
             <div>
-              <h1 className="welcome-title">👋 Good Morning, Dr. Layla</h1>
+              <h1 className="welcome-title">Good Morning, Dr. Layla</h1>
               <p className="welcome-subtitle">
                 Here's a summary of today's key AI insights and patient status.
               </p>

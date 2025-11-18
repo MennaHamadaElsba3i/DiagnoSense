@@ -15,10 +15,6 @@ const LogoutConfirmation = ({ isOpen, onClose }) => {
     const result = await logoutAPI();
 
     if (result.success) {
-      // مسح كل البيانات من localStorage
-      // localStorage.removeItem("user");
-      // localStorage.removeItem("user_token");
-      // localStorage.removeItem("isAuthenticated");
       deleteCookie("user_token");
       deleteCookie("user");
       deleteCookie("isAuthenticated");
@@ -74,7 +70,7 @@ const LogoutConfirmation = ({ isOpen, onClose }) => {
                 color: "#ff4444",
               }}
             >
-              ⚠️ {error}
+                {error}
             </div>
           )}
 
