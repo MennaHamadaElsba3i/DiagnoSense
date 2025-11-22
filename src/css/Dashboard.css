@@ -49,6 +49,10 @@
          width: 100%;
     }
 
+    .logo-text img {
+         cursor: pointer;
+    }
+
     .sidebar-nav {
          flex: 1;
          padding: 20px 16px;
@@ -347,6 +351,10 @@
          display: flex;
          align-items: center;
          justify-content: center;
+         stroke: currentColor;
+         fill: none;
+         stroke-width: 2;
+
     }
 
     .status-indicator {
@@ -541,11 +549,13 @@
          width: 56px;
          height: 56px;
          background: linear-gradient(135deg, #2A66FF, #467DFF);
-         border-radius: 14px;
+         border-radius: 12px;
          display: flex;
          align-items: center;
          justify-content: center;
          margin-bottom: 16px;
+         margin-right: 10px;
+         padding: 10px;
     }
 
     .modal-icon svg {
@@ -559,7 +569,7 @@
     }
 
     .modal-title {
-         font-size: 24px;
+         font-size: 19px;
          font-weight: 700;
          color: #0E1A34;
          margin-bottom: 8px;

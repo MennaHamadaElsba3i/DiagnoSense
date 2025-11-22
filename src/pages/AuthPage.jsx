@@ -128,12 +128,6 @@ const AuthPage = () => {
             <div className="pulse-ring ring-1"></div>
             <div className="pulse-ring ring-2"></div>
 
-            <div className="dna-helix">
-              <div className="dna-strand">
-                <div className="dna-line"></div>
-                <div className="dna-line"></div>
-              </div>
-            </div>
           </div>
 
           <div className="left-content">

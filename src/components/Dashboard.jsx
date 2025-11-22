@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
+import logo from "../assets/Logo_Diagnoo.png"
 import "../css/Dashboard.css";
 
 export default function Dashboard() {
@@ -31,9 +32,8 @@ export default function Dashboard() {
     <>
       <aside className="sidebar">
         <div className="sidebar-logo">
-          <span className="logo-text">DiagnoSense</span>
+          <span className="logo-text"><img src={logo} alt="DiagnoSense Logo" onError={(e) => e.target.style.display='none'} /></span>
         </div>
-
         <nav className="sidebar-nav">
           <div className="nav-main">
             <div className="nav-section">
@@ -145,7 +145,7 @@ export default function Dashboard() {
           </svg>
           <input
             type="text"
-            className="search-input"
+            className="search-input" style={{padding: "12px 16px 12px 44px"}}
             placeholder="Search patient or report…"
           />
         </div>
@@ -158,10 +158,10 @@ export default function Dashboard() {
 
           <div className="credits-badge">
             <span className="credits-icon">
-              <svg viewBox="0 0 24 24">
-                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                <line x1="1" y1="10" x2="23" y2="10"></line>
-              </svg>
+                <svg viewBox="0 0 24 24">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+            <line x1="1" y1="10" x2="23" y2="10"></line>
+          </svg>
             </span>
             <span>Credits: 1,247</span>
           </div>

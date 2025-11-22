@@ -8,6 +8,8 @@ const ResetPassword = ({ email, onResetSuccess, onBackToForget }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState("");
+  const [otpErrors, setOtpErrors] = useState([]);
+  const [passwordErrors, setPasswordErrors] = useState([]);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
@@ -18,6 +20,8 @@ const ResetPassword = ({ email, onResetSuccess, onBackToForget }) => {
 
     setIsLoading(true);
     setError("");
+    setOtpErrors([]);
+    setPasswordErrors([]);
     setSuccessMessage("");
 
     const result = await resetPasswordAPI(
@@ -27,6 +31,7 @@ const ResetPassword = ({ email, onResetSuccess, onBackToForget }) => {
       confirmPassword
     );
 
+    console.log(result.errors);
     if (result.success) {
       setSuccessMessage(result.message);
 
@@ -34,7 +39,24 @@ const ResetPassword = ({ email, onResetSuccess, onBackToForget }) => {
         onResetSuccess();
       }, 2000);
     } else {
-      setError(result.message);
+      if (result.errors) {
+        if (result.errors.otp) {
+          setOtpErrors(result.errors.otp);
+        }
+
+        if (result.errors.password) {
+          setPasswordErrors(result.errors.password);
+        }
+
+        const otherErrors = Object.keys(result.errors).filter(
+          (key) => key !== "otp" && key !== "password"
+        );
+        if (otherErrors.length > 0) {
+          setError(result.errors[otherErrors[0]][0]);
+        }
+      } else {
+        setError(result.message);
+      }
     }
 
     setIsLoading(false);
@@ -50,6 +72,8 @@ const ResetPassword = ({ email, onResetSuccess, onBackToForget }) => {
 
     setIsResending(true);
     setError("");
+    setOtpErrors([]);
+    setPasswordErrors([]);
     setSuccessMessage("");
 
     const result = await forgetPasswordAPI(savedEmail);
@@ -75,27 +99,41 @@ const ResetPassword = ({ email, onResetSuccess, onBackToForget }) => {
         <div className="form-group">
           <input
             type="text"
-            placeholder="Enter 6 digit OTP"
+            placeholder="Enter 6-digit OTP"
             value={otp}
             onChange={(e) => {
               const value = e.target.value.replace(/\D/g, "");
               if (value.length <= 6) {
                 setOtp(value);
                 setError("");
+                setOtpErrors([]);
               }
             }}
             required
-            
-            className={error ? "error" : ""}
+            maxLength="6"
+            className={otpErrors.length > 0 ? "error" : ""}
             style={{
               textAlign: "center",
               fontSize: "20px",
-              letterSpacing: "2px",
+              letterSpacing: "8px",
               fontWeight: "bold",
             }}
             autoFocus
             disabled={isLoading}
           />
+          {otpErrors.length > 0 && (
+            <div className="field-errors">
+              {otpErrors.map((error, index) => (
+                <div
+                  key={index}
+                  className="error-message"
+                  style={{ marginTop: "5px", marginBottom: "0" }}
+                >
+                  {error}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="form-group">
@@ -107,8 +145,9 @@ const ResetPassword = ({ email, onResetSuccess, onBackToForget }) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              
+              minLength="8"
               disabled={isLoading}
+              className={passwordErrors.length > 0 ? "error" : ""}
             />
             <button
               type="button"
@@ -172,6 +211,7 @@ const ResetPassword = ({ email, onResetSuccess, onBackToForget }) => {
               required
               minLength="8"
               disabled={isLoading}
+              className={passwordErrors.length > 0 ? "error" : ""}
             />
             <button
               type="button"
@@ -221,6 +261,19 @@ const ResetPassword = ({ email, onResetSuccess, onBackToForget }) => {
               )}
             </button>
           </div>
+          {passwordErrors.length > 0 && (
+            <div className="field-errors">
+              {passwordErrors.map((error, index) => (
+                <div
+                  key={index}
+                  className="error-message"
+                  style={{ marginTop: "5px", marginBottom: "0" }}
+                >
+                  {error}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {error && <div className="error-message">{error}</div>}
@@ -236,7 +289,7 @@ const ResetPassword = ({ email, onResetSuccess, onBackToForget }) => {
               textAlign: "center",
             }}
           >
-            {successMessage}
+            ✓ {successMessage}
           </div>
         )}
 

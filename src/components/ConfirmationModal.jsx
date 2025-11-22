@@ -45,7 +45,7 @@ const LogoutConfirmation = ({ isOpen, onClose }) => {
           <div
             className="modal-icon"
             style={{
-              background: "linear-gradient(135deg, #ff4444 0%, #cc0000 100%)",
+              background: "linear-gradient(135deg, #2A66FF 0%, #467DFF 100%)",
             }}
           >
             <svg viewBox="0 0 24 24" stroke="white" fill="none" strokeWidth="2">
@@ -70,7 +70,7 @@ const LogoutConfirmation = ({ isOpen, onClose }) => {
                 color: "#ff4444",
               }}
             >
-                {error}
+              {error}
             </div>
           )}
 
@@ -97,7 +97,7 @@ const LogoutConfirmation = ({ isOpen, onClose }) => {
             style={{
               background: isLoggingOut
                 ? "#ccc"
-                : "linear-gradient(135deg, #ff4444 0%, #cc0000 100%)",
+                : "linear-gradient(135deg, #2A66FF, #467DFF)",
               cursor: isLoggingOut ? "not-allowed" : "pointer",
             }}
           >
