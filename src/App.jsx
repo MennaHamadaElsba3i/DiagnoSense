@@ -18,6 +18,9 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AuthPage from "./pages/AuthPage.jsx";
 import Dashboard from "./components/Dashboard.jsx";
+import PatientList from "./components/PatientList.jsx";
+import AddPatient from "./components/AddPatient.jsx";
+import PatientProfile from "./components/PatientProfile.jsx"; 
 import "./App.css";
 
 const ProtectedRoute = ({ children }) => {
@@ -29,10 +32,8 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* صفحة اللوجين */}
         <Route path="/login" element={<AuthPage />} />
 
-        {/* صفحة الداشبورد المحمية */}
         <Route
           path="/dashboard"
           element={
@@ -42,13 +43,41 @@ function App() {
           }
         />
 
-        {/* الصفحة الرئيسية توجه للوجين */}
+        <Route
+          path="/patients"
+          element={
+            <ProtectedRoute>
+              <PatientList />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/addpatient"
+          element={
+            <ProtectedRoute>
+              <AddPatient />
+            </ProtectedRoute>
+          }
+        />
+
+      
+        <Route
+          path="/patient-profile" 
+          element={
+            <ProtectedRoute>
+              <PatientProfile />
+            </ProtectedRoute>
+          }
+        />
+
         <Route path="/" element={<Navigate to="/login" />} />
 
-        {/* أي صفحة غير موجودة توجه للوجين */}
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>
+    // <PatientProfile></PatientProfile>
+    
   );
 }
 

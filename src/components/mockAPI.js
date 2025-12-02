@@ -1,6 +1,4 @@
-// const API_BASE_URL = 'https://nontelepathically-pamphletary-cyndi.ngrok-free.dev';
-// const API_BASE_URL = 'https://disputable-roily-maya.ngrok-free.dev';
-const API_BASE_URL = 'https://toothlike-intermetatarsal-avah.ngrok-free.dev';
+const API_BASE_URL = 'https://unpersecuted-vanitied-jayson.ngrok-free.dev';
 
 import { getCookie, setCookie, deleteCookie, setJsonCookie } from './cookieUtils';
 
@@ -58,7 +56,7 @@ export const registerAPI = async (userData) => {
   });
 
   if (result.success && result.data && result.data.token) {
-    setCookie('user_token', result.data.token, 7); 
+    setCookie('user_token', result.data.token, 7);
     setJsonCookie('user', result.data.user, 7);
     setCookie('isAuthenticated', 'true', 7);
   }
@@ -156,4 +154,194 @@ export const resendOTPAPI = async (email) => {
     method: 'POST',
     body: JSON.stringify({ email }),
   });
+};
+
+export const analyzeReportAPI = async (formData) => {
+  const token = getCookie('user_token');
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/analyze-report`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        deleteCookie('user_token');
+        deleteCookie('user');
+        deleteCookie('isAuthenticated');
+      }
+
+      return {
+        success: false,
+        message: data.message || 'Something went wrong',
+        errors: data.errors || null,
+      };
+    }
+
+    return data;
+  } catch (error) {
+    console.error('API Error:', error);
+    return {
+      success: false,
+      message: 'Network error. Please check your connection.',
+    };
+  }
+};
+
+
+// export const getPatientAnalysisAPI = async (patientId) => {
+//   const token = getCookie('user_token');
+
+//   try {
+//     const response = await fetch(`${API_BASE_URL}/api/patients/${patientId}/analysis`, {
+//       method: 'GET',
+//       headers: {
+//         'Authorization': `Bearer ${token}`,
+//         'Accept': 'application/json',
+//       },
+//     });
+
+//     const data = await response.json();
+
+//     if (!response.ok) {
+//       if (response.status === 401) {
+//         deleteCookie('user_token');
+//         deleteCookie('user');
+//         deleteCookie('isAuthenticated');
+//       }
+
+//       return {
+//         success: false,
+//         message: data.message || 'Something went wrong',
+//         errors: data.errors || null,
+//       };
+
+      
+     
+//     }
+
+//     return data;
+//   } catch (error) {
+//     console.error('API Error:', error);
+//     return {
+//       success: false,
+//       message: 'Network error. Please check your connection.',
+//     };
+//   }
+// };
+
+
+// export const getPatientAnalysisAPI = async (patientId) => {
+//   const token = getCookie('user_token');
+
+//   try {
+//     const response = await fetch(`${API_BASE_URL}/api/patients/${patientId}/analysis`, {
+//       method: 'GET',
+//       headers: {
+//         'Authorization': `Bearer ${token}`,
+//         'Accept': 'application/json',
+//       },
+//     });
+
+//     const data = await response.json();
+
+//     if (!response.ok) {
+//       if (response.status === 401) {
+//         deleteCookie('user_token');
+//         deleteCookie('user');
+//         deleteCookie('isAuthenticated');
+//       }
+
+//       return {
+//         success: false,
+//         message: data.message || 'Something went wrong',
+//         errors: data.errors || null,
+//       };
+//     }
+
+//     return {
+//       success: true, 
+//       data: data 
+//     };
+
+//   } catch (error) {
+//     console.error('API Error:', error);
+//     return {
+//       success: false,
+//       message: 'Network error. Please check your connection.',
+//     };
+//   }
+// };
+
+
+
+export const getPatientAnalysisAPI = async (patientId) => {
+  const token = getCookie('user_token');
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/patients/${patientId}/analysis`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true'
+      },
+    });
+
+    // 1. لو الرد 204 (نجاح بس مفيش داتا)
+    if (response.status === 204) {
+      return {
+        success: true,
+        data: null, // أو array فاضية [] حسب ديزاينك
+        message: 'No data available'
+      };
+    }
+
+    // 2. التأكد إن الرد فعلاً JSON قبل ما نحاول نقرأه
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+       // لو الرد مش JSON (غالباً HTML error page)
+       const text = await response.text(); 
+       console.error("Non-JSON response received:", text); // هيطبعلك الـ HTML في الكونسول عشان تشوفه
+       return {
+         success: false,
+         message: 'Server returned an unexpected format (HTML). Check console.',
+       };
+    }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        deleteCookie('user_token');
+        deleteCookie('user');
+        deleteCookie('isAuthenticated');
+      }
+
+      return {
+        success: false,
+        message: data.message || 'Something went wrong',
+        errors: data.errors || null,
+      };
+    }
+
+    return {
+        success: true,
+        data: data 
+    };
+
+  } catch (error) {
+    console.error('API Error:', error);
+    return {
+      success: false,
+      message: 'Network error. Please check your connection.',
+    };
+  }
 };

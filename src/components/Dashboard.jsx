@@ -1,9 +1,11 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
-import logo from "../assets/Logo_Diagnoo.png"
+import logo from "../assets/Logo_Diagnoo.png";
 import "../css/Dashboard.css";
 
 export default function Dashboard() {
+  const navigate = useNavigate(); // ADD THIS HOOK
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
@@ -32,7 +34,13 @@ export default function Dashboard() {
     <>
       <aside className="sidebar">
         <div className="sidebar-logo">
-          <span className="logo-text"><img src={logo} alt="DiagnoSense Logo" onError={(e) => e.target.style.display='none'} /></span>
+          <span className="logo-text">
+            <img
+              src={logo}
+              alt="DiagnoSense Logo"
+              onError={(e) => (e.target.style.display = "none")}
+            />
+          </span>
         </div>
         <nav className="sidebar-nav">
           <div className="nav-main">
@@ -47,7 +55,14 @@ export default function Dashboard() {
                 </span>
                 <span>Overview</span>
               </a>
-              <a href="#" className="nav-item">
+              <a
+                href="#"
+                className="nav-item"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate("/patients");
+                }}
+              >
                 <span className="nav-icon">
                   <svg viewBox="0 0 24 24">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -84,8 +99,8 @@ export default function Dashboard() {
                 </span>
                 <span>Support</span>
               </a>
-              <a 
-                href="#" 
+              <a
+                href="#"
                 className="nav-item"
                 onClick={(e) => {
                   e.preventDefault();
@@ -145,7 +160,8 @@ export default function Dashboard() {
           </svg>
           <input
             type="text"
-            className="search-input" style={{padding: "12px 16px 12px 44px"}}
+            className="search-input"
+            style={{ padding: "12px 16px 12px 44px" }}
             placeholder="Search patient or report…"
           />
         </div>
@@ -158,10 +174,10 @@ export default function Dashboard() {
 
           <div className="credits-badge">
             <span className="credits-icon">
-                <svg viewBox="0 0 24 24">
-            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-            <line x1="1" y1="10" x2="23" y2="10"></line>
-          </svg>
+              <svg viewBox="0 0 24 24">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                <line x1="1" y1="10" x2="23" y2="10"></line>
+              </svg>
             </span>
             <span>Credits: 1,247</span>
           </div>
@@ -259,9 +275,9 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <LogoutConfirmation 
-        isOpen={isLogoutModalOpen} 
-        onClose={closeLogoutModal} 
+      <LogoutConfirmation
+        isOpen={isLogoutModalOpen}
+        onClose={closeLogoutModal}
       />
 
       <main className="main-content">
