@@ -23,10 +23,11 @@ import AddPatient from "./components/AddPatient.jsx";
 import PatientProfile from "./components/PatientProfile.jsx"; 
 import "./App.css";
 
-// const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children }) => {
   const isAuthenticated = localStorage.getItem("isAuthenticated");
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
+
 
 function App() {
   return (
