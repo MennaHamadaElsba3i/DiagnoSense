@@ -915,6 +915,7 @@ body {
 
 .patient-actions {
     display: flex;
+    justify-content: center;
     gap: 12px;
     width: 80%;
 
@@ -932,6 +933,7 @@ body {
 }
 
 .btn-primary {
+    display: inline;
     background: #2A66FF;
     color: #FFFFFF;
 }

@@ -10,13 +10,13 @@ const Login = ({ onForgotPassword }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const email = e.target.email.value;
+    const identity = e.target.identity.value;
     const password = e.target.password.value;
 
     setIsLoading(true);
     setError("");
 
-    const result = await loginAPI(email, password);
+    const result = await loginAPI(identity, password);
 
     if (result.success) {
       console.log(result.data);
@@ -51,9 +51,9 @@ const Login = ({ onForgotPassword }) => {
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <input
-            type="email"
-            placeholder="Email address"
-            name="email"
+            type="text"
+            placeholder="Email or Phone number"
+            name="identity"
             required
             className={error ? "error" : ""}
           />

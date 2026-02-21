@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useNavigate } from "react-router-dom"; 
+import OTPVerification from '../components/OTPVerification.jsx';
 import Login from '../components/Login.jsx';
 import Register from '../components/Register.jsx';
 import ForgetPassword from '../components/ForgetPassword.jsx';
@@ -7,9 +9,11 @@ import logo from "../assets/Logo_Diagnoo.png"
 import '../css/auth.css';
 
 const AuthPage = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('login');
   const [currentView, setCurrentView] = useState('auth'); 
-  const [userEmail, setUserEmail] = useState('');
+  const [userIdentity, setUserIdentity] = useState(''); 
+  const [currentOTP, setCurrentOTP] = useState('');
   const [doctorImage, setDoctorImage] = useState('https://i.postimg.cc/MpcnGfzB/About-Us-Team-Photo-14.png');
 
   const handleTabChange = (tab) => {
@@ -26,16 +30,16 @@ const AuthPage = () => {
     setCurrentView('forget');
   };
 
-  const handleOTPSent = (email) => {
-    setUserEmail(email);
+  const handleOTPSent = (identity) => {
+    setUserIdentity(identity);
 
-    setCurrentView('reset');
+    setCurrentView('forget-otp');
   };
 
   const handleBackToLogin = () => {
     setCurrentView('auth');
     setActiveTab('login');
-    setUserEmail('');
+    // setUserEmail('');
     setDoctorImage('https://i.postimg.cc/MpcnGfzB/About-Us-Team-Photo-14.png');
   };
 
@@ -50,20 +54,42 @@ const AuthPage = () => {
   const renderContent = () => {
     switch (currentView) {
       case 'forget':
-        return <ForgetPassword onOTPSent={handleOTPSent} onBackToLogin={handleBackToLogin} />;
-      case 'reset':
-        return (
-          <ResetPassword 
-            email={userEmail} 
-            onResetSuccess={handleResetSuccess}
-            onBackToForget={handleBackToForget}
-          />
-        );
+      return <ForgetPassword onOTPSent={handleOTPSent} onBackToLogin={handleBackToLogin} />;
+      case 'forget-otp':
+  return (
+    <OTPVerification 
+      identity={userIdentity}
+      // skipVerification={true}
+      onVerifySuccess={(otpCode) => {
+        setCurrentOTP(otpCode);
+        setCurrentView('reset-password');
+      }} 
+    />
+  );
+      case 'reset-password':
+      return (
+        <ResetPassword 
+          identity={userIdentity} 
+          otp={currentOTP} 
+          onResetSuccess={handleResetSuccess}
+          onBackToForget={handleBackToForget}
+        />
+      );
+        case 'otp':
+      return (
+        <OTPVerification 
+          identity={userIdentity} 
+          onVerifySuccess={() => navigate("/dashboard")} 
+        />
+      );
       default:
-        return activeTab === 'login' ? 
-          <Login onForgotPassword={handleForgotPassword} /> : 
-          <Register />;
-    }
+      return activeTab === 'login' ? 
+        <Login onForgotPassword={handleForgotPassword} /> : 
+        <Register onRegisterSuccess={(identity) => {
+            setUserIdentity(identity);
+            setCurrentView('otp'); 
+        }} />;
+  }
   };
 
   return (

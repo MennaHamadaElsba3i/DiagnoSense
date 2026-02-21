@@ -481,6 +481,7 @@ body {
 .patient-identity {
     display: flex;
     align-items: center;
+    gap: 165px;
     justify-content: space-between;
 }
 
@@ -560,6 +561,7 @@ body {
 
 /* Tabs */
 .tab-nav {
+    width: fit-content;
     display: flex;
     gap: 25px;
     margin-bottom: 28px;
@@ -567,7 +569,7 @@ body {
     padding: 6px;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    overflow-x: auto;
+    /* overflow-x: auto; */
     justify-content: center;
     align-items: center;
 }
