@@ -102,6 +102,7 @@ const ProtectedRoute = ({ children }) => {
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
+
 function App() {
   return (
     <BrowserRouter>
