@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import logo from "../assets/Logo_Diagnoo.png";
 import "../css/PatientList.css";
 
 const PatientList = () => {
@@ -160,7 +161,7 @@ const PatientList = () => {
       <aside className="sidebar">
         <div className="sidebar-logo">
           <span className="logo-text">
-            <img src="DiagnoSense Logo Without BG.png" alt="" />
+            <img src={logo} alt="" />
           </span>
         </div>
 
@@ -261,7 +262,8 @@ const PatientList = () => {
           </svg>
           <input
             type="text"
-            className="search-input"
+            className="search-input" 
+            style={{padding:"12px 16px 12px 44px"}}
             placeholder="Search patient or report…"
           />
         </div>
@@ -432,6 +434,7 @@ const PatientList = () => {
             <input
               type="text"
               className="page-search"
+              style={{padding:"12px 16px 12px 44px"}}
               placeholder="Search by name, ID, or condition…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -524,6 +527,7 @@ const PatientList = () => {
                 <div className="patient-actions">
                   <button
                     className="btn btn-primary"
+                    style={{display:"inline"}}
                      onClick={(e) => {
                   
                   navigate("/patient-profile");

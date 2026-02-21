@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://unpersecuted-vanitied-jayson.ngrok-free.dev';
+const API_BASE_URL = 'https://nontelepathically-pamphletary-cyndi.ngrok-free.dev';
 
 import { getCookie, setCookie, deleteCookie, setJsonCookie } from './cookieUtils';
 
@@ -44,15 +44,44 @@ const apiCall = async (endpoint, options = {}) => {
   }
 };
 
+// export const registerAPI = async (userData) => {
+//   const result = await apiCall('/api/register/doctor', {
+//     method: 'POST',
+//     body: JSON.stringify({
+//       name: userData.name,
+//       email: userData.email,
+//       phone: userData.phone,
+//       password: userData.password,
+//       password_confirmation: userData.password_confirmation,
+//     }),
+//   });
+
+//   if (result.success && result.data && result.data.token) {
+//     setCookie('user_token', result.data.token, 7);
+//     setJsonCookie('user', result.data.user, 7);
+//     setCookie('isAuthenticated', 'true', 7);
+//   }
+
+//   return result;
+// };
 export const registerAPI = async (userData) => {
+  const payload = {
+    name: userData.name,
+    password: userData.password,
+    password_confirmation: userData.password_confirmation,
+  };
+
+  if (userData.email && userData.email.trim() !== "") {
+    payload.email = userData.email;
+  }
+
+  if (userData.phone && userData.phone.trim() !== "") {
+    payload.phone = userData.phone;
+  }
+
   const result = await apiCall('/api/register/doctor', {
     method: 'POST',
-    body: JSON.stringify({
-      name: userData.name,
-      email: userData.email,
-      password: userData.password,
-      password_confirmation: userData.password_confirmation,
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (result.success && result.data && result.data.token) {
@@ -64,10 +93,10 @@ export const registerAPI = async (userData) => {
   return result;
 };
 
-export const loginAPI = async (email, password) => {
+export const loginAPI = async (identity, password) => {
   const result = await apiCall('/api/login/doctor', {
     method: 'POST',
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ identity, password }),
   });
 
   if (result.success && result.data && result.data.token) {
@@ -106,20 +135,20 @@ export const logoutAPI = async () => {
 };
 
 
-export const forgetPasswordAPI = async (email) => {
+export const forgetPasswordAPI = async (identity) => {
   return await apiCall('/api/forget-password/doctor', {
     method: 'POST',
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ identity }),
   });
 };
 
 
-export const resetPasswordAPI = async (otp, email, password, password_confirmation) => {
+export const resetPasswordAPI = async (otp, identity, password, password_confirmation) => {
   return await apiCall('/api/reset-password/doctor', {
     method: 'POST',
     body: JSON.stringify({
       otp,
-      email,
+      identity,
       password,
       password_confirmation,
     }),
@@ -141,10 +170,13 @@ export const googleLoginAPI = async (googleToken) => {
   return result;
 };
 
-export const verifyOTPAPI = async (email, otp) => {
-  return await apiCall('/api/verify-email/doctor', {
+export const verifyOTPAPI = async (identity, otp) => {
+  return await apiCall('/api/verify-email/doctor', { 
     method: 'POST',
-    body: JSON.stringify({ email, otp }),
+    body: JSON.stringify({ 
+      identity: identity, 
+      otp: otp 
+    }),
   });
 };
 

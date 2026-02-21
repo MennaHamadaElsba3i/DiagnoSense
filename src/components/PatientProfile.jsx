@@ -471,7 +471,7 @@ const PatientProfile = () => {
             <div className="header-actions">
               <button className="btn btn-secondary">Edit File</button>
               <button className="btn btn-secondary">Start Collaboration</button>
-              <button className="btn btn-primary">Verify Summary</button>
+              <button className="btn btn-primary" style={{padding:"35px 40px"}}>Verify Summary</button>
             </div>
           </div>
         </header>

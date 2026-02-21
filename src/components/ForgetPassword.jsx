@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { forgetPasswordAPI } from "./mockAPI";
 
 const ForgetPassword = ({ onOTPSent, onBackToLogin }) => {
-  const [email, setEmail] = useState("");
+  const [identity, setIdentity] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -13,18 +13,19 @@ const ForgetPassword = ({ onOTPSent, onBackToLogin }) => {
     setError("");
     setSuccessMessage("");
 
-    const result = await forgetPasswordAPI(email);
+    const result = await forgetPasswordAPI(identity);
 
     if (result.success) {
       setSuccessMessage(result.message);
 
-      localStorage.setItem("resetEmail", email);
+      // localStorage.setItem("resetIdentity", identity);
+      // onOTPSent(identity);
 
       setTimeout(() => {
-        onOTPSent(email);
-      }, 2000);
+        onOTPSent(identity);
+      }, 1500);
     } else {
-      setError(result.errors.email);
+      setError(result.errors.identity);
     }
 
     setIsLoading(false);
@@ -34,16 +35,16 @@ const ForgetPassword = ({ onOTPSent, onBackToLogin }) => {
     <div className="tab-content active">
       <div className="form-header">
         <h2>Forgot Password?</h2>
-        <p>Enter your email address and we'll send you a verification code</p>
+        <p>Enter your email or phone number to reset your password</p>
       </div>
 
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <input
-            type="email"
-            placeholder="Email address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            placeholder="Email or Phone number"
+            value={identity}
+            onChange={(e) => setIdentity(e.target.value)}
             required
             className={error ? "error" : ""}
             disabled={isLoading}

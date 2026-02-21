@@ -5,7 +5,7 @@ import logo from "../assets/Logo_Diagnoo.png";
 import "../css/Dashboard.css";
 
 export default function Dashboard() {
-  const navigate = useNavigate(); // ADD THIS HOOK
+  const navigate = useNavigate(); 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 

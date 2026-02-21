@@ -1,14 +1,11 @@
 import React, { useState } from "react";
-import { resetPasswordAPI, forgetPasswordAPI } from "./mockAPI";
+import { resetPasswordAPI } from "./mockAPI";
 
-const ResetPassword = ({ email, onResetSuccess, onBackToForget }) => {
-  const [otp, setOtp] = useState("");
+const ResetPassword = ({ identity,otp, onResetSuccess, onBackToForget }) => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState("");
-  const [otpErrors, setOtpErrors] = useState([]);
   const [passwordErrors, setPasswordErrors] = useState([]);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -16,17 +13,15 @@ const ResetPassword = ({ email, onResetSuccess, onBackToForget }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const savedEmail = localStorage.getItem("resetEmail");
-
+    // const savedIdentity = localStorage.getItem("resetIdentity") || identity;
     setIsLoading(true);
     setError("");
-    setOtpErrors([]);
     setPasswordErrors([]);
     setSuccessMessage("");
 
     const result = await resetPasswordAPI(
       otp,
-      savedEmail,
+      identity,
       password,
       confirmPassword
     );
@@ -34,16 +29,14 @@ const ResetPassword = ({ email, onResetSuccess, onBackToForget }) => {
     console.log(result.errors);
     if (result.success) {
       setSuccessMessage(result.message);
+      // localStorage.removeItem("resetIdentity")
 
       setTimeout(() => {
         onResetSuccess();
       }, 2000);
     } else {
       if (result.errors) {
-        if (result.errors.otp) {
-          setOtpErrors(result.errors.otp);
-        }
-
+      
         if (result.errors.password) {
           setPasswordErrors(result.errors.password);
         }
@@ -62,79 +55,16 @@ const ResetPassword = ({ email, onResetSuccess, onBackToForget }) => {
     setIsLoading(false);
   };
 
-  const handleResendOTP = async () => {
-    const savedEmail = localStorage.getItem("resetEmail");
 
-    if (!savedEmail) {
-      setError("Email not found. Please go back and enter your email again.");
-      return;
-    }
-
-    setIsResending(true);
-    setError("");
-    setOtpErrors([]);
-    setPasswordErrors([]);
-    setSuccessMessage("");
-
-    const result = await forgetPasswordAPI(savedEmail);
-
-    if (result.success) {
-      setSuccessMessage("A new OTP has been sent to your email.");
-      setOtp("");
-    } else {
-      setError(result.message);
-    }
-
-    setIsResending(false);
-  };
 
   return (
     <div className="tab-content active">
       <div className="form-header">
-        <h2>Reset Password</h2>
-        <p>Enter the 6-digit OTP sent to {email}</p>
+        <h2>Set New Password</h2>
+        <p>Creating a new password for <strong>{identity}</strong></p>
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <input
-            type="text"
-            placeholder="Enter 6-digit OTP"
-            value={otp}
-            onChange={(e) => {
-              const value = e.target.value.replace(/\D/g, "");
-              if (value.length <= 6) {
-                setOtp(value);
-                setError("");
-                setOtpErrors([]);
-              }
-            }}
-            required
-            maxLength="6"
-            className={otpErrors.length > 0 ? "error" : ""}
-            style={{
-              textAlign: "center",
-              fontSize: "20px",
-              letterSpacing: "8px",
-              fontWeight: "bold",
-            }}
-            autoFocus
-            disabled={isLoading}
-          />
-          {otpErrors.length > 0 && (
-            <div className="field-errors">
-              {otpErrors.map((error, index) => (
-                <div
-                  key={index}
-                  className="error-message"
-                  style={{ marginTop: "5px", marginBottom: "0" }}
-                >
-                  {error}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
         <div className="form-group">
           <div className="password-input-wrapper">
@@ -296,28 +226,12 @@ const ResetPassword = ({ email, onResetSuccess, onBackToForget }) => {
         <button
           type="submit"
           className={`btn-primary ${isLoading ? "loading" : ""}`}
-          disabled={isLoading || otp.length !== 6}
+          disabled={isLoading}
         >
           {isLoading ? "Resetting..." : "Reset Password"}
         </button>
 
-        <div style={{ textAlign: "center", marginTop: "20px" }}>
-          <button
-            type="button"
-            onClick={handleResendOTP}
-            disabled={isResending || isLoading}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#667eea",
-              cursor: isResending || isLoading ? "not-allowed" : "pointer",
-              fontSize: "14px",
-              textDecoration: "underline",
-            }}
-          >
-            {isResending ? "Sending..." : "Didn't receive code? Resend"}
-          </button>
-        </div>
+      
 
         <div style={{ textAlign: "center", marginTop: "10px" }}>
           <a

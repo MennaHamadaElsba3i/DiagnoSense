@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { registerAPI } from "./mockAPI";
 import { setCookie, setJsonCookie } from "./cookieUtils";
 
-const Register = () => {
-  const navigate = useNavigate();
+const Register = ({ onRegisterSuccess }) => {
+  // const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [emailErrors, setEmailErrors] = useState([]);
@@ -15,9 +15,14 @@ const Register = () => {
     const firstName = e.target.firstName.value;
     const lastName = e.target.lastName.value;
     const email = e.target.email.value;
+    const phone = e.target.phone.value;
     const password = e.target.password.value;
     const confirmPassword = e.target.password_confirmation.value;
 
+    if (!email && !phone) {
+      setError("Please provide either an email address or a phone number.");
+      return;
+    }
     setIsLoading(true);
     setError("");
     setEmailErrors([]);
@@ -28,21 +33,24 @@ const Register = () => {
     const result = await registerAPI({
       name: fullName,
       email,
+      phone,
       password,
       password_confirmation: confirmPassword,
     });
 
     if (result.success) {
+      const identityUsed = email ? email : phone;
       console.log(result.data);
       setCookie("user_token", result.data.token, 7);
       setJsonCookie("user", result.data.user, 7);
       setCookie("isAuthenticated", "true", 7);
 
-      navigate("/dashboard");
+      if (onRegisterSuccess) {
+        onRegisterSuccess(identityUsed); 
+      }
+      // navigate("/dashboard");
     } else {
-
       if (result.errors) {
-
         if (result.errors.email) {
           setEmailErrors(result.errors.email);
         }
@@ -52,7 +60,7 @@ const Register = () => {
         }
 
         const otherErrors = Object.keys(result.errors).filter(
-          (key) => key !== "email" && key !== "password"
+          (key) => key !== "email" && key !== "password",
         );
         if (otherErrors.length > 0) {
           setError(result.errors[otherErrors[0]][0]);
@@ -97,7 +105,7 @@ const Register = () => {
             type="email"
             placeholder="Email address"
             name="email"
-            required
+    
             className={emailErrors.length > 0 ? "error" : ""}
           />
           {emailErrors.length > 0 && (
@@ -117,11 +125,18 @@ const Register = () => {
 
         <div className="form-group">
           <input
+            type="tel"
+            placeholder="Phone Number (Optional if email is provided)"
+            name="phone"
+            className={error.includes("phone") ? "error" : ""}
+          />
+        </div>
+        <div className="form-group">
+          <input
             type="password"
             placeholder="Password"
             name="password"
             required
-            
             className={passwordErrors.length > 0 ? "error" : ""}
           />
         </div>
@@ -132,7 +147,6 @@ const Register = () => {
             placeholder="Confirm Password"
             name="password_confirmation"
             required
-            
             className={passwordErrors.length > 0 ? "error" : ""}
           />
           {passwordErrors.length > 0 && (
