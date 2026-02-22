@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { verifyOTPAPI, resendOTPAPI } from "./mockAPI";
+import { setCookie } from "./cookieUtils.js";
 
 const OTPVerification = ({ identity, onVerifySuccess }) => {
   const [otp, setOtp] = useState("");
@@ -24,6 +25,10 @@ const OTPVerification = ({ identity, onVerifySuccess }) => {
     const result = await verifyOTPAPI(identity, otp);
 
     if (result.success) {
+      // بنجيب التوكن من الـ result، ولو مش موجود (زي في الـ Mock) بنحط قيمة "dummy"
+      const tokenToStore = result.token || result.data?.token || "verified_user_token";
+      
+      setCookie("token", tokenToStore, 7);
       onVerifySuccess(otp); 
     } else {
       setError(result.message);

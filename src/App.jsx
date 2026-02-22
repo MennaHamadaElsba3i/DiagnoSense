@@ -96,10 +96,11 @@ import AddPatient from "./components/AddPatient.jsx";
 import PatientProfile from "./components/PatientProfile.jsx";
 import DiagnoSense from "./components/DiagnoSense.jsx"; // تأكدي ان المسار صح
 import "./App.css";
+import { getCookie } from "./components/cookieUtils";
 
 const ProtectedRoute = ({ children }) => {
-  const isAuthenticated = localStorage.getItem("isAuthenticated");
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  const token = getCookie("user_token");
+  return token ? children : <Navigate to="/login" />;
 };
 
 
