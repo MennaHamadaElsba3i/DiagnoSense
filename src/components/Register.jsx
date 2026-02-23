@@ -6,6 +6,8 @@ import { setCookie, setJsonCookie } from "./cookieUtils";
 const Register = ({ onRegisterSuccess }) => {
   // const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [emailValue, setEmailValue] = useState("");
+const [phoneValue, setPhoneValue] = useState("");
   const [error, setError] = useState("");
   const [emailErrors, setEmailErrors] = useState([]);
   const [passwordErrors, setPasswordErrors] = useState([]);
@@ -14,8 +16,8 @@ const Register = ({ onRegisterSuccess }) => {
     e.preventDefault();
     const firstName = e.target.firstName.value;
     const lastName = e.target.lastName.value;
-    const email = e.target.email.value;
-    const phone = e.target.phone.value;
+    const email = emailValue;
+    const phone = phoneValue;
     const password = e.target.password.value;
     const confirmPassword = e.target.password_confirmation.value;
 
@@ -105,7 +107,9 @@ const Register = ({ onRegisterSuccess }) => {
             type="email"
             placeholder="Email address"
             name="email"
-    
+            value={emailValue}
+  onChange={(e) => setEmailValue(e.target.value)}
+  disabled={phoneValue.length > 0}
             className={emailErrors.length > 0 ? "error" : ""}
           />
           {emailErrors.length > 0 && (
@@ -128,6 +132,9 @@ const Register = ({ onRegisterSuccess }) => {
             type="tel"
             placeholder="Phone Number (Optional if email is provided)"
             name="phone"
+            value={phoneValue}
+  onChange={(e) => setPhoneValue(e.target.value)}
+  disabled={emailValue.length > 0}
             className={error.includes("phone") ? "error" : ""}
           />
         </div>

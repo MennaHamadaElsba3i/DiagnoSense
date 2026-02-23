@@ -17,15 +17,11 @@ const ForgetPassword = ({ onOTPSent, onBackToLogin }) => {
 
     if (result.success) {
       setSuccessMessage(result.message);
-
-      // localStorage.setItem("resetIdentity", identity);
-      // onOTPSent(identity);
-
       setTimeout(() => {
         onOTPSent(identity);
       }, 1500);
     } else {
-      setError(result.errors.identity);
+      setError(result.message);
     }
 
     setIsLoading(false);

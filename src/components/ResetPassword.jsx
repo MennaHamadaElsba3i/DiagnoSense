@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { resetPasswordAPI } from "./mockAPI";
 
-const ResetPassword = ({ identity,otp, onResetSuccess, onBackToForget }) => {
+const ResetPassword = ({ reset_token, onResetSuccess, onBackToForget }) => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -13,40 +13,47 @@ const ResetPassword = ({ identity,otp, onResetSuccess, onBackToForget }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // const savedIdentity = localStorage.getItem("resetIdentity") || identity;
     setIsLoading(true);
     setError("");
     setPasswordErrors([]);
     setSuccessMessage("");
 
     const result = await resetPasswordAPI(
-      otp,
-      identity,
+      reset_token,
       password,
       confirmPassword
     );
 
     console.log(result.errors);
+    // if (result.success) {
+    //   setSuccessMessage(result.message);
+    //   setTimeout(() => {
+    //     onResetSuccess();
+    //   }, 2000);
+    // } else {
+    //   if (result.errors) {
+    //     if (result.errors.password) {
+    //       setPasswordErrors(result.errors.password);
+    //     }
+
+    //     const otherErrors = Object.keys(result.errors).filter(
+    //       (key) => key !== "otp" && key !== "password"
+    //     );
+    //     if (otherErrors.length > 0) {
+    //       setError(result.errors[otherErrors[0]][0]);
+    //     }
+    //   } else {
+    //     setError(result.message);
+    //   }
+    // }
     if (result.success) {
       setSuccessMessage(result.message);
-      // localStorage.removeItem("resetIdentity")
-
       setTimeout(() => {
         onResetSuccess();
       }, 2000);
     } else {
-      if (result.errors) {
-      
-        if (result.errors.password) {
-          setPasswordErrors(result.errors.password);
-        }
-
-        const otherErrors = Object.keys(result.errors).filter(
-          (key) => key !== "otp" && key !== "password"
-        );
-        if (otherErrors.length > 0) {
-          setError(result.errors[otherErrors[0]][0]);
-        }
+      if (result.errors?.password) {
+        setPasswordErrors(result.errors.password);
       } else {
         setError(result.message);
       }
@@ -61,7 +68,7 @@ const ResetPassword = ({ identity,otp, onResetSuccess, onBackToForget }) => {
     <div className="tab-content active">
       <div className="form-header">
         <h2>Set New Password</h2>
-        <p>Creating a new password for <strong>{identity}</strong></p>
+        <p>Choose a strong password for your account</p>
       </div>
 
       <form onSubmit={handleSubmit}>
