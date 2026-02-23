@@ -7,6 +7,8 @@ const OTPVerification = ({ identity, onVerifySuccess }) => {
 //   const [userIdentity, setUserIdentity] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [resendLoading, setResendLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const handleVerify = async (e) => {
     e.preventDefault();
@@ -36,6 +38,20 @@ const OTPVerification = ({ identity, onVerifySuccess }) => {
     setIsLoading(false);
   };
 
+  const handleResendOTP = async (e) => {
+    e.preventDefault();
+    setResendLoading(true);
+    setError("");
+    setSuccessMessage("");
+    const result = await resendOTPAPI();
+    if (result.success) {
+      setSuccessMessage(result.message || "OTP sent successfully.");
+    } else {
+      setError(result.message);
+    }
+    setResendLoading(false);
+  };
+
   return (
     <div className="tab-content active">
       <div className="form-header">
@@ -57,6 +73,7 @@ const OTPVerification = ({ identity, onVerifySuccess }) => {
         </div>
 
         {error && <div className="error-message">{error}</div>}
+        {successMessage && <div className="success-message">{successMessage}</div>}
 
         <button type="submit" className={`btn-primary ${isLoading ? "loading" : ""}`}>
           {!isLoading && "Verify Now"}
@@ -65,7 +82,7 @@ const OTPVerification = ({ identity, onVerifySuccess }) => {
 
       <div className="form-options" style={{ justifyContent: 'center', marginTop: '15px' }}>
         <p>Didn't receive code? 
-          <a href="#" onClick={(e) => { e.preventDefault(); resendOTPAPI(identity); }}> Resend</a>
+          <a href="#" onClick={handleResendOTP} style={{ pointerEvents: resendLoading ? 'none' : 'auto' }}> {resendLoading ? "Resending..." : "Resend"}</a>
         </p>
       </div>
     </div>

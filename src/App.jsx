@@ -86,7 +86,7 @@
 
 // export default App;
 
-
+//-------------------------------------------------------------------------------------------
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AuthPage from "./pages/AuthPage.jsx";
@@ -95,8 +95,10 @@ import PatientList from "./components/PatientList.jsx";
 import AddPatient from "./components/AddPatient.jsx";
 import PatientProfile from "./components/PatientProfile.jsx";
 import DiagnoSense from "./components/DiagnoSense.jsx"; // تأكدي ان المسار صح
+import GoogleCallback from "./components/GoogleCallback.jsx";
 import "./App.css";
 import { getCookie } from "./components/cookieUtils";
+
 
 const ProtectedRoute = ({ children }) => {
   const token = getCookie("user_token");
@@ -116,6 +118,10 @@ function App() {
 
         {/* 2. صفحة اللوجين */}
         <Route path="/login" element={<AuthPage />} />
+
+        {/* Google OAuth callback - backend redirects here after sign in */}
+        <Route path="/google-callback" element={<GoogleCallback />} />
+        <Route path="/auth/google/callback" element={<GoogleCallback />} />
 
         {/* 3. الصفحات المحمية (لازم تسجيل دخول) */}
         <Route

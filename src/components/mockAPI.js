@@ -10,6 +10,7 @@ const apiCall = async (endpoint, options = {}) => {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
 
         ...(token && { 'Authorization': `Bearer ${token}` }),
         ...options.headers,
@@ -155,6 +156,12 @@ export const resetPasswordAPI = async (otp, identity, password, password_confirm
   });
 };
 
+export const getGoogleRedirectAPI = async () => {
+  return await apiCall('/api/google/redirect', {
+    method: 'GET',
+  });
+};
+
 export const googleLoginAPI = async (googleToken) => {
   const result = await apiCall('/auth/google', {
     method: 'POST',
@@ -180,11 +187,9 @@ export const verifyOTPAPI = async (identity, otp) => {
   });
 };
 
-export const resendOTPAPI = async (email) => {
-
+export const resendOTPAPI = async () => {
   return await apiCall('/api/resend-otp/doctor', {
-    method: 'POST',
-    body: JSON.stringify({ email }),
+    method: 'GET',
   });
 };
 
