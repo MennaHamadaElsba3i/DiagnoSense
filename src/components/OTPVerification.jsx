@@ -51,20 +51,19 @@ const OTPVerification = ({
     } else if (mode === "forget_password") {
       result = await verifyOTPForResetAPI(identity, otp);
       if (result.success) {
-        const reset_token =
-          result.data.reset_token
+        const reset_token = result.data.reset_token;
         onVerifySuccess(reset_token);
       } else {
         setError(result.message);
       }
     }
-    
+
     // if (result.success) {
     //   // بنجيب التوكن من الـ result، ولو مش موجود (زي في الـ Mock) بنحط قيمة "dummy"
     //   const tokenToStore = result.token || result.data?.token || "verified_user_token";
-      
+
     //   setCookie("token", tokenToStore, 7);
-    //   onVerifySuccess(otp); 
+    //   onVerifySuccess(otp);
     // } else {
     //   setError(result.message);
     // }
@@ -88,6 +87,9 @@ const OTPVerification = ({
 
     if (result.success) {
       setSuccessMessage(result.message || "OTP sent successfully.");
+      setTimeout(() => {
+        setSuccessMessage("");
+      }, 2000);
     } else {
       setError(result.message);
     }
@@ -121,7 +123,21 @@ const OTPVerification = ({
         </div>
 
         {error && <div className="error-message">{error}</div>}
-        {successMessage && <div className="success-message">{successMessage}</div>}
+        {successMessage && (
+          <div
+            className="success-message"
+            style={{
+              color: "#10b981",
+              marginBottom: "15px",
+              padding: "10px",
+              background: "#d1fae5",
+              borderRadius: "8px",
+              textAlign: "center",
+            }}
+          >
+            {successMessage}
+          </div>
+        )}
 
         <button
           type="submit"
@@ -132,9 +148,20 @@ const OTPVerification = ({
         </button>
       </form>
 
-      <div className="form-options" style={{ justifyContent: 'center', marginTop: '15px' }}>
-        <p>Didn't receive code? 
-          <a href="#" onClick={handleResendOTP} style={{ pointerEvents: resendLoading ? 'none' : 'auto' }}> {resendLoading ? "Resending..." : "Resend"}</a>
+      <div
+        className="form-options"
+        style={{ justifyContent: "center", marginTop: "15px" }}
+      >
+        <p>
+          Didn't receive code?
+          <a
+            href="#"
+            onClick={handleResendOTP}
+            style={{ pointerEvents: resendLoading ? "none" : "auto" }}
+          >
+            {" "}
+            {resendLoading ? "Resending..." : "Resend"}
+          </a>
         </p>
       </div>
     </div>

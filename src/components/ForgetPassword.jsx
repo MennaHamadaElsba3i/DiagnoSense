@@ -19,7 +19,7 @@ const ForgetPassword = ({ onOTPSent, onBackToLogin }) => {
       setSuccessMessage(result.message);
       setTimeout(() => {
         onOTPSent(identity);
-      }, 1500);
+      }, 2000);
     } else {
       setError(result.message);
     }
