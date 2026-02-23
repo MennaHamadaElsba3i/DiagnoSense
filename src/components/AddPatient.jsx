@@ -130,10 +130,8 @@ const AddPatient = () => {
     setError("");
 
     try {
-      // Create FormData object
       const apiFormData = new FormData();
 
-      // Add patient basic info
       apiFormData.append(
         "first_name",
         formData.fullName.split(" ")[0] || formData.fullName
@@ -150,7 +148,6 @@ const AddPatient = () => {
       );
       apiFormData.append("phone_number", formData.phone || "0000000000");
 
-      // Add medical history
       apiFormData.append("is_smoker", isSmoker ? "1" : "0");
       apiFormData.append("has_surgeries", hasSurgeries ? "1" : "0");
       apiFormData.append("surgery_details", formData.surgeryText || "");
@@ -162,7 +159,6 @@ const AddPatient = () => {
       apiFormData.append("allergies", formData.allergies || "");
       apiFormData.append("family_history", formData.familyHistory || "");
 
-      // Add files with proper naming
       fileManager.lab.forEach((file, index) => {
         apiFormData.append(`lab_test[]`, file);
       });
@@ -175,11 +171,9 @@ const AddPatient = () => {
         apiFormData.append(`radiology_report[]`, file);
       });
 
-      // Call API
       const result = await analyzeReportAPI(apiFormData);
 
       if (result.success) {
-        // Store patient data for the profile page
         localStorage.setItem(
           "currentPatient",
           JSON.stringify({
@@ -209,7 +203,6 @@ const AddPatient = () => {
           })
         );
 
-        // Navigate to patient profile
         navigate("/patient-profile", {
           state: {
             patientId: result.patient_id,

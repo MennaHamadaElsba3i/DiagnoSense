@@ -1,50 +1,64 @@
-import React, { useState } from 'react';
-import { useNavigate } from "react-router-dom"; 
-import OTPVerification from '../components/OTPVerification.jsx';
-import Login from '../components/Login.jsx';
-import Register from '../components/Register.jsx';
-import ForgetPassword from '../components/ForgetPassword.jsx';
-import ResetPassword from '../components/ResetPassword.jsx';
-import logo from "../assets/Logo_Diagnoo.png"
-import '../css/auth.css';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import OTPVerification from "../components/OTPVerification.jsx";
+import Login from "../components/Login.jsx";
+import Register from "../components/Register.jsx";
+import ForgetPassword from "../components/ForgetPassword.jsx";
+import ResetPassword from "../components/ResetPassword.jsx";
+import logo from "../assets/Logo_Diagnoo.png";
+import "../css/auth.css";
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('login');
-  const [currentView, setCurrentView] = useState('auth'); 
-  const [userIdentity, setUserIdentity] = useState(''); 
-  const [currentOTP, setCurrentOTP] = useState('');
-  const [doctorImage, setDoctorImage] = useState('https://i.postimg.cc/MpcnGfzB/About-Us-Team-Photo-14.png');
+  const [activeTab, setActiveTab] = useState("login");
+  const [currentView, setCurrentView] = useState("auth");
+  const [userIdentity, setUserIdentity] = useState("");
+  const [currentOTP, setCurrentOTP] = useState("");
+  const [resetToken, setResetToken] = useState("");
+  const [doctorImage, setDoctorImage] = useState(
+    "https://i.postimg.cc/MpcnGfzB/About-Us-Team-Photo-14.png",
+  );
+
+  useEffect(() => {
+    if (resetToken) {
+      setCurrentView("reset-password");
+    }
+  }, [resetToken]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setCurrentView('auth');
-    if (tab === 'register') {
-      setDoctorImage('https://i.postimg.cc/63zCzm6K/About-Us-Team-Photo-13.png');
+    setCurrentView("auth");
+    if (tab === "register") {
+      setDoctorImage(
+        "https://i.postimg.cc/63zCzm6K/About-Us-Team-Photo-13.png",
+      );
     } else {
-      setDoctorImage('https://i.postimg.cc/MpcnGfzB/About-Us-Team-Photo-14.png');
+      setDoctorImage(
+        "https://i.postimg.cc/MpcnGfzB/About-Us-Team-Photo-14.png",
+      );
     }
   };
 
   const handleForgotPassword = () => {
-    setCurrentView('forget');
+    setCurrentView("forget");
   };
 
   const handleOTPSent = (identity) => {
     setUserIdentity(identity);
-
-    setCurrentView('forget-otp');
+    setCurrentView("forget-otp");
   };
 
   const handleBackToLogin = () => {
-    setCurrentView('auth');
-    setActiveTab('login');
+    setCurrentView("auth");
+    setActiveTab("login");
+    setUserIdentity("");
+    setResetToken("");
     // setUserEmail('');
-    setDoctorImage('https://i.postimg.cc/MpcnGfzB/About-Us-Team-Photo-14.png');
+    setDoctorImage("https://i.postimg.cc/MpcnGfzB/About-Us-Team-Photo-14.png");
   };
 
   const handleBackToForget = () => {
-    setCurrentView('forget');
+    setCurrentView("forget");
   };
 
   const handleResetSuccess = () => {
@@ -53,47 +67,63 @@ const AuthPage = () => {
 
   const renderContent = () => {
     switch (currentView) {
-      case 'forget':
-      return <ForgetPassword onOTPSent={handleOTPSent} onBackToLogin={handleBackToLogin} />;
-      case 'forget-otp':
-  return (
-    <OTPVerification 
-      identity={userIdentity}
-      // skipVerification={true}
-      onVerifySuccess={(otpCode) => {
-        setCurrentOTP(otpCode);
-        setCurrentView('reset-password');
-      }} 
-    />
-  );
-      case 'reset-password':
-      return (
-        <ResetPassword 
-          identity={userIdentity} 
-          otp={currentOTP} 
-          onResetSuccess={handleResetSuccess}
-          onBackToForget={handleBackToForget}
-        />
-      );
-        case 'otp':
-      return (
-        <OTPVerification 
-          identity={userIdentity} 
-          onVerifySuccess={() => navigate("/dashboard")} 
-        />
-      );
+      case "forget":
+        return (
+          <ForgetPassword
+            onOTPSent={handleOTPSent}
+            onBackToLogin={handleBackToLogin}
+          />
+        );
+      case "forget-otp":
+        return (
+          <OTPVerification
+            identity={userIdentity}
+            mode="forget_password"
+            onVerifySuccess={(token) => {
+              setResetToken(token);
+              setTimeout(() => setCurrentView("reset-password"), 0);
+            }}
+          />
+        );
+      case "reset-password":
+        return resetToken ? (
+          <ResetPassword
+            reset_token={resetToken}
+            onResetSuccess={handleResetSuccess}
+            onBackToForget={handleBackToForget}
+          />
+        ) : null;
+      case "otp":
+        return (
+          <OTPVerification
+            identity={userIdentity}
+            mode="email_verification"
+            onVerifySuccess={() => navigate("/dashboard")}
+          />
+        );
       default:
-      return activeTab === 'login' ? 
-        <Login onForgotPassword={handleForgotPassword} /> : 
-        <Register onRegisterSuccess={(identity) => {
-            setUserIdentity(identity);
-            setCurrentView('otp'); 
-        }} />;
-  }
+        return activeTab === "login" ? (
+          <Login onForgotPassword={handleForgotPassword} />
+        ) : (
+          <Register
+            onRegisterSuccess={(identity) => {
+              setUserIdentity(identity);
+              setCurrentView("otp");
+            }}
+          />
+        );
+    }
   };
 
   return (
-    <div style={{ minHeight: '100vh', display:'flex', justifyContent:'center', alignItems:'center' }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
       <div className="background-elements">
         <div className="data-grid"></div>
         <div className="glow-orb blue"></div>
@@ -128,7 +158,11 @@ const AuthPage = () => {
           <div className="left-visual-elements">
             <div className="medical-icon med-icon-1">
               <svg viewBox="0 0 24 24">
-                <path d="M22 12h-4l-3 9L9 3l-3 9H2" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M22 12h-4l-3 9L9 3l-3 9H2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </div>
 
@@ -139,27 +173,42 @@ const AuthPage = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
-                <path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
                 <circle cx="20" cy="10" r="2" />
               </svg>
             </div>
 
             <div className="medical-icon med-icon-3">
               <svg viewBox="0 0 24 24">
-                <path d="M12 2v20M17 7H7v10h10V7z" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M9 12h6M12 9v6" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M12 2v20M17 7H7v10h10V7z"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M9 12h6M12 9v6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </div>
 
             <div className="pulse-ring ring-1"></div>
             <div className="pulse-ring ring-2"></div>
-
           </div>
 
           <div className="left-content">
             <div className="logo">
               <span className="logo-text">
-                <img src={logo} alt="DiagnoSense Logo" onError={(e) => e.target.style.display='none'} />
+                <img
+                  src={logo}
+                  alt="DiagnoSense Logo"
+                  onError={(e) => (e.target.style.display = "none")}
+                />
               </span>
             </div>
 
@@ -174,24 +223,24 @@ const AuthPage = () => {
               src={doctorImage}
               alt="Doctor"
               className="doctor-image"
-              onError={(e) => e.target.style.display='none'}
+              onError={(e) => (e.target.style.display = "none")}
             />
           </div>
         </div>
 
         <div className="right-section">
           <div className="form-wrapper">
-            {currentView === 'auth' && (
+            {currentView === "auth" && (
               <div className="tabs-container">
                 <button
-                  className={`tab ${activeTab === 'login' ? 'active' : ''}`}
-                  onClick={() => handleTabChange('login')}
+                  className={`tab ${activeTab === "login" ? "active" : ""}`}
+                  onClick={() => handleTabChange("login")}
                 >
                   Login
                 </button>
                 <button
-                  className={`tab ${activeTab === 'register' ? 'active' : ''}`}
-                  onClick={() => handleTabChange('register')}
+                  className={`tab ${activeTab === "register" ? "active" : ""}`}
+                  onClick={() => handleTabChange("register")}
                 >
                   Register
                 </button>

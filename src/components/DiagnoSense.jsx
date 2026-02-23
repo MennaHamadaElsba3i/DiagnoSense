@@ -20,7 +20,7 @@ export default function DiagnoSense() {
       </div>
 
       <nav>
-        <div className="logo">
+        <div className="logo" style={{ width: "160px" }}>
           <img src={dlogo} alt="" style={{ width: "160px" }} />
         </div>
         <ul className="nav-links" style={{ marginBottom: "0px" }}>

@@ -113,21 +113,16 @@ const PatientProfile = () => {
     fetchAnalysisData();
   }, []);
 
-  // Selected Report State
   const [selectedReport, setSelectedReport] = useState(null);
 
-  // Refs for scrolling
   const messagesEndRef = useRef(null);
 
-  // -- Effects --
   useEffect(() => {
-    // Scroll to bottom of chat when messages change
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [chatMessages, isChatOpen]);
 
-  // -- Handlers --
 
   const handleTabClick = (tabId) => {
     setActiveTab(tabId);
@@ -160,7 +155,6 @@ const PatientProfile = () => {
     setSelectedReport(index);
   };
 
-  // Chatbot Logic
   const toggleChat = () => setIsChatOpen(!isChatOpen);
 
   const handleChatEnter = (e) => {
@@ -170,13 +164,11 @@ const PatientProfile = () => {
   const sendMessage = () => {
     if (!chatInput.trim()) return;
 
-    // Add user message
     const newMessages = [...chatMessages, { type: "user", text: chatInput }];
     setChatMessages(newMessages);
     const currentInput = chatInput.toLowerCase();
     setChatInput("");
 
-    // Simulate AI response
     setTimeout(() => {
       let aiText =
         "I can help you with lab results, medication history, trends analysis, and patient summaries. What would you like to know?";
@@ -208,7 +200,6 @@ const PatientProfile = () => {
     }, 800);
   };
 
-  // Modal Handlers
   const openDecisionSupport = () => setIsDecisionModalOpen(true);
   const closeDecisionSupport = () => setIsDecisionModalOpen(false);
   const upgradeToProPlan = () => {
@@ -219,14 +210,12 @@ const PatientProfile = () => {
 
   return (
     <div className="patient-profile-page">
-      {/* Background Layer */}
       <div className="background-layer">
         <div className="ambient-ripple ripple-1"></div>
         <div className="ambient-ripple ripple-2"></div>
         <div className="ambient-ripple ripple-3"></div>
       </div>
 
-      {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-logo">
           <span className="logo-text">
@@ -287,7 +276,6 @@ const PatientProfile = () => {
             </div>
           </div>
 
-          {/* Premium Decision Support Card */}
           <div className="nav-bottom">
             <div
               className="decision-support-card"
@@ -310,7 +298,6 @@ const PatientProfile = () => {
         </nav>
       </aside>
 
-      {/* Top Navbar */}
       <nav className="top-navbar">
         <div className="search-container">
           <svg
@@ -374,7 +361,6 @@ const PatientProfile = () => {
         </div>
       </nav>
 
-      {/* Decision Support Modal */}
       <div
         className={`modal-overlay ${isDecisionModalOpen ? "active" : ""}`}
         id="decisionSupportModal"
@@ -456,9 +442,7 @@ const PatientProfile = () => {
         </div>
       </div>
 
-      {/* Content Layer */}
       <div className="content-layer">
-        {/* Patient Header - Compact */}
         <header className="patient-header">
           <div className="patient-identity">
             <div className="patient-main-info">
@@ -476,9 +460,7 @@ const PatientProfile = () => {
           </div>
         </header>
 
-        {/* Main Container */}
         <div className="container">
-          {/* Tab Navigation */}
           <nav className="tab-nav">
             <button
               className={`tab-btn ${activeTab === "overview" ? "active" : ""}`}
@@ -526,7 +508,6 @@ const PatientProfile = () => {
             </button>
           </nav>
 
-          {/* Overview Tab */}
           <div
             className={`tab-content ${
               activeTab === "overview" ? "active" : ""
@@ -604,7 +585,7 @@ const PatientProfile = () => {
                       <div className="info-value">
                         {isLoadingAnalysis ? (
                           "Loading..."
-                        ) : /* 1. التأكد إن الداتا موجودة والـ Array مش فاضية */
+                        ) : 
                         analysisData?.[0]?.result?.current_diagnoses?.length >
                           0 ? (
                           <div
@@ -614,7 +595,6 @@ const PatientProfile = () => {
                               gap: "5px",
                             }}
                           >
-                            {/* 2. عمل Map لعرض كل تشخيص في سطر لوحده */}
                             {analysisData[0].result.current_diagnoses.map(
                               (diagnosis, index) => (
                                 <span
@@ -830,18 +810,16 @@ const PatientProfile = () => {
                     <div style={{ padding: "20px", color: "#666" }}>
                       Loading High Priority Alerts...
                     </div>
-                  ) : /* التحقق من وجود داتا وعرضها */
+                  ) : 
                   analysisData?.[0]?.result?.high_priority_alerts?.length >
                     0 ? (
                     analysisData[0].result.high_priority_alerts.map(
                       (alert, index) => (
                         <div className="note-item high-priority" key={index}>
                           <div className="note-text">
-                            {/* عرض نص التحذير القادم من الـ API */}
                             <strong>Critical: </strong> {alert}
                           </div>
                           <div className="note-meta">
-                            {/* بيانات ثابتة لأن الـ API يرسل النص فقط */}
                             <span>🤖 AI Analysis</span>
                             <span>{new Date().toLocaleDateString()}</span>
                           </div>
@@ -856,7 +834,6 @@ const PatientProfile = () => {
                 </div>
               </div>
 
-              {/* --- Low Priority Section --- */}
               <div className="priority-card">
                 <div className="priority-header">
                   <h3 className="priority-title">
@@ -871,13 +848,12 @@ const PatientProfile = () => {
                     <div style={{ padding: "20px", color: "#666" }}>
                       Loading Low Priority Notes...
                     </div>
-                  ) : /* التحقق من وجود داتا وعرضها */
+                  ) : 
                   analysisData?.[0]?.result?.low_priority_alerts?.length > 0 ? (
                     analysisData[0].result.low_priority_alerts.map(
                       (alert, index) => (
                         <div className="note-item low-priority" key={index}>
                           <div className="note-text">
-                            {/* عرض نص الملاحظة القادم من الـ API */}
                             <strong>Note: </strong> {alert}
                           </div>
                           <div className="note-meta">
@@ -897,7 +873,6 @@ const PatientProfile = () => {
             </div>
           </div>
 
-          {/* Comparative Analysis Tab */}
           <div
             className={`tab-content ${
               activeTab === "comparative" ? "active" : ""
@@ -914,7 +889,6 @@ const PatientProfile = () => {
               </div>
 
               <div className="chart-grid">
-                {/* Charts converted to SVG JSX */}
                 <div className="chart-card">
                   <div className="chart-header">
                     <h3 className="chart-title">Blood Pressure</h3>
@@ -1039,18 +1013,15 @@ const PatientProfile = () => {
                   </div>
                 </div>
 
-                {/* More charts can be added here following same pattern */}
               </div>
             </div>
           </div>
 
-          {/* Patient Records Tab */}
           <div
             className={`tab-content ${activeTab === "records" ? "active" : ""}`}
             id="records"
           >
             <div className="records-layout">
-              {/* Medical History Section */}
               <div className="section-card">
                 <div className="section-title">
                   <div className="section-icon">
@@ -1111,10 +1082,8 @@ const PatientProfile = () => {
                     </div>
                   </div>
                 </div>
-                {/* Additional accordion items would follow same pattern */}
               </div>
 
-              {/* Lab Reports Section */}
               <div className="section-card">
                 <div className="section-title">
                   <div className="section-icon">

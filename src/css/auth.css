@@ -1170,3 +1170,11 @@ button:disabled:hover {
      transform: none;
      box-shadow: none;
 }
+
+input:disabled {
+     filter: blur(0.4px); 
+     opacity: 0.6;      
+     cursor: not-allowed;
+     background-color: #f9fafb; 
+     transition: all 0.3s ease; 
+}

@@ -143,13 +143,18 @@ export const forgetPasswordAPI = async (identity) => {
   });
 };
 
+export const verifyOTPForResetAPI = async (identity, otp) => {
+  return await apiCall('/api/verify-otp/doctor', {
+    method: 'POST',
+    body: JSON.stringify({ identity, otp }),
+  });
+};
 
-export const resetPasswordAPI = async (otp, identity, password, password_confirmation) => {
+export const resetPasswordAPI = async (reset_token, password, password_confirmation) => {
   return await apiCall('/api/reset-password/doctor', {
     method: 'POST',
     body: JSON.stringify({
-      otp,
-      identity,
+      reset_token,
       password,
       password_confirmation,
     }),
