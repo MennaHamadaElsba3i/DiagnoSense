@@ -1,5 +1,10 @@
 import React, { useState } from "react";
-import { verifyOTPAPI, verifyOTPForResetAPI, resendOTPAPI } from "./mockAPI";
+import {
+  verifyOTPAPI,
+  verifyOTPForResetAPI,
+  resendOTPAPI,
+  forgetPasswordAPI,
+} from "./mockAPI";
 // import { setCookie } from "./cookieUtils.js";
 
 const OTPVerification = ({
@@ -11,6 +16,8 @@ const OTPVerification = ({
   //   const [userIdentity, setUserIdentity] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [resendLoading, setResendLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const content = {
     email_verification: {
@@ -64,6 +71,29 @@ const OTPVerification = ({
     setIsLoading(false);
   };
 
+  const handleResendOTP = async (e) => {
+    e.preventDefault();
+    setResendLoading(true);
+    setError("");
+    setSuccessMessage("");
+
+    let result;
+    if (mode === "forget_password") {
+      // In forget password flow, resend using the identity (email/phone)
+      result = await forgetPasswordAPI(identity);
+    } else {
+      // In email verification flow, use the authenticated resend endpoint
+      result = await resendOTPAPI();
+    }
+
+    if (result.success) {
+      setSuccessMessage(result.message || "OTP sent successfully.");
+    } else {
+      setError(result.message);
+    }
+    setResendLoading(false);
+  };
+
   return (
     <div className="tab-content active">
       <div className="form-header">
@@ -91,6 +121,7 @@ const OTPVerification = ({
         </div>
 
         {error && <div className="error-message">{error}</div>}
+        {successMessage && <div className="success-message">{successMessage}</div>}
 
         <button
           type="submit"
@@ -101,22 +132,9 @@ const OTPVerification = ({
         </button>
       </form>
 
-      <div
-        className="form-options"
-        style={{ justifyContent: "center", marginTop: "15px" }}
-      >
-        <p>
-          Didn't receive code?
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              resendOTPAPI(identity);
-            }}
-          >
-            {" "}
-            Resend
-          </a>
+      <div className="form-options" style={{ justifyContent: 'center', marginTop: '15px' }}>
+        <p>Didn't receive code? 
+          <a href="#" onClick={handleResendOTP} style={{ pointerEvents: resendLoading ? 'none' : 'auto' }}> {resendLoading ? "Resending..." : "Resend"}</a>
         </p>
       </div>
     </div>

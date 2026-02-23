@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginAPI, googleLoginAPI } from "./mockAPI";
+import { loginAPI, googleLoginAPI, getGoogleRedirectAPI } from "./mockAPI";
 import { setCookie, setJsonCookie } from "./cookieUtils";
 
 const Login = ({ onForgotPassword }) => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
@@ -32,13 +33,15 @@ const Login = ({ onForgotPassword }) => {
   };
 
   const handleGoogleLogin = async () => {
-    const result = await googleLoginAPI();
-    if (result.success) {
-      localStorage.setItem("user", JSON.stringify(result.data));
-      localStorage.setItem("user_token", result.data.token);
-      localStorage.setItem("isAuthenticated", "true");
-      navigate("/dashboard");
+    setGoogleLoading(true);
+    setError("");
+    const result = await getGoogleRedirectAPI();
+    if (result.url) {
+      window.location.href = result.url;
+    } else {
+      setError(result.message || "Failed to load Google login. Please try again.");
     }
+    setGoogleLoading(false);
   };
 
   return (
@@ -105,6 +108,7 @@ const Login = ({ onForgotPassword }) => {
           type="button"
           className="social-btn"
           onClick={handleGoogleLogin}
+          disabled={googleLoading}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
             <path
@@ -124,7 +128,7 @@ const Login = ({ onForgotPassword }) => {
               fill="#EA4335"
             />
           </svg>
-          Google
+          {googleLoading ? "Loading..." : "Google"}
         </button>
       </div>
     </div>

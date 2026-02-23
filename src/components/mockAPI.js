@@ -10,6 +10,7 @@ const apiCall = async (endpoint, options = {}) => {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
 
         ...(token && { 'Authorization': `Bearer ${token}` }),
         ...options.headers,
@@ -44,6 +45,26 @@ const apiCall = async (endpoint, options = {}) => {
   }
 };
 
+// export const registerAPI = async (userData) => {
+//   const result = await apiCall('/api/register/doctor', {
+//     method: 'POST',
+//     body: JSON.stringify({
+//       name: userData.name,
+//       email: userData.email,
+//       phone: userData.phone,
+//       password: userData.password,
+//       password_confirmation: userData.password_confirmation,
+//     }),
+//   });
+
+//   if (result.success && result.data && result.data.token) {
+//     setCookie('user_token', result.data.token, 7);
+//     setJsonCookie('user', result.data.user, 7);
+//     setCookie('isAuthenticated', 'true', 7);
+//   }
+
+//   return result;
+// };
 export const registerAPI = async (userData) => {
   const payload = {
     name: userData.name,
@@ -88,15 +109,6 @@ export const loginAPI = async (identity, password) => {
   return result;
 };
 
-export const verifyOTPAPI = async (identity, otp) => {
-  return await apiCall('/api/verify-email/doctor', { 
-    method: 'POST',
-    body: JSON.stringify({ 
-      identity: identity, 
-      otp: otp 
-    }),
-  });
-};
 export const logoutAPI = async () => {
   const token = getCookie('user_token');
 
@@ -137,6 +149,7 @@ export const verifyOTPForResetAPI = async (identity, otp) => {
     body: JSON.stringify({ identity, otp }),
   });
 };
+
 export const resetPasswordAPI = async (reset_token, password, password_confirmation) => {
   return await apiCall('/api/reset-password/doctor', {
     method: 'POST',
@@ -145,6 +158,12 @@ export const resetPasswordAPI = async (reset_token, password, password_confirmat
       password,
       password_confirmation,
     }),
+  });
+};
+
+export const getGoogleRedirectAPI = async () => {
+  return await apiCall('/api/google/redirect', {
+    method: 'GET',
   });
 };
 
@@ -163,12 +182,19 @@ export const googleLoginAPI = async (googleToken) => {
   return result;
 };
 
-
-export const resendOTPAPI = async (email) => {
-
-  return await apiCall('/api/resend-otp/doctor', {
+export const verifyOTPAPI = async (identity, otp) => {
+  return await apiCall('/api/verify-email/doctor', { 
     method: 'POST',
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ 
+      identity: identity, 
+      otp: otp 
+    }),
+  });
+};
+
+export const resendOTPAPI = async () => {
+  return await apiCall('/api/resend-otp/doctor', {
+    method: 'GET',
   });
 };
 
@@ -311,18 +337,21 @@ export const getPatientAnalysisAPI = async (patientId) => {
       },
     });
 
+    // 1. لو الرد 204 (نجاح بس مفيش داتا)
     if (response.status === 204) {
       return {
         success: true,
-        data: null, 
+        data: null, // أو array فاضية [] حسب ديزاينك
         message: 'No data available'
       };
     }
 
+    // 2. التأكد إن الرد فعلاً JSON قبل ما نحاول نقرأه
     const contentType = response.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
+       // لو الرد مش JSON (غالباً HTML error page)
        const text = await response.text(); 
-       console.error("Non-JSON response received:", text); 
+       console.error("Non-JSON response received:", text); // هيطبعلك الـ HTML في الكونسول عشان تشوفه
        return {
          success: false,
          message: 'Server returned an unexpected format (HTML). Check console.',
