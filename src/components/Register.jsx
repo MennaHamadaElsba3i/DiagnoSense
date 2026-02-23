@@ -144,6 +144,7 @@ const [phoneValue, setPhoneValue] = useState("");
             placeholder="Password"
             name="password"
             required
+            minLength="8"
             className={passwordErrors.length > 0 ? "error" : ""}
           />
         </div>
@@ -154,6 +155,7 @@ const [phoneValue, setPhoneValue] = useState("");
             placeholder="Confirm Password"
             name="password_confirmation"
             required
+            minLength="8"
             className={passwordErrors.length > 0 ? "error" : ""}
           />
           {passwordErrors.length > 0 && (

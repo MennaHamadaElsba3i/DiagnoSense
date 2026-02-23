@@ -112,7 +112,7 @@
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           cursor: pointer;
-          width: 160px;
+          /* width: 160px; */
      }
 
      .nav-links {
