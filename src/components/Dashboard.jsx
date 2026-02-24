@@ -114,7 +114,7 @@ export default function Dashboard() {
                     <path d="M14 12H8"></path>
                   </svg>
                 </span>
-                <span>LogOut</span>
+                <span>Logout</span>
               </a>
             </div>
           </div>

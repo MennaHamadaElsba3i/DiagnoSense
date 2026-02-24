@@ -6,6 +6,7 @@ import EvidencePanel from "../components/EvidencePanel.jsx";
 
 import logo from "../assets/Logo_Diagnoo.png";
 import "../css/PatientProfile.css";
+import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 
 const PatientProfile = () => {
   const navigate = useNavigate();
@@ -210,6 +211,11 @@ const PatientProfile = () => {
     // navigate('/subscription');
   };
 
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+
+  const openLogoutModal = () => setIsLogoutModalOpen(true);
+  const closeLogoutModal = () => setIsLogoutModalOpen(false);
+
   return (
     <div className="patient-profile-page">
       <div className="background-layer">
@@ -275,6 +281,23 @@ const PatientProfile = () => {
                 </span>
                 <span>Support</span>
               </Link>
+              <a
+                href="#"
+                className="nav-item"
+                onClick={(e) => {
+                  e.preventDefault();
+                  openLogoutModal();
+                }}
+              >
+                <span className="nav-icon">
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M10 16l4-4-4-4"></path>
+                    <path d="M14 12H8"></path>
+                  </svg>
+                </span>
+                <span>Logout</span>
+              </a>
             </div>
           </div>
 
@@ -322,6 +345,13 @@ const PatientProfile = () => {
             className="search-input"
             placeholder="Search patient or report…"
           />
+          <button type="button" className="search-menu-btn" aria-label="Search options">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="6" r="1.5" />
+              <circle cx="12" cy="12" r="1.5" />
+              <circle cx="12" cy="18" r="1.5" />
+            </svg>
+          </button>
         </div>
 
         <div className="navbar-right">
@@ -362,6 +392,11 @@ const PatientProfile = () => {
           </div>
         </div>
       </nav>
+
+      <LogoutConfirmation
+        isOpen={isLogoutModalOpen}
+        onClose={closeLogoutModal}
+      />
 
       <div
         className={`modal-overlay ${isDecisionModalOpen ? "active" : ""}`}
@@ -457,18 +492,14 @@ const PatientProfile = () => {
             <div className="header-actions">
               <button className="btn btn-secondary">Edit File</button>
               <button className="btn btn-secondary">Start Collaboration</button>
-              <button
-                className="btn btn-primary"
-                style={{ padding: "35px 40px" }}
-              >
-                Verify Summary
-              </button>
+              <button className="btn btn-primary">Verify Summary</button>
             </div>
           </div>
         </header>
 
-        <div className="container">
-          <nav className="tab-nav">
+        <div className="tabs-bar">
+          <div className="container">
+            <nav className="tab-nav">
             <button
               className={`tab-btn ${activeTab === "overview" ? "active" : ""}`}
               onClick={() => handleTabClick("overview")}
@@ -490,12 +521,6 @@ const PatientProfile = () => {
               Comparative Analysis
             </button>
             <button
-              className={`tab-btn ${activeTab === "records" ? "active" : ""}`}
-              onClick={() => handleTabClick("records")}
-            >
-              Patient Records
-            </button>
-            <button
               className={`tab-btn ${activeTab === "decision" ? "active" : ""}`}
               onClick={() => handleTabClick("decision")}
             >
@@ -514,7 +539,10 @@ const PatientProfile = () => {
               Activity Log
             </button>
           </nav>
+          </div>
+        </div>
 
+        <div className="container">
           <div
             className={`tab-content ${
               activeTab === "overview" ? "active" : ""
@@ -818,8 +846,17 @@ const PatientProfile = () => {
 
                 <div className="note-list">
                   {isLoadingAnalysis ? (
-                    <div style={{ padding: "20px", color: "#666" }}>
-                      Loading High Priority Alerts...
+                    <div className="note-item high-priority">
+                      <div className="note-text">
+                        <strong>Critical:</strong> Persistent high-grade fever
+                        (38-39°C) in a patient with an implanted pacemaker raises
+                        concern for pacemaker-related infection or infective
+                        endocarditis.
+                      </div>
+                      <div className="note-meta">
+                        <span>Jan 28, 2026</span>
+                        <span>Permanent Record</span>
+                      </div>
                     </div>
                   ) : analysisData?.[0]?.result?.high_priority_alerts?.length >
                     0 ? (
@@ -837,10 +874,64 @@ const PatientProfile = () => {
                       ),
                     )
                   ) : (
-                    <div className="note-item">
-                      No high priority alerts detected.
-                    </div>
+                    <>
+                      <div className="note-item high-priority">
+                        <div className="note-text">
+                          <strong>Critical:</strong> Persistent high-grade fever
+                          (38-39°C) in a patient with an implanted pacemaker
+                          raises concern for pacemaker-related infection or
+                          infective endocarditis.
+                        </div>
+                        <div className="note-meta">
+                          <span>Jan 28, 2026</span>
+                          <span>Permanent Record</span>
+                        </div>
+                      </div>
+                      <div className="note-item high-priority">
+                        <div className="note-text">
+                          <strong>Penicillin Allergy:</strong> Patient has
+                          documented severe allergic reaction. Always verify
+                          antibiotic alternatives before prescribing.
+                        </div>
+                        <div className="note-meta">
+                          <span>⚠️ Critical Medical Alert</span>
+                          <span>Permanent Record</span>
+                        </div>
+                      </div>
+                    </>
                   )}
+                </div>
+              </div>
+
+              <div className="priority-card">
+                <div className="priority-header">
+                  <h3 className="priority-title">
+                    <span className="priority-icon medium"></span>
+                    Medium Priority Alerts
+                  </h3>
+                  <button className="btn btn-primary">+ Add Note</button>
+                </div>
+                <div className="note-list">
+                  <div className="note-item medium-priority">
+                    <div className="note-text">
+                      <strong>Medication review:</strong> Use of Concor and
+                      Forxiga despite no prior history of hypertension or
+                      diabetes requires monitoring and indication verification.
+                    </div>
+                    <div className="note-meta">
+                      <span>Jan 30, 2026</span>
+                    </div>
+                  </div>
+                  <div className="note-item medium-priority">
+                    <div className="note-text">
+                      <strong>Lab follow-up:</strong> Liver enzyme ALT slightly
+                      elevated at last check. Recommend repeat liver function
+                      test in 7 days.
+                    </div>
+                    <div className="note-meta">
+                      <span>Jan 25, 2026</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -855,8 +946,16 @@ const PatientProfile = () => {
 
                 <div className="note-list">
                   {isLoadingAnalysis ? (
-                    <div style={{ padding: "20px", color: "#666" }}>
-                      Loading Low Priority Notes...
+                    <div className="note-item low-priority">
+                      <div className="note-text">
+                        <strong>Note:</strong> Medication cost concern
+                        addressed. Patient inquired about generic alternatives;
+                        current prescription is already generic. Insurance
+                        verified.
+                      </div>
+                      <div className="note-meta">
+                        <span>Oct 10, 2025</span>
+                      </div>
                     </div>
                   ) : analysisData?.[0]?.result?.low_priority_alerts?.length >
                     0 ? (
@@ -874,9 +973,19 @@ const PatientProfile = () => {
                       ),
                     )
                   ) : (
-                    <div className="note-item">
-                      No low priority notes available.
-                    </div>
+                    <>
+                      <div className="note-item low-priority">
+                        <div className="note-text">
+                          <strong>Note:</strong> Medication cost concern
+                          addressed. Patient inquired about generic
+                          alternatives; current prescription is already
+                          generic. Insurance verified.
+                        </div>
+                        <div className="note-meta">
+                          <span>Oct 10, 2025</span>
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -1026,126 +1135,6 @@ const PatientProfile = () => {
             </div>
           </div>
 
-          <div
-            className={`tab-content ${activeTab === "records" ? "active" : ""}`}
-            id="records"
-          >
-            <div className="records-layout">
-              <div className="section-card">
-                <div className="section-title">
-                  <div className="section-icon">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                  </div>
-                  Medical History
-                </div>
-
-                <div
-                  className={`accordion-item ${
-                    activeAccordions[0] ? "active" : ""
-                  }`}
-                >
-                  <div
-                    className="accordion-header"
-                    onClick={() => toggleAccordion(0)}
-                  >
-                    <span>Chronic Conditions</span>
-                    <span className="accordion-icon">▼</span>
-                  </div>
-                  <div className="accordion-content">
-                    <div className="history-entry">
-                      <strong>Hypertension</strong> - Since 2018
-                      <br />
-                      <span style={{ fontSize: "11px", color: "#8A94A6" }}>
-                        Currently managed with medication
-                      </span>
-                      <br />
-                      <span
-                        className="badge badge-info"
-                        style={{ marginTop: "6px", display: "inline-block" }}
-                      >
-                        Verified by AI
-                      </span>
-                    </div>
-                    <div className="history-entry">
-                      <strong>Type 2 Diabetes</strong> - Since 2020
-                      <br />
-                      <span style={{ fontSize: "11px", color: "#8A94A6" }}>
-                        Well controlled with lifestyle and medication
-                      </span>
-                      <br />
-                      <span
-                        className="badge badge-info"
-                        style={{ marginTop: "6px", display: "inline-block" }}
-                      >
-                        Verified by AI
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="section-card">
-                <div className="section-title">
-                  <div className="section-icon">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                      <polyline points="14 2 14 8 20 8"></polyline>
-                      <line x1="16" y1="13" x2="8" y2="13"></line>
-                      <line x1="16" y1="17" x2="8" y2="17"></line>
-                      <polyline points="10 9 9 9 8 9"></polyline>
-                    </svg>
-                  </div>
-                  Lab & Reports
-                </div>
-
-                <div className="report-list">
-                  <div
-                    className={`report-card ${
-                      selectedReport === 0 ? "selected" : ""
-                    }`}
-                    onClick={() => handleReportClick(0)}
-                  >
-                    <div className="report-icon">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#2A66FF"
-                        strokeWidth="2"
-                      >
-                        <path d="M9 11l3 3L22 4"></path>
-                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                      </svg>
-                    </div>
-                    <div className="report-info">
-                      <div className="report-name">Complete Blood Count</div>
-                      <div className="report-date">Oct 30, 2025</div>
-                    </div>
-                    <span className="badge badge-stable">Normal</span>
-                  </div>
-                  {/* More report cards... */}
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Decision Support Tab */}
           <div
             className={`tab-content ${
@@ -1159,10 +1148,183 @@ const PatientProfile = () => {
                 AI-Powered Decision Support
               </h2>
               <div className="likelihood-stack">
-                {isLoadingAnalysis ? (
-                  <div style={{ textAlign: "center", padding: "20px" }}>
-                    Analyzing diagnostic data...
-                  </div>
+                {isLoadingAnalysis ||
+                !(
+                  analysisData?.[0]?.result?.likely_diagnoses?.high_likelihood
+                    ?.length > 0 ||
+                  analysisData?.[0]?.result?.likely_diagnoses?.possible?.length >
+                    0 ||
+                  analysisData?.[0]?.result?.likely_diagnoses?.low_likelihood
+                    ?.length > 0
+                ) ? (
+                  <>
+                    <div
+                      className="likelihood-card high"
+                      style={{ borderLeft: "4px solid #FF5C5C" }}
+                    >
+                      <div className="likelihood-header">
+                        <div>
+                          <div
+                            style={{
+                              fontSize: "11px",
+                              color: "#FF5C5C",
+                              marginBottom: "3px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            HIGH LIKELIHOOD
+                          </div>
+                          <div className="likelihood-title">
+                            Pacemaker-related infection (device or lead
+                            infection)
+                          </div>
+                        </div>
+                        <div
+                          className="confidence"
+                          style={{ color: "#FF5C5C" }}
+                        >
+                          94%
+                        </div>
+                      </div>
+                      <div className="reasoning">
+                        <strong>AI Analysis:</strong> This condition shows a
+                        strong correlation with the patient's reported symptoms
+                        and recent lab results.
+                      </div>
+                    </div>
+                    <div
+                      className="likelihood-card high"
+                      style={{ borderLeft: "4px solid #FF5C5C" }}
+                    >
+                      <div className="likelihood-header">
+                        <div>
+                          <div
+                            style={{
+                              fontSize: "11px",
+                              color: "#FF5C5C",
+                              marginBottom: "3px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            HIGH LIKELIHOOD
+                          </div>
+                          <div className="likelihood-title">
+                            Symptomatic sinus node dysfunction or high-grade AV
+                            block
+                          </div>
+                        </div>
+                        <div
+                          className="confidence"
+                          style={{ color: "#FF5C5C" }}
+                        >
+                          76%
+                        </div>
+                      </div>
+                      <div className="reasoning">
+                        <strong>AI Analysis:</strong> Strong correlation with
+                        pacemaker history and current presentation.
+                      </div>
+                    </div>
+                    <div
+                      className="likelihood-card medium"
+                      style={{ borderLeft: "4px solid #FFA500" }}
+                    >
+                      <div className="likelihood-header">
+                        <div>
+                          <div
+                            style={{
+                              fontSize: "11px",
+                              color: "#FFA500",
+                              marginBottom: "3px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            POSSIBLE
+                          </div>
+                          <div className="likelihood-title">
+                            Infective endocarditis related to pacemaker leads
+                          </div>
+                        </div>
+                        <div
+                          className="confidence"
+                          style={{ color: "#FFA500" }}
+                        >
+                          5%
+                        </div>
+                      </div>
+                      <div className="reasoning">
+                        <strong>AI Analysis:</strong> Potential diagnosis based
+                        on partial symptom match. Further investigation
+                        suggested.
+                      </div>
+                    </div>
+                    <div
+                      className="likelihood-card medium"
+                      style={{ borderLeft: "4px solid #FFA500" }}
+                    >
+                      <div className="likelihood-header">
+                        <div>
+                          <div
+                            style={{
+                              fontSize: "11px",
+                              color: "#FFA500",
+                              marginBottom: "3px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            POSSIBLE
+                          </div>
+                          <div className="likelihood-title">
+                            Systemic bacterial infection secondary to surgical
+                            site infection
+                          </div>
+                        </div>
+                        <div
+                          className="confidence"
+                          style={{ color: "#FFA500" }}
+                        >
+                          3%
+                        </div>
+                      </div>
+                      <div className="reasoning">
+                        <strong>AI Analysis:</strong> Consider if fever and
+                        wound findings persist.
+                      </div>
+                    </div>
+                    <div
+                      className="likelihood-card low"
+                      style={{ borderLeft: "4px solid #2A66FF" }}
+                    >
+                      <div className="likelihood-header">
+                        <div>
+                          <div
+                            style={{
+                              fontSize: "11px",
+                              color: "#2A66FF",
+                              marginBottom: "3px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            LOW LIKELIHOOD
+                          </div>
+                          <div className="likelihood-title">
+                            Primary neurological disorder causing headache and
+                            dizziness
+                          </div>
+                        </div>
+                        <div
+                          className="confidence"
+                          style={{ color: "#2A66FF" }}
+                        >
+                          1%
+                        </div>
+                      </div>
+                      <div className="reasoning">
+                        <strong>AI Analysis:</strong> Considered unlikely but
+                        monitored for differential diagnosis exclusion.
+                      </div>
+                    </div>
+                  </>
                 ) : (
                   <>
                     {/* 1. High Likelihood Section (Red) */}

@@ -1,3 +1,125 @@
 #root {
   width: 100%;
+  min-height: 100vh;
+}
+
+/* -------------------------------------------------------------------------- */
+/* App shell layout fixes (sidebar + top navbar + search)                      */
+/* Keeps layout stable across pages even when multiple CSS files define        */
+/* `.sidebar`, `.top-navbar`, etc.                                             */
+/* -------------------------------------------------------------------------- */
+
+body .sidebar {
+  width: 260px;
+}
+
+body .top-navbar {
+  left: 260px;
+}
+
+body .main-content,
+body .content-layer {
+  margin-left: 260px;
+  margin-top: 70px;
+}
+
+body .search-container {
+  min-width: 0;
+}
+
+body .search-input {
+  min-width: 0;
+}
+
+body .decision-support-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+body .decision-support-card .card-header {
+  width: 100%;
+}
+
+body .decision-support-card .card-subtitle {
+  margin-bottom: 6px;
+}
+
+body .decision-support-card .card-cta-btn {
+  margin-top: 4px;
+}
+
+@media (max-width: 1024px) {
+  body .sidebar {
+    width: 72px;
+    transform: none;
+  }
+
+  body .top-navbar {
+    left: 72px;
+    padding: 0 20px;
+  }
+
+  body .main-content,
+  body .content-layer {
+    margin-left: 72px;
+    padding: 24px;
+  }
+
+  body .sidebar-logo {
+    justify-content: center;
+  }
+
+  body .sidebar-logo span img {
+    width: 44px;
+  }
+
+  body .nav-section-title {
+    display: none;
+  }
+
+  body .nav-item {
+    justify-content: center;
+    padding: 11px 12px;
+  }
+
+  body .nav-item span:not(.nav-icon) {
+    display: none;
+  }
+
+  body .nav-bottom {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  body .top-navbar {
+    height: 60px;
+    padding: 0 16px;
+  }
+
+  body .search-container {
+    display: block;
+    max-width: 100%;
+  }
+
+  body .main-content,
+  body .content-layer {
+    margin-top: 60px;
+    padding: 20px;
+  }
+
+  body .credits-badge,
+  body .status-indicator {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  body .main-content,
+  body .content-layer {
+    padding: 16px;
+  }
 }
