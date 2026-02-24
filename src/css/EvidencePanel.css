@@ -1,0 +1,457 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+.evidence-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: rgba(10, 15, 30, 0.35);
+  backdrop-filter: blur(6px) saturate(0.8);
+  -webkit-backdrop-filter: blur(6px) saturate(0.8);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
+.evidence-overlay--visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.evidence-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100dvh;
+  width: min(680px, 100vw);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  box-shadow: -8px 0 48px rgba(0, 0, 0, 0.18), -2px 0 8px rgba(0, 0, 0, 0.06);
+  border-left: 1.5px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px 0 0 16px;
+  font-family: 'DM Sans', sans-serif;
+  transform: translateX(110%);
+  transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+  overflow: hidden;
+}
+
+.evidence-panel--open {
+  transform: translateX(0);
+}
+
+.evidence-header {
+  flex-shrink: 0;
+  background: #fff;
+  border-bottom: 1.5px solid #eef0f4;
+  padding: 16px 20px 0;
+}
+
+.evidence-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.evidence-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5a6278;
+  background: #f0f2f7;
+  border: 1px solid #dde1ec;
+  border-radius: 20px;
+  padding: 4px 10px;
+}
+
+.evidence-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid #dde1ec;
+  border-radius: 8px;
+  background: #f8f9fc;
+  color: #6b7280;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.evidence-close-btn:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+.evidence-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.evidence-brain-icon {
+  font-size: 28px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.evidence-title {
+  font-size: 19px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 6px;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.evidence-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.evidence-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  padding: 2px 7px;
+}
+
+.evidence-badge--critical {
+  background: #dc2626;
+  color: #fff;
+}
+
+.evidence-meta-item {
+  font-size: 11.5px;
+  color: #6b7280;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.evidence-meta-sep {
+  color: #d1d5db;
+  font-size: 12px;
+}
+
+.evidence-quote-box {
+  background: #fffaf0;
+  border: 1.5px solid #fed7aa;
+  border-left: 4px solid #f97316;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+
+.evidence-quote-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #f97316;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.evidence-quote {
+  margin: 0;
+  font-size: 12.5px;
+  color: #374151;
+  line-height: 1.6;
+  font-style: italic;
+}
+
+.evidence-body {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #dde1ec transparent;
+}
+
+.evidence-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.evidence-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.evidence-body::-webkit-scrollbar-thumb {
+  background: #dde1ec;
+  border-radius: 99px;
+}
+
+.evidence-footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fffaf0;
+  border-top: 1.5px solid #fed7aa;
+  padding: 12px 20px;
+}
+
+.evidence-footer-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.evidence-footer-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #d97706;
+  display: block;
+  margin-bottom: 3px;
+}
+
+.evidence-footer-text {
+  margin: 0;
+  font-size: 12px;
+  color: #374151;
+  line-height: 1.55;
+}
+
+.pdf-viewer {
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f8f9fc;
+  border-bottom: 1.5px solid #eef0f4;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  flex-wrap: wrap;
+}
+
+.pdf-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border: 1.5px solid #dde1ec;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.pdf-nav-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: #374151;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s;
+}
+
+.pdf-nav-btn:hover {
+  background: #f0f2f7;
+}
+
+.pdf-page-info {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: #374151;
+  padding: 0 8px;
+  border-left: 1.5px solid #dde1ec;
+  border-right: 1.5px solid #dde1ec;
+  line-height: 28px;
+}
+
+.pdf-zoom {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border: 1.5px solid #dde1ec;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.pdf-zoom-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: #374151;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s;
+}
+
+.pdf-zoom-btn:hover {
+  background: #f0f2f7;
+}
+
+.pdf-zoom-level {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: #374151;
+  padding: 0 8px;
+  border-left: 1.5px solid #dde1ec;
+  border-right: 1.5px solid #dde1ec;
+  line-height: 28px;
+}
+
+.pdf-highlight-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1.5px solid #d97706;
+  border-radius: 8px;
+  background: #f97316;
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pdf-highlight-btn:hover {
+  background: #ea6a00;
+}
+
+.pdf-jump-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1.5px solid #fca5a5;
+  border-radius: 8px;
+  background: #fff5f5;
+  color: #dc2626;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: auto;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.pdf-jump-btn:hover {
+  background: #fee2e2;
+  border-color: #f87171;
+}
+
+.pdf-content {
+  padding: 28px 32px 40px;
+}
+
+.pdf-section-title {
+  text-align: center;
+  font-size: 17px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 18px;
+  letter-spacing: -0.015em;
+}
+
+.pdf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  margin-bottom: 32px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.pdf-table tr {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.pdf-table tr:last-child {
+  border-bottom: none;
+}
+
+.pdf-table-label {
+  font-weight: 600;
+  color: #1f2937;
+  background: #f8f9fc;
+  padding: 9px 14px;
+  width: 38%;
+  border-right: 1px solid #e5e7eb;
+  vertical-align: top;
+}
+
+.pdf-table-value {
+  color: #374151;
+  background: #fff;
+  padding: 9px 14px;
+  vertical-align: top;
+}
+
+/* ── Paragraphs ── */
+.pdf-paragraph {
+  margin-bottom: 14px;
+}
+
+.pdf-tag {
+  display: inline-block;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  padding: 2px 7px;
+  margin-bottom: 5px;
+}
+
+.pdf-tag.chief {
+  background: #dc2626;
+  color: #fff;
+}
+
+.pdf-text {
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.7;
+  margin: 0 0 14px;
+}
+
+.pdf-highlight {
+  background: #fef08a;
+  border: 1.5px solid #facc15;
+  border-radius: 3px;
+  padding: 1px 2px;
+}
+
+.pdf-text-fade {
+  -webkit-mask-image: linear-gradient(to bottom, #000 50%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 50%, transparent 100%);
+}

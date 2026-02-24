@@ -37,7 +37,14 @@ export default function DiagnoSense() {
             <a href="#contact">Contact</a>
           </li>
         </ul>
-        <a href="#" onClick={(e) => { e.preventDefault(); navigate("/login"); }} className="btn-nav">
+        <a
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            navigate("/login");
+          }}
+          className="btn-nav"
+        >
           Get Started
         </a>
       </nav>
@@ -53,7 +60,14 @@ export default function DiagnoSense() {
             helping doctors focus on care.
           </p>
           <div className="hero-actions">
-            <a  href="#" onClick={(e) => { e.preventDefault(); navigate("/login"); }} className="start">
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/login");
+              }}
+              className="start"
+            >
               Start Your Free Trial
             </a>
             <a href="#" className="btn-secondary">

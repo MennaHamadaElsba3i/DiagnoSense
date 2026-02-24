@@ -1,0 +1,318 @@
+.processing-reports-page {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #F8FAFF 0%, #F0F4FF 100%);
+    color: #3A4560;
+    overflow: hidden;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.processing-reports-page *,
+.processing-reports-page *::before,
+.processing-reports-page *::after {
+    box-sizing: border-box;
+}
+
+.processing-reports-page .background-pattern {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background:
+        radial-gradient(circle at 15% 25%, rgba(42, 102, 255, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 85% 75%, rgba(0, 193, 135, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.processing-reports-page .ai-waves {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 600px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+}
+
+.processing-reports-page .wave {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 1px solid rgba(42, 102, 255, 0.08);
+    border-radius: 50%;
+    animation: pr-waveExpand 3s ease-out infinite;
+}
+
+.processing-reports-page .wave:nth-child(1) {
+    width: 200px;
+    height: 200px;
+    animation-delay: 0s;
+}
+
+.processing-reports-page .wave:nth-child(2) {
+    width: 200px;
+    height: 200px;
+    animation-delay: 1s;
+}
+
+.processing-reports-page .wave:nth-child(3) {
+    width: 200px;
+    height: 200px;
+    animation-delay: 2s;
+}
+
+@keyframes pr-waveExpand {
+    0% {
+        width: 200px;
+        height: 200px;
+        opacity: 0.6;
+    }
+    100% {
+        width: 600px;
+        height: 600px;
+        opacity: 0;
+    }
+}
+
+.processing-reports-page .loading-container {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    animation: pr-fadeIn 0.6s ease;
+}
+
+@keyframes pr-fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.processing-reports-page .loading-logo {
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 32px;
+    background: linear-gradient(135deg, #2A66FF, #467DFF);
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+        0 8px 24px rgba(42, 102, 255, 0.25),
+        0 0 0 12px rgba(42, 102, 255, 0.08);
+    animation: pr-pulse 2s ease-in-out infinite;
+}
+
+.processing-reports-page .loading-logo svg {
+    width: 70px;
+    height: 70px;
+    stroke: white;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+@keyframes pr-pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow:
+            0 8px 24px rgba(42, 102, 255, 0.25),
+            0 0 0 12px rgba(42, 102, 255, 0.08);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow:
+            0 12px 32px rgba(42, 102, 255, 0.35),
+            0 0 0 16px rgba(42, 102, 255, 0.12);
+    }
+}
+
+.processing-reports-page .loading-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0E1A34;
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+}
+
+.processing-reports-page .loading-subtitle {
+    font-size: 16px;
+    color: #8A94A6;
+    font-weight: 500;
+    margin-bottom: 48px;
+}
+
+.processing-reports-page .spinner-container {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 32px;
+}
+
+.processing-reports-page .spinner {
+    width: 80px;
+    height: 80px;
+    border: 4px solid #E6EAF2;
+    border-top-color: #2A66FF;
+    border-radius: 50%;
+    animation: pr-spin 1s linear infinite;
+}
+
+@keyframes pr-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.processing-reports-page .progress-container {
+    width: 300px;
+    height: 6px;
+    background: #E6EAF2;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 0 auto 24px;
+}
+
+.processing-reports-page .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #2A66FF, #467DFF);
+    border-radius: 10px;
+    animation: pr-progress 2s ease-in-out forwards;
+    box-shadow: 0 0 10px rgba(42, 102, 255, 0.4);
+}
+
+@keyframes pr-progress {
+    from {
+        width: 0%;
+    }
+    to {
+        width: 100%;
+    }
+}
+
+.processing-reports-page .status-message {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2A66FF;
+    animation: pr-fadeInOut 3s ease-in-out infinite;
+}
+
+@keyframes pr-fadeInOut {
+    0%, 100% {
+        opacity: 0.4;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+.processing-reports-page .loading-steps {
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+}
+
+.processing-reports-page .loading-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    border: 1px solid rgba(230, 234, 242, 0.6);
+    opacity: 0;
+    animation: pr-stepFadeIn 0.5s ease forwards;
+    min-width: 280px;
+}
+
+.processing-reports-page .loading-step:nth-child(1) {
+    animation-delay: 0.3s;
+}
+
+.processing-reports-page .loading-step:nth-child(2) {
+    animation-delay: 0.6s;
+}
+
+.processing-reports-page .loading-step:nth-child(3) {
+    animation-delay: 0.9s;
+}
+
+@keyframes pr-stepFadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+.processing-reports-page .step-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.processing-reports-page .step-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke: #00C187;
+    fill: none;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.processing-reports-page .step-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #3A4560;
+}
+
+.processing-reports-page .step-spinner {
+    margin-left: auto;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #E6EAF2;
+    border-top-color: #2A66FF;
+    border-radius: 50%;
+    animation: pr-spin 0.8s linear infinite;
+}
+
+@media (max-width: 768px) {
+    .processing-reports-page .loading-logo {
+        width: 120px;
+        height: 120px;
+    }
+
+    .processing-reports-page .loading-title {
+        font-size: 24px;
+    }
+
+    .processing-reports-page .loading-subtitle {
+        font-size: 14px;
+    }
+
+    .processing-reports-page .progress-container {
+        width: 240px;
+    }
+
+    .processing-reports-page .loading-step {
+        min-width: 240px;
+    }
+}

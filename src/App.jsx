@@ -7,29 +7,30 @@ import Dashboard from "./components/Dashboard.jsx";
 import PatientList from "./components/PatientList.jsx";
 import AddPatient from "./components/AddPatient.jsx";
 import PatientProfile from "./components/PatientProfile.jsx";
-
-
+import ProcessingReports from "./components/ProcessingReports.jsx";
 import DiagnoSense from "./components/DiagnoSense.jsx";
 import GoogleCallback from "./components/GoogleCallback.jsx";
+import EvidencePanel from './components/EvidencePanel';
 import "./App.css";
 import { getCookie } from "./components/cookieUtils";
-
 
 const ProtectedRoute = ({ children }) => {
   const token = getCookie("user_token");
   return token ? children : <Navigate to="/login" />;
 };
 
-
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<DiagnoSense />} />
-        
+
         <Route path="/home" element={<DiagnoSense />} />
 
         <Route path="/login" element={<AuthPage />} />
+
+        <Route path="/loading" element={<ProcessingReports />} />
+        <Route path="/evidence" element={<EvidencePanel />} />
 
         {/* Google OAuth callback - backend redirects here after sign in */}
         <Route path="/google-callback" element={<GoogleCallback />} />

@@ -2,11 +2,14 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { getPatientAnalysisAPI } from "./mockAPI";
+import EvidencePanel from "../components/EvidencePanel.jsx";
+
 import logo from "../assets/Logo_Diagnoo.png";
 import "../css/PatientProfile.css";
 
 const PatientProfile = () => {
   const navigate = useNavigate();
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   const [activeTab, setActiveTab] = useState("overview");
   const [isDecisionModalOpen, setIsDecisionModalOpen] = useState(false);
@@ -123,7 +126,6 @@ const PatientProfile = () => {
     }
   }, [chatMessages, isChatOpen]);
 
-
   const handleTabClick = (tabId) => {
     setActiveTab(tabId);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -146,8 +148,8 @@ const PatientProfile = () => {
   const toggleTask = (id) => {
     setTasks(
       tasks.map((task) =>
-        task.id === id ? { ...task, done: !task.done } : task
-      )
+        task.id === id ? { ...task, done: !task.done } : task,
+      ),
     );
   };
 
@@ -455,7 +457,12 @@ const PatientProfile = () => {
             <div className="header-actions">
               <button className="btn btn-secondary">Edit File</button>
               <button className="btn btn-secondary">Start Collaboration</button>
-              <button className="btn btn-primary" style={{padding:"35px 40px"}}>Verify Summary</button>
+              <button
+                className="btn btn-primary"
+                style={{ padding: "35px 40px" }}
+              >
+                Verify Summary
+              </button>
             </div>
           </div>
         </header>
@@ -526,8 +533,7 @@ const PatientProfile = () => {
                   <strong>AI Summary:</strong>{" "}
                   {isLoadingAnalysis
                     ? "Loading..."
-                    : 
-                      analysisData?.[0]?.result?.["ai-summary"] ||
+                    : analysisData?.[0]?.result?.["ai-summary"] ||
                       "No insights available"}
                 </div>
 
@@ -585,9 +591,8 @@ const PatientProfile = () => {
                       <div className="info-value">
                         {isLoadingAnalysis ? (
                           "Loading..."
-                        ) : 
-                        analysisData?.[0]?.result?.current_diagnoses?.length >
-                          0 ? (
+                        ) : analysisData?.[0]?.result?.current_diagnoses
+                            ?.length > 0 ? (
                           <div
                             style={{
                               display: "flex",
@@ -607,7 +612,7 @@ const PatientProfile = () => {
                                 >
                                   • {diagnosis}
                                 </span>
-                              )
+                              ),
                             )}
                           </div>
                         ) : (
@@ -802,6 +807,12 @@ const PatientProfile = () => {
                     <span className="priority-icon high"></span>
                     High Priority Alerts
                   </h3>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => setIsPanelOpen(true)}
+                  >
+                    view evidence
+                  </button>
                   <button className="btn btn-primary">+ Add Note</button>
                 </div>
 
@@ -810,8 +821,7 @@ const PatientProfile = () => {
                     <div style={{ padding: "20px", color: "#666" }}>
                       Loading High Priority Alerts...
                     </div>
-                  ) : 
-                  analysisData?.[0]?.result?.high_priority_alerts?.length >
+                  ) : analysisData?.[0]?.result?.high_priority_alerts?.length >
                     0 ? (
                     analysisData[0].result.high_priority_alerts.map(
                       (alert, index) => (
@@ -824,7 +834,7 @@ const PatientProfile = () => {
                             <span>{new Date().toLocaleDateString()}</span>
                           </div>
                         </div>
-                      )
+                      ),
                     )
                   ) : (
                     <div className="note-item">
@@ -848,8 +858,8 @@ const PatientProfile = () => {
                     <div style={{ padding: "20px", color: "#666" }}>
                       Loading Low Priority Notes...
                     </div>
-                  ) : 
-                  analysisData?.[0]?.result?.low_priority_alerts?.length > 0 ? (
+                  ) : analysisData?.[0]?.result?.low_priority_alerts?.length >
+                    0 ? (
                     analysisData[0].result.low_priority_alerts.map(
                       (alert, index) => (
                         <div className="note-item low-priority" key={index}>
@@ -861,7 +871,7 @@ const PatientProfile = () => {
                             <span>{new Date().toLocaleDateString()}</span>
                           </div>
                         </div>
-                      )
+                      ),
                     )
                   ) : (
                     <div className="note-item">
@@ -1012,7 +1022,6 @@ const PatientProfile = () => {
                     </div>
                   </div>
                 </div>
-
               </div>
             </div>
           </div>
@@ -1198,7 +1207,7 @@ const PatientProfile = () => {
                             {item.probability})
                           </div>
                         </div>
-                      )
+                      ),
                     )}
 
                     {/* 2. Possible Diagnoses Section (Orange) */}
@@ -1243,7 +1252,7 @@ const PatientProfile = () => {
                             investigation suggested.
                           </div>
                         </div>
-                      )
+                      ),
                     )}
 
                     {/* 3. Low Likelihood Section (Blue/Grey) */}
@@ -1287,7 +1296,7 @@ const PatientProfile = () => {
                             but monitored for differential diagnosis exclusion.
                           </div>
                         </div>
-                      )
+                      ),
                     )}
                   </>
                 )}
@@ -1434,6 +1443,10 @@ const PatientProfile = () => {
           </button>
         </div>
       </div>
+      <EvidencePanel
+        isOpen={isPanelOpen}
+        onClose={() => setIsPanelOpen(false)}
+      />
     </div>
   );
 };

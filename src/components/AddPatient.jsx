@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { analyzeReportAPI } from "./mockAPI";
+import ProcessingReports from "../components/ProcessingReports"
 import logo from "../assets/Logo_Diagnoo.png";
 import "../css/AddPatient.css";
 
@@ -221,6 +222,10 @@ const AddPatient = () => {
       setIsProcessing(false);
     }
   };
+
+  if (isProcessing) {
+  return <ProcessingReports />;
+}
 
   return (
     <div>
@@ -938,6 +943,7 @@ const AddPatient = () => {
                     </>
                   )}
                 </button>
+             
               </div>
             </div>
           </div>
