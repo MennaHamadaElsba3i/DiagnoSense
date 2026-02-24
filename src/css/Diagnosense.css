@@ -81,7 +81,7 @@
           }
      }
 
-     nav {
+     nav:not(.top-navbar):not(.sidebar-nav) {
           position: absolute;
           top: 2rem;
           left: 50%;
@@ -101,7 +101,7 @@
           min-width: 800px;
      }
 
-     nav:hover {
+     nav:not(.top-navbar):not(.sidebar-nav):hover {
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
      }
 

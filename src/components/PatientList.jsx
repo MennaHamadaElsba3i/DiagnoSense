@@ -2,12 +2,14 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/Logo_Diagnoo.png";
 import "../css/PatientList.css";
+import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 
 const PatientList = () => {
     const navigate = useNavigate(); 
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const patients = [
     {
@@ -137,8 +139,7 @@ const PatientList = () => {
       activeFilter === "all" ||
       (activeFilter === "critical" && patient.status === "critical") ||
       (activeFilter === "stable" && patient.status === "stable") ||
-      activeFilter === "updates" ||
-      activeFilter === "discharged";
+      (activeFilter === "underReview" && patient.statusType === "warning");
 
     const matchesSearch =
       patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -153,6 +154,9 @@ const PatientList = () => {
     alert("Redirecting to subscription page...");
     closeDecisionSupport();
   };
+
+  const openLogoutModal = () => setIsLogoutModalOpen(true);
+  const closeLogoutModal = () => setIsLogoutModalOpen(false);
 
   return (
     <>
@@ -217,6 +221,23 @@ const PatientList = () => {
                   </svg>
                 </span>
                 <span>Support</span>
+              </a>
+              <a
+                href="#"
+                className="nav-item"
+                onClick={(e) => {
+                  e.preventDefault();
+                  openLogoutModal();
+                }}
+              >
+                <span className="nav-icon">
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M10 16l4-4-4-4"></path>
+                    <path d="M14 12H8"></path>
+                  </svg>
+                </span>
+                <span>Logout</span>
               </a>
             </div>
           </div>
@@ -311,6 +332,11 @@ const PatientList = () => {
           </div>
         </div>
       </nav>
+
+      <LogoutConfirmation
+        isOpen={isLogoutModalOpen}
+        onClose={closeLogoutModal}
+      />
 
       {showModal && (
         <div
@@ -446,7 +472,8 @@ const PatientList = () => {
               className={`chip ${activeFilter === "all" ? "active" : ""}`}
               onClick={() => setActiveFilter("all")}
             >
-              All Patients
+              <i className="fa-solid fa-user-plus"></i>
+              <span>All Patients</span>
             </div>
             <div
               className={`chip ${activeFilter === "critical" ? "active" : ""}`}
@@ -461,18 +488,12 @@ const PatientList = () => {
               Stable
             </div>
             <div
-              className={`chip ${activeFilter === "updates" ? "active" : ""}`}
-              onClick={() => setActiveFilter("updates")}
-            >
-              New Updates
-            </div>
-            <div
               className={`chip ${
-                activeFilter === "discharged" ? "active" : ""
+                activeFilter === "underReview" ? "active" : ""
               }`}
-              onClick={() => setActiveFilter("discharged")}
+              onClick={() => setActiveFilter("underReview")}
             >
-              Discharged
+              Under Review
             </div>
           </div>
         </div>

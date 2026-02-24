@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { analyzeReportAPI } from "./mockAPI";
 import logo from "../assets/Logo_Diagnoo.png";
 import "../css/AddPatient.css";
+import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 
 const AddPatient = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ const AddPatient = () => {
     radiology: [],
   });
   const [showModal, setShowModal] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
 
@@ -84,6 +86,14 @@ const AddPatient = () => {
 
   const handleSurgerySelect = (value) => {
     setHasSurgeries(value === "yes");
+  };
+
+  const openLogoutModal = () => {
+    setIsLogoutModalOpen(true);
+  };
+
+  const closeLogoutModal = () => {
+    setIsLogoutModalOpen(false);
   };
 
   const handleChronicDiseaseToggle = (value) => {
@@ -289,6 +299,23 @@ const AddPatient = () => {
                 </span>
                 <span>Support</span>
               </a>
+              <a
+                href="#"
+                className="nav-item"
+                onClick={(e) => {
+                  e.preventDefault();
+                  openLogoutModal();
+                }}
+              >
+                <span className="nav-icon">
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M10 16l4-4-4-4"></path>
+                    <path d="M14 12H8"></path>
+                  </svg>
+                </span>
+                <span>Logout</span>
+              </a>
             </div>
           </div>
         </nav>
@@ -355,6 +382,11 @@ const AddPatient = () => {
           <div className="user-avatar">LA</div>
         </div>
       </nav>
+
+      <LogoutConfirmation
+        isOpen={isLogoutModalOpen}
+        onClose={closeLogoutModal}
+      />
 
       <div className="main-content">
         <div className="page-header"></div>
