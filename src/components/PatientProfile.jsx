@@ -1247,8 +1247,8 @@ const PatientProfile = () => {
                 ) ? (
                   <>
                     <div
-                      className="likelihood-card high"
-                      style={{ borderLeft: "4px solid #FF5C5C" }}
+                      className={`likelihood-card high ${expandedLikelihoods["static-0"] ? "expanded" : ""}`}
+                      onClick={() => toggleLikelihood("static-0")}
                     >
                       <div className="likelihood-header">
                         <div>
@@ -1275,14 +1275,14 @@ const PatientProfile = () => {
                         </div>
                       </div>
                       <div className="reasoning">
-                        <strong>AI Analysis:</strong> This condition shows a
-                        strong correlation with the patient's reported symptoms
-                        and recent lab results.
+                        <strong>Clinical Reasoning:</strong> Based on elevated ALT (48 U/L), BMI 29.4,
+                        cholesterol trend showing mild elevation, and ultrasound findings consistent with fatty
+                        infiltration. Patient's metabolic profile and lifestyle factors support this diagnosis.
                       </div>
                     </div>
                     <div
-                      className="likelihood-card high"
-                      style={{ borderLeft: "4px solid #FF5C5C" }}
+                      className={`likelihood-card high ${expandedLikelihoods["static-1"] ? "expanded" : ""}`}
+                      onClick={() => toggleLikelihood("static-1")}
                     >
                       <div className="likelihood-header">
                         <div>
@@ -1309,13 +1309,14 @@ const PatientProfile = () => {
                         </div>
                       </div>
                       <div className="reasoning">
-                        <strong>AI Analysis:</strong> Strong correlation with
-                        pacemaker history and current presentation.
+                        <strong>Clinical Reasoning:</strong> Elevated fasting glucose (102 mg/dL), HbA1c at
+                        6.1%, central obesity (BMI 29.4), and history of Type 2 Diabetes suggest ongoing insulin
+                        resistance despite treatment. Recommend insulin sensitivity assessment.
                       </div>
                     </div>
                     <div
-                      className="likelihood-card medium"
-                      style={{ borderLeft: "4px solid #FFA500" }}
+                      className={`likelihood-card medium ${expandedLikelihoods["static-2"] ? "expanded" : ""}`}
+                      onClick={() => toggleLikelihood("static-2")}
                     >
                       <div className="likelihood-header">
                         <div>
@@ -1341,14 +1342,14 @@ const PatientProfile = () => {
                         </div>
                       </div>
                       <div className="reasoning">
-                        <strong>AI Analysis:</strong> Potential diagnosis based
-                        on partial symptom match. Further investigation
-                        suggested.
+                        <strong>Clinical Reasoning:</strong> Patient presents with 3 of 5 criteria: elevated
+                        fasting glucose (102 mg/dL), increased waist circumference, and dyslipidemia. Blood
+                        pressure has normalized with treatment. Requires continued monitoring.
                       </div>
                     </div>
                     <div
-                      className="likelihood-card medium"
-                      style={{ borderLeft: "4px solid #FFA500" }}
+                      className={`likelihood-card medium ${expandedLikelihoods["static-3"] ? "expanded" : ""}`}
+                      onClick={() => toggleLikelihood("static-3")}
                     >
                       <div className="likelihood-header">
                         <div>
@@ -1375,20 +1376,21 @@ const PatientProfile = () => {
                         </div>
                       </div>
                       <div className="reasoning">
-                        <strong>AI Analysis:</strong> Consider if fever and
-                        wound findings persist.
+                        <strong>Clinical Reasoning:</strong> Multiple risk factors present including diabetes,
+                        hypertension (controlled), dyslipidemia, and overweight status. 10-year cardiovascular
+                        risk score suggests moderate elevation. Lifestyle modifications showing positive effect.
                       </div>
                     </div>
                     <div
-                      className="likelihood-card low"
-                      style={{ borderLeft: "4px solid #2A66FF" }}
+                      className={`likelihood-card low ${expandedLikelihoods["static-4"] ? "expanded" : ""}`}
+                      onClick={() => toggleLikelihood("static-4")}
                     >
                       <div className="likelihood-header">
                         <div>
                           <div
                             style={{
                               fontSize: "11px",
-                              color: "#2A66FF",
+                              color: "#8A94A6",
                               marginBottom: "3px",
                               fontWeight: 600,
                             }}
@@ -1402,14 +1404,15 @@ const PatientProfile = () => {
                         </div>
                         <div
                           className="confidence"
-                          style={{ color: "#2A66FF" }}
+                          style={{ color: "#8A94A6" }}
                         >
                           1%
                         </div>
                       </div>
                       <div className="reasoning">
-                        <strong>AI Analysis:</strong> Considered unlikely but
-                        monitored for differential diagnosis exclusion.
+                        <strong>Clinical Reasoning:</strong> Negative hepatitis panel from previous testing. ALT
+                        elevation is mild and pattern more consistent with metabolic causes. No risk factors or
+                        symptoms suggestive of viral infection.
                       </div>
                     </div>
                   </>
@@ -1471,7 +1474,6 @@ const PatientProfile = () => {
                               : ""
                           }`}
                           onClick={() => toggleLikelihood(`poss-${index}`)}
-                          style={{ borderLeft: "4px solid #FFA500" }} // لون برتقالي للمحتمل
                         >
                           <div className="likelihood-header">
                             <div>
@@ -1516,14 +1518,13 @@ const PatientProfile = () => {
                               : ""
                           }`}
                           onClick={() => toggleLikelihood(`low-${index}`)}
-                          style={{ borderLeft: "4px solid #2A66FF" }} // لون أزرق للمنخفض
                         >
                           <div className="likelihood-header">
                             <div>
                               <div
                                 style={{
                                   fontSize: "11px",
-                                  color: "#2A66FF",
+                                  color: "#8A94A6",
                                   marginBottom: "3px",
                                   fontWeight: 600,
                                 }}
@@ -1536,7 +1537,7 @@ const PatientProfile = () => {
                             </div>
                             <div
                               className="confidence"
-                              style={{ color: "#2A66FF" }}
+                              style={{ color: "#8A94A6" }}
                             >
                               {item.probability}
                             </div>
