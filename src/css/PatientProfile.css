@@ -633,7 +633,12 @@ body {
 }
 
 /* Tabs */
-.tab-nav {
+.content-layer.container{
+    position: relative;
+}
+.content-layer.tab-nav {
+    position: absolute;
+    top: 0;
     width: 100%;
     display: flex;
     gap: 16px;

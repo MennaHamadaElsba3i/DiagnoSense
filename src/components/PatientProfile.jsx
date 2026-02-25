@@ -345,7 +345,11 @@ const PatientProfile = () => {
             className="search-input"
             placeholder="Search patient or report…"
           />
-          <button type="button" className="search-menu-btn" aria-label="Search options">
+          <button
+            type="button"
+            className="search-menu-btn"
+            aria-label="Search options"
+          >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <circle cx="12" cy="6" r="1.5" />
               <circle cx="12" cy="12" r="1.5" />
@@ -490,55 +494,122 @@ const PatientProfile = () => {
               </div>
             </div>
             <div className="header-actions">
-              <button className="btn btn-secondary">Edit File</button>
-              <button className="btn btn-secondary">Start Collaboration</button>
-              <button className="btn btn-primary">Verify Summary</button>
+              <button
+                className="btn btn-secondary"
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  textAlign: "center",
+                  padding: "8px 16px",
+                  borderRadius: "10px",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                  transition: " all 0.3s ease",
+                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
+                  background: "transparent",
+                  color: "#2A66FF",
+                  border: "1px solid #2A66FF",
+                  fontWeight: "bold",
+                }}
+              >
+                Edit File
+              </button>
+              <button
+                className="btn btn-secondary"
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  textAlign: "center",
+                  padding: "8px 16px",
+                  borderRadius: "10px",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                  transition: " all 0.3s ease",
+                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
+                  background: "transparent",
+                  color: "#2A66FF",
+                  border: "1px solid #2A66FF",
+                  fontWeight: "bold",
+                }}
+              >
+                Start Collaboration
+              </button>
+              <button
+                className="btn btn-secondary"
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  textAlign: "center",
+                  padding: "8px 16px",
+                  borderRadius: "10px",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                  transition: " all 0.3s ease",
+                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
+                  background: "#2A66FF",
+                  color: "white",
+                  border: "1px solid #2A66FF",
+                  fontWeight: "bold",
+                }}
+              >
+                Verify Summary
+              </button>
             </div>
           </div>
         </header>
 
-        <div className="tabs-bar">
-          <div className="container">
-            <nav className="tab-nav">
-            <button
-              className={`tab-btn ${activeTab === "overview" ? "active" : ""}`}
-              onClick={() => handleTabClick("overview")}
+        <div className="tabs-bar" style={{ background: "none" }}>
+          <div
+            className="container"
+            style={{ position: "relative", background: "none" }}
+          >
+            <nav
+              className="tab-nav"
+              style={{
+                position: "absolute",
+                top: "0",
+                "border-radius": "15px",
+              }}
             >
-              Overview
-            </button>
-            <button
-              className={`tab-btn ${activeTab === "keyinfo" ? "active" : ""}`}
-              onClick={() => handleTabClick("keyinfo")}
-            >
-              Key Important Info
-            </button>
-            <button
-              className={`tab-btn ${
-                activeTab === "comparative" ? "active" : ""
-              }`}
-              onClick={() => handleTabClick("comparative")}
-            >
-              Comparative Analysis
-            </button>
-            <button
-              className={`tab-btn ${activeTab === "decision" ? "active" : ""}`}
-              onClick={() => handleTabClick("decision")}
-            >
-              Decision Support
-            </button>
-            <button
-              className={`tab-btn ${activeTab === "tasks" ? "active" : ""}`}
-              onClick={() => handleTabClick("tasks")}
-            >
-              Tasks & Follow-ups
-            </button>
-            <button
-              className={`tab-btn ${activeTab === "activity" ? "active" : ""}`}
-              onClick={() => handleTabClick("activity")}
-            >
-              Activity Log
-            </button>
-          </nav>
+              <button
+                className={`tab-btn ${activeTab === "overview" ? "active" : ""}`}
+                onClick={() => handleTabClick("overview")}
+              >
+                Overview
+              </button>
+              <button
+                className={`tab-btn ${activeTab === "keyinfo" ? "active" : ""}`}
+                onClick={() => handleTabClick("keyinfo")}
+              >
+                Key Important Info
+              </button>
+              <button
+                className={`tab-btn ${
+                  activeTab === "comparative" ? "active" : ""
+                }`}
+                onClick={() => handleTabClick("comparative")}
+              >
+                Comparative Analysis
+              </button>
+              <button
+                className={`tab-btn ${activeTab === "decision" ? "active" : ""}`}
+                onClick={() => handleTabClick("decision")}
+              >
+                Decision Support
+              </button>
+              <button
+                className={`tab-btn ${activeTab === "tasks" ? "active" : ""}`}
+                onClick={() => handleTabClick("tasks")}
+              >
+                Tasks & Follow-ups
+              </button>
+              <button
+                className={`tab-btn ${activeTab === "activity" ? "active" : ""}`}
+                onClick={() => handleTabClick("activity")}
+              >
+                Activity Log
+              </button>
+            </nav>
           </div>
         </div>
 
@@ -551,21 +622,30 @@ const PatientProfile = () => {
           >
             <div className="overview-layout">
               <div className="card smart-summary">
-                <div className="card-header">
+                <div
+                  className="card-header"
+                  style={{ background: "none", display: "block" }}
+                >
                   <h2 className="card-title">
                     <span className="ai-pulse"></span>
                     Smart Summary
                   </h2>
-                </div>
-                <div className="ai-insight">
-                  <strong>AI Summary:</strong>{" "}
-                  {isLoadingAnalysis
-                    ? "Loading..."
-                    : analysisData?.[0]?.result?.["ai-summary"] ||
-                      "No insights available"}
+                  <div
+                    className="ai-insight"
+                    style={{ marginTop: "-10px", marginBottom: "0" }}
+                  >
+                    <strong>AI Summary:</strong>{" "}
+                    {isLoadingAnalysis
+                      ? "Loading..."
+                      : analysisData?.[0]?.result?.["ai-summary"] ||
+                        "No insights available No insights available No insights available No insights available No insights available No insights available No insights available"}
+                  </div>
                 </div>
 
-                <div className="critical-info-section">
+                <div
+                  className="critical-info-section"
+                  style={{ marginTop: "0" }}
+                >
                   <h3 className="section-header">
                     <svg
                       width="18"
@@ -841,7 +921,22 @@ const PatientProfile = () => {
                   >
                     view evidence
                   </button>
-                  <button className="btn btn-primary">+ Add Note</button>
+                  <button className="btn btn-primary" style={{
+                    width:0,
+                  display: "flex",
+                  justifyContent: "center",
+                  textAlign: "center",
+                  padding: "8px 0",
+                  borderRadius: "10px",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                  transition: " all 0.3s ease",
+                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
+                  background: "#2A66FF",
+                  color: "white",
+                  border: "1px solid #2A66FF",
+                  fontWeight: "bold",
+                }}>+ Add Note</button>
                 </div>
 
                 <div className="note-list">
@@ -849,9 +944,9 @@ const PatientProfile = () => {
                     <div className="note-item high-priority">
                       <div className="note-text">
                         <strong>Critical:</strong> Persistent high-grade fever
-                        (38-39°C) in a patient with an implanted pacemaker raises
-                        concern for pacemaker-related infection or infective
-                        endocarditis.
+                        (38-39°C) in a patient with an implanted pacemaker
+                        raises concern for pacemaker-related infection or
+                        infective endocarditis.
                       </div>
                       <div className="note-meta">
                         <span>Jan 28, 2026</span>
@@ -978,8 +1073,8 @@ const PatientProfile = () => {
                         <div className="note-text">
                           <strong>Note:</strong> Medication cost concern
                           addressed. Patient inquired about generic
-                          alternatives; current prescription is already
-                          generic. Insurance verified.
+                          alternatives; current prescription is already generic.
+                          Insurance verified.
                         </div>
                         <div className="note-meta">
                           <span>Oct 10, 2025</span>
@@ -1152,8 +1247,8 @@ const PatientProfile = () => {
                 !(
                   analysisData?.[0]?.result?.likely_diagnoses?.high_likelihood
                     ?.length > 0 ||
-                  analysisData?.[0]?.result?.likely_diagnoses?.possible?.length >
-                    0 ||
+                  analysisData?.[0]?.result?.likely_diagnoses?.possible
+                    ?.length > 0 ||
                   analysisData?.[0]?.result?.likely_diagnoses?.low_likelihood
                     ?.length > 0
                 ) ? (
