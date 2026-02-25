@@ -296,7 +296,7 @@ body {
 }
 
 /* Top Navbar */
-.pp-scope .top-navbar {
+.top-navbar {
     position: fixed;
     left: 260px;
     right: 0;
@@ -308,38 +308,48 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 32px;
+    padding: 0 24px 0 32px;
     z-index: 90;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
-    gap: 20px;
+    gap: 24px;
 }
 
-.pp-scope .search-container {
+.search-container {
     flex: 1;
+    min-width: 0;
     max-width: 1200px;
     position: relative;
+    display: flex;
+    align-items: center;
 }
 
-.pp-scope .search-icon {
+.search-icon {
     position: absolute;
-    left: 16px;
+    left: 14px;
     top: 50%;
     transform: translateY(-50%);
     color: #8A94A6;
     font-size: 16px;
     pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
 }
 
-.pp-scope .search-icon svg {
+.search-icon svg {
     display: block;
 }
 
-.pp-scope .search-input {
-    width: 100%;
-    padding: 12px 16px 12px 44px;
+.search-input {
+    flex: 1;
+    min-width: 0;
+    height: 42px;
+    padding: 0 44px 0 42px;
     border: 1px solid #E6EAF2;
     border-radius: 12px;
     font-size: 14px;
+    line-height: 1.5;
     font-family: 'Inter', sans-serif;
     transition: all 0.3s ease;
     background: rgba(248, 250, 255, 0.6);
@@ -347,7 +357,7 @@ body {
     box-sizing: border-box;
 }
 
-.pp-scope .search-menu-btn {
+.search-menu-btn {
     position: absolute;
     right: 10px;
     top: 50%;
@@ -366,23 +376,47 @@ body {
     flex-shrink: 0;
 }
 
-.pp-scope .search-menu-btn:hover {
+.search-menu-btn:hover {
     background: rgba(42, 102, 255, 0.08);
     color: #2A66FF;
 }
 
-.pp-scope .search-menu-btn svg {
+.search-menu-btn svg {
     display: block;
 }
 
-.pp-scope .search-input:focus {
+.search-input:focus {
     outline: none;
     border-color: #2A66FF;
     box-shadow: 0 0 0 3px rgba(42, 102, 255, 0.08);
     background: white;
 }
 
-.pp-scope .navbar-right {
+/* Scoped Patient Profile top navbar/search to match HTML reference */
+.pp-scope .top-navbar {
+    padding: 0 32px;
+    gap: 20px;
+}
+
+.pp-scope .search-container {
+    flex: 1;
+    max-width: 1200px;
+    position: relative;
+}
+
+.pp-scope .search-icon {
+    left: 16px;
+}
+
+.pp-scope .search-input {
+    width: 100%;
+    height: auto;
+    padding: 12px 16px 12px 44px;
+    border-radius: 12px;
+    background: rgba(248, 250, 255, 0.6);
+}
+
+.navbar-right {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -505,36 +539,39 @@ body {
     min-height: calc(100vh - 70px);
 }
 
-.pp-scope .patient-header {
+.patient-header {
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid #E6EAF2;
-    padding: 16px 28px;
+    padding: 20px 32px;
     display: flex;
     align-items: center;
     justify-content: space-between;
 }
 
-.pp-scope .patient-identity {
+.patient-identity {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 24px;
+    width: 100%;
+    flex-wrap: wrap;
+    row-gap: 12px;
 }
 
-.pp-scope .patient-main-info {
+.patient-main-info {
     display: flex;
-    align-items: center;
+    align-items: start;
     gap: 16px;
     flex: 1 1 auto;
     min-width: 0;
 }
 
-.pp-scope .patient-details {
+.patient-details {
     margin-top: 10px;
     min-width: 0;
 }
 
-.pp-scope .patient-avatar {
+.patient-avatar {
     width: 52px;
     height: 52px;
     border-radius: 50%;
@@ -547,7 +584,7 @@ body {
     font-size: 20px;
 }
 
-.pp-scope .patient-details h1 {
+.patient-details h1 {
     font-size: 20px;
     font-weight: 600;
     color: #0E1A34;
@@ -557,21 +594,26 @@ body {
     text-overflow: ellipsis;
 }
 
-.pp-scope .patient-meta {
+.patient-meta {
     font-size: 13px;
     color: #8A94A6;
 }
 
-.pp-scope .header-actions {
+.header-actions {
     display: flex;
-    gap: 10px;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    margin-left: auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
-.pp-scope .header-actions .btn {
+.header-actions .btn {
     white-space: nowrap;
 }
 
-.pp-scope .btn {
+.btn {
     padding: 8px 18px;
     border-radius: 8px;
     font-size: 13px;
@@ -582,24 +624,24 @@ body {
     outline: none;
 }
 
-.pp-scope .btn-primary {
+.btn-primary {
     background: #2A66FF;
     color: white;
     box-shadow: 0 2px 6px rgba(42, 102, 255, 0.25);
 }
 
-.pp-scope .btn-primary:hover {
+.btn-primary:hover {
     background: #1E4EDB;
     transform: translateY(-1px);
 }
 
-.pp-scope .btn-secondary {
+.btn-secondary {
     background: transparent;
     color: #2A66FF;
     border: 1px solid #2A66FF;
 }
 
-.pp-scope .btn-secondary:hover {
+.btn-secondary:hover {
     background: #E9F0FF;
 }
 
@@ -1564,15 +1606,15 @@ body {
 
 /* Responsive */
 @media (max-width: 1200px) {
-    .pp-scope .sidebar { width: 220px; }
-    .pp-scope .content-layer { margin-left: 220px; }
-    .pp-scope .top-navbar { left: 220px; }
+    .sidebar { width: 220px; }
+    .content-layer { margin-left: 220px; }
+    .top-navbar { left: 220px; }
 }
 
 @media (max-width: 968px) {
-    .pp-scope .sidebar { transform: translateX(-100%); }
-    .pp-scope .content-layer { margin-left: 0; }
-    .pp-scope .top-navbar { left: 0; }
+    .sidebar { transform: translateX(-100%); }
+    .content-layer { margin-left: 0; }
+    .top-navbar { left: 0; }
     .overview-layout, .records-layout { grid-template-columns: 1fr; }
     .chart-grid { grid-template-columns: 1fr; }
     .key-info-grid { grid-template-columns: 1fr; }

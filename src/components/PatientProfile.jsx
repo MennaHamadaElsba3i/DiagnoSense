@@ -217,7 +217,7 @@ const PatientProfile = () => {
   const closeLogoutModal = () => setIsLogoutModalOpen(false);
 
   return (
-    <div className="pp-scope patient-profile-page">
+      <div className="pp-scope patient-profile-page">
       <div className="background-layer">
         <div className="ambient-ripple ripple-1"></div>
         <div className="ambient-ripple ripple-2"></div>
@@ -472,31 +472,75 @@ const PatientProfile = () => {
         </div>
       </div>
 
-      <div className="content-layer">
-        <header className="patient-header">
+      <div
+        className="content-layer"
+        style={{
+          position: "relative",
+          zIndex: "1",
+          marginLeft: "240px",
+          marginRight: "0",
+          marginTop: "64px",
+          minHeight: "calc(100vh - 64px)",
+          width:"85%"
+        }}
+      >
+        <header
+          className="patient-header"
+          style={{
+            background: "rgba(255, 255, 255, 0.98)",
+            backdropFilter: "blur(10px)",
+            borderBottom: "1px solid #E6EAF2",
+            padding: "16px 28px",
+          }}
+        >
           <div className="patient-identity">
             <div className="patient-main-info">
-              <div className="patient-avatar">RS</div>
-              <div className="patient-details">
-                <h1>ِRamadan Said Mohamed</h1>
-                <p className="patient-meta">Dr. Tareq Ahmed / Patient ID #2031</p>
+              <div className="patient-avatar" style={{borderRadius:'50%'}}>NH</div>
+              <div className="patient-details" style={{marginBottom:'0px'}}>
+                <h1>Nour Hassan</h1>
+                <p className="patient-meta">Dr. El-Sayed / Patient ID #2031</p>
               </div>
             </div>
             <div className="header-actions">
               <button
                 className="btn btn-secondary"
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  textAlign: "center",
+                  padding: "8px 16px",
+                  borderRadius: "10px",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                  transition: " all 0.3s ease",
+                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
+                  background: "transparent",
+                  color: "#2A66FF",
+                  border: "1px solid #2A66FF",
+                  fontWeight: "bold",
+                }}
               >
                 Edit File
               </button>
               <button
                 className="btn btn-secondary"
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  textAlign: "center",
+                  padding: "8px 16px",
+                  borderRadius: "10px",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                  transition: " all 0.3s ease",
+                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
+                  background: "rgb(42, 102, 255)",
+                  color: "white",
+                  border: "1px solid #2A66FF",
+                  fontWeight: "bold",
+                }}
               >
                 Start Collaboration
-              </button>
-              <button
-                className="btn btn-primary"
-              >
-                Verify Summary
               </button>
             </div>
           </div>
