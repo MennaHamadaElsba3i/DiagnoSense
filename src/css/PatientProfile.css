@@ -1089,11 +1089,20 @@ body {
     color: #8A94A6;
 }
 
-/* Pencil edit button — top-right corner of each note card */
-.pp-note-edit-btn {
+/* Action buttons container — only Edit button, absolute top-right of each note card */
+.pp-note-actions {
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    z-index: 10;
+}
+
+/* Pencil edit button */
+.pp-note-edit-btn {
     background: transparent;
     border: none;
     outline: none;
@@ -1106,11 +1115,12 @@ body {
     justify-content: center;
     transition: background 0.2s ease, color 0.2s ease;
     line-height: 1;
-    z-index: 10;
+    width: 28px;
+    height: 28px;
 }
 
-/* Hide edit button when in edit mode */
-.note-item:has(.pp-note-edit-textarea) .pp-note-edit-btn {
+/* Hide action buttons container when in edit mode */
+.note-item:has(.pp-note-edit-textarea) .pp-note-actions {
     display: none;
 }
 
@@ -1126,6 +1136,46 @@ body {
 
 .pp-note-edit-btn:hover svg {
     stroke: #1E4EDB;
+}
+
+/* Delete button — sits in the note-footer row, right-aligned under Edit */
+button.pp-note-delete-btn {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(225, 29, 72, 0.35);
+    background: rgba(225, 29, 72, 0.08);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    color: #e11d48;
+    padding: 0;
+}
+
+button.pp-note-delete-btn svg {
+    width: 18px !important;
+    height: 18px !important;
+    display: inline-block !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+button.pp-note-delete-btn svg,
+button.pp-note-delete-btn svg * {
+    stroke: currentColor !important;
+    fill: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+button.pp-note-delete-btn:hover {
+    background: rgba(225, 29, 72, 0.18);
+    border-color: rgba(225, 29, 72, 0.65);
+    color: #be123c;
 }
 
 /* Editable textarea replacing note-text when in edit mode */
@@ -1228,10 +1278,11 @@ body {
     border-color: #B0B8CC;
 }
 
-/* Vertical stacked footer: date on top, View Evidence below */
+/* Footer row: left = date+evidence, right = delete button */
 .note-footer {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: space-between;
     margin-top: 2px;
 }
 
