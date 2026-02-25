@@ -519,10 +519,6 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 24px;
-    width: 100%;
-    flex-wrap: wrap;
-    row-gap: 12px;
 }
 
 .pp-scope .patient-main-info {
@@ -1568,15 +1564,15 @@ body {
 
 /* Responsive */
 @media (max-width: 1200px) {
-    .sidebar { width: 220px; }
-    .content-layer { margin-left: 220px; }
-    .top-navbar { left: 220px; }
+    .pp-scope .sidebar { width: 220px; }
+    .pp-scope .content-layer { margin-left: 220px; }
+    .pp-scope .top-navbar { left: 220px; }
 }
 
 @media (max-width: 968px) {
-    .sidebar { transform: translateX(-100%); }
-    .content-layer { margin-left: 0; }
-    .top-navbar { left: 0; }
+    .pp-scope .sidebar { transform: translateX(-100%); }
+    .pp-scope .content-layer { margin-left: 0; }
+    .pp-scope .top-navbar { left: 0; }
     .overview-layout, .records-layout { grid-template-columns: 1fr; }
     .chart-grid { grid-template-columns: 1fr; }
     .key-info-grid { grid-template-columns: 1fr; }

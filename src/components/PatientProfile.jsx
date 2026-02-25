@@ -306,7 +306,7 @@ const PatientProfile = () => {
               className="decision-support-card"
               onClick={openDecisionSupport}
             >
-              <div className="card-header">
+              <div className="card-header" style={{marginBottom:'0px', gap:'10px' , paddingBottom:'8px'}}>
                 <div className="card-icon">
                   <svg viewBox="0 0 24 24">
                     <polyline points="9 11 12 14 22 4"></polyline>
@@ -568,7 +568,7 @@ const PatientProfile = () => {
               <div className="card smart-summary">
                 <div
                   className="card-header"
-                  style={{ background: "none", display: "block" }}
+                  style={{ background: "none", display: "block"}}
                 >
                   <h2 className="card-title">
                     <span className="ai-pulse"></span>
