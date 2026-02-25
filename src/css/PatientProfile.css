@@ -536,13 +536,14 @@ body {
 
 .patient-main-info {
     display: flex;
-    align-items: center;
+    align-items: start;
     gap: 16px;
     flex: 1 1 auto;
     min-width: 0;
 }
 
 .patient-details {
+    margin-top: 10px;
     min-width: 0;
 }
 
