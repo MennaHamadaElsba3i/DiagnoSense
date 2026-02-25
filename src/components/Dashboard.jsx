@@ -124,7 +124,7 @@ export default function Dashboard() {
               className="decision-support-card"
               onClick={openDecisionSupport}
             >
-              <div className="card-header">
+              <div className="card-header" style={{marginBottom:'0px', gap:'10px' , paddingBottom:'8px'}}>
                 <div className="card-icon">
                   <svg viewBox="0 0 24 24">
                     <polyline points="9 11 12 14 22 4"></polyline>
