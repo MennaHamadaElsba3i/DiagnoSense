@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { analyzeReportAPI } from "./mockAPI";
-import ProcessingReports from "../components/ProcessingReports"
+import ProcessingReports from "../components/ProcessingReports";
 import logo from "../assets/Logo_Diagnoo.png";
 import "../css/AddPatient.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
@@ -77,8 +77,8 @@ const AddPatient = () => {
     setFormData((prev) => ({ ...prev, [id]: value }));
   };
 
-  const handleGenderSelect = (value) => {
-    setSelectedGender(value);
+  const handleGenderSelect = (e) => {
+    setSelectedGender(e.target.value || null);
   };
 
   const handleSmokerSelect = (value) => {
@@ -99,7 +99,7 @@ const AddPatient = () => {
 
   const handleChronicDiseaseToggle = (value) => {
     setSelectedChronicDiseases((prev) =>
-      prev.includes(value) ? prev.filter((d) => d !== value) : [...prev, value]
+      prev.includes(value) ? prev.filter((d) => d !== value) : [...prev, value],
     );
   };
 
@@ -145,17 +145,17 @@ const AddPatient = () => {
 
       apiFormData.append(
         "first_name",
-        formData.fullName.split(" ")[0] || formData.fullName
+        formData.fullName.split(" ")[0] || formData.fullName,
       );
       apiFormData.append(
         "last_name",
-        formData.fullName.split(" ").slice(1).join(" ") || "N/A"
+        formData.fullName.split(" ").slice(1).join(" ") || "N/A",
       );
       apiFormData.append("age", formData.age);
       apiFormData.append("gender", selectedGender);
       apiFormData.append(
         "email",
-        formData.phone ? `${formData.phone}@temp.com` : "noemail@temp.com"
+        formData.phone ? `${formData.phone}@temp.com` : "noemail@temp.com",
       );
       apiFormData.append("phone_number", formData.phone || "0000000000");
 
@@ -164,7 +164,7 @@ const AddPatient = () => {
       apiFormData.append("surgery_details", formData.surgeryText || "");
       apiFormData.append(
         "chronic_diseases",
-        selectedChronicDiseases.join(", ") || "none"
+        selectedChronicDiseases.join(", ") || "none",
       );
       apiFormData.append("medications", formData.medications || "");
       apiFormData.append("allergies", formData.allergies || "");
@@ -211,7 +211,7 @@ const AddPatient = () => {
               radiology: fileManager.radiology.length,
             },
             analysisData: result.data || {},
-          })
+          }),
         );
 
         navigate("/patient-profile", {
@@ -222,7 +222,7 @@ const AddPatient = () => {
         });
       } else {
         setError(
-          result.message || "Failed to process patient data. Please try again."
+          result.message || "Failed to process patient data. Please try again.",
         );
       }
     } catch (err) {
@@ -234,8 +234,8 @@ const AddPatient = () => {
   };
 
   if (isProcessing) {
-  return <ProcessingReports />;
-}
+    return <ProcessingReports />;
+  }
 
   return (
     <div>
@@ -250,7 +250,7 @@ const AddPatient = () => {
       <aside className="sidebar">
         <div className="sidebar-logo">
           <span className="logo-text">
-            <img src= {logo} alt="" />
+            <img src={logo} alt="" />
           </span>
         </div>
 
@@ -346,7 +346,7 @@ const AddPatient = () => {
           <input
             type="text"
             className="search-input"
-            style={{padding:"12px 16px 12px 44px"}}
+            style={{ padding: "12px 16px 12px 44px" }}
             placeholder="Search patient or report…"
           />
         </div>
@@ -471,7 +471,7 @@ const AddPatient = () => {
               </div>
 
               <div className="form-grid">
-                <div className="form-group full-width">
+                <div className="form-group">
                   <label className="form-label required">Full Name</label>
                   <input
                     type="text"
@@ -479,6 +479,18 @@ const AddPatient = () => {
                     id="fullName"
                     placeholder="Enter patient's full name"
                     value={formData.fullName}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label required">Email</label>
+                  <input
+                    type="email"
+                    className="form-input"
+                    id="email"
+                    placeholder="Enter patient's email"
+                    value={formData.email}
                     onChange={handleInputChange}
                   />
                 </div>
@@ -498,25 +510,23 @@ const AddPatient = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label required">Gender</label>
-                  <div className="radio-group">
-                    <div
-                      className={`radio-button ${
-                        selectedGender === "male" ? "selected" : ""
-                      }`}
-                      onClick={() => handleGenderSelect("male")}
-                    >
-                      Male
-                    </div>
-                    <div
-                      className={`radio-button ${
-                        selectedGender === "female" ? "selected" : ""
-                      }`}
-                      onClick={() => handleGenderSelect("female")}
-                    >
-                      Female
-                    </div>
-                  </div>
+                  <label className="form-label required" htmlFor="gender">
+                    Gender
+                  </label>
+                  <select
+                    id="gender"
+                    className={`form-input form-select${!selectedGender ? " form-select--placeholder" : ""}`}
+                    value={selectedGender || ""}
+                    onChange={handleGenderSelect}
+                  >
+                    <option value="" disabled>
+                      Select gender
+                    </option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                    <option value="prefer_not_to_say">Prefer not to say</option>
+                  </select>
                 </div>
 
                 <div className="form-group">
@@ -564,6 +574,8 @@ const AddPatient = () => {
                     Optional - for record linkage
                   </div>
                 </div>
+
+               
               </div>
 
               <div className="wizard-actions">
@@ -804,23 +816,23 @@ const AddPatient = () => {
                           {category === "lab"
                             ? "Lab"
                             : category === "history"
-                            ? "History"
-                            : "Radiology"}
+                              ? "History"
+                              : "Radiology"}
                         </span>
                         <h4>
                           {category === "lab"
                             ? "Lab Tests"
                             : category === "history"
-                            ? "Medical History"
-                            : "Radiology Reports"}
+                              ? "Medical History"
+                              : "Radiology Reports"}
                         </h4>
                       </div>
                       <p className="upload-card-subtitle">
                         {category === "lab"
                           ? "Blood work, urinalysis, biochemistry panels"
                           : category === "history"
-                          ? "Patient records, visit notes, prescriptions"
-                          : "X-rays, CT scans, MRI, DICOM images"}
+                            ? "Patient records, visit notes, prescriptions"
+                            : "X-rays, CT scans, MRI, DICOM images"}
                       </p>
                     </div>
 
@@ -975,7 +987,6 @@ const AddPatient = () => {
                     </>
                   )}
                 </button>
-             
               </div>
             </div>
           </div>
