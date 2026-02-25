@@ -217,7 +217,7 @@ const PatientProfile = () => {
   const closeLogoutModal = () => setIsLogoutModalOpen(false);
 
   return (
-    <div className="patient-profile-page">
+      <div className="pp-scope patient-profile-page">
       <div className="background-layer">
         <div className="ambient-ripple ripple-1"></div>
         <div className="ambient-ripple ripple-2"></div>
@@ -345,17 +345,6 @@ const PatientProfile = () => {
             className="search-input"
             placeholder="Search patient or report…"
           />
-          <button
-            type="button"
-            className="search-menu-btn"
-            aria-label="Search options"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="12" cy="6" r="1.5" />
-              <circle cx="12" cy="12" r="1.5" />
-              <circle cx="12" cy="18" r="1.5" />
-            </svg>
-          </button>
         </div>
 
         <div className="navbar-right">
@@ -545,33 +534,13 @@ const PatientProfile = () => {
                   cursor: "pointer",
                   transition: " all 0.3s ease",
                   boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
-                  background: "transparent",
-                  color: "#2A66FF",
-                  border: "1px solid #2A66FF",
-                  fontWeight: "bold",
-                }}
-              >
-                Start Collaboration
-              </button>
-              <button
-                className="btn btn-secondary"
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  textAlign: "center",
-                  padding: "8px 16px",
-                  borderRadius: "10px",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  transition: " all 0.3s ease",
-                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
-                  background: "#2A66FF",
+                  background: "rgb(42, 102, 255)",
                   color: "white",
                   border: "1px solid #2A66FF",
                   fontWeight: "bold",
                 }}
               >
-                Verify Summary
+                Start Collaboration
               </button>
             </div>
           </div>
