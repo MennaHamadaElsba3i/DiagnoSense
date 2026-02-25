@@ -645,6 +645,105 @@ body {
     background: #E9F0FF;
 }
 
+/* Scoped button overrides to prevent cross-component CSS contamination */
+.pp-scope .btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    outline: none;
+    width: auto;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.pp-scope .btn-primary {
+    background: #2A66FF;
+    color: white;
+    box-shadow: 0 2px 6px rgba(42, 102, 255, 0.25);
+    border: none;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+}
+
+.pp-scope .btn-primary:hover {
+    background: #1E4EDB;
+    transform: translateY(-1px);
+}
+
+.pp-scope .btn-secondary {
+    background: transparent;
+    color: #2A66FF;
+    border: 1px solid #2A66FF;
+}
+
+.pp-scope .btn-secondary:hover {
+    background: #E9F0FF;
+}
+
+/* Unique scoped button classes — immune to global CSS overrides */
+.pp-add-note-btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #2A66FF;
+    color: white;
+    border: none;
+    outline: none;
+    box-shadow: 0 2px 6px rgba(42, 102, 255, 0.25);
+    width: auto;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    line-height: 1;
+    min-width: 0;
+    max-width: none;
+}
+
+.pp-add-note-btn:hover {
+    background: #1E4EDB;
+    transform: translateY(-1px);
+}
+
+.pp-view-evidence-btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: transparent;
+    color: #2A66FF;
+    border: 1px solid #2A66FF;
+    outline: none;
+    width: auto;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    line-height: 1;
+    min-width: 0;
+    max-width: none;
+}
+
+.pp-view-evidence-btn:hover {
+    background: #E9F0FF;
+}
+
 .container {
     max-width: 1400px;
     margin: 0 auto;
@@ -850,6 +949,24 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    gap: 10px;
+}
+
+.priority-header .btn {
+    width: auto !important;
+    flex-shrink: 0;
+    white-space: nowrap;
+    flex: 0 0 auto;
+}
+
+.pp-scope .priority-header .btn {
+    width: auto !important;
+    flex: 0 0 auto !important;
+    flex-shrink: 0;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .priority-title {

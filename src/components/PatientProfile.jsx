@@ -903,33 +903,17 @@ const PatientProfile = () => {
                     <span className="priority-icon high"></span>
                     High Priority Alerts
                   </h3>
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => setIsPanelOpen(true)}
-                  >
-                    view evidence
-                  </button>
-                  <button
-                    className="btn btn-primary"
-                    style={{
-                      width: 0,
-                      display: "flex",
-                      justifyContent: "center",
-                      textAlign: "center",
-                      padding: "8px 0",
-                      borderRadius: "10px",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                      transition: " all 0.3s ease",
-                      boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
-                      background: "#2A66FF",
-                      color: "white",
-                      border: "1px solid #2A66FF",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    + Add Note
-                  </button>
+                  <div style={{ display: "flex", gap: "10px", alignItems: "center", flexShrink: 0 }}>
+                    <button
+                      className="pp-view-evidence-btn"
+                      onClick={() => setIsPanelOpen(true)}
+                    >
+                      View Evidence
+                    </button>
+                    <button className="pp-add-note-btn">
+                      + Add Note
+                    </button>
+                  </div>
                 </div>
 
                 <div className="note-list">
@@ -997,7 +981,7 @@ const PatientProfile = () => {
                     <span className="priority-icon medium"></span>
                     Medium Priority Alerts
                   </h3>
-                  <button className="btn btn-primary">+ Add Note</button>
+                  <button className="pp-add-note-btn">+ Add Note</button>
                 </div>
                 <div className="note-list">
                   <div className="note-item medium-priority">
@@ -1029,7 +1013,7 @@ const PatientProfile = () => {
                     <span className="priority-icon low"></span>
                     Low Priority Notes
                   </h3>
-                  <button className="btn btn-primary">+ Add Note</button>
+                  <button className="pp-add-note-btn">+ Add Note</button>
                 </div>
 
                 <div className="note-list">
