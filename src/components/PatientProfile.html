@@ -1,0 +1,3347 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Profile - DiagnoSense</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #F8FAFF;
+            color: #3A4560;
+            overflow-x: hidden;
+        }
+
+        /* Background Layer */
+        .background-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background: linear-gradient(135deg, #F8FAFF 0%, #E9F0FF 100%);
+            overflow: hidden;
+        }
+
+        .ambient-ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(42, 102, 255, 0.03) 0%, transparent 70%);
+            animation: ripple 8s ease-in-out infinite;
+        }
+
+        .ripple-1 {
+            width: 400px;
+            height: 400px;
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .ripple-2 {
+            width: 600px;
+            height: 600px;
+            top: 50%;
+            right: 10%;
+            animation-delay: 2s;
+        }
+
+        .ripple-3 {
+            width: 500px;
+            height: 500px;
+            bottom: 10%;
+            left: 40%;
+            animation-delay: 4s;
+        }
+
+        @keyframes ripple {
+
+            0%,
+            100% {
+                transform: scale(1) translateY(0);
+                opacity: 0.4;
+            }
+
+            50% {
+                transform: scale(1.1) translateY(-20px);
+                opacity: 0.6;
+            }
+        }
+
+        /* Top Navbar - Dashboard Style */
+        .top-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid #E6EAF2;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Logo - Top Left */
+        .navbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-right: 32px;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #2A66FF, #467DFF);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .logo-text {
+            font-size: 17px;
+            font-weight: 700;
+            color: #0E1A34;
+        }
+
+        /* Search - Center */
+        .search-container {
+            flex: 1;
+            max-width: 480px;
+        }
+
+        .search-box {
+            position: relative;
+            width: 100%;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 16px 10px 40px;
+            border: 1px solid #E6EAF2;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: #F8FAFF;
+        }
+
+        .search-box input:focus {
+            border-color: #2A66FF;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(42, 102, 255, 0.08);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #8A94A6;
+        }
+
+        /* Right Side Items */
+        .top-navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-left: auto;
+        }
+
+        .online-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #00C187;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #00C187;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 0.5;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        .credits-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: #E9F0FF;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #2A66FF;
+        }
+
+        .user-profile {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2A66FF, #467DFF);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .user-profile:hover {
+            transform: scale(1.05);
+        }
+
+        /* Left Sidebar - Dashboard Style */
+        .left-sidebar {
+            position: fixed;
+            left: 0;
+            top: 64px;
+            bottom: 0;
+            width: 240px;
+            background: white;
+            border-right: 1px solid #E6EAF2;
+            z-index: 999;
+            padding: 20px 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            margin-bottom: 24px;
+        }
+
+        .sidebar-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #8A94A6;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0 20px;
+            margin-bottom: 8px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 20px;
+            color: #3A4560;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: #F8FAFF;
+            color: #2A66FF;
+        }
+
+        .nav-item.active {
+            background: #E9F0FF;
+            color: #2A66FF;
+            border-left-color: #2A66FF;
+        }
+
+        .nav-icon {
+            width: 18px;
+            height: 18px;
+        }
+
+        .pro-badge {
+            background: linear-gradient(135deg, #FFB84D, #FF9500);
+            color: white;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: auto;
+        }
+
+        /* Main Content Area */
+        .content-layer {
+            position: relative;
+            z-index: 1;
+            margin-left: 240px;
+            margin-top: 64px;
+            min-height: calc(100vh - 64px);
+        }
+
+        /* Patient Header - Compact */
+        .patient-header {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #E6EAF2;
+            padding: 16px 28px;
+        }
+
+        .patient-identity {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .patient-main-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .patient-avatar {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2A66FF, #467DFF);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        .patient-details h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #0E1A34;
+            margin-bottom: 2px;
+        }
+
+        .patient-meta {
+            font-size: 13px;
+            color: #8A94A6;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            outline: none;
+        }
+
+        .btn-primary {
+            background: #2A66FF;
+            color: white;
+            box-shadow: 0 2px 6px rgba(42, 102, 255, 0.25);
+        }
+
+        .btn-primary:hover {
+            background: #1E4EDB;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #2A66FF;
+            border: 1px solid #2A66FF;
+        }
+
+        .btn-secondary:hover {
+            background: #E9F0FF;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 28px;
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 28px;
+            background: white;
+            padding: 6px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            overflow-x: auto;
+            justify-content: center;
+            align-items: center;
+
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            color: #3A4560;
+            font-weight: 600;
+            font-size: 13px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            background: #F0F3F9;
+        }
+
+        .tab-btn.active {
+            background: #E9F0FF;
+            color: #2A66FF;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            animation: fadeInSlide 0.4s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeInSlide {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Card Styling */
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0E1A34;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ai-pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #2A66FF;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+
+
+        .smart-summary {
+            background: linear-gradient(135deg, rgba(42, 102, 255, 0.02) 0%, rgba(255, 255, 255, 1) 100%);
+        }
+
+        .ai-insight {
+            padding: 18px;
+            background: rgba(42, 102, 255, 0.05);
+            border-left: 3px solid #2A66FF;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* Critical Key Information Section */
+        .critical-info-section {
+            margin-top: 24px;
+        }
+
+        .section-header {
+            font-size: 16px;
+            font-weight: 600;
+            color: #0E1A34;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .key-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .info-item {
+            padding: 16px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #E6EAF2;
+            transition: all 0.3s ease;
+        }
+
+        .info-item:hover {
+            border-color: #2A66FF;
+            box-shadow: 0 0 10px rgba(42, 102, 255, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #8A94A6;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #0E1A34;
+            line-height: 1.4;
+        }
+
+        /* Vital Cards - Compact Grid */
+        .vital-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .vital-card {
+            padding: 16px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #E6EAF2;
+            transition: all 0.3s ease;
+        }
+
+        .vital-card:hover {
+            border-color: #2A66FF;
+            box-shadow: 0 4px 12px rgba(42, 102, 255, 0.08);
+        }
+
+        .vital-header {
+            font-size: 12px;
+            color: #8A94A6;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .vital-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0E1A34;
+            margin-bottom: 6px;
+        }
+
+        .vital-status {
+            font-size: 12px;
+            color: #00C187;
+            font-weight: 600;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .badge-critical {
+            background: #FFECEC;
+            color: #FF5C5C;
+        }
+
+        .badge-stable {
+            background: #E6FFF5;
+            color: #00C187;
+        }
+
+        .badge-info {
+            background: #E9F0FF;
+            color: #2A66FF;
+        }
+
+        .badge-warning {
+            background: #FFF4E6;
+            color: #FFA500;
+        }
+
+        /* Priority Sections */
+        .priority-sections {
+            display: grid;
+            gap: 20px;
+        }
+
+        .priority-card {
+            background: white;
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .priority-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .priority-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0E1A34;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .priority-icon {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .priority-icon.high {
+            background: #FF5C5C;
+            box-shadow: 0 0 10px rgba(255, 92, 92, 0.4);
+        }
+
+        .priority-icon.low {
+            background: #8A94A6;
+        }
+
+        .note-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .note-item {
+            padding: 16px;
+            background: #F8FAFF;
+            border-radius: 10px;
+            border-left: 3px solid;
+            transition: all 0.3s ease;
+        }
+
+        .note-item.high-priority {
+            border-color: #FF5C5C;
+            background: rgba(255, 92, 92, 0.03);
+        }
+
+        .note-item.low-priority {
+            border-color: #8A94A6;
+        }
+
+        .note-item:hover {
+            transform: translateX(6px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+        }
+
+        .note-text {
+            font-size: 14px;
+            color: #3A4560;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .note-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: #8A94A6;
+        }
+
+        /* Comparative Analysis */
+        .timeline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            position: relative;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #2A66FF 0%, #467DFF 100%);
+            z-index: 0;
+        }
+
+        .timeline-node {
+            position: relative;
+            z-index: 1;
+            background: white;
+            padding: 10px 18px;
+            border-radius: 18px;
+            border: 2px solid #2A66FF;
+            font-size: 12px;
+            font-weight: 600;
+            color: #2A66FF;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-node:hover {
+            background: #2A66FF;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .chart-card {
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #E6EAF2;
+            transition: all 0.3s ease;
+        }
+
+        .chart-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .chart-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #0E1A34;
+        }
+
+        .chart-trend {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .trend-up {
+            background: #FFECEC;
+            color: #FF5C5C;
+        }
+
+        .trend-down {
+            background: #E6FFF5;
+            color: #00C187;
+        }
+
+        .trend-stable {
+            background: #E9F0FF;
+            color: #2A66FF;
+        }
+
+        .mini-chart {
+            width: 100%;
+            height: 160px;
+            margin-bottom: 14px;
+        }
+
+        .chart-stats {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 14px;
+            border-top: 1px solid #E6EAF2;
+        }
+
+        .stat-col {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: #8A94A6;
+            margin-bottom: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 15px;
+            font-weight: 600;
+            color: #0E1A34;
+        }
+
+        /* Patient Records */
+        .records-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .section-card {
+            background: white;
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0E1A34;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #E9F0FF;
+            border-radius: 8px;
+            color: #2A66FF;
+        }
+
+        .accordion-item {
+            background: #F8FAFF;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #E6EAF2;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .accordion-header {
+            padding: 14px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 13px;
+            color: #0E1A34;
+            transition: background 0.2s ease;
+        }
+
+        .accordion-header:hover {
+            background: rgba(42, 102, 255, 0.04);
+        }
+
+        .accordion-icon {
+            transition: transform 0.3s ease;
+            color: #8A94A6;
+            font-size: 12px;
+        }
+
+        .accordion-item.active .accordion-icon {
+            transform: rotate(180deg);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.4s ease;
+        }
+
+        .accordion-item.active .accordion-content {
+            max-height: 500px;
+            padding: 0 14px 14px;
+        }
+
+        .history-entry {
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .report-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .report-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px;
+            background: #F8FAFF;
+            border-radius: 10px;
+            border: 1px solid #E6EAF2;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .report-card:hover {
+            border-color: #2A66FF;
+            background: white;
+            transform: translateX(4px);
+        }
+
+        .report-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #E9F0FF, #F8FAFF);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .report-info {
+            flex: 1;
+        }
+
+        .report-name {
+            font-weight: 600;
+            color: #0E1A34;
+            font-size: 13px;
+            margin-bottom: 3px;
+        }
+
+        .report-date {
+            font-size: 11px;
+            color: #8A94A6;
+        }
+
+        /* Decision Support */
+        .likelihood-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .likelihood-card {
+            padding: 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .likelihood-card.high {
+            background: linear-gradient(135deg, rgba(255, 92, 92, 0.08), rgba(255, 92, 92, 0.03));
+            border-color: #FF5C5C;
+        }
+
+        .likelihood-card.medium {
+            background: linear-gradient(135deg, rgba(255, 165, 0, 0.08), rgba(255, 165, 0, 0.03));
+            border-color: #FFA500;
+        }
+
+        .likelihood-card.low {
+            background: linear-gradient(135deg, rgba(138, 148, 166, 0.08), rgba(138, 148, 166, 0.03));
+            border-color: #8A94A6;
+        }
+
+        .likelihood-card:hover {
+            transform: translateX(6px);
+        }
+
+        .likelihood-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .likelihood-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #0E1A34;
+        }
+
+        .confidence {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .reasoning {
+            display: none;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+            font-size: 13px;
+            color: #3A4560;
+            line-height: 1.5;
+        }
+
+        .likelihood-card.expanded .reasoning {
+            display: block;
+        }
+
+        /* Tasks */
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #E6EAF2;
+            transition: all 0.3s ease;
+        }
+
+        .task-item:hover {
+            border-color: #2A66FF;
+        }
+
+        .task-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #E6EAF2;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .task-checkbox.checked {
+            background: #00C187;
+            border-color: #00C187;
+            position: relative;
+        }
+
+        .task-checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+        }
+
+        .task-text {
+            flex: 1;
+            font-size: 14px;
+            color: #3A4560;
+        }
+
+        .task-text.done {
+            text-decoration: line-through;
+            color: #8A94A6;
+        }
+
+        /* Activity Log */
+        .activity-timeline {
+            position: relative;
+            padding-left: 28px;
+        }
+
+        .activity-timeline::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #E6EAF2;
+        }
+
+        .activity-item {
+            position: relative;
+            padding: 14px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 14px;
+            border: 1px solid #E6EAF2;
+            transition: all 0.3s ease;
+        }
+
+        .activity-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+        }
+
+        .activity-item::before {
+            content: '';
+            position: absolute;
+            left: -21px;
+            top: 20px;
+            width: 10px;
+            height: 10px;
+            background: #2A66FF;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px #E6EAF2;
+        }
+
+        .activity-text {
+            font-size: 13px;
+            color: #3A4560;
+            margin-bottom: 4px;
+        }
+
+        .activity-time {
+            font-size: 11px;
+            color: #8A94A6;
+        }
+
+        /* Chatbot */
+        .chatbot-trigger {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #2A66FF, #467DFF);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(42, 102, 255, 0.35);
+            z-index: 1000;
+            transition: all 0.3s ease;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .chatbot-trigger:hover {
+            transform: scale(1.08);
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-6px);
+            }
+        }
+
+        .chatbot-trigger::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid #2A66FF;
+            animation: ping 2s ease-out infinite;
+        }
+
+        @keyframes ping {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        .chatbot-panel {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            width: 360px;
+            height: 560px;
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+            display: none;
+            flex-direction: column;
+            z-index: 1001;
+            animation: slideUp 0.35s ease;
+        }
+
+        .chatbot-panel.active {
+            display: flex;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(15px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .chat-header {
+            padding: 18px;
+            background: linear-gradient(135deg, #2A66FF, #467DFF);
+            color: white;
+            border-radius: 14px 14px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 18px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 11px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.5;
+            animation: messageIn 0.3s ease;
+        }
+
+        @keyframes messageIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: #2A66FF;
+            color: white;
+        }
+
+        .message.ai {
+            align-self: flex-start;
+            background: #F8FAFF;
+            color: #3A4560;
+            border: 1px solid #E6EAF2;
+        }
+
+        .chat-input {
+            padding: 14px;
+            border-top: 1px solid #E6EAF2;
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #E6EAF2;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .chat-input input:focus {
+            border-color: #2A66FF;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .left-sidebar {
+                width: 220px;
+            }
+
+            .content-layer {
+                margin-left: 220px;
+            }
+        }
+
+        @media (max-width: 968px) {
+            .left-sidebar {
+                transform: translateX(-100%);
+            }
+
+            .content-layer {
+                margin-left: 0;
+            }
+
+            .overview-layout,
+            .records-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .key-info-grid,
+            .vital-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .chatbot-panel {
+                width: calc(100vw - 32px);
+                right: 16px;
+                bottom: 16px;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #F8FAFF 0%, #E9F0FF 100%);
+            color: #3A4560;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 260px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(230, 234, 242, 0.6);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.03);
+        }
+
+        .sidebar-logo span img {
+            width: 180px;
+        }
+
+        .sidebar-logo {
+            padding: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(230, 234, 242, 0.5);
+        }
+
+        .logo-icon {
+            font-size: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-text {
+            display: flex;
+            justify-content: center;
+            font-size: 21px;
+            font-weight: 700;
+            color: #2A66FF;
+            letter-spacing: -0.3px;
+            width: 100%;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 20px 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .nav-main {
+            flex: 1;
+        }
+
+        .nav-section {
+            margin-bottom: 8px;
+        }
+
+        .nav-section-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: #8A94A6;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 12px 12px 8px 12px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 14px;
+            margin-bottom: 4px;
+            border-radius: 10px;
+            color: #5A6580;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background: rgba(233, 240, 255, 0.6);
+            color: #2A66FF;
+            transform: translateX(2px);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, rgba(42, 102, 255, 0.12), rgba(70, 125, 255, 0.08));
+            color: #2A66FF;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(42, 102, 255, 0.15);
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 60%;
+            background: linear-gradient(180deg, #2A66FF, #467DFF);
+            border-radius: 0 3px 3px 0;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .nav-icon svg {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .nav-bottom {
+            border-top: 1px solid rgba(230, 234, 242, 0.5);
+            padding-top: 16px;
+            margin-top: 12px;
+        }
+
+        /* Premium Decision Support Card */
+        .decision-support-card {
+            background: linear-gradient(135deg, #2A66FF 0%, #467DFF 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 0 0 12px 0;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(42, 102, 255, 0.25);
+        }
+
+        .decision-support-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .decision-support-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(42, 102, 255, 0.35);
+        }
+
+        .decision-support-card:hover::before {
+            opacity: 1;
+        }
+
+        .decision-support-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-icon svg {
+            width: 20px;
+            height: 20px;
+            stroke: white;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .decision-card-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: white;
+            white-space: nowrap;
+        }
+
+        .card-pro-badge {
+            background: linear-gradient(135deg, #FFB800, #FFC940);
+            color: #fff;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 3px 7px;
+            border-radius: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            box-shadow: 0 2px 6px rgba(255, 184, 0, 0.4);
+            margin-left: auto;
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 14px;
+            line-height: 1.4;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-cta-btn {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
+            padding: 9px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-cta-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .top-navbar {
+            position: fixed;
+            left: 260px;
+            right: 0;
+            top: 0;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(230, 234, 242, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            z-index: 90;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+            gap: 20px;
+        }
+
+        .search-container {
+            flex: 1;
+            max-width: 1200px;
+            position: relative;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #8A94A6;
+            font-size: 16px;
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            border: 1px solid #E6EAF2;
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            background: rgba(248, 250, 255, 0.6);
+            font-weight: 400;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #2A66FF;
+            box-shadow: 0 0 0 3px rgba(42, 102, 255, 0.08);
+            background: white;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .credits-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 16px;
+            background: rgba(42, 102, 255, 0.08);
+            border-radius: 24px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #2A66FF;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .credits-badge:hover {
+            background: rgba(42, 102, 255, 0.14);
+            transform: scale(1.02);
+        }
+
+        .credits-icon {
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: rgba(0, 193, 135, 0.08);
+            border-radius: 24px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #00C187;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #00C187;
+            border-radius: 50%;
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes statusPulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 0 0 rgba(0, 193, 135, 0.4);
+            }
+
+            50% {
+                opacity: 0.6;
+                box-shadow: 0 0 0 6px rgba(0, 193, 135, 0);
+            }
+        }
+
+        .icon-btn {
+            position: relative;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #8A94A6;
+            padding: 10px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+        }
+
+        .icon-btn:hover {
+            background: rgba(42, 102, 255, 0.08);
+            color: #2A66FF;
+        }
+
+        .icon-btn svg {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 8px;
+            height: 8px;
+            background: #FF5C5C;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #2A66FF, #467DFF);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(42, 102, 255, 0.2);
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(42, 102, 255, 0.3);
+        }
+
+        .main-content {
+            margin-left: 260px;
+            margin-top: 70px;
+            padding: 32px;
+        }
+
+        .placeholder-text {
+            text-align: center;
+            color: #8A94A6;
+            font-size: 18px;
+            margin-top: 100px;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal-content {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            position: relative;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #8A94A6;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(233, 240, 255, 0.6);
+            color: #2A66FF;
+        }
+
+        .modal-close svg {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #2A66FF, #467DFF);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .modal-icon svg {
+            width: 32px;
+            height: 32px;
+            stroke: #FFFFFF;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0E1A34;
+            margin-bottom: 8px;
+        }
+
+        .modal-subtitle {
+            font-size: 16px;
+            color: #8A94A6;
+        }
+
+        .modal-body {
+            margin-bottom: 24px;
+        }
+
+        .modal-text {
+            font-size: 15px;
+            color: #3A4560;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .modal-features {
+            list-style: none;
+            padding: 0;
+        }
+
+        .modal-features li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: #3A4560;
+        }
+
+        .modal-features li svg {
+            width: 20px;
+            height: 20px;
+            stroke: #00C187;
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-button {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .modal-button-primary {
+            background: linear-gradient(135deg, #2A66FF, #467DFF);
+            color: #FFFFFF;
+        }
+
+        .modal-button-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(42, 102, 255, 0.3);
+        }
+
+        .modal-button-secondary {
+            background: #F0F3F9;
+            color: #3A4560;
+        }
+
+        .modal-button-secondary:hover {
+            background: #E6EAF2;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Background Layer -->
+    <div class="background-layer">
+        <div class="ambient-ripple ripple-1"></div>
+        <div class="ambient-ripple ripple-2"></div>
+        <div class="ambient-ripple ripple-3"></div>
+    </div>
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <span class="logo-text"><img src="DiagnoSense Logo Without BG.png" alt=""></span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-main">
+                <div class="nav-section">
+                    <div class="nav-section-title">Main</div>
+                    <a href="[Final] Dashboard.html" class="nav-item">
+                        <span class="nav-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                            </svg>
+                        </span>
+                        <span>Overview</span>
+                    </a>
+                    <a href="[Final] Patient List.html" class="nav-item">
+                        <span class="nav-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                        </span>
+                        <span>Patients</span>
+                    </a>
+                    <a href="[Final] Subscription.html" class="nav-item">
+                        <span class="nav-icon">
+                            <svg viewBox="0 0 24 24">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                        </span>
+                        <span>Subscription</span>
+                    </a>
+                    <a href="[Final] Support.html" class="nav-item">
+                        <span class="nav-icon">
+                            <svg viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                        </span>
+                        <span>Support</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Premium Decision Support Card -->
+            <div class="nav-bottom">
+                <div class="decision-support-card" onclick="openDecisionSupport()">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <svg viewBox="0 0 24 24">
+                                <polyline points="9 11 12 14 22 4"></polyline>
+                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                            </svg>
+                        </div>
+                        <span class="decision-card-title">Decision Support</span>
+                        <span class="card-pro-badge">PRO</span>
+                    </div>
+                    <div class="card-subtitle">Make accurate decisions</div>
+                    <button class="card-cta-btn">Try Now</button>
+                </div>
+            </div>
+        </nav>
+    </aside>
+
+    <nav class="top-navbar">
+        <div class="search-container">
+            <svg class="search-icon" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input type="text" class="search-input" placeholder="Search patient or report…">
+        </div>
+
+        <div class="navbar-right">
+            <div class="status-indicator">
+                <span class="status-dot"></span>
+                <span>Online</span>
+            </div>
+
+            <div class="credits-badge">
+                <span class="credits-icon">
+                    <svg viewBox="0 0 24 24"
+                        style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                        <line x1="1" y1="10" x2="23" y2="10"></line>
+                    </svg>
+                </span>
+                <span>Credits: 1,247</span>
+            </div>
+
+            <button class="icon-btn">
+                <svg viewBox="0 0 24 24">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <span class="notification-badge"></span>
+            </button>
+
+            <div class="user-avatar" onclick="window.location.href='[semiFinalAwy] Settings.html'">LA</div>
+        </div>
+    </nav>
+
+    <!-- Decision Support Modal -->
+    <div class="modal-overlay" id="decisionSupportModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeDecisionSupport()">
+                <svg viewBox="0 0 24 24">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            <div class="modal-header">
+                <div class="modal-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M9 11l3 3L22 4"></path>
+                        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+                    </svg>
+                </div>
+                <h2 class="modal-title">Decision Support</h2>
+                <p class="modal-subtitle">AI-powered clinical decision assistance</p>
+            </div>
+            <div class="modal-body">
+                <p class="modal-text">
+                    Enhance your diagnostic accuracy with our advanced AI-powered Decision Support system. Get
+                    intelligent recommendations based on patient data, symptoms, and medical history.
+                </p>
+
+                <ul class="modal-features">
+                    <li>
+                        <svg viewBox="0 0 24 24">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <span>Real-time diagnostic suggestions based on latest medical research</span>
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <span>Comprehensive differential diagnosis lists with confidence scores</span>
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <span>Treatment recommendations and drug interaction warnings</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-button modal-button-secondary" onclick="closeDecisionSupport()">
+                    Maybe Later
+                </button>
+                <button class="modal-button modal-button-primary" onclick="upgradeToProPlan()">
+                    Upgrade to Pro
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Content Layer -->
+    <div class="content-layer">
+        <!-- Patient Header - Compact -->
+        <header class="patient-header">
+            <div class="patient-identity">
+                <div class="patient-main-info">
+                    <div class="patient-avatar">RS</div>
+                    <div class="patient-details">
+                        <h1>ِRamadan Said Mohamed</h1>
+                        <p class="patient-meta">Dr. Tareq Ahmed / Patient ID #2031</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary">Edit File</button>
+                    <button class="btn btn-secondary">Start Collaboration</button>
+                    <button class="btn btn-primary">Verify Summary</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Container -->
+        <div class="container">
+            <!-- Tab Navigation -->
+            <nav class="tab-nav">
+                <button class="tab-btn active" data-tab="overview">Overview</button>
+                <button class="tab-btn" data-tab="keyinfo">Key Important Info</button>
+                <button class="tab-btn" data-tab="comparative">Comparative Analysis</button>
+                <button class="tab-btn" data-tab="records">Patient Records</button>
+                <button class="tab-btn" data-tab="decision">Decision Support</button>
+                <button class="tab-btn" data-tab="tasks">Tasks & Follow-ups</button>
+                <button class="tab-btn" data-tab="activity">Activity Log</button>
+            </nav>
+
+            <!-- Overview Tab -->
+            <div class="tab-content active" id="overview">
+                <div class="overview-layout">
+                    <div class="card smart-summary">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <span class="ai-pulse"></span>
+                                Smart Summary
+                            </h2>
+                        </div>
+                        <div class="ai-insight">
+                            <strong>AI Summary:</strong> This 51-year-old male patient presented initially with
+                            sudden-onset severe headache and dizziness, later found to be caused by profound bradycardia
+                            (HR 21 bpm), requiring pacemaker implantation. After initial improvement, he developed
+                            recurrence of symptoms due to pacemaker failure, followed by surgical site infection and
+                            persistent high-grade fever. He is currently hospitalized for management of suspected
+                            pacemaker-related infection. There is no significant past medical history, no chronic
+                            illnesses, and no relevant family history.
+
+                        </div>
+
+                        <div class="critical-info-section">
+                            <h3 class="section-header">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
+                                Critical Key Information
+                            </h3>
+                            <div class="key-info-grid">
+                                <div class="info-item">
+                                    <div class="info-label">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg>
+                                        Primary Condition
+                                    </div>
+                                    <div class="info-value">Non-smoker, No special habits</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                                        </svg>
+                                        Current Diagnosis
+                                    </div>
+                                    <div class="info-value">Symptomatic severe bradycardia (history, treated with permanent pacemaker)</div>
+                                </div>
+                                <div class="info-item" style="background: #FFECEC; border-color: #FF5C5C;">
+                                    <div class="info-label" style="color: #FF5C5C;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path
+                                                d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                                            </path>
+                                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                        </svg>
+                                        Critical Allergy
+                                    </div>
+                                    <div class="info-value" style="color: #FF5C5C;">Nothing</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                                        </svg>
+                                        Date of Birth
+                                    </div>
+                                    <div class="info-value">jan 23, 1975 (51 years)</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                                        </svg>
+                                        Blood Type
+                                    </div>
+                                    <div class="info-value">O+</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path
+                                                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+                                            </path>
+                                        </svg>
+                                        Contact Number
+                                    </div>
+                                    <div class="info-value">01002113407</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- <div class="vital-cards">
+                        <div class="vital-card">
+                            <div class="vital-header">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                                </svg>
+                                Blood Pressure
+                            </div>
+                            <div class="vital-value">128/82</div>
+                            <div class="vital-status">✓ Normal Range</div>
+                            <span class="badge badge-stable">Improved -17/-10</span>
+                        </div>
+
+                        <div class="vital-card">
+                            <div class="vital-header">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+                                    </path>
+                                </svg>
+                                Heart Rate
+                            </div>
+                            <div class="vital-value">72 <span style="font-size: 14px; color: #8A94A6;">bpm</span></div>
+                            <div class="vital-status">✓ Normal Range</div>
+                            <span class="badge badge-info">Stable</span>
+                        </div>
+
+                        <div class="vital-card">
+                            <div class="vital-header">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                </svg>
+                                BMI
+                            </div>
+                            <div class="vital-value">29.4</div>
+                            <div class="vital-status" style="color: #FFA500;">⚠ Overweight</div>
+                            <span class="badge badge-stable">Improved -1.2</span>
+                        </div>
+
+                        <div class="vital-card">
+                            <div class="vital-header">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M12 2v20M2 12h20"></path>
+                                </svg>
+                                O₂ Saturation
+                            </div>
+                            <div class="vital-value">98<span style="font-size: 14px; color: #8A94A6;">%</span></div>
+                            <div class="vital-status">✓ Excellent</div>
+                            <span class="badge badge-info">Stable</span>
+                        </div>
+                    </div> -->
+                </div>
+            </div>
+
+            <!-- Key Important Info Tab -->
+            <div class="tab-content" id="keyinfo">
+                <div class="priority-sections">
+                    <div class="priority-card">
+                        <div class="priority-header">
+                            <h3 class="priority-title">
+                                <span class="priority-icon high"></span>
+                                High Priority Alerts
+                            </h3>
+                            <button class="btn btn-primary">+ Add Note</button>
+                        </div>
+                        <div class="note-list">
+                            <div class="note-item high-priority">
+                                <div class="note-text">
+                                    <!-- <strong>ALT Elevation Requires Follow-up:</strong> Confirmed diagnosis of Microscopic Polyangiitis (MPA) with positive P-ANCA (1:60 titers) -->
+                                    Persistent high-grade fever (38–39°C) in a patient with an implanted pacemaker
+                                    raises concern for pacemaker-related infection or infective endocarditis
+                                </div>
+                                <div class="note-meta">
+                                    <!-- <span>📝 Dr. Sarah Ahmed</span> -->
+                                    <span>jan 28, 2026</span>
+                                </div>
+                            </div>
+
+                            <div class="note-item high-priority">
+                                <div class="note-text">
+                                    <!-- <strong>Penicillin Allergy - Critical:</strong> Severe motor nerve dysfunction
+                                    confirmed by EMG-NCV -->
+                                    History of pacemaker malfunction with recurrent symptoms suggests possible device or
+                                    lead-related complications
+
+                                </div>
+                                <div class="note-meta">
+                                    <!-- <span>⚠️ Critical Medical Alert</span> -->
+                                    <span>Permanent Record</span>
+                                </div>
+                            </div>
+
+                            <div class="note-item high-priority">
+                                <div class="note-text">
+                                    <!-- <strong>Medication Adherence Check:</strong> Histopathologic evidence of vasculitis
+                                    in sural nerve biopsy -->
+                                    Purulent discharge from pacemaker incision indicates confirmed secondary bacterial
+                                    infection
+
+                                </div>
+                                <div class="note-meta">
+                                    <!-- <span>📋 Dr. El-Sayed</span> -->
+                                    <span>jan 30, 2026</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="priority-card">
+                        <div class="priority-header">
+                            <h3 class="priority-title">
+                                <span class="priority-icon low"></span>
+                                Low Priority Notes
+                            </h3>
+                            <button class="btn btn-primary">+ Add Note</button>
+                        </div>
+                        <div class="note-list">
+                            <div class="note-item low-priority">
+                                <div class="note-text">
+                                    <!-- <strong>Medication Cost Concern Addressed:</strong> Delayed P-ANCA positivity after
+                                    third test -->
+                                    Use of Concor and Forxiga despite no prior history of hypertension or diabetes
+                                    requires monitoring
+
+                                </div>
+                                <div class="note-meta">
+                                    <!-- <span>💊 Pharmacy Note</span> -->
+                                    <span>jan 30, 2026</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="note-list" style="margin-top: 10px;">
+                            <div class="note-item low-priority">
+                                <div class="note-text">
+                                    <!-- <strong>Medication Cost Concern Addressed:</strong> Delayed P-ANCA positivity after
+                                    third test -->
+                                    Recurrent severe headache and dizziness without clear neurological findings may need
+                                    reevaluation after infection control
+                                </div>
+                                <div class="note-meta">
+                                    <!-- <span>💊 Pharmacy Note</span> -->
+                                    <span>jan 30, 2026</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparative Analysis Tab -->
+            <div class="tab-content" id="comparative">
+                <div class="card">
+                    <div class="timeline">
+                        <div class="timeline-node">Visit #1</div>
+                        <div class="timeline-node">Visit #2</div>
+                        <div class="timeline-node">Visit #3</div>
+                        <div class="timeline-node">Visit #4</div>
+                        <div class="timeline-node">Visit #5</div>
+                    </div>
+
+                    <div class="chart-grid">
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3 class="chart-title">Blood Pressure</h3>
+                                <span class="chart-trend trend-down">↓ 8.2%</span>
+                            </div>
+                            <div class="mini-chart">
+                                <svg class="chart-canvas" viewBox="0 0 300 180">
+                                    <defs>
+                                        <linearGradient id="grad1" x1="0%" y1="0%" x2="0%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#2A66FF;stop-opacity:0.3" />
+                                            <stop offset="100%" style="stop-color:#2A66FF;stop-opacity:0" />
+                                        </linearGradient>
+                                    </defs>
+                                    <path d="M 0 120 L 75 100 L 150 80 L 225 70 L 300 65 L 300 180 L 0 180 Z"
+                                        fill="url(#grad1)" />
+                                    <path d="M 0 120 L 75 100 L 150 80 L 225 70 L 300 65" stroke="#2A66FF"
+                                        stroke-width="3" fill="none" />
+                                    <circle cx="0" cy="120" r="4" fill="#2A66FF" />
+                                    <circle cx="75" cy="100" r="4" fill="#2A66FF" />
+                                    <circle cx="150" cy="80" r="4" fill="#2A66FF" />
+                                    <circle cx="225" cy="70" r="4" fill="#2A66FF" />
+                                    <circle cx="300" cy="65" r="4" fill="#00C187" />
+                                </svg>
+                            </div>
+                            <div class="chart-stats">
+                                <div class="stat-col">
+                                    <div class="stat-label">Initial</div>
+                                    <div class="stat-value">145/92</div>
+                                </div>
+                                <div class="stat-col">
+                                    <div class="stat-label">Current</div>
+                                    <div class="stat-value" style="color: #00C187;">128/82</div>
+                                </div>
+                                <div class="stat-col">
+                                    <div class="stat-label">Change</div>
+                                    <div class="stat-value" style="color: #00C187;">-17/-10</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3 class="chart-title">Total Cholesterol</h3>
+                                <span class="chart-trend trend-down">↓ 12.4%</span>
+                            </div>
+                            <div class="mini-chart">
+                                <svg class="chart-canvas" viewBox="0 0 300 180">
+                                    <defs>
+                                        <linearGradient id="grad2" x1="0%" y1="0%" x2="0%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#467DFF;stop-opacity:0.3" />
+                                            <stop offset="100%" style="stop-color:#467DFF;stop-opacity:0" />
+                                        </linearGradient>
+                                    </defs>
+                                    <path d="M 0 110 L 75 95 L 150 85 L 225 75 L 300 60 L 300 180 L 0 180 Z"
+                                        fill="url(#grad2)" />
+                                    <path d="M 0 110 L 75 95 L 150 85 L 225 75 L 300 60" stroke="#467DFF"
+                                        stroke-width="3" fill="none" />
+                                    <circle cx="0" cy="110" r="4" fill="#467DFF" />
+                                    <circle cx="75" cy="95" r="4" fill="#467DFF" />
+                                    <circle cx="150" cy="85" r="4" fill="#467DFF" />
+                                    <circle cx="225" cy="75" r="4" fill="#467DFF" />
+                                    <circle cx="300" cy="60" r="4" fill="#00C187" />
+                                </svg>
+                            </div>
+                            <div class="chart-stats">
+                                <div class="stat-col">
+                                    <div class="stat-label">Initial</div>
+                                    <div class="stat-value">223</div>
+                                </div>
+                                <div class="stat-col">
+                                    <div class="stat-label">Current</div>
+                                    <div class="stat-value" style="color: #00C187;">195</div>
+                                </div>
+                                <div class="stat-col">
+                                    <div class="stat-label">Change</div>
+                                    <div class="stat-value" style="color: #00C187;">-28</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3 class="chart-title">Fasting Glucose</h3>
+                                <span class="chart-trend trend-down">↓ 15.3%</span>
+                            </div>
+                            <div class="mini-chart">
+                                <svg class="chart-canvas" viewBox="0 0 300 180">
+                                    <defs>
+                                        <linearGradient id="grad3" x1="0%" y1="0%" x2="0%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#00C187;stop-opacity:0.3" />
+                                            <stop offset="100%" style="stop-color:#00C187;stop-opacity:0" />
+                                        </linearGradient>
+                                    </defs>
+                                    <path d="M 0 100 L 75 88 L 150 82 L 225 72 L 300 55 L 300 180 L 0 180 Z"
+                                        fill="url(#grad3)" />
+                                    <path d="M 0 100 L 75 88 L 150 82 L 225 72 L 300 55" stroke="#00C187"
+                                        stroke-width="3" fill="none" />
+                                    <circle cx="0" cy="100" r="4" fill="#00C187" />
+                                    <circle cx="75" cy="88" r="4" fill="#00C187" />
+                                    <circle cx="150" cy="82" r="4" fill="#00C187" />
+                                    <circle cx="225" cy="72" r="4" fill="#00C187" />
+                                    <circle cx="300" cy="55" r="4" fill="#00C187" />
+                                </svg>
+                            </div>
+                            <div class="chart-stats">
+                                <div class="stat-col">
+                                    <div class="stat-label">Initial</div>
+                                    <div class="stat-value">118</div>
+                                </div>
+                                <div class="stat-col">
+                                    <div class="stat-label">Current</div>
+                                    <div class="stat-value" style="color: #00C187;">102</div>
+                                </div>
+                                <div class="stat-col">
+                                    <div class="stat-label">Change</div>
+                                    <div class="stat-value" style="color: #00C187;">-16</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3 class="chart-title">Body Mass Index</h3>
+                                <span class="chart-trend trend-down">↓ 3.9%</span>
+                            </div>
+                            <div class="mini-chart">
+                                <svg class="chart-canvas" viewBox="0 0 300 180">
+                                    <defs>
+                                        <linearGradient id="grad4" x1="0%" y1="0%" x2="0%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#FFA500;stop-opacity:0.3" />
+                                            <stop offset="100%" style="stop-color:#FFA500;stop-opacity:0" />
+                                        </linearGradient>
+                                    </defs>
+                                    <path d="M 0 90 L 75 88 L 150 85 L 225 80 L 300 75 L 300 180 L 0 180 Z"
+                                        fill="url(#grad4)" />
+                                    <path d="M 0 90 L 75 88 L 150 85 L 225 80 L 300 75" stroke="#FFA500"
+                                        stroke-width="3" fill="none" />
+                                    <circle cx="0" cy="90" r="4" fill="#FFA500" />
+                                    <circle cx="75" cy="88" r="4" fill="#FFA500" />
+                                    <circle cx="150" cy="85" r="4" fill="#FFA500" />
+                                    <circle cx="225" cy="80" r="4" fill="#FFA500" />
+                                    <circle cx="300" cy="75" r="4" fill="#00C187" />
+                                </svg>
+                            </div>
+                            <div class="chart-stats">
+                                <div class="stat-col">
+                                    <div class="stat-label">Initial</div>
+                                    <div class="stat-value">30.6</div>
+                                </div>
+                                <div class="stat-col">
+                                    <div class="stat-label">Current</div>
+                                    <div class="stat-value" style="color: #00C187;">29.4</div>
+                                </div>
+                                <div class="stat-col">
+                                    <div class="stat-label">Change</div>
+                                    <div class="stat-value" style="color: #00C187;">-1.2</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3 class="chart-title">LDL Cholesterol</h3>
+                                <span class="chart-trend trend-down">↓ 18.7%</span>
+                            </div>
+                            <div class="mini-chart">
+                                <svg class="chart-canvas" viewBox="0 0 300 180">
+                                    <defs>
+                                        <linearGradient id="grad5" x1="0%" y1="0%" x2="0%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#2A66FF;stop-opacity:0.3" />
+                                            <stop offset="100%" style="stop-color:#2A66FF;stop-opacity:0" />
+                                        </linearGradient>
+                                    </defs>
+                                    <path d="M 0 105 L 75 90 L 150 78 L 225 68 L 300 58 L 300 180 L 0 180 Z"
+                                        fill="url(#grad5)" />
+                                    <path d="M 0 105 L 75 90 L 150 78 L 225 68 L 300 58" stroke="#2A66FF"
+                                        stroke-width="3" fill="none" />
+                                    <circle cx="0" cy="105" r="4" fill="#2A66FF" />
+                                    <circle cx="75" cy="90" r="4" fill="#2A66FF" />
+                                    <circle cx="150" cy="78" r="4" fill="#2A66FF" />
+                                    <circle cx="225" cy="68" r="4" fill="#2A66FF" />
+                                    <circle cx="300" cy="58" r="4" fill="#00C187" />
+                                </svg>
+                            </div>
+                            <div class="chart-stats">
+                                <div class="stat-col">
+                                    <div class="stat-label">Initial</div>
+                                    <div class="stat-value">150</div>
+                                </div>
+                                <div class="stat-col">
+                                    <div class="stat-label">Current</div>
+                                    <div class="stat-value" style="color: #00C187;">122</div>
+                                </div>
+                                <div class="stat-col">
+                                    <div class="stat-label">Change</div>
+                                    <div class="stat-value" style="color: #00C187;">-28</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3 class="chart-title">HbA1c Level</h3>
+                                <span class="chart-trend trend-stable">↓ 6.8%</span>
+                            </div>
+                            <div class="mini-chart">
+                                <svg class="chart-canvas" viewBox="0 0 300 180">
+                                    <defs>
+                                        <linearGradient id="grad6" x1="0%" y1="0%" x2="0%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#467DFF;stop-opacity:0.3" />
+                                            <stop offset="100%" style="stop-color:#467DFF;stop-opacity:0" />
+                                        </linearGradient>
+                                    </defs>
+                                    <path d="M 0 95 L 75 88 L 150 82 L 225 78 L 300 70 L 300 180 L 0 180 Z"
+                                        fill="url(#grad6)" />
+                                    <path d="M 0 95 L 75 88 L 150 82 L 225 78 L 300 70" stroke="#467DFF"
+                                        stroke-width="3" fill="none" />
+                                    <circle cx="0" cy="95" r="4" fill="#467DFF" />
+                                    <circle cx="75" cy="88" r="4" fill="#467DFF" />
+                                    <circle cx="150" cy="82" r="4" fill="#467DFF" />
+                                    <circle cx="225" cy="78" r="4" fill="#467DFF" />
+                                    <circle cx="300" cy="70" r="4" fill="#00C187" />
+                                </svg>
+                            </div>
+                            <div class="chart-stats">
+                                <div class="stat-col">
+                                    <div class="stat-label">Initial</div>
+                                    <div class="stat-value">6.8%</div>
+                                </div>
+                                <div class="stat-col">
+                                    <div class="stat-label">Current</div>
+                                    <div class="stat-value" style="color: #00C187;">6.1%</div>
+                                </div>
+                                <div class="stat-col">
+                                    <div class="stat-label">Change</div>
+                                    <div class="stat-value" style="color: #00C187;">-0.7%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Patient Records Tab -->
+            <div class="tab-content" id="records">
+                <div class="records-layout">
+                    <!-- Medical History Section -->
+                    <div class="section-card">
+                        <div class="section-title">
+                            <div class="section-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                                </svg>
+                            </div>
+                            Medical History
+                        </div>
+
+                        <div class="accordion-item">
+                            <div class="accordion-header">
+                                <span>Chronic Conditions</span>
+                                <span class="accordion-icon">▼</span>
+                            </div>
+                            <div class="accordion-content">
+                                <div class="history-entry">
+                                    <strong>Hypertension</strong> - Since 2018
+                                    <br><span style="font-size: 11px; color: #8A94A6;">Currently managed with
+                                        medication</span>
+                                    <br><span class="badge badge-info"
+                                        style="margin-top: 6px; display: inline-block;">Verified by AI</span>
+                                </div>
+                                <div class="history-entry">
+                                    <strong>Type 2 Diabetes</strong> - Since 2020
+                                    <br><span style="font-size: 11px; color: #8A94A6;">Well controlled with lifestyle
+                                        and medication</span>
+                                    <br><span class="badge badge-info"
+                                        style="margin-top: 6px; display: inline-block;">Verified by AI</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <div class="accordion-header">
+                                <span>Past Surgeries</span>
+                                <span class="accordion-icon">▼</span>
+                            </div>
+                            <div class="accordion-content">
+                                <div class="history-entry">
+                                    <strong>Appendectomy</strong> - 2012
+                                    <br><span style="font-size: 11px; color: #8A94A6;">No complications reported</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <div class="accordion-header">
+                                <span>Ongoing Medications</span>
+                                <span class="accordion-icon">▼</span>
+                            </div>
+                            <div class="accordion-content">
+                                <div class="history-entry">
+                                    <strong>Atorvastatin 20mg</strong> - Daily
+                                    <br><span style="font-size: 11px; color: #8A94A6;">For cholesterol management</span>
+                                    <br><span class="badge badge-info"
+                                        style="margin-top: 6px; display: inline-block;">Verified by AI</span>
+                                </div>
+                                <div class="history-entry">
+                                    <strong>Metformin 500mg</strong> - Twice daily
+                                    <br><span style="font-size: 11px; color: #8A94A6;">For blood sugar control</span>
+                                    <br><span class="badge badge-info"
+                                        style="margin-top: 6px; display: inline-block;">Verified by AI</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <div class="accordion-header">
+                                <span>Allergies</span>
+                                <span class="accordion-icon">▼</span>
+                            </div>
+                            <div class="accordion-content">
+                                <div class="history-entry" style="background: #FFECEC; border-left: 3px solid #FF5C5C;">
+                                    <strong>Penicillin</strong>
+                                    <br><span style="font-size: 11px; color: #FF5C5C;">Severe allergic reaction -
+                                        anaphylaxis</span>
+                                    <br><span class="badge badge-critical"
+                                        style="margin-top: 6px; display: inline-block;">Critical Alert</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lab Reports Section -->
+                    <div class="section-card">
+                        <div class="section-title">
+                            <div class="section-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10 9 9 9 8 9"></polyline>
+                                </svg>
+                            </div>
+                            Lab & Reports
+                        </div>
+
+                        <div class="report-list">
+                            <div class="report-card">
+                                <div class="report-icon">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2A66FF"
+                                        stroke-width="2">
+                                        <path d="M9 11l3 3L22 4"></path>
+                                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                                    </svg>
+                                </div>
+                                <div class="report-info">
+                                    <div class="report-name">Complete Blood Count</div>
+                                    <div class="report-date">Oct 30, 2025</div>
+                                </div>
+                                <span class="badge badge-stable">Normal</span>
+                            </div>
+
+                            <div class="report-card">
+                                <div class="report-icon">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFA500"
+                                        stroke-width="2">
+                                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                    </svg>
+                                </div>
+                                <div class="report-info">
+                                    <div class="report-name">Liver Function Test</div>
+                                    <div class="report-date">Oct 25, 2025</div>
+                                </div>
+                                <span class="badge badge-warning">Elevated</span>
+                            </div>
+
+                            <div class="report-card">
+                                <div class="report-icon">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2A66FF"
+                                        stroke-width="2">
+                                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                                    </svg>
+                                </div>
+                                <div class="report-info">
+                                    <div class="report-name">Lipid Panel</div>
+                                    <div class="report-date">Oct 20, 2025</div>
+                                </div>
+                                <span class="badge badge-stable">Improved</span>
+                            </div>
+
+                            <div class="report-card">
+                                <div class="report-icon">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00C187"
+                                        stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                </div>
+                                <div class="report-info">
+                                    <div class="report-name">HbA1c Test</div>
+                                    <div class="report-date">Oct 15, 2025</div>
+                                </div>
+                                <span class="badge badge-stable">Normal</span>
+                            </div>
+
+                            <div class="report-card">
+                                <div class="report-icon">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2A66FF"
+                                        stroke-width="2">
+                                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                                    </svg>
+                                </div>
+                                <div class="report-info">
+                                    <div class="report-name">Kidney Function Test</div>
+                                    <div class="report-date">Oct 10, 2025</div>
+                                </div>
+                                <span class="badge badge-stable">Normal</span>
+                            </div>
+
+                            <div class="report-card">
+                                <div class="report-icon">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#467DFF"
+                                        stroke-width="2">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                        <polyline points="21 15 16 10 5 21"></polyline>
+                                    </svg>
+                                </div>
+                                <div class="report-info">
+                                    <div class="report-name">Abdominal Ultrasound</div>
+                                    <div class="report-date">Oct 5, 2025</div>
+                                </div>
+                                <span class="badge badge-info">Review</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Decision Support Tab -->
+            <div class="tab-content" id="decision">
+                <div class="card">
+                    <h2 class="card-title" style="margin-bottom: 20px;">
+                        <span class="ai-pulse"></span>
+                        AI-Powered Decision Support
+                    </h2>
+                    <div class="likelihood-stack">
+                        <div class="likelihood-card high">
+                            <div class="likelihood-header">
+                                <div>
+                                    <div style="font-size: 11px; color: #FF5C5C; margin-bottom: 3px; font-weight: 600;">
+                                        HIGH LIKELIHOOD</div>
+                                    <div class="likelihood-title">Pacemaker-related infection (device or lead infection)</div>
+                                </div>
+                                <div class="confidence" style="color: #FF5C5C;">94%</div>
+                            </div>
+                            <div class="reasoning">
+                                <strong>Clinical Reasoning:</strong> Based on elevated ALT (48 U/L), BMI 29.4,
+                                cholesterol trend showing mild elevation, and ultrasound findings consistent with fatty
+                                infiltration. Patient's metabolic profile and lifestyle factors support this diagnosis.
+                            </div>
+                        </div>
+
+                        <div class="likelihood-card high">
+                            <div class="likelihood-header">
+                                <div>
+                                    <div style="font-size: 11px; color: #FF5C5C; margin-bottom: 3px; font-weight: 600;">
+                                        HIGH LIKELIHOOD</div>
+                                    <div class="likelihood-title">Symptomatic sinus node dysfunction or high-grade AV block</div>
+                                </div>
+                                <div class="confidence" style="color: #FF5C5C;">76%</div>
+                            </div>
+                            <div class="reasoning">
+                                <strong>Clinical Reasoning:</strong> Elevated fasting glucose (102 mg/dL), HbA1c at
+                                6.1%, central obesity (BMI 29.4), and history of Type 2 Diabetes suggest ongoing insulin
+                                resistance despite treatment. Recommend insulin sensitivity assessment.
+                            </div>
+                        </div>
+
+                        <div class="likelihood-card medium">
+                            <div class="likelihood-header">
+                                <div>
+                                    <div style="font-size: 11px; color: #FFA500; margin-bottom: 3px; font-weight: 600;">
+                                        POSSIBLE</div>
+                                    <div class="likelihood-title">Infective endocarditis related to pacemaker leads</div>
+                                </div>
+                                <div class="confidence" style="color: #FFA500;">5%</div>
+                            </div>
+                            <div class="reasoning">
+                                <strong>Clinical Reasoning:</strong> Patient presents with 3 of 5 criteria: elevated
+                                fasting glucose (102 mg/dL), increased waist circumference, and dyslipidemia. Blood
+                                pressure has normalized with treatment. Requires continued monitoring.
+                            </div>
+                        </div>
+
+                        <div class="likelihood-card medium">
+                            <div class="likelihood-header">
+                                <div>
+                                    <div style="font-size: 11px; color: #FFA500; margin-bottom: 3px; font-weight: 600;">
+                                        POSSIBLE</div>
+                                    <div class="likelihood-title">Systemic bacterial infection secondary to surgical site infection</div>
+                                </div>
+                                <div class="confidence" style="color: #FFA500;">3%</div>
+                            </div>
+                            <div class="reasoning">
+                                <strong>Clinical Reasoning:</strong> Multiple risk factors present including diabetes,
+                                hypertension (controlled), dyslipidemia, and overweight status. 10-year cardiovascular
+                                risk score suggests moderate elevation. Lifestyle modifications showing positive effect.
+                            </div>
+                        </div>
+
+                        <div class="likelihood-card low">
+                            <div class="likelihood-header">
+                                <div>
+                                    <div style="font-size: 11px; color: #8A94A6; margin-bottom: 3px; font-weight: 600;">
+                                        LOW LIKELIHOOD</div>
+                                    <div class="likelihood-title">Primary neurological disorder causing headache and dizziness</div>
+                                </div>
+                                <div class="confidence" style="color: #8A94A6;">1%</div>
+                            </div>
+                            <div class="reasoning">
+                                <strong>Clinical Reasoning:</strong> Negative hepatitis panel from previous testing. ALT
+                                elevation is mild and pattern more consistent with metabolic causes. No risk factors or
+                                symptoms suggestive of viral infection.
+                            </div>
+                        </div>
+
+                        <div class="likelihood-card low">
+                            <div class="likelihood-header">
+                                <div>
+                                    <div style="font-size: 11px; color: #8A94A6; margin-bottom: 3px; font-weight: 600;">
+                                        LOW LIKELIHOOD</div>
+                                    <div class="likelihood-title">Primary cardiac ischemic disease</div>
+                                </div>
+                                <div class="confidence" style="color: #8A94A6;">0.5%</div>
+                            </div>
+                            <div class="reasoning">
+                                <strong>Clinical Reasoning:</strong> No clinical signs of liver failure or portal
+                                hypertension. Ultrasound shows fatty infiltration without evidence of advanced fibrosis.
+                                Liver enzymes mildly elevated but improving with treatment. Platelet count normal.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tasks & Follow-ups Tab -->
+            <div class="tab-content" id="tasks">
+                <div class="card">
+                    <h3 style="font-size: 16px; font-weight: 600; color: #0E1A34; margin-bottom: 18px;">Upcoming Tasks
+                    </h3>
+                    <div class="task-list">
+                        <div class="task-item">
+                            <div class="task-checkbox"></div>
+                            <div class="task-text">Schedule MRI for liver assessment</div>
+                            <span class="badge badge-critical">Due Nov 5</span>
+                        </div>
+
+                        <div class="task-item">
+                            <div class="task-checkbox checked"></div>
+                            <div class="task-text done">Complete Blood Test</div>
+                            <span class="badge badge-stable">Done Oct 30</span>
+                        </div>
+
+                        <div class="task-item">
+                            <div class="task-checkbox"></div>
+                            <div class="task-text">Follow-up consultation</div>
+                            <span class="badge badge-info">Due Nov 15</span>
+                        </div>
+
+                        <div class="task-item">
+                            <div class="task-checkbox checked"></div>
+                            <div class="task-text done">Review medication adherence</div>
+                            <span class="badge badge-stable">Done Oct 28</span>
+                        </div>
+
+                        <div class="task-item">
+                            <div class="task-checkbox"></div>
+                            <div class="task-text">Nutritionist consultation</div>
+                            <span class="badge badge-info">Due Nov 10</span>
+                        </div>
+
+                        <div class="task-item">
+                            <div class="task-checkbox"></div>
+                            <div class="task-text">Repeat Liver Function Test</div>
+                            <span class="badge badge-info">Due Nov 10</span>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" style="margin-top: 20px;">+ Add New Follow-up</button>
+                </div>
+            </div>
+
+            <!-- Activity Log Tab -->
+            <div class="tab-content" id="activity">
+                <div class="card">
+                    <h3 style="font-size: 16px; font-weight: 600; color: #0E1A34; margin-bottom: 18px;">Recent Activity
+                    </h3>
+                    <div class="activity-timeline">
+                        <div class="activity-item">
+                            <div class="activity-text">🕒 Dr. Ahmed uploaded new lab results</div>
+                            <div class="activity-time">Oct 31, 2025 - 2:30 PM</div>
+                        </div>
+
+                        <div class="activity-item">
+                            <div class="activity-text">✅ AI summary verified by Dr. Sarah</div>
+                            <div class="activity-time">Oct 30, 2025 - 11:15 AM</div>
+                        </div>
+
+                        <div class="activity-item">
+                            <div class="activity-text">📎 New note added: blood pressure stabilized</div>
+                            <div class="activity-time">Oct 30, 2025 - 9:45 AM</div>
+                        </div>
+
+                        <div class="activity-item">
+                            <div class="activity-text">🩸 Complete Blood Count test completed</div>
+                            <div class="activity-time">Oct 30, 2025 - 8:00 AM</div>
+                        </div>
+
+                        <div class="activity-item">
+                            <div class="activity-text">📊 Liver Function Test results analyzed by AI</div>
+                            <div class="activity-time">Oct 25, 2025 - 4:20 PM</div>
+                        </div>
+
+                        <div class="activity-item">
+                            <div class="activity-text">👨‍⚕️ Dr. Mansour updated medication dosage</div>
+                            <div class="activity-time">Oct 25, 2025 - 2:10 PM</div>
+                        </div>
+
+                        <div class="activity-item">
+                            <div class="activity-text">📋 Patient profile updated with new vitals</div>
+                            <div class="activity-time">Oct 20, 2025 - 10:30 AM</div>
+                        </div>
+
+                        <div class="activity-item">
+                            <div class="activity-text">🏥 Abdominal ultrasound report uploaded</div>
+                            <div class="activity-time">Oct 5, 2025 - 3:15 PM</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot Trigger -->
+    <div class="chatbot-trigger" onclick="toggleChat()">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+    </div>
+
+    <!-- Chatbot Panel -->
+    <div class="chatbot-panel" id="chatPanel">
+        <div class="chat-header">
+            <div>
+                <div style="font-weight: 600;">AI Assistant</div>
+                <div style="font-size: 11px; opacity: 0.9;">Always here to help</div>
+            </div>
+            <button onclick="toggleChat()"
+                style="background: none; border: none; color: white; font-size: 22px; cursor: pointer;">×</button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="message ai">Hello Dr. Layla! How can I assist you with Nour Hassan's case today?</div>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="chatInput" placeholder="Ask me anything..." onkeypress="handleChatEnter(event)">
+            <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // Tab Switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const currentTab = document.querySelector('.tab-content.active');
+                const targetTab = document.getElementById(btn.dataset.tab);
+
+                if (currentTab === targetTab) return;
+
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                btn.classList.add('active');
+                targetTab.classList.add('active');
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        });
+
+        // Accordion
+        document.querySelectorAll('.accordion-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const item = header.parentElement;
+                const wasActive = item.classList.contains('active');
+
+                const section = header.closest('.section-card');
+                section.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('active'));
+
+                if (!wasActive) {
+                    item.classList.add('active');
+                }
+            });
+        });
+
+        // Likelihood Cards Expansion
+        document.querySelectorAll('.likelihood-card').forEach(card => {
+            card.addEventListener('click', () => {
+                card.classList.toggle('expanded');
+            });
+        });
+
+        // Task Checkbox
+        document.querySelectorAll('.task-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('click', (e) => {
+                e.stopPropagation();
+                checkbox.classList.toggle('checked');
+                const taskText = checkbox.nextElementSibling;
+                taskText.classList.toggle('done');
+            });
+        });
+
+        // Chatbot
+        function toggleChat() {
+            document.getElementById('chatPanel').classList.toggle('active');
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+
+            if (message) {
+                const messagesContainer = document.getElementById('chatMessages');
+
+                const userMsg = document.createElement('div');
+                userMsg.className = 'message user';
+                userMsg.textContent = message;
+                messagesContainer.appendChild(userMsg);
+
+                input.value = '';
+
+                setTimeout(() => {
+                    const aiMsg = document.createElement('div');
+                    aiMsg.className = 'message ai';
+
+                    if (message.toLowerCase().includes('hba1c')) {
+                        aiMsg.textContent = '6.1% (Oct 25, 2025). Within normal range for diabetic patients. Shows 0.7% improvement from baseline.';
+                    } else if (message.toLowerCase().includes('liver') || message.toLowerCase().includes('alt')) {
+                        aiMsg.textContent = 'ALT slightly elevated at 48 U/L; however, showing consistent improvement overall. Last three readings: 62 → 55 → 48 U/L. Recommend follow-up test in 7 days.';
+                    } else if (message.toLowerCase().includes('test') || message.toLowerCase().includes('drug')) {
+                        aiMsg.textContent = 'Current medications: Atorvastatin 20mg daily, Metformin 500mg twice daily. No interactions detected. Patient reported good adherence.';
+                    } else if (message.toLowerCase().includes('blood pressure') || message.toLowerCase().includes('bp')) {
+                        aiMsg.textContent = 'Blood pressure shows excellent improvement: 145/92 → 128/82 mmHg. Normalized over last 3 visits. Treatment effective.';
+                    } else {
+                        aiMsg.textContent = 'He was prescribed pofalgan to control the fever, concor to prevent hypertension and forxiga to prevent edema.';
+                    }
+
+                    messagesContainer.appendChild(aiMsg);
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }, 800);
+
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        }
+
+        function handleChatEnter(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // Report Card Interactions
+        document.querySelectorAll('.report-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.report-card').forEach(c => {
+                    c.style.borderColor = '#E6EAF2';
+                    c.style.background = '#F8FAFF';
+                });
+                card.style.borderColor = '#2A66FF';
+                card.style.background = 'white';
+            });
+        });
+
+        // Parallax effect
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            document.querySelectorAll('.ambient-ripple').forEach((ripple, index) => {
+                ripple.style.transform = `translateY(${scrolled * (0.1 + index * 0.05)}px)`;
+            });
+        });
+
+        // Activity timeline animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateX(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.activity-item').forEach(item => {
+            item.style.opacity = '0';
+            item.style.transform = 'translateX(-20px)';
+            item.style.transition = 'all 0.5s ease';
+            observer.observe(item);
+        });
+
+        function openDecisionSupport() {
+            document.getElementById('decisionSupportModal').classList.add('active');
+        }
+
+        function closeDecisionSupport() {
+            document.getElementById('decisionSupportModal').classList.remove('active');
+        }
+
+        function upgradeToProPlan() {
+            alert('Redirecting to subscription page...');
+            closeDecisionSupport();
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('decisionSupportModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeDecisionSupport();
+            }
+        });
+    </script>
+</body>
+
+
+</html>

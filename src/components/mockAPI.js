@@ -1,5 +1,5 @@
-// const API_BASE_URL = 'https://nontelepathically-pamphletary-cyndi.ngrok-free.dev';
-const API_BASE_URL = 'https://toothlike-intermetatarsal-avah.ngrok-free.dev';
+const API_BASE_URL = 'https://nontelepathically-pamphletary-cyndi.ngrok-free.dev';
+// const API_BASE_URL = 'https://toothlike-intermetatarsal-avah.ngrok-free.dev';
 
 import { getCookie, setCookie, deleteCookie, setJsonCookie } from './cookieUtils';
 
