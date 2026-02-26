@@ -574,14 +574,38 @@ const AddPatient = () => {
                     Optional - for record linkage
                   </div>
                 </div>
-
-               
               </div>
 
               <div className="wizard-actions">
-                <div></div>
                 <button
-                  className="btn btn-primary"
+                  className="btn btn-secondary"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "10px",
+                    padding: "10px 10px",
+                  }}
+                  onClick={() => navigate("/patients")}
+                >
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                  Back
+                </button>
+                <button
+                  className="btn btn-primary" style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "10px",
+                    padding: "8px 10px",
+                  }}
                   disabled={!isStep1Valid}
                   onClick={() => goToStep(2)}
                 >
@@ -748,7 +772,13 @@ const AddPatient = () => {
 
               <div className="wizard-actions">
                 <button
-                  className="btn btn-secondary"
+                  className="btn btn-secondary" style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "10px",
+                    padding: "10px 10px",
+                  }}
                   onClick={() => goToStep(1)}
                 >
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -762,7 +792,13 @@ const AddPatient = () => {
                   Back
                 </button>
                 <button
-                  className="btn btn-primary"
+                  className="btn btn-primary" style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "10px",
+                    padding: "10px 10px",
+                  }}
                   disabled={!isStep2Valid}
                   onClick={() => goToStep(3)}
                 >
@@ -927,9 +963,15 @@ const AddPatient = () => {
                 ))}
               </div>
 
-              <div className="wizard-actions">
+              <div className="wizard-actions" style={{gap:'50%'}} >
                 <button
-                  className="btn btn-secondary"
+                  className="btn btn-secondary" style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "10px",
+                    padding: "10px 10px",
+                  }}
                   onClick={() => goToStep(2)}
                   disabled={isProcessing}
                 >
@@ -944,7 +986,15 @@ const AddPatient = () => {
                   Back
                 </button>
                 <button
-                  className={`btn btn-primary ${isProcessing ? "loading" : ""}`}
+                  className={`btn btn-primary ${isProcessing ? "loading" : ""}`} 
+                  style={{
+                    width:'fit-content',
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "10px",
+                    padding: "10px 10px",
+                  }}
                   onClick={handleProcess}
                   disabled={isProcessing}
                 >
