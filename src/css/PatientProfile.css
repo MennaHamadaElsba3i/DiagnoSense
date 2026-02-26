@@ -645,6 +645,147 @@ body {
     background: #E9F0FF;
 }
 
+/* Scoped button overrides to prevent cross-component CSS contamination */
+.pp-scope .btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    outline: none;
+    width: auto;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.pp-scope .btn-primary {
+    background: #2A66FF;
+    color: white;
+    box-shadow: 0 2px 6px rgba(42, 102, 255, 0.25);
+    border: none;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+}
+
+.pp-scope .btn-primary:hover {
+    background: #1E4EDB;
+    transform: translateY(-1px);
+}
+
+.pp-scope .btn-secondary {
+    background: transparent;
+    color: #2A66FF;
+    border: 1px solid #2A66FF;
+}
+
+.pp-scope .btn-secondary:hover {
+    background: #E9F0FF;
+}
+
+/* Unique scoped button classes — immune to global CSS overrides */
+.pp-add-note-btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #2A66FF;
+    color: white;
+    border: none;
+    outline: none;
+    box-shadow: 0 2px 6px rgba(42, 102, 255, 0.25);
+    width: auto;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    line-height: 1;
+    min-width: 0;
+    max-width: none;
+}
+
+.pp-add-note-btn:hover {
+    background: #1E4EDB;
+    transform: translateY(-1px);
+}
+
+.pp-view-evidence-btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: transparent;
+    color: #2A66FF;
+    border: 1px solid #2A66FF;
+    outline: none;
+    width: auto;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    line-height: 1;
+    min-width: 0;
+    max-width: none;
+}
+
+.pp-view-evidence-btn:hover {
+    background: #E9F0FF;
+}
+
+/* View Evidence icon button inside note-meta */
+.pp-evidence-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #2A66FF;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    cursor: pointer;
+    padding: 3px 6px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    line-height: 1;
+    white-space: nowrap;
+    flex-shrink: 0;
+    letter-spacing: 0.1px;
+}
+
+.pp-evidence-icon-btn svg {
+    stroke: #2A66FF;
+    flex-shrink: 0;
+    transition: stroke 0.2s ease;
+}
+
+.pp-evidence-icon-btn:hover {
+    background: rgba(42, 102, 255, 0.08);
+    color: #1E4EDB;
+}
+
+.pp-evidence-icon-btn:hover svg {
+    stroke: #1E4EDB;
+}
+
+.pp-evidence-icon-btn:active {
+    background: rgba(42, 102, 255, 0.14);
+    transform: scale(0.97);
+}
+
 .container {
     max-width: 1400px;
     margin: 0 auto;
@@ -850,6 +991,24 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    gap: 10px;
+}
+
+.priority-header .btn {
+    width: auto !important;
+    flex-shrink: 0;
+    white-space: nowrap;
+    flex: 0 0 auto;
+}
+
+.pp-scope .priority-header .btn {
+    width: auto !important;
+    flex: 0 0 auto !important;
+    flex-shrink: 0;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .priority-title {
@@ -892,6 +1051,7 @@ body {
     border-radius: 10px;
     border-left: 3px solid;
     transition: all 0.3s ease;
+    position: relative;
 }
 
 .note-item.high-priority {
@@ -918,6 +1078,7 @@ body {
     color: #3A4560;
     line-height: 1.6;
     margin-bottom: 10px;
+    padding-right: 28px;
 }
 
 .note-meta {
@@ -926,6 +1087,216 @@ body {
     align-items: center;
     font-size: 11px;
     color: #8A94A6;
+}
+
+/* Action buttons container — only Edit button, absolute top-right of each note card */
+.pp-note-actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    z-index: 10;
+}
+
+/* Pencil edit button */
+.pp-note-edit-btn {
+    background: transparent;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    color: #2A66FF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, color 0.2s ease;
+    line-height: 1;
+    width: 28px;
+    height: 28px;
+}
+
+/* Hide action buttons container when in edit mode */
+.note-item:has(.pp-note-edit-textarea) .pp-note-actions {
+    display: none;
+}
+
+.pp-note-edit-btn svg {
+    stroke: #2A66FF;
+    transition: stroke 0.2s ease;
+    display: block;
+}
+
+.pp-note-edit-btn:hover {
+    background: rgba(42, 102, 255, 0.08);
+}
+
+.pp-note-edit-btn:hover svg {
+    stroke: #1E4EDB;
+}
+
+/* Delete button — sits in the note-footer row, right-aligned under Edit */
+button.pp-note-delete-btn {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(225, 29, 72, 0.35);
+    background: rgba(225, 29, 72, 0.08);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    color: #e11d48;
+    padding: 0;
+}
+
+button.pp-note-delete-btn svg {
+    width: 18px !important;
+    height: 18px !important;
+    display: inline-block !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+button.pp-note-delete-btn svg,
+button.pp-note-delete-btn svg * {
+    stroke: currentColor !important;
+    fill: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+button.pp-note-delete-btn:hover {
+    background: rgba(225, 29, 72, 0.18);
+    border-color: rgba(225, 29, 72, 0.65);
+    color: #be123c;
+}
+
+/* Editable textarea replacing note-text when in edit mode */
+.pp-note-edit-textarea {
+    width: 100%;
+    min-height: 72px;
+    padding: 10px 12px 10px 12px;
+    border: 1.5px solid #2A66FF;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #3A4560;
+    line-height: 1.6;
+    resize: vertical;
+    outline: none;
+    background: #F8FAFF;
+    box-sizing: border-box;
+    margin-bottom: 8px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Flex container for edit mode: left (date+evidence) | right (save+cancel) */
+.pp-edit-footer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Ensure left side doesn't wrap */
+.pp-edit-footer-row .note-footer {
+    flex: 1;
+    min-width: 0;
+}
+
+.pp-edit-footer-row .note-meta-stack {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+}
+
+.pp-edit-footer-row .pp-note-save-row {
+    flex-shrink: 0;
+    margin-bottom: 0;
+}
+
+.pp-note-edit-textarea:focus {
+    border-color: #1E4EDB;
+    box-shadow: 0 0 0 3px rgba(42, 102, 255, 0.1);
+    background: white;
+}
+
+/* Save / Cancel row — bottom-right aligned */
+.pp-note-save-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.pp-note-save-btn {
+    padding: 6px 16px;
+    background: #2A66FF;
+    color: white;
+    border: none;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+    line-height: 1;
+}
+
+.pp-note-save-btn:hover {
+    background: #1E4EDB;
+    transform: translateY(-1px);
+}
+
+.pp-note-cancel-btn {
+    padding: 6px 14px;
+    background: transparent;
+    color: #8A94A6;
+    border: 1px solid #D0D5E0;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+
+.pp-note-cancel-btn:hover {
+    background: #F0F2F8;
+    color: #3A4560;
+    border-color: #B0B8CC;
+}
+
+/* Footer row: left = date+evidence, right = delete button */
+.note-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 2px;
+}
+
+.note-meta-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.note-date {
+    font-size: 11px;
+    color: #8A94A6;
+    line-height: 1.4;
 }
 
 /* Charts & Timeline */
