@@ -521,7 +521,7 @@ const PatientList = () => {
               data-status={patient.status}
               data-patient={patient.name}
             >
-              <div className="patient-header" style={{alignItems:"center"}}>
+              <div className="patient-header" style={{alignItems:"center", border:'none', marginBottom:'0px'}}>
                 <div
                   className="patient-avatar"
                   style={{
