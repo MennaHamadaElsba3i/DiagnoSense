@@ -709,6 +709,7 @@ const PatientProfile = () => {
             <nav
               className="tab-nav"
               style={{
+                width:'96%',
                 position: "absolute",
                 top: "0",
                 "border-radius": "15px",

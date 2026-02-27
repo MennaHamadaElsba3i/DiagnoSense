@@ -916,11 +916,13 @@
              grid-column: 1 / -1;
         }
 
+       
         .form-label {
              font-size: 14px;
              font-weight: 600;
              color: #3A4560;
              letter-spacing: -0.1px;
+             
         }
 
         .form-label.required::after {
@@ -1304,7 +1306,8 @@
 
         /* Navigation Buttons */
         .wizard-actions {
-          gap: 60%;
+             /* gap: 60%; */
+             gap: 300px;
              display: flex;
              justify-content: space-between;
              align-items: center;
@@ -1363,9 +1366,46 @@
         }
 
         .btn svg {
-             width: 16px;
-             height: 16px;
+             width: 20px;
+             height: 20px;
              flex-shrink: 0;
+        }
+
+        .next,
+        .back {
+             padding: 8px 18px;
+             border-radius: 8px;
+             font-size: 15px;
+             font-weight: 600;
+             cursor: pointer;
+             transition: all 0.3s ease;
+             background: #2A66FF;
+             color: white;
+             border: none;
+             outline: none;
+             box-shadow: 0 2px 6px rgba(42, 102, 255, 0.25);
+             width: auto;
+             flex: 0 0 auto;
+             display: inline-flex;
+             align-items: center;
+             justify-content: center;
+             white-space: nowrap;
+             line-height: 1;
+             min-width: 0;
+             max-width: none;
+        }
+
+        .back{
+          background-color: white;
+          color: #4b4b4c ;
+        }
+        .next svg{
+             color: white;
+             width: 20px;
+        }
+        .back svg{
+            color: #4b4b4c;
+             width: 20px;
         }
 
         /* Helper Text */

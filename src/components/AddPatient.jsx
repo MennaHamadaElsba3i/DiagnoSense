@@ -578,14 +578,7 @@ const AddPatient = () => {
 
               <div className="wizard-actions">
                 <button
-                  className="btn btn-secondary"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: "10px",
-                    padding: "10px 10px",
-                  }}
+                  className="back"
                   onClick={() => navigate("/patients")}
                 >
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -599,13 +592,7 @@ const AddPatient = () => {
                   Back
                 </button>
                 <button
-                  className="btn btn-primary" style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: "10px",
-                    padding: "8px 10px",
-                  }}
+                  className="next"
                   disabled={!isStep1Valid}
                   onClick={() => goToStep(2)}
                 >
@@ -770,15 +757,20 @@ const AddPatient = () => {
                 ></textarea>
               </div>
 
+              <div className="form-group">
+                <label className="form-label">Chief Complaint</label>
+                <textarea
+                  className="form-textarea"
+                  id="ChiefComplaint"
+                  placeholder="Describe the main problem the patient is experiencing..."
+                  value={formData.familyHistory}
+                  onChange={handleInputChange}
+                ></textarea>
+              </div>
+
               <div className="wizard-actions">
                 <button
-                  className="btn btn-secondary" style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: "10px",
-                    padding: "10px 10px",
-                  }}
+                  className="back" style={{}}
                   onClick={() => goToStep(1)}
                 >
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -792,13 +784,7 @@ const AddPatient = () => {
                   Back
                 </button>
                 <button
-                  className="btn btn-primary" style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: "10px",
-                    padding: "10px 10px",
-                  }}
+                  className="next"
                   disabled={!isStep2Valid}
                   onClick={() => goToStep(3)}
                 >
@@ -965,13 +951,7 @@ const AddPatient = () => {
 
               <div className="wizard-actions" style={{gap:'50%'}} >
                 <button
-                  className="btn btn-secondary" style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: "10px",
-                    padding: "10px 10px",
-                  }}
+                  className="back"
                   onClick={() => goToStep(2)}
                   disabled={isProcessing}
                 >
@@ -986,15 +966,8 @@ const AddPatient = () => {
                   Back
                 </button>
                 <button
-                  className={`btn btn-primary ${isProcessing ? "loading" : ""}`} 
-                  style={{
-                    width:'fit-content',
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: "10px",
-                    padding: "10px 10px",
-                  }}
+                  className={`next ${isProcessing ? "loading" : ""}`} 
+                
                   onClick={handleProcess}
                   disabled={isProcessing}
                 >

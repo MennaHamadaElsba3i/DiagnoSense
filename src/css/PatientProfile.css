@@ -803,6 +803,7 @@ body {
     position: relative;
 }
 .content-layer.tab-nav {
+    
     position: absolute;
     top: 0;
     width: 100%;
