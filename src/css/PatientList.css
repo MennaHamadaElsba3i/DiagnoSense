@@ -841,10 +841,18 @@ body {
     margin-bottom: 4px;
 }
 
+.patient-meta-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
 .patient-meta {
     font-size: 14px;
     color: #8A94A6;
-    margin-bottom: 8px;
+    margin-bottom: 0;
 }
 
 .status-badge {
