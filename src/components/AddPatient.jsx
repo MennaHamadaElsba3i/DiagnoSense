@@ -13,6 +13,7 @@ const AddPatient = () => {
   const [isSmoker, setIsSmoker] = useState(null);
   const [hasSurgeries, setHasSurgeries] = useState(null);
   const [selectedChronicDiseases, setSelectedChronicDiseases] = useState([]);
+  const [isGenderOpen, setIsGenderOpen] = useState(false);
   const [fileManager, setFileManager] = useState({
     lab: [],
     history: [],
@@ -25,6 +26,7 @@ const AddPatient = () => {
 
   const [formData, setFormData] = useState({
     fullName: "",
+    email:"",
     age: "",
     phone: "",
     nationalId: "",
@@ -32,11 +34,12 @@ const AddPatient = () => {
     medications: "",
     allergies: "",
     familyHistory: "",
+    ChiefComplaint: "",
   });
 
   const isStep1Valid =
-    formData.fullName.trim() && formData.age && selectedGender;
-  const isStep2Valid = true;
+    formData.fullName.trim() && formData.age && selectedGender && formData.phone.trim() && formData.nationalId.trim();
+  const isStep2Valid = isSmoker !== null;
 
   useEffect(() => {
     const categories = ["lab", "history", "radiology"];
@@ -505,7 +508,7 @@ const AddPatient = () => {
                   />
                 </div>
 
-                <div className="form-group">
+                {/* <div className="form-group">
                   <label className="form-label required" htmlFor="gender">
                     Gender
                   </label>
@@ -523,10 +526,45 @@ const AddPatient = () => {
                     <option value="other">Other</option>
                     <option value="prefer_not_to_say">Prefer not to say</option>
                   </select>
-                </div>
+                </div> */}
 
+                  <div className="form-group">
+  <label className="form-label required">Gender</label>
+  <div className={`custom-select-container ${isGenderOpen ? "is-open" : ""}`}>
+    <div 
+      className={`form-input custom-select-trigger ${!selectedGender ? "placeholder" : ""}`}
+      onClick={() => setIsGenderOpen(!isGenderOpen)}
+    >
+      {selectedGender ? selectedGender.charAt(0).toUpperCase() + selectedGender.slice(1) : "Select gender"}
+      <svg className="arrow-icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
+    </div>
+    
+    {isGenderOpen && (
+      <div className="custom-options-list">
+        {[
+          { value: "male", label: "Male" },
+          { value: "female", label: "Female" },
+          { value: "other", label: "Other" },
+          { value: "prefer_not_to_say", label: "Prefer not to say" }
+        ].map((opt) => (
+          <div
+            key={opt.value}
+            className={`custom-option ${selectedGender === opt.value ? "selected" : ""}`}
+            onClick={() => {
+              setSelectedGender(opt.value);
+              setIsGenderOpen(false);
+            }}
+          >
+            {opt.label}
+            {selectedGender === opt.value && <svg className="check-icon" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" /></svg>}
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
                 <div className="form-group">
-                  <label className="form-label">Phone Number</label>
+                  <label className="form-label required">Phone Number</label>
                   <input
                     type="tel"
                     className="form-input"
@@ -549,7 +587,7 @@ const AddPatient = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">National ID / MRN</label>
+                  <label className="form-label required">National ID / MRN</label>
                   <input
                     type="text"
                     className="form-input"

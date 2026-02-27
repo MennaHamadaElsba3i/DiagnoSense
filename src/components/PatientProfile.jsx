@@ -154,7 +154,10 @@ const PatientProfile = () => {
     const id = `new-${priority}-${Date.now()}`;
     setNewNotes((prev) => ({
       ...prev,
-      [priority]: [...prev[priority], { id, text: "", date: null, saved: false }],
+      [priority]: [
+        ...prev[priority],
+        { id, text: "", date: null, saved: false },
+      ],
     }));
     setNewNoteTexts((prev) => ({ ...prev, [id]: "" }));
   };
@@ -162,12 +165,14 @@ const PatientProfile = () => {
   const saveNewNote = (priority, id) => {
     const text = newNoteTexts[id] || "";
     const date = new Date().toLocaleDateString("en-US", {
-      month: "short", day: "numeric", year: "numeric",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
     setNewNotes((prev) => ({
       ...prev,
       [priority]: prev[priority].map((n) =>
-        n.id === id ? { ...n, text, date, saved: true } : n
+        n.id === id ? { ...n, text, date, saved: true } : n,
       ),
     }));
   };
@@ -190,7 +195,7 @@ const PatientProfile = () => {
       const updated = {};
       for (const priority of ["high", "medium", "low"]) {
         updated[priority] = prev[priority].map((n) =>
-          n.id === id ? { ...n, saved: false } : n
+          n.id === id ? { ...n, saved: false } : n,
         );
       }
       return updated;
@@ -199,11 +204,16 @@ const PatientProfile = () => {
 
   // Static note texts (editable)
   const [staticNotes, setStaticNotes] = useState({
-    "high-1": "Persistent high-grade fever (38-39°C) in a patient with an implanted pacemaker raises concern for pacemaker-related infection or infective endocarditis.",
-    "high-2": "Patient has documented severe allergic reaction. Always verify antibiotic alternatives before prescribing.",
-    "medium-1": "Use of Concor and Forxiga despite no prior history of hypertension or diabetes requires monitoring and indication verification.",
-    "medium-2": "Liver enzyme ALT slightly elevated at last check. Recommend repeat liver function test in 7 days.",
-    "low-1": "Medication cost concern addressed. Patient inquired about generic alternatives; current prescription is already generic. Insurance verified.",
+    "high-1":
+      "Persistent high-grade fever (38-39°C) in a patient with an implanted pacemaker raises concern for pacemaker-related infection or infective endocarditis.",
+    "high-2":
+      "Patient has documented severe allergic reaction. Always verify antibiotic alternatives before prescribing.",
+    "medium-1":
+      "Use of Concor and Forxiga despite no prior history of hypertension or diabetes requires monitoring and indication verification.",
+    "medium-2":
+      "Liver enzyme ALT slightly elevated at last check. Recommend repeat liver function test in 7 days.",
+    "low-1":
+      "Medication cost concern addressed. Patient inquired about generic alternatives; current prescription is already generic. Insurance verified.",
   });
 
   const startEditNote = (id, currentText) => {
@@ -477,7 +487,14 @@ const PatientProfile = () => {
               className="decision-support-card"
               onClick={openDecisionSupport}
             >
-              <div className="card-header" style={{ marginBottom: '0px', gap: '10px', paddingBottom: '8px' }}>
+              <div
+                className="card-header"
+                style={{
+                  marginBottom: "0px",
+                  gap: "10px",
+                  paddingBottom: "8px",
+                }}
+              >
                 <div className="card-icon">
                   <svg viewBox="0 0 24 24">
                     <polyline points="9 11 12 14 22 4"></polyline>
@@ -576,10 +593,16 @@ const PatientProfile = () => {
               <div
                 className="modal-icon"
                 style={{
-                  background: "linear-gradient(135deg, #ff4444 0%, #cc0000 100%)",
+                  background:
+                    "linear-gradient(135deg, #ff4444 0%, #cc0000 100%)",
                 }}
               >
-                <svg viewBox="0 0 24 24" stroke="white" fill="none" strokeWidth="2">
+                <svg
+                  viewBox="0 0 24 24"
+                  stroke="white"
+                  fill="none"
+                  strokeWidth="2"
+                >
                   <polyline points="3 6 5 6 21 6"></polyline>
                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                   <line x1="10" y1="11" x2="10" y2="17"></line>
@@ -706,10 +729,14 @@ const PatientProfile = () => {
         <header className="patient-header pp-header">
           <div className="patient-identity">
             <div className="patient-main-info">
-              <div className="patient-avatar" style={{ borderRadius: '50%' }}>NH</div>
-              <div className="patient-details" style={{ marginBottom: '0px' }}>
+              <div className="patient-avatar" style={{ borderRadius: "50%" }}>
+                NH
+              </div>
+              <div className="patient-details" style={{ marginBottom: "0px" }}>
                 <h1>Nour Hassan</h1>
-                <p className="patient-meta">Dr. El-Sayed / National ID: #30410141201075</p>
+                <p className="patient-meta">
+                  Dr. El-Sayed / National ID: #30410141201075
+                </p>
               </div>
             </div>
             <div className="header-actions">
@@ -729,6 +756,9 @@ const PatientProfile = () => {
                   color: "#2A66FF",
                   border: "1px solid #2A66FF",
                   fontWeight: "bold",
+                }}
+                onClick={(e) => {
+                  navigate("/add-patient");
                 }}
               >
                 Edit File
@@ -765,7 +795,7 @@ const PatientProfile = () => {
             <nav
               className="tab-nav"
               style={{
-                width: '96%',
+                width: "96%",
                 position: "absolute",
                 top: "0",
                 "border-radius": "15px",
@@ -784,8 +814,9 @@ const PatientProfile = () => {
                 Key Important Info
               </button>
               <button
-                className={`tab-btn ${activeTab === "comparative" ? "active" : ""
-                  }`}
+                className={`tab-btn ${
+                  activeTab === "comparative" ? "active" : ""
+                }`}
                 onClick={() => handleTabClick("comparative")}
               >
                 Comparative Analysis
@@ -814,8 +845,9 @@ const PatientProfile = () => {
 
         <div className="container">
           <div
-            className={`tab-content ${activeTab === "overview" ? "active" : ""
-              }`}
+            className={`tab-content ${
+              activeTab === "overview" ? "active" : ""
+            }`}
             id="overview"
           >
             <div className="overview-layout">
@@ -836,7 +868,7 @@ const PatientProfile = () => {
                     {isLoadingAnalysis
                       ? "This 51-year-old male patient presented initially with sudden-onset severe headache and dizziness, later found to be caused by profound bradycardia (HR 21 bpm), requiring pacemaker implantation. After initial improvement, he developed recurrence of symptoms due to pacemaker failure, followed by surgical site infection and persistent high-grade fever. He is currently hospitalized for management of suspected pacemaker-related infection. There is no significant past medical history, no chronic illnesses, and no relevant family history."
                       : analysisData?.[0]?.result?.["ai-summary"] ||
-                      "No insights available No insights available No insights available No insights available No insights available No insights available No insights available"}
+                        "No insights available No insights available No insights available No insights available No insights available No insights available No insights available"}
                   </div>
                 </div>
 
@@ -866,21 +898,45 @@ const PatientProfile = () => {
                         onClick={() => setSelectedStatus("stable")}
                         style={{ cursor: "pointer" }}
                       >
-                        <span className="status-dot" style={{ backgroundColor: "#00C187", boxShadow: "none", animation: "none" }}></span> Stable
+                        <span
+                          className="status-dot"
+                          style={{
+                            backgroundColor: "#00C187",
+                            boxShadow: "none",
+                            animation: "none",
+                          }}
+                        ></span>{" "}
+                        Stable
                       </span>
                       <span
                         className={`status-badge critical ${selectedStatus !== "critical" ? "inactive" : ""}`}
                         onClick={() => setSelectedStatus("critical")}
                         style={{ cursor: "pointer" }}
                       >
-                        <span className="status-dot" style={{ backgroundColor: "#FF5C5C", boxShadow: "none", animation: "none" }}></span> Critical
+                        <span
+                          className="status-dot"
+                          style={{
+                            backgroundColor: "#FF5C5C",
+                            boxShadow: "none",
+                            animation: "none",
+                          }}
+                        ></span>{" "}
+                        Critical
                       </span>
                       <span
                         className={`status-badge warning ${selectedStatus !== "warning" ? "inactive" : ""}`}
                         onClick={() => setSelectedStatus("warning")}
                         style={{ cursor: "pointer" }}
                       >
-                        <span className="status-dot" style={{ backgroundColor: "#FFA500", boxShadow: "none", animation: "none" }}></span> Under Review
+                        <span
+                          className="status-dot"
+                          style={{
+                            backgroundColor: "#FFA500",
+                            boxShadow: "none",
+                            animation: "none",
+                          }}
+                        ></span>{" "}
+                        Under Review
                       </span>
                     </div>
                   </div>
@@ -898,15 +954,20 @@ const PatientProfile = () => {
                             stroke="currentColor"
                             strokeWidth="2"
                           >
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <rect
+                              x="3"
+                              y="4"
+                              width="18"
+                              height="18"
+                              rx="2"
+                              ry="2"
+                            ></rect>
                             <line x1="16" y1="2" x2="16" y2="6"></line>
                             <line x1="8" y1="2" x2="8" y2="6"></line>
                           </svg>
                           Age
                         </div>
-                        <div className="info-value">
-                          47 Years
-                        </div>
+                        <div className="info-value">47 Years</div>
                       </div>
 
                       {/* Mini-field B: Smoker */}
@@ -926,9 +987,7 @@ const PatientProfile = () => {
                           </svg>
                           Smoker
                         </div>
-                        <div className="info-value">
-                          No
-                        </div>
+                        <div className="info-value">No</div>
                       </div>
                     </div>
 
@@ -972,9 +1031,7 @@ const PatientProfile = () => {
                         </svg>
                         Previous Surgeries
                       </div>
-                      <div className="info-value">
-                        Appendectomy (2015)
-                      </div>
+                      <div className="info-value">Appendectomy (2015)</div>
                     </div>
 
                     {/* Row 2 / Col 2 */}
@@ -1013,7 +1070,14 @@ const PatientProfile = () => {
                           stroke="currentColor"
                           strokeWidth="2"
                         >
-                          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                          <rect
+                            x="2"
+                            y="7"
+                            width="20"
+                            height="14"
+                            rx="2"
+                            ry="2"
+                          ></rect>
                           <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                         </svg>
                         Medications
@@ -1147,7 +1211,10 @@ const PatientProfile = () => {
                     <span className="priority-icon high"></span>
                     High Priority Alerts
                   </h3>
-                  <button className="pp-add-note-btn" onClick={() => addNewNote("high")}>
+                  <button
+                    className="pp-add-note-btn"
+                    onClick={() => addNewNote("high")}
+                  >
                     + Add Note
                   </button>
                 </div>
@@ -1158,10 +1225,21 @@ const PatientProfile = () => {
                       <div className="pp-note-actions">
                         <button
                           className="pp-note-edit-btn"
-                          onClick={() => startEditNote("high-loading", staticNotes["high-1"])}
+                          onClick={() =>
+                            startEditNote("high-loading", staticNotes["high-1"])
+                          }
                           title="Edit"
                         >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                           </svg>
@@ -1179,18 +1257,48 @@ const PatientProfile = () => {
                             <div className="note-footer">
                               <div className="note-meta-stack">
                                 <span className="note-date">Jan 28, 2026</span>
-                                <button className="pp-evidence-icon-btn" onClick={() => setIsPanelOpen(true)} title="View Evidence">
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <button
+                                  className="pp-evidence-icon-btn"
+                                  onClick={() => setIsPanelOpen(true)}
+                                  title="View Evidence"
+                                >
+                                  <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
                                     <circle cx="11" cy="11" r="8"></circle>
-                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    <line
+                                      x1="21"
+                                      y1="21"
+                                      x2="16.65"
+                                      y2="16.65"
+                                    ></line>
                                   </svg>
                                   View Evidence
                                 </button>
                               </div>
                             </div>
                             <div className="pp-note-save-row">
-                              <button className="pp-note-save-btn" onClick={() => saveEditNote("high-loading", editingNoteText)}>Save</button>
-                              <button className="pp-note-cancel-btn" onClick={cancelEditNote}>Cancel</button>
+                              <button
+                                className="pp-note-save-btn"
+                                onClick={() =>
+                                  saveEditNote("high-loading", editingNoteText)
+                                }
+                              >
+                                Save
+                              </button>
+                              <button
+                                className="pp-note-cancel-btn"
+                                onClick={cancelEditNote}
+                              >
+                                Cancel
+                              </button>
                             </div>
                           </div>
                         </>
@@ -1203,10 +1311,28 @@ const PatientProfile = () => {
                         <div className="note-footer">
                           <div className="note-meta-stack">
                             <span className="note-date">Jan 28, 2026</span>
-                            <button className="pp-evidence-icon-btn" onClick={() => setIsPanelOpen(true)} title="View Evidence">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <button
+                              className="pp-evidence-icon-btn"
+                              onClick={() => setIsPanelOpen(true)}
+                              title="View Evidence"
+                            >
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
                                 <circle cx="11" cy="11" r="8"></circle>
-                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                <line
+                                  x1="21"
+                                  y1="21"
+                                  x2="16.65"
+                                  y2="16.65"
+                                ></line>
                               </svg>
                               View Evidence
                             </button>
@@ -1216,7 +1342,17 @@ const PatientProfile = () => {
                             onClick={() => openDeleteAlertModal("high-loading")}
                             title="Delete"
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
                               <path d="M3 6h18" />
                               <path d="M8 6V4h8v2" />
                               <path d="M19 6l-1 14H6L5 6" />
@@ -1241,7 +1377,16 @@ const PatientProfile = () => {
                                 onClick={() => startEditNote(noteId, alert)}
                                 title="Edit"
                               >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
                                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                 </svg>
@@ -1252,17 +1397,44 @@ const PatientProfile = () => {
                                 <textarea
                                   className="pp-note-edit-textarea"
                                   value={editingNoteText}
-                                  onChange={(e) => setEditingNoteText(e.target.value)}
+                                  onChange={(e) =>
+                                    setEditingNoteText(e.target.value)
+                                  }
                                   autoFocus
                                 />
                                 <div className="pp-edit-footer-row">
                                   <div className="note-footer">
                                     <div className="note-meta-stack">
-                                      <span className="note-date">🤖 AI Analysis · {new Date().toLocaleDateString()}</span>
-                                      <button className="pp-evidence-icon-btn" onClick={() => setIsPanelOpen(true)} title="View Evidence">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                          <circle cx="11" cy="11" r="8"></circle>
-                                          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                      <span className="note-date">
+                                        🤖 AI Analysis ·{" "}
+                                        {new Date().toLocaleDateString()}
+                                      </span>
+                                      <button
+                                        className="pp-evidence-icon-btn"
+                                        onClick={() => setIsPanelOpen(true)}
+                                        title="View Evidence"
+                                      >
+                                        <svg
+                                          width="14"
+                                          height="14"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth="2.5"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        >
+                                          <circle
+                                            cx="11"
+                                            cy="11"
+                                            r="8"
+                                          ></circle>
+                                          <line
+                                            x1="21"
+                                            y1="21"
+                                            x2="16.65"
+                                            y2="16.65"
+                                          ></line>
                                         </svg>
                                         View Evidence
                                       </button>
@@ -1282,11 +1454,32 @@ const PatientProfile = () => {
                             {editingNoteId !== noteId && (
                               <div className="note-footer">
                                 <div className="note-meta-stack">
-                                  <span className="note-date">🤖 AI Analysis · {new Date().toLocaleDateString()}</span>
-                                  <button className="pp-evidence-icon-btn" onClick={() => setIsPanelOpen(true)} title="View Evidence">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <span className="note-date">
+                                    🤖 AI Analysis ·{" "}
+                                    {new Date().toLocaleDateString()}
+                                  </span>
+                                  <button
+                                    className="pp-evidence-icon-btn"
+                                    onClick={() => setIsPanelOpen(true)}
+                                    title="View Evidence"
+                                  >
+                                    <svg
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2.5"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
                                       <circle cx="11" cy="11" r="8"></circle>
-                                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                      <line
+                                        x1="21"
+                                        y1="21"
+                                        x2="16.65"
+                                        y2="16.65"
+                                      ></line>
                                     </svg>
                                     View Evidence
                                   </button>
@@ -1296,7 +1489,17 @@ const PatientProfile = () => {
                                   onClick={() => openDeleteAlertModal(noteId)}
                                   title="Delete"
                                 >
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
                                     <path d="M3 6h18" />
                                     <path d="M8 6V4h8v2" />
                                     <path d="M19 6l-1 14H6L5 6" />
@@ -1308,7 +1511,7 @@ const PatientProfile = () => {
                             )}
                           </div>
                         );
-                      }
+                      },
                     )
                   ) : (
                     <>
@@ -1475,7 +1678,16 @@ const PatientProfile = () => {
                               onClick={() => startEditNewNote(note.id)}
                               title="Edit"
                             >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                               </svg>
@@ -1491,8 +1703,22 @@ const PatientProfile = () => {
                               onClick={() => openDeleteAlertModal(note.id)}
                               title="Delete"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" />
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4h8v2" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M10 11v6" />
+                                <path d="M14 11v6" />
                               </svg>
                             </button>
                           </div>
@@ -1502,7 +1728,12 @@ const PatientProfile = () => {
                           <textarea
                             className="pp-note-edit-textarea"
                             value={newNoteTexts[note.id] || ""}
-                            onChange={(e) => setNewNoteTexts((prev) => ({ ...prev, [note.id]: e.target.value }))}
+                            onChange={(e) =>
+                              setNewNoteTexts((prev) => ({
+                                ...prev,
+                                [note.id]: e.target.value,
+                              }))
+                            }
                             autoFocus
                             placeholder="Type your note here…"
                           />
@@ -1513,8 +1744,18 @@ const PatientProfile = () => {
                               </div>
                             </div>
                             <div className="pp-note-save-row">
-                              <button className="pp-note-save-btn" onClick={() => saveNewNote("high", note.id)}>Save</button>
-                              <button className="pp-note-cancel-btn" onClick={() => cancelNewNote("high", note.id)}>Cancel</button>
+                              <button
+                                className="pp-note-save-btn"
+                                onClick={() => saveNewNote("high", note.id)}
+                              >
+                                Save
+                              </button>
+                              <button
+                                className="pp-note-cancel-btn"
+                                onClick={() => cancelNewNote("high", note.id)}
+                              >
+                                Cancel
+                              </button>
                             </div>
                           </div>
                         </>
@@ -1530,7 +1771,12 @@ const PatientProfile = () => {
                     <span className="priority-icon medium"></span>
                     Medium Priority Alerts
                   </h3>
-                  <button className="pp-add-note-btn" onClick={() => addNewNote("medium")}>+ Add Note</button>
+                  <button
+                    className="pp-add-note-btn"
+                    onClick={() => addNewNote("medium")}
+                  >
+                    + Add Note
+                  </button>
                 </div>
                 <div className="note-list">
                   {staticNotes["medium-1"] && (
@@ -1694,7 +1940,16 @@ const PatientProfile = () => {
                               onClick={() => startEditNewNote(note.id)}
                               title="Edit"
                             >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                               </svg>
@@ -1710,8 +1965,22 @@ const PatientProfile = () => {
                               onClick={() => openDeleteAlertModal(note.id)}
                               title="Delete"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" />
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4h8v2" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M10 11v6" />
+                                <path d="M14 11v6" />
                               </svg>
                             </button>
                           </div>
@@ -1721,7 +1990,12 @@ const PatientProfile = () => {
                           <textarea
                             className="pp-note-edit-textarea"
                             value={newNoteTexts[note.id] || ""}
-                            onChange={(e) => setNewNoteTexts((prev) => ({ ...prev, [note.id]: e.target.value }))}
+                            onChange={(e) =>
+                              setNewNoteTexts((prev) => ({
+                                ...prev,
+                                [note.id]: e.target.value,
+                              }))
+                            }
                             autoFocus
                             placeholder="Type your note here…"
                           />
@@ -1732,8 +2006,18 @@ const PatientProfile = () => {
                               </div>
                             </div>
                             <div className="pp-note-save-row">
-                              <button className="pp-note-save-btn" onClick={() => saveNewNote("medium", note.id)}>Save</button>
-                              <button className="pp-note-cancel-btn" onClick={() => cancelNewNote("medium", note.id)}>Cancel</button>
+                              <button
+                                className="pp-note-save-btn"
+                                onClick={() => saveNewNote("medium", note.id)}
+                              >
+                                Save
+                              </button>
+                              <button
+                                className="pp-note-cancel-btn"
+                                onClick={() => cancelNewNote("medium", note.id)}
+                              >
+                                Cancel
+                              </button>
                             </div>
                           </div>
                         </>
@@ -1749,7 +2033,12 @@ const PatientProfile = () => {
                     <span className="priority-icon low"></span>
                     Low Priority Notes
                   </h3>
-                  <button className="pp-add-note-btn" onClick={() => addNewNote("low")}>+ Add Note</button>
+                  <button
+                    className="pp-add-note-btn"
+                    onClick={() => addNewNote("low")}
+                  >
+                    + Add Note
+                  </button>
                 </div>
 
                 <div className="note-list">
@@ -1758,10 +2047,21 @@ const PatientProfile = () => {
                       <div className="pp-note-actions">
                         <button
                           className="pp-note-edit-btn"
-                          onClick={() => startEditNote("low-loading", staticNotes["low-1"])}
+                          onClick={() =>
+                            startEditNote("low-loading", staticNotes["low-1"])
+                          }
                           title="Edit"
                         >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                           </svg>
@@ -1779,18 +2079,46 @@ const PatientProfile = () => {
                             <div className="note-footer">
                               <div className="note-meta-stack">
                                 <span className="note-date">Oct 10, 2025</span>
-                                <button className="pp-evidence-icon-btn" onClick={() => setIsPanelOpen(true)} title="View Evidence">
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <button
+                                  className="pp-evidence-icon-btn"
+                                  onClick={() => setIsPanelOpen(true)}
+                                  title="View Evidence"
+                                >
+                                  <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
                                     <circle cx="11" cy="11" r="8"></circle>
-                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    <line
+                                      x1="21"
+                                      y1="21"
+                                      x2="16.65"
+                                      y2="16.65"
+                                    ></line>
                                   </svg>
                                   View Evidence
                                 </button>
                               </div>
                             </div>
                             <div className="pp-note-save-row">
-                              <button className="pp-note-save-btn" onClick={() => saveEditNote("low-loading")}>Save</button>
-                              <button className="pp-note-cancel-btn" onClick={cancelEditNote}>Cancel</button>
+                              <button
+                                className="pp-note-save-btn"
+                                onClick={() => saveEditNote("low-loading")}
+                              >
+                                Save
+                              </button>
+                              <button
+                                className="pp-note-cancel-btn"
+                                onClick={cancelEditNote}
+                              >
+                                Cancel
+                              </button>
                             </div>
                           </div>
                         </>
@@ -1803,10 +2131,28 @@ const PatientProfile = () => {
                         <div className="note-footer">
                           <div className="note-meta-stack">
                             <span className="note-date">Oct 10, 2025</span>
-                            <button className="pp-evidence-icon-btn" onClick={() => setIsPanelOpen(true)} title="View Evidence">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <button
+                              className="pp-evidence-icon-btn"
+                              onClick={() => setIsPanelOpen(true)}
+                              title="View Evidence"
+                            >
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
                                 <circle cx="11" cy="11" r="8"></circle>
-                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                <line
+                                  x1="21"
+                                  y1="21"
+                                  x2="16.65"
+                                  y2="16.65"
+                                ></line>
                               </svg>
                               View Evidence
                             </button>
@@ -1816,7 +2162,17 @@ const PatientProfile = () => {
                             onClick={() => openDeleteAlertModal("low-loading")}
                             title="Delete"
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
                               <path d="M3 6h18" />
                               <path d="M8 6V4h8v2" />
                               <path d="M19 6l-1 14H6L5 6" />
@@ -1841,7 +2197,16 @@ const PatientProfile = () => {
                                 onClick={() => startEditNote(noteId, alert)}
                                 title="Edit"
                               >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
                                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                 </svg>
@@ -1852,17 +2217,44 @@ const PatientProfile = () => {
                                 <textarea
                                   className="pp-note-edit-textarea"
                                   value={editingNoteText}
-                                  onChange={(e) => setEditingNoteText(e.target.value)}
+                                  onChange={(e) =>
+                                    setEditingNoteText(e.target.value)
+                                  }
                                   autoFocus
                                 />
                                 <div className="pp-edit-footer-row">
                                   <div className="note-footer">
                                     <div className="note-meta-stack">
-                                      <span className="note-date">ℹ️ AI Suggestion · {new Date().toLocaleDateString()}</span>
-                                      <button className="pp-evidence-icon-btn" onClick={() => setIsPanelOpen(true)} title="View Evidence">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                          <circle cx="11" cy="11" r="8"></circle>
-                                          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                      <span className="note-date">
+                                        ℹ️ AI Suggestion ·{" "}
+                                        {new Date().toLocaleDateString()}
+                                      </span>
+                                      <button
+                                        className="pp-evidence-icon-btn"
+                                        onClick={() => setIsPanelOpen(true)}
+                                        title="View Evidence"
+                                      >
+                                        <svg
+                                          width="14"
+                                          height="14"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth="2.5"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        >
+                                          <circle
+                                            cx="11"
+                                            cy="11"
+                                            r="8"
+                                          ></circle>
+                                          <line
+                                            x1="21"
+                                            y1="21"
+                                            x2="16.65"
+                                            y2="16.65"
+                                          ></line>
                                         </svg>
                                         View Evidence
                                       </button>
@@ -1882,11 +2274,32 @@ const PatientProfile = () => {
                             {editingNoteId !== noteId && (
                               <div className="note-footer">
                                 <div className="note-meta-stack">
-                                  <span className="note-date">ℹ️ AI Suggestion · {new Date().toLocaleDateString()}</span>
-                                  <button className="pp-evidence-icon-btn" onClick={() => setIsPanelOpen(true)} title="View Evidence">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <span className="note-date">
+                                    ℹ️ AI Suggestion ·{" "}
+                                    {new Date().toLocaleDateString()}
+                                  </span>
+                                  <button
+                                    className="pp-evidence-icon-btn"
+                                    onClick={() => setIsPanelOpen(true)}
+                                    title="View Evidence"
+                                  >
+                                    <svg
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2.5"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
                                       <circle cx="11" cy="11" r="8"></circle>
-                                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                      <line
+                                        x1="21"
+                                        y1="21"
+                                        x2="16.65"
+                                        y2="16.65"
+                                      ></line>
                                     </svg>
                                     View Evidence
                                   </button>
@@ -1896,7 +2309,17 @@ const PatientProfile = () => {
                                   onClick={() => openDeleteAlertModal(noteId)}
                                   title="Delete"
                                 >
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
                                     <path d="M3 6h18" />
                                     <path d="M8 6V4h8v2" />
                                     <path d="M19 6l-1 14H6L5 6" />
@@ -1908,7 +2331,7 @@ const PatientProfile = () => {
                             )}
                           </div>
                         );
-                      }
+                      },
                     )
                   ) : (
                     <>
@@ -2000,7 +2423,16 @@ const PatientProfile = () => {
                               onClick={() => startEditNewNote(note.id)}
                               title="Edit"
                             >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                               </svg>
@@ -2016,8 +2448,22 @@ const PatientProfile = () => {
                               onClick={() => openDeleteAlertModal(note.id)}
                               title="Delete"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" />
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4h8v2" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M10 11v6" />
+                                <path d="M14 11v6" />
                               </svg>
                             </button>
                           </div>
@@ -2027,7 +2473,12 @@ const PatientProfile = () => {
                           <textarea
                             className="pp-note-edit-textarea"
                             value={newNoteTexts[note.id] || ""}
-                            onChange={(e) => setNewNoteTexts((prev) => ({ ...prev, [note.id]: e.target.value }))}
+                            onChange={(e) =>
+                              setNewNoteTexts((prev) => ({
+                                ...prev,
+                                [note.id]: e.target.value,
+                              }))
+                            }
                             autoFocus
                             placeholder="Type your note here…"
                           />
@@ -2038,8 +2489,18 @@ const PatientProfile = () => {
                               </div>
                             </div>
                             <div className="pp-note-save-row">
-                              <button className="pp-note-save-btn" onClick={() => saveNewNote("low", note.id)}>Save</button>
-                              <button className="pp-note-cancel-btn" onClick={() => cancelNewNote("low", note.id)}>Cancel</button>
+                              <button
+                                className="pp-note-save-btn"
+                                onClick={() => saveNewNote("low", note.id)}
+                              >
+                                Save
+                              </button>
+                              <button
+                                className="pp-note-cancel-btn"
+                                onClick={() => cancelNewNote("low", note.id)}
+                              >
+                                Cancel
+                              </button>
                             </div>
                           </div>
                         </>
@@ -2052,8 +2513,9 @@ const PatientProfile = () => {
           </div>
 
           <div
-            className={`tab-content ${activeTab === "comparative" ? "active" : ""
-              }`}
+            className={`tab-content ${
+              activeTab === "comparative" ? "active" : ""
+            }`}
             id="comparative"
           >
             <div className="card">
@@ -2195,8 +2657,9 @@ const PatientProfile = () => {
 
           {/* Decision Support Tab */}
           <div
-            className={`tab-content ${activeTab === "decision" ? "active" : ""
-              }`}
+            className={`tab-content ${
+              activeTab === "decision" ? "active" : ""
+            }`}
             id="decision"
           >
             <div className="card">
@@ -2206,14 +2669,14 @@ const PatientProfile = () => {
               </h2>
               <div className="likelihood-stack">
                 {isLoadingAnalysis ||
-                  !(
-                    analysisData?.[0]?.result?.likely_diagnoses?.high_likelihood
-                      ?.length > 0 ||
-                    analysisData?.[0]?.result?.likely_diagnoses?.possible
-                      ?.length > 0 ||
-                    analysisData?.[0]?.result?.likely_diagnoses?.low_likelihood
-                      ?.length > 0
-                  ) ? (
+                !(
+                  analysisData?.[0]?.result?.likely_diagnoses?.high_likelihood
+                    ?.length > 0 ||
+                  analysisData?.[0]?.result?.likely_diagnoses?.possible
+                    ?.length > 0 ||
+                  analysisData?.[0]?.result?.likely_diagnoses?.low_likelihood
+                    ?.length > 0
+                ) ? (
                   <>
                     <div
                       className={`likelihood-card high ${expandedLikelihoods["static-0"] ? "expanded" : ""}`}
@@ -2244,9 +2707,11 @@ const PatientProfile = () => {
                         </div>
                       </div>
                       <div className="reasoning">
-                        <strong>Clinical Reasoning:</strong> Based on elevated ALT (48 U/L), BMI 29.4,
-                        cholesterol trend showing mild elevation, and ultrasound findings consistent with fatty
-                        infiltration. Patient's metabolic profile and lifestyle factors support this diagnosis.
+                        <strong>Clinical Reasoning:</strong> Based on elevated
+                        ALT (48 U/L), BMI 29.4, cholesterol trend showing mild
+                        elevation, and ultrasound findings consistent with fatty
+                        infiltration. Patient's metabolic profile and lifestyle
+                        factors support this diagnosis.
                       </div>
                     </div>
                     <div
@@ -2278,9 +2743,11 @@ const PatientProfile = () => {
                         </div>
                       </div>
                       <div className="reasoning">
-                        <strong>Clinical Reasoning:</strong> Elevated fasting glucose (102 mg/dL), HbA1c at
-                        6.1%, central obesity (BMI 29.4), and history of Type 2 Diabetes suggest ongoing insulin
-                        resistance despite treatment. Recommend insulin sensitivity assessment.
+                        <strong>Clinical Reasoning:</strong> Elevated fasting
+                        glucose (102 mg/dL), HbA1c at 6.1%, central obesity (BMI
+                        29.4), and history of Type 2 Diabetes suggest ongoing
+                        insulin resistance despite treatment. Recommend insulin
+                        sensitivity assessment.
                       </div>
                     </div>
                     <div
@@ -2311,9 +2778,11 @@ const PatientProfile = () => {
                         </div>
                       </div>
                       <div className="reasoning">
-                        <strong>Clinical Reasoning:</strong> Patient presents with 3 of 5 criteria: elevated
-                        fasting glucose (102 mg/dL), increased waist circumference, and dyslipidemia. Blood
-                        pressure has normalized with treatment. Requires continued monitoring.
+                        <strong>Clinical Reasoning:</strong> Patient presents
+                        with 3 of 5 criteria: elevated fasting glucose (102
+                        mg/dL), increased waist circumference, and dyslipidemia.
+                        Blood pressure has normalized with treatment. Requires
+                        continued monitoring.
                       </div>
                     </div>
                     <div
@@ -2345,9 +2814,12 @@ const PatientProfile = () => {
                         </div>
                       </div>
                       <div className="reasoning">
-                        <strong>Clinical Reasoning:</strong> Multiple risk factors present including diabetes,
-                        hypertension (controlled), dyslipidemia, and overweight status. 10-year cardiovascular
-                        risk score suggests moderate elevation. Lifestyle modifications showing positive effect.
+                        <strong>Clinical Reasoning:</strong> Multiple risk
+                        factors present including diabetes, hypertension
+                        (controlled), dyslipidemia, and overweight status.
+                        10-year cardiovascular risk score suggests moderate
+                        elevation. Lifestyle modifications showing positive
+                        effect.
                       </div>
                     </div>
                     <div
@@ -2379,9 +2851,10 @@ const PatientProfile = () => {
                         </div>
                       </div>
                       <div className="reasoning">
-                        <strong>Clinical Reasoning:</strong> Negative hepatitis panel from previous testing. ALT
-                        elevation is mild and pattern more consistent with metabolic causes. No risk factors or
-                        symptoms suggestive of viral infection.
+                        <strong>Clinical Reasoning:</strong> Negative hepatitis
+                        panel from previous testing. ALT elevation is mild and
+                        pattern more consistent with metabolic causes. No risk
+                        factors or symptoms suggestive of viral infection.
                       </div>
                     </div>
                   </>
@@ -2392,10 +2865,11 @@ const PatientProfile = () => {
                       (item, index) => (
                         <div
                           key={`high-${index}`}
-                          className={`likelihood-card high ${expandedLikelihoods[`high-${index}`]
-                            ? "expanded"
-                            : ""
-                            }`}
+                          className={`likelihood-card high ${
+                            expandedLikelihoods[`high-${index}`]
+                              ? "expanded"
+                              : ""
+                          }`}
                           onClick={() => toggleLikelihood(`high-${index}`)}
                         >
                           <div className="likelihood-header">
@@ -2436,10 +2910,11 @@ const PatientProfile = () => {
                       (item, index) => (
                         <div
                           key={`poss-${index}`}
-                          className={`likelihood-card medium ${expandedLikelihoods[`poss-${index}`]
-                            ? "expanded"
-                            : ""
-                            }`}
+                          className={`likelihood-card medium ${
+                            expandedLikelihoods[`poss-${index}`]
+                              ? "expanded"
+                              : ""
+                          }`}
                           onClick={() => toggleLikelihood(`poss-${index}`)}
                         >
                           <div className="likelihood-header">
@@ -2479,10 +2954,11 @@ const PatientProfile = () => {
                       (item, index) => (
                         <div
                           key={`low-${index}`}
-                          className={`likelihood-card low ${expandedLikelihoods[`low-${index}`]
-                            ? "expanded"
-                            : ""
-                            }`}
+                          className={`likelihood-card low ${
+                            expandedLikelihoods[`low-${index}`]
+                              ? "expanded"
+                              : ""
+                          }`}
                           onClick={() => toggleLikelihood(`low-${index}`)}
                         >
                           <div className="likelihood-header">
@@ -2564,8 +3040,9 @@ const PatientProfile = () => {
 
           {/* Activity Log Tab */}
           <div
-            className={`tab-content ${activeTab === "activity" ? "active" : ""
-              }`}
+            className={`tab-content ${
+              activeTab === "activity" ? "active" : ""
+            }`}
             id="activity"
           >
             <div className="card">
