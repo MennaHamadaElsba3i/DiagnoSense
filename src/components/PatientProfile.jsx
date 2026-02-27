@@ -323,6 +323,11 @@ const PatientProfile = () => {
 
   const confirmDeleteAlert = () => {
     console.log("Deleting alert:", alertToDelete);
+    if (alertToDelete && typeof alertToDelete === "string" && alertToDelete.startsWith("new-")) {
+      const parts = alertToDelete.split("-");
+      const priority = parts[1];
+      cancelNewNote(priority, alertToDelete);
+    }
     // Add your delete logic here
     closeDeleteAlertModal();
   };
@@ -1423,7 +1428,7 @@ const PatientProfile = () => {
                             </div>
                             <button
                               className="pp-note-delete-btn"
-                              onClick={() => cancelNewNote("high", note.id)}
+                              onClick={() => openDeleteAlertModal(note.id)}
                               title="Delete"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1638,7 +1643,7 @@ const PatientProfile = () => {
                             </div>
                             <button
                               className="pp-note-delete-btn"
-                              onClick={() => cancelNewNote("medium", note.id)}
+                              onClick={() => openDeleteAlertModal(note.id)}
                               title="Delete"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1941,7 +1946,7 @@ const PatientProfile = () => {
                             </div>
                             <button
                               className="pp-note-delete-btn"
-                              onClick={() => cancelNewNote("low", note.id)}
+                              onClick={() => openDeleteAlertModal(note.id)}
                               title="Delete"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
