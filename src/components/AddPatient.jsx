@@ -36,7 +36,7 @@ const AddPatient = () => {
 
   const isStep1Valid =
     formData.fullName.trim() && formData.age && selectedGender;
-  const isStep2Valid = isSmoker !== null;
+  const isStep2Valid = true;
 
   useEffect(() => {
     const categories = ["lab", "history", "radiology"];
@@ -400,9 +400,8 @@ const AddPatient = () => {
           <div className="wizard-header">
             <div className="step-indicator">
               <div
-                className={`step-item ${currentStep === 1 ? "active" : ""} ${
-                  currentStep > 1 ? "completed" : ""
-                }`}
+                className={`step-item ${currentStep === 1 ? "active" : ""} ${currentStep > 1 ? "completed" : ""
+                  }`}
               >
                 <div className="step-circle">
                   {currentStep > 1 ? (
@@ -421,14 +420,12 @@ const AddPatient = () => {
                 <span className="step-label">Patient Info</span>
               </div>
               <div
-                className={`step-connector ${
-                  currentStep > 1 ? "completed" : ""
-                }`}
+                className={`step-connector ${currentStep > 1 ? "completed" : ""
+                  }`}
               ></div>
               <div
-                className={`step-item ${currentStep === 2 ? "active" : ""} ${
-                  currentStep > 2 ? "completed" : ""
-                }`}
+                className={`step-item ${currentStep === 2 ? "active" : ""} ${currentStep > 2 ? "completed" : ""
+                  }`}
               >
                 <div className="step-circle">
                   {currentStep > 2 ? (
@@ -447,9 +444,8 @@ const AddPatient = () => {
                 <span className="step-label">Medical History</span>
               </div>
               <div
-                className={`step-connector ${
-                  currentStep > 2 ? "completed" : ""
-                }`}
+                className={`step-connector ${currentStep > 2 ? "completed" : ""
+                  }`}
               ></div>
               <div className={`step-item ${currentStep === 3 ? "active" : ""}`}>
                 <div className="step-circle">03</div>
@@ -623,22 +619,19 @@ const AddPatient = () => {
               <div className="toggle-section medhist">
                 <div className="tog-item">
                   <label className="toggle-label">
-                    Is the patient a smoker?{" "}
-                    <span style={{ color: "#FF5C5C" }}>*</span>
+                    Is the patient a smoker?
                   </label>
                   <div className="radio-group">
                     <div
-                      className={`radio-button ${
-                        isSmoker === true ? "selected" : ""
-                      }`}
+                      className={`radio-button ${isSmoker === true ? "selected" : ""
+                        }`}
                       onClick={() => handleSmokerSelect("yes")}
                     >
                       Yes
                     </div>
                     <div
-                      className={`radio-button ${
-                        isSmoker === false ? "selected" : ""
-                      }`}
+                      className={`radio-button ${isSmoker === false ? "selected" : ""
+                        }`}
                       onClick={() => handleSmokerSelect("no")}
                     >
                       No
@@ -649,17 +642,15 @@ const AddPatient = () => {
                   <label className="toggle-label">Previous surgeries?</label>
                   <div className="radio-group">
                     <div
-                      className={`radio-button ${
-                        hasSurgeries === true ? "selected" : ""
-                      }`}
+                      className={`radio-button ${hasSurgeries === true ? "selected" : ""
+                        }`}
                       onClick={() => handleSurgerySelect("yes")}
                     >
                       Yes
                     </div>
                     <div
-                      className={`radio-button ${
-                        hasSurgeries === false ? "selected" : ""
-                      }`}
+                      className={`radio-button ${hasSurgeries === false ? "selected" : ""
+                        }`}
                       onClick={() => handleSurgerySelect("no")}
                     >
                       No
@@ -685,11 +676,10 @@ const AddPatient = () => {
                   ].map((disease) => (
                     <div
                       key={disease}
-                      className={`pill ${
-                        selectedChronicDiseases.includes(disease)
-                          ? "selected"
-                          : ""
-                      }`}
+                      className={`pill ${selectedChronicDiseases.includes(disease)
+                        ? "selected"
+                        : ""
+                        }`}
                       onClick={() => handleChronicDiseaseToggle(disease)}
                     >
                       {disease.charAt(0).toUpperCase() +
@@ -705,24 +695,20 @@ const AddPatient = () => {
 
               <div className="section-divider"></div>
 
-              <div className="toggle-section">
-                {hasSurgeries && (
-                  <div id="surgeryDetails">
-                    <div className="conditional-field">
-                      <label className="form-label">
-                        Please specify surgeries
-                      </label>
-                      <textarea
-                        className="form-textarea"
-                        id="surgeryText"
-                        placeholder="List previous surgeries and approximate dates..."
-                        value={formData.surgeryText}
-                        onChange={handleInputChange}
-                      ></textarea>
-                    </div>
-                  </div>
-                )}
-              </div>
+              {hasSurgeries && (
+                <div className="form-group" id="surgeryDetails">
+                  <label className="form-label">
+                    Please specify surgeries
+                  </label>
+                  <textarea
+                    className="form-textarea"
+                    id="surgeryText"
+                    placeholder="List previous surgeries and approximate dates..."
+                    value={formData.surgeryText}
+                    onChange={handleInputChange}
+                  ></textarea>
+                </div>
+              )}
 
               <div className="form-group">
                 <label className="form-label">Regular Medications</label>
@@ -949,7 +935,7 @@ const AddPatient = () => {
                 ))}
               </div>
 
-              <div className="wizard-actions" style={{gap:'50%'}} >
+              <div className="wizard-actions" style={{ gap: '50%' }} >
                 <button
                   className="back"
                   onClick={() => goToStep(2)}
@@ -966,8 +952,8 @@ const AddPatient = () => {
                   Back
                 </button>
                 <button
-                  className={`next ${isProcessing ? "loading" : ""}`} 
-                
+                  className={`next ${isProcessing ? "loading" : ""}`}
+
                   onClick={handleProcess}
                   disabled={isProcessing}
                 >
