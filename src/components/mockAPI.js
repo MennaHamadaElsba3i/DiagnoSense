@@ -302,8 +302,8 @@ export const getPatientAnalysisAPI = async (patientId) => {
   }
 };
 
-export const getPatientsAPI = async () => {
-  return await apiCall('/api/patients', {
+export const getPatientsAPI = async (page = 1) => {
+  return await apiCall(`/api/patients?page=${page}`, {
     method: 'GET',
   });
 };

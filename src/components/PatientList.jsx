@@ -13,6 +13,9 @@ const PatientList = () => {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const [patients, setPatients] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [totalPatients, setTotalPatients] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -20,7 +23,7 @@ const PatientList = () => {
     const fetchPatients = async () => {
       setLoading(true);
       setError(null);
-      const res = await getPatientsAPI();
+      const res = await getPatientsAPI(currentPage);
 
       if (res.success === false) {
         setError(res.message || "Failed to load patients");
@@ -28,7 +31,32 @@ const PatientList = () => {
         return;
       }
 
-      const dataArray = Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []);
+      // Resilient duck-typed backend response extraction for ANY Laravel pagination wrapper (Resource vs Standard)
+      let meta = {};
+      let items = [];
+
+      if (Array.isArray(res?.data?.data)) {
+        items = res.data.data;
+        meta = res.data.meta || res.data;
+      } else if (Array.isArray(res?.data)) {
+        items = res.data;
+        meta = res.meta || res;
+      } else if (Array.isArray(res)) {
+        items = res;
+      }
+
+      const parsedLastPage = parseInt(meta.last_page || meta.lastPage) || 1;
+      const parsedCurrentPage = parseInt(meta.current_page || meta.currentPage) || currentPage;
+      const parsedTotal = parseInt(meta.total) || items.length;
+
+      setLastPage(parsedLastPage);
+      setTotalPatients(parsedTotal);
+
+      if (parsedCurrentPage !== currentPage) {
+        setCurrentPage(parsedCurrentPage);
+      }
+
+      const dataArray = items;
 
       const gradients = [
         "linear-gradient(135deg, #467DFF, #2A66FF)",
@@ -87,7 +115,7 @@ const PatientList = () => {
     };
 
     fetchPatients();
-  }, []);
+  }, [currentPage]);
 
 
   const filteredPatients = patients.filter((patient) => {
@@ -435,34 +463,37 @@ const PatientList = () => {
               style={{ padding: "12px 16px 12px 44px" }}
               placeholder="Search by name, ID, or condition…"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
             />
           </div>
 
           <div className="filter-chips">
             <div
               className={`chip ${activeFilter === "all" ? "active" : ""}`}
-              onClick={() => setActiveFilter("all")}
+              onClick={() => { setActiveFilter("all"); setCurrentPage(1); }}
             >
               <i className="fa-solid fa-user-plus"></i>
               <span>All Patients</span>
             </div>
             <div
               className={`chip ${activeFilter === "critical" ? "active" : ""}`}
-              onClick={() => setActiveFilter("critical")}
+              onClick={() => { setActiveFilter("critical"); setCurrentPage(1); }}
             >
               Critical
             </div>
             <div
               className={`chip ${activeFilter === "stable" ? "active" : ""}`}
-              onClick={() => setActiveFilter("stable")}
+              onClick={() => { setActiveFilter("stable"); setCurrentPage(1); }}
             >
               Stable
             </div>
             <div
               className={`chip ${activeFilter === "underReview" ? "active" : ""
                 }`}
-              onClick={() => setActiveFilter("underReview")}
+              onClick={() => { setActiveFilter("underReview"); setCurrentPage(1); }}
             >
               Under Review
             </div>
@@ -557,11 +588,29 @@ const PatientList = () => {
         </div>
 
         <div className="pagination">
-          <button disabled>◂ Prev</button>
-          <button className="active">1</button>
-          <button>2</button>
-          <button>3</button>
-          <button>Next ▸</button>
+          <button
+            disabled={currentPage <= 1 || filteredPatients.length === 0}
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          >
+            ◂ Prev
+          </button>
+
+          {Array.from({ length: lastPage }, (_, i) => i + 1).map((page) => (
+            <button
+              key={page}
+              className={currentPage === page ? "active" : ""}
+              onClick={() => setCurrentPage(page)}
+            >
+              {page}
+            </button>
+          ))}
+
+          <button
+            disabled={currentPage >= lastPage || filteredPatients.length === 0}
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, lastPage))}
+          >
+            Next ▸
+          </button>
         </div>
       </div>
     </>
