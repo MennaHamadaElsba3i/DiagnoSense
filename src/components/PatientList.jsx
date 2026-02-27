@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/Logo_Diagnoo.png";
 import "../css/PatientList.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
+import { getPatientsAPI } from "./mockAPI";
 
 const PatientList = () => {
   const navigate = useNavigate();
@@ -11,128 +12,83 @@ const PatientList = () => {
   const [showModal, setShowModal] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
-  const patients = [
-    {
-      id: 1,
-      initials: "NH",
-      name: "Nour Hassan",
-      age: 47,
-      condition: "Type II Diabetes",
-      status: "stable",
-      statusLabel: "🟢 Stable",
-      aiInsight: "Stable. 2 new lab results added today.",
-      lastVisit: "Oct 23, 2025",
-      nextAppointment: "Nov 2, 2025",
-      gradient: "linear-gradient(135deg, #467DFF, #2A66FF)",
-    },
-    {
-      id: 2,
-      initials: "RE",
-      name: "Rana ElSayed",
-      age: 33,
-      condition: "Hypertension",
-      status: "critical",
-      statusLabel: "🔴 Critical",
-      aiInsight: "Possible irregularity detected.",
-      lastVisit: "Oct 29, 2025",
-      nextAppointment: "Today",
-      gradient: "linear-gradient(135deg, #FF5C5C, #FF8A8A)",
-      insightStyle: { borderLeftColor: "#FF5C5C", background: "#FFECEC" },
-    },
-    {
-      id: 3,
-      initials: "OT",
-      name: "Omar Tarek",
-      age: 52,
-      condition: "Post-surgery Recovery",
-      status: "stable",
-      statusLabel: "🟡 Under Review",
-      statusType: "warning",
-      aiInsight: "No new complications.",
-      lastVisit: "Oct 26, 2025",
-      nextAppointment: "Nov 5, 2025",
-      gradient: "linear-gradient(135deg, #FFA500, #FFB84D)",
-      insightStyle: { borderLeftColor: "#FFA500" },
-    },
-    {
-      id: 4,
-      initials: "MH",
-      name: "Mariam Hassan",
-      age: 41,
-      condition: "Asthma",
-      status: "stable",
-      statusLabel: "🟢 Stable",
-      aiInsight: "Improving after medication adjustment.",
-      lastVisit: "Oct 25, 2025",
-      nextAppointment: "Nov 8, 2025",
-      gradient: "linear-gradient(135deg, #00C187, #00E5A0)",
-    },
-    {
-      id: 5,
-      initials: "KH",
-      name: "Khaled Hassan",
-      age: 61,
-      condition: "Chronic Heart Disease",
-      status: "stable",
-      statusLabel: "🟢 Stable",
-      aiInsight: "Medication adherence excellent. Vitals within normal range.",
-      lastVisit: "Oct 27, 2025",
-      nextAppointment: "Nov 3, 2025",
-      gradient: "linear-gradient(135deg, #467DFF, #6B9FFF)",
-    },
-    {
-      id: 6,
-      initials: "LI",
-      name: "Layla Ibrahim",
-      age: 29,
-      condition: "Pre-diabetes Management",
-      status: "stable",
-      statusLabel: "🟢 Stable",
-      aiInsight: "Excellent progress. Diet and exercise plan working well.",
-      lastVisit: "Oct 20, 2025",
-      nextAppointment: "Nov 10, 2025",
-      gradient: "linear-gradient(135deg, #9D5CFF, #B380FF)",
-    },
-    {
-      id: 7,
-      initials: "YM",
-      name: "Youssef Mansour",
-      age: 55,
-      condition: "Arthritis",
-      status: "stable",
-      statusLabel: "🟢 Stable",
-      aiInsight: "Pain management effective. Mobility improving.",
-      lastVisit: "Oct 24, 2025",
-      nextAppointment: "Nov 7, 2025",
-      gradient: "linear-gradient(135deg, #2A66FF, #5A8BFF)",
-    },
-    {
-      id: 8,
-      initials: "NK",
-      name: "Nadia Khalil",
-      age: 44,
-      condition: "Migraine",
-      status: "stable",
-      statusLabel: "🟢 Stable",
-      aiInsight: "Frequency reduced by 60%. Treatment effective.",
-      lastVisit: "Oct 21, 2025",
-      nextAppointment: "Nov 11, 2025",
-      gradient: "linear-gradient(135deg, #FF6B9D, #FF8FB3)",
-    },
-    {
-      id: 9,
-      initials: "SF",
-      name: "Samir Farid",
-      age: 48,
-      condition: "Sleep Apnea",
-      status: "stable",
-      statusLabel: "🟢 Stable",
-      aiInsight: "CPAP therapy showing positive results.",
-      lastVisit: "Oct 28, 2025",
-      nextAppointment: "Nov 14, 2025",
-      gradient: "linear-gradient(135deg, #00C9A7, #00E5C0)",
-    },
-  ];
+  const [patients, setPatients] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchPatients = async () => {
+      setLoading(true);
+      setError(null);
+      const res = await getPatientsAPI();
+
+      if (res.success === false) {
+        setError(res.message || "Failed to load patients");
+        setLoading(false);
+        return;
+      }
+
+      const dataArray = Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []);
+
+      const gradients = [
+        "linear-gradient(135deg, #467DFF, #2A66FF)",
+        "linear-gradient(135deg, #FF5C5C, #FF8A8A)",
+        "linear-gradient(135deg, #FFA500, #FFB84D)",
+        "linear-gradient(135deg, #00C187, #00E5A0)",
+        "linear-gradient(135deg, #9D5CFF, #B380FF)",
+        "linear-gradient(135deg, #2A66FF, #5A8BFF)",
+        "linear-gradient(135deg, #FF6B9D, #FF8FB3)",
+        "linear-gradient(135deg, #00C9A7, #00E5C0)"
+      ];
+
+      const mappedPatients = dataArray.map((p, index) => {
+        let status = p.status ? p.status.toLowerCase() : "stable";
+        let statusLabel = "🟢 Stable";
+        let statusType = "";
+        let insightStyle = {};
+
+        if (status === "critical") {
+          statusLabel = "🔴 Critical";
+          insightStyle = { borderLeftColor: "#FF5C5C", background: "#FFECEC" };
+        } else if (status === "under review" || status === "underreview" || status === "warning") {
+          status = "underReview";
+          statusLabel = "🟡 Under Review";
+          statusType = "warning";
+          insightStyle = { borderLeftColor: "#FFA500" };
+        }
+
+        const nameParts = p.name ? p.name.split(" ") : ["U", "N"];
+        let initials = "UN";
+        if (nameParts.length > 1 && nameParts[0] && nameParts[1]) {
+          initials = `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
+        } else if (p.name && p.name.length >= 2) {
+          initials = p.name.substring(0, 2).toUpperCase();
+        }
+
+        return {
+          id: p.id || index,
+          initials: p.initials || initials,
+          name: p.name || "Unknown Patient",
+          age: p.age || "N/A",
+          condition: p.condition || p.disease || "Not specified",
+          status: status,
+          statusLabel: statusLabel,
+          statusType: statusType,
+          aiInsight: p.aiInsight || p.ai_insight || "No new insights available.",
+          lastVisit: p.lastVisit || p.last_visit || "N/A",
+          nextAppointment: p.nextAppointment || p.next_appointment || "N/A",
+          gradient: p.gradient || gradients[index % gradients.length],
+          insightStyle: insightStyle,
+        };
+      });
+
+      setPatients(mappedPatients);
+      setLoading(false);
+    };
+
+    fetchPatients();
+  }, []);
+
 
   const filteredPatients = patients.filter((patient) => {
     const matchesFilter =
@@ -514,69 +470,90 @@ const PatientList = () => {
         </div>
 
         <div className="patient-grid">
-          {filteredPatients.map((patient) => (
-            <div
-              key={patient.id}
-              className="patient-card"
-              data-status={patient.status}
-              data-patient={patient.name}
-            >
-              <div className="patient-header" style={{alignItems:"center", border:'none', marginBottom:'0px'}}>
-                <div
-                  className="patient-avatar"
-                  style={{
-                    background: patient.gradient, width: '57px',
-                    height: '57px', fontSize: '20px'
-                  }}
-                >
-                  {patient.initials}
+          {loading ? (
+            <div style={{ padding: "40px 20px", textAlign: "center", width: "100%", gridColumn: "1 / -1", color: "#6b7280" }}>
+              <div style={{ marginBottom: "10px" }}><i className="fa-solid fa-spinner fa-spin fa-2x"></i></div>
+              Loading patients...
+            </div>
+          ) : error ? (
+            <div style={{ padding: "20px", textAlign: "center", width: "100%", gridColumn: "1 / -1", backgroundColor: "#fef2f2", color: "#b91c1c", borderRadius: "12px", border: "1px solid #fecaca" }}>
+              <p style={{ margin: "0 0 10px 0", fontWeight: "500" }}>{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                style={{ padding: "8px 16px", backgroundColor: "#ef4444", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "500" }}
+              >
+                Retry
+              </button>
+            </div>
+          ) : filteredPatients.length === 0 ? (
+            <div style={{ padding: "40px 20px", textAlign: "center", width: "100%", gridColumn: "1 / -1", color: "#6b7280" }}>
+              No patients found.
+            </div>
+          ) : (
+            filteredPatients.map((patient) => (
+              <div
+                key={patient.id}
+                className="patient-card"
+                data-status={patient.status}
+                data-patient={patient.name}
+              >
+                <div className="patient-header" style={{ alignItems: "center", border: 'none', marginBottom: '0px' }}>
+                  <div
+                    className="patient-avatar"
+                    style={{
+                      background: patient.gradient, width: '57px',
+                      height: '57px', fontSize: '20px'
+                    }}
+                  >
+                    {patient.initials}
+                  </div>
+                  <div className="patient-info">
+                    <h3>{patient.name}</h3>
+                    <div className="patient-meta-row">
+                      <p className="patient-meta">
+                        Age: {patient.age}
+                      </p>
+                      <span
+                        className={`status-badge ${patient.statusType || patient.status
+                          }`}
+                      >
+                        {patient.statusLabel}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="patient-info">
-                  <h3>{patient.name}</h3>
-                  <div className="patient-meta-row">
-                    <p className="patient-meta">
-                      Age: {patient.age}
-                    </p>
-                    <span
-                      className={`status-badge ${patient.statusType || patient.status
-                        }`}
-                    >
-                      {patient.statusLabel}
+                <div className="ai-insight" style={patient.insightStyle}>
+                  <p>
+                    <strong>AI Insight:</strong> {patient.aiInsight}
+                  </p>
+                </div>
+                <div className="patient-details">
+                  <div className="detail-row">
+                    <span className="detail-label">Last Visit</span>
+                    <span className="detail-value">{patient.lastVisit}</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Next Appointment</span>
+                    <span className="detail-value">
+                      {patient.nextAppointment}
                     </span>
                   </div>
                 </div>
-              </div>
-              <div className="ai-insight" style={patient.insightStyle}>
-                <p>
-                  <strong>AI Insight:</strong> {patient.aiInsight}
-                </p>
-              </div>
-              <div className="patient-details">
-                <div className="detail-row">
-                  <span className="detail-label">Last Visit</span>
-                  <span className="detail-value">{patient.lastVisit}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Next Appointment</span>
-                  <span className="detail-value">
-                    {patient.nextAppointment}
-                  </span>
+                <div className="pa">
+                  <div className="patient-actions">
+                    <button
+                      className="btn btn-primary"
+                      onClick={(e) => {
+                        navigate("/patient-profile");
+                      }}
+                    >
+                      View Details
+                    </button>
+                  </div>
                 </div>
               </div>
-              <div className="pa">
-                <div className="patient-actions">
-                  <button
-                    className="btn btn-primary"
-                    onClick={(e) => {
-                      navigate("/patient-profile");
-                    }}
-                  >
-                    View Details
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
 
         <div className="pagination">
