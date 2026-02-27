@@ -20,7 +20,9 @@ const PatientProfile = () => {
   const [selectedStatus, setSelectedStatus] = useState(() => {
     const patientData = JSON.parse(localStorage.getItem("currentPatient"));
     return patientData && patientData.status ? patientData.status : "warning";
-  }); // Null default
+  }); // Default to "warning" if no status is found
+
+  const [deletedNotes, setDeletedNotes] = useState({});
 
   const [chatMessages, setChatMessages] = useState([
     {
@@ -110,8 +112,23 @@ const PatientProfile = () => {
         const result = await getPatientAnalysisAPI(patientData.patient_id);
 
         if (result.success) {
-          console.log("Analysis Data:", result.data);
-          setAnalysisData(result.data);
+          console.log("Analysis Data Raw:", result.data);
+          let transformedData = result.data;
+          if (transformedData && transformedData[0] && transformedData[0].result) {
+            transformedData = [...transformedData];
+            const resultObj = { ...transformedData[0].result };
+            ["high", "medium", "low"].forEach(priority => {
+              const key = `${priority}_priority_alerts`;
+              if (Array.isArray(resultObj[key])) {
+                resultObj[key] = resultObj[key].map(alertText => ({
+                  id: `${priority}-api-${Math.random().toString(36).substr(2, 9)}`,
+                  text: typeof alertText === 'string' ? alertText : (alertText.text || '')
+                }));
+              }
+            });
+            transformedData[0].result = resultObj;
+          }
+          setAnalysisData(transformedData);
         } else {
           console.error(result.message);
         }
@@ -206,11 +223,28 @@ const PatientProfile = () => {
 
   const saveEditNote = (id, newText) => {
     console.log("Saving note:", id, "with text:", newText);
-    setStaticNotes((prev) => {
-      const updated = { ...prev, [id]: newText };
-      console.log("Updated staticNotes:", updated);
-      return updated;
-    });
+    if (id.includes("-api-")) {
+      const priority = id.split("-")[0];
+      setAnalysisData(prev => {
+        if (!prev || !prev[0] || !prev[0].result) return prev;
+        const newData = [...prev];
+        const resultObj = { ...newData[0].result };
+        const arrName = `${priority}_priority_alerts`;
+        if (resultObj[arrName]) {
+          resultObj[arrName] = resultObj[arrName].map(item =>
+            item.id === id ? { ...item, text: newText } : item
+          );
+        }
+        newData[0].result = resultObj;
+        return newData;
+      });
+    } else {
+      setStaticNotes((prev) => {
+        const updated = { ...prev, [id]: newText };
+        console.log("Updated staticNotes:", updated);
+        return updated;
+      });
+    }
     setEditingNoteId(null);
     setEditingNoteText("");
   };
@@ -333,16 +367,33 @@ const PatientProfile = () => {
 
   const confirmDeleteAlert = () => {
     console.log("Deleting alert:", alertToDelete);
-    if (
-      alertToDelete &&
-      typeof alertToDelete === "string" &&
-      alertToDelete.startsWith("new-")
-    ) {
-      const parts = alertToDelete.split("-");
-      const priority = parts[1];
-      cancelNewNote(priority, alertToDelete);
+    if (alertToDelete && typeof alertToDelete === "string") {
+      if (alertToDelete.startsWith("new-")) {
+        const parts = alertToDelete.split("-");
+        const priority = parts[1];
+        cancelNewNote(priority, alertToDelete);
+      } else if (alertToDelete.includes("-api-")) {
+        const priority = alertToDelete.split("-")[0];
+        setAnalysisData(prev => {
+          if (!prev || !prev[0] || !prev[0].result) return prev;
+          const newData = [...prev];
+          const resultObj = { ...newData[0].result };
+          const arrName = `${priority}_priority_alerts`;
+          if (resultObj[arrName]) {
+            resultObj[arrName] = resultObj[arrName].filter(item => item.id !== alertToDelete);
+          }
+          newData[0].result = resultObj;
+          return newData;
+        });
+      } else {
+        setStaticNotes(prev => {
+          const next = { ...prev };
+          delete next[alertToDelete];
+          return next;
+        });
+        setDeletedNotes(prev => ({ ...prev, [alertToDelete]: true }));
+      }
     }
-    // Add your delete logic here
     closeDeleteAlertModal();
   };
 
@@ -1315,10 +1366,11 @@ const PatientProfile = () => {
                   ) : analysisData?.[0]?.result?.high_priority_alerts?.length >
                     0 ? (
                     analysisData[0].result.high_priority_alerts.map(
-                      (alert, index) => {
-                        const noteId = `high-api-${index}`;
+                      (alertObj) => {
+                        const noteId = alertObj.id;
+                        const alert = alertObj.text;
                         return (
-                          <div className="note-item high-priority" key={index}>
+                          <div className="note-item high-priority" key={noteId}>
                             <div className="pp-note-actions">
                               <button
                                 className="pp-note-edit-btn"
@@ -1389,25 +1441,14 @@ const PatientProfile = () => {
                                     </div>
                                   </div>
                                   <div className="pp-note-save-row">
-                                    <button
-                                      className="pp-note-save-btn"
-                                      onClick={() => saveEditNote(noteId)}
-                                    >
-                                      Save
-                                    </button>
-                                    <button
-                                      className="pp-note-cancel-btn"
-                                      onClick={cancelEditNote}
-                                    >
-                                      Cancel
-                                    </button>
+                                    <button className="pp-note-save-btn" onClick={() => saveEditNote(noteId, editingNoteText)}>Save</button>
+                                    <button className="pp-note-cancel-btn" onClick={cancelEditNote}>Cancel</button>
                                   </div>
                                 </div>
                               </>
                             ) : (
                               <div className="note-text">
-                                <strong>Critical: </strong>{" "}
-                                {staticNotes[noteId] || alert}
+                                <strong>Critical: </strong> {alert}
                               </div>
                             )}
                             {editingNoteId !== noteId && (
@@ -1474,301 +1515,156 @@ const PatientProfile = () => {
                     )
                   ) : (
                     <>
-                      <div className="note-item high-priority">
-                        <div className="pp-note-actions">
-                          <button
-                            className="pp-note-edit-btn"
-                            onClick={() =>
-                              startEditNote("high-1", staticNotes["high-1"])
-                            }
-                            title="Edit"
-                          >
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                          </button>
-                        </div>
-                        {editingNoteId === "high-1" ? (
-                          <>
-                            <textarea
-                              className="pp-note-edit-textarea"
-                              value={editingNoteText}
-                              onChange={(e) =>
-                                setEditingNoteText(e.target.value)
-                              }
-                              autoFocus
-                            />
-                            <div className="pp-edit-footer-row">
-                              <div className="note-footer">
-                                <div className="note-meta-stack">
-                                  <span className="note-date">
-                                    Jan 28, 2026
-                                  </span>
-                                  <button
-                                    className="pp-evidence-icon-btn"
-                                    onClick={() => setIsPanelOpen(true)}
-                                    title="View Evidence"
-                                  >
-                                    <svg
-                                      width="14"
-                                      height="14"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2.5"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    >
-                                      <circle cx="11" cy="11" r="8"></circle>
-                                      <line
-                                        x1="21"
-                                        y1="21"
-                                        x2="16.65"
-                                        y2="16.65"
-                                      ></line>
-                                    </svg>
-                                    View Evidence
-                                  </button>
-                                </div>
-                              </div>
-                              <div className="pp-note-save-row">
-                                <button
-                                  className="pp-note-save-btn"
-                                  onClick={() =>
-                                    saveEditNote("high-1", editingNoteText)
-                                  }
-                                >
-                                  Save
-                                </button>
-                                <button
-                                  className="pp-note-cancel-btn"
-                                  onClick={cancelEditNote}
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-                          </>
-                        ) : (
-                          <div className="note-text">
-                            <strong>Critical:</strong> {staticNotes["high-1"]}
-                          </div>
-                        )}
-                        {editingNoteId !== "high-1" && (
-                          <div className="note-footer">
-                            <div className="note-meta-stack">
-                              <span className="note-date">Jan 28, 2026</span>
-                              <button
-                                className="pp-evidence-icon-btn"
-                                onClick={() => setIsPanelOpen(true)}
-                                title="View Evidence"
-                              >
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2.5"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <circle cx="11" cy="11" r="8"></circle>
-                                  <line
-                                    x1="21"
-                                    y1="21"
-                                    x2="16.65"
-                                    y2="16.65"
-                                  ></line>
-                                </svg>
-                                View Evidence
-                              </button>
-                            </div>
+                      {staticNotes["high-1"] && (
+                        <div className="note-item high-priority">
+                          <div className="pp-note-actions">
                             <button
-                              className="pp-note-delete-btn"
-                              onClick={() => openDeleteAlertModal("high-1")}
-                              title="Delete"
+                              className="pp-note-edit-btn"
+                              onClick={() => startEditNote("high-1", staticNotes["high-1"])}
+                              title="Edit"
                             >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="18"
-                                height="18"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <path d="M3 6h18" />
-                                <path d="M8 6V4h8v2" />
-                                <path d="M19 6l-1 14H6L5 6" />
-                                <path d="M10 11v6" />
-                                <path d="M14 11v6" />
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                               </svg>
                             </button>
                           </div>
-                        )}
-                      </div>
-                      <div className="note-item high-priority">
-                        <div className="pp-note-actions">
-                          <button
-                            className="pp-note-edit-btn"
-                            onClick={() =>
-                              startEditNote("high-2", staticNotes["high-2"])
-                            }
-                            title="Edit"
-                          >
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                          </button>
-                        </div>
-                        {editingNoteId === "high-2" ? (
-                          <>
-                            <textarea
-                              className="pp-note-edit-textarea"
-                              value={editingNoteText}
-                              onChange={(e) =>
-                                setEditingNoteText(e.target.value)
-                              }
-                              autoFocus
-                            />
-                            <div className="pp-edit-footer-row">
-                              <div className="note-footer">
-                                <div className="note-meta-stack">
-                                  <span className="note-date">
-                                    ⚠️ Critical Medical Alert · Permanent Record
-                                  </span>
-                                  <button
-                                    className="pp-evidence-icon-btn"
-                                    onClick={() => setIsPanelOpen(true)}
-                                    title="View Evidence"
-                                  >
-                                    <svg
-                                      width="14"
-                                      height="14"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2.5"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    >
-                                      <circle cx="11" cy="11" r="8"></circle>
-                                      <line
-                                        x1="21"
-                                        y1="21"
-                                        x2="16.65"
-                                        y2="16.65"
-                                      ></line>
-                                    </svg>
-                                    View Evidence
-                                  </button>
+                          {editingNoteId === "high-1" ? (
+                            <>
+                              <textarea
+                                className="pp-note-edit-textarea"
+                                value={editingNoteText}
+                                onChange={(e) => setEditingNoteText(e.target.value)}
+                                autoFocus
+                              />
+                              <div className="pp-edit-footer-row">
+                                <div className="note-footer">
+                                  <div className="note-meta-stack">
+                                    <span className="note-date">Jan 28, 2026</span>
+                                    <button className="pp-evidence-icon-btn" onClick={() => setIsPanelOpen(true)} title="View Evidence">
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                      </svg>
+                                      View Evidence
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className="pp-note-save-row">
+                                  <button className="pp-note-save-btn" onClick={() => saveEditNote("high-1", editingNoteText)}>Save</button>
+                                  <button className="pp-note-cancel-btn" onClick={cancelEditNote}>Cancel</button>
                                 </div>
                               </div>
-                              <div className="pp-note-save-row">
-                                <button
-                                  className="pp-note-save-btn"
-                                  onClick={() =>
-                                    saveEditNote("high-2", editingNoteText)
-                                  }
-                                >
-                                  Save
-                                </button>
-                                <button
-                                  className="pp-note-cancel-btn"
-                                  onClick={cancelEditNote}
-                                >
-                                  Cancel
+                            </>
+                          ) : (
+                            <div className="note-text">
+                              <strong>Critical:</strong> {staticNotes["high-1"]}
+                            </div>
+                          )}
+                          {editingNoteId !== "high-1" && (
+                            <div className="note-footer">
+                              <div className="note-meta-stack">
+                                <span className="note-date">Jan 28, 2026</span>
+                                <button className="pp-evidence-icon-btn" onClick={() => setIsPanelOpen(true)} title="View Evidence">
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                  </svg>
+                                  View Evidence
                                 </button>
                               </div>
-                            </div>
-                          </>
-                        ) : (
-                          <div className="note-text">
-                            <strong>Penicillin Allergy:</strong>{" "}
-                            {staticNotes["high-2"]}
-                          </div>
-                        )}
-                        {editingNoteId !== "high-2" && (
-                          <div className="note-footer">
-                            <div className="note-meta-stack">
-                              <span className="note-date">
-                                ⚠️ Critical Medical Alert · Permanent Record
-                              </span>
                               <button
-                                className="pp-evidence-icon-btn"
-                                onClick={() => setIsPanelOpen(true)}
-                                title="View Evidence"
+                                className="pp-note-delete-btn"
+                                onClick={() => openDeleteAlertModal("high-1")}
+                                title="Delete"
                               >
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2.5"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <circle cx="11" cy="11" r="8"></circle>
-                                  <line
-                                    x1="21"
-                                    y1="21"
-                                    x2="16.65"
-                                    y2="16.65"
-                                  ></line>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M3 6h18" />
+                                  <path d="M8 6V4h8v2" />
+                                  <path d="M19 6l-1 14H6L5 6" />
+                                  <path d="M10 11v6" />
+                                  <path d="M14 11v6" />
                                 </svg>
-                                View Evidence
                               </button>
                             </div>
+                          )}
+                        </div>
+                      )}
+                      {staticNotes["high-2"] && (
+                        <div className="note-item high-priority">
+                          <div className="pp-note-actions">
                             <button
-                              className="pp-note-delete-btn"
-                              onClick={() => openDeleteAlertModal("high-2")}
-                              title="Delete"
+                              className="pp-note-edit-btn"
+                              onClick={() => startEditNote("high-2", staticNotes["high-2"])}
+                              title="Edit"
                             >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="18"
-                                height="18"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <path d="M3 6h18" />
-                                <path d="M8 6V4h8v2" />
-                                <path d="M19 6l-1 14H6L5 6" />
-                                <path d="M10 11v6" />
-                                <path d="M14 11v6" />
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                               </svg>
                             </button>
                           </div>
-                        )}
-                      </div>
+                          {editingNoteId === "high-2" ? (
+                            <>
+                              <textarea
+                                className="pp-note-edit-textarea"
+                                value={editingNoteText}
+                                onChange={(e) => setEditingNoteText(e.target.value)}
+                                autoFocus
+                              />
+                              <div className="pp-edit-footer-row">
+                                <div className="note-footer">
+                                  <div className="note-meta-stack">
+                                    <span className="note-date">⚠️ Critical Medical Alert · Permanent Record</span>
+                                    <button className="pp-evidence-icon-btn" onClick={() => setIsPanelOpen(true)} title="View Evidence">
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                      </svg>
+                                      View Evidence
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className="pp-note-save-row">
+                                  <button className="pp-note-save-btn" onClick={() => saveEditNote("high-2", editingNoteText)}>Save</button>
+                                  <button className="pp-note-cancel-btn" onClick={cancelEditNote}>Cancel</button>
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="note-text">
+                              <strong>Penicillin Allergy:</strong> {staticNotes["high-2"]}
+                            </div>
+                          )}
+                          {editingNoteId !== "high-2" && (
+                            <div className="note-footer">
+                              <div className="note-meta-stack">
+                                <span className="note-date">⚠️ Critical Medical Alert · Permanent Record</span>
+                                <button className="pp-evidence-icon-btn" onClick={() => setIsPanelOpen(true)} title="View Evidence">
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                  </svg>
+                                  View Evidence
+                                </button>
+                              </div>
+                              <button
+                                className="pp-note-delete-btn"
+                                onClick={() => openDeleteAlertModal("high-2")}
+                                title="Delete"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M3 6h18" />
+                                  <path d="M8 6V4h8v2" />
+                                  <path d="M19 6l-1 14H6L5 6" />
+                                  <path d="M10 11v6" />
+                                  <path d="M14 11v6" />
+                                </svg>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </>
                   )}
                   {/* Doctor-added new notes for High Priority */}
@@ -1800,9 +1696,7 @@ const PatientProfile = () => {
                           <div className="note-text">{note.text}</div>
                           <div className="note-footer">
                             <div className="note-meta-stack">
-                              <span className="note-date">
-                                📝 Dr. Note · {note.date}
-                              </span>
+                              <span className="note-date">{note.date}</span>
                             </div>
                             <button
                               className="pp-note-delete-btn"
@@ -1846,14 +1740,7 @@ const PatientProfile = () => {
                           <div className="pp-edit-footer-row">
                             <div className="note-footer">
                               <div className="note-meta-stack">
-                                <span className="note-date">
-                                  📝 Dr. Note ·{" "}
-                                  {new Date().toLocaleDateString("en-US", {
-                                    month: "short",
-                                    day: "numeric",
-                                    year: "numeric",
-                                  })}
-                                </span>
+                                <span className="note-date">{new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
                               </div>
                             </div>
                             <div className="pp-note-save-row">
@@ -1892,292 +1779,156 @@ const PatientProfile = () => {
                   </button>
                 </div>
                 <div className="note-list">
-                  <div className="note-item medium-priority">
-                    <div className="pp-note-actions">
-                      <button
-                        className="pp-note-edit-btn"
-                        onClick={() =>
-                          startEditNote("medium-1", staticNotes["medium-1"])
-                        }
-                        title="Edit"
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                      </button>
-                    </div>
-                    {editingNoteId === "medium-1" ? (
-                      <>
-                        <textarea
-                          className="pp-note-edit-textarea"
-                          value={editingNoteText}
-                          onChange={(e) => setEditingNoteText(e.target.value)}
-                          autoFocus
-                        />
-                        <div className="pp-edit-footer-row">
-                          <div className="note-footer">
-                            <div className="note-meta-stack">
-                              <span className="note-date">Jan 30, 2026</span>
-                              <button
-                                className="pp-evidence-icon-btn"
-                                onClick={() => setIsPanelOpen(true)}
-                                title="View Evidence"
-                              >
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2.5"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <circle cx="11" cy="11" r="8"></circle>
-                                  <line
-                                    x1="21"
-                                    y1="21"
-                                    x2="16.65"
-                                    y2="16.65"
-                                  ></line>
-                                </svg>
-                                View Evidence
-                              </button>
-                            </div>
-                          </div>
-                          <div className="pp-note-save-row">
-                            <button
-                              className="pp-note-save-btn"
-                              onClick={() =>
-                                saveEditNote("medium-1", editingNoteText)
-                              }
-                            >
-                              Save
-                            </button>
-                            <button
-                              className="pp-note-cancel-btn"
-                              onClick={cancelEditNote}
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="note-text">
-                        <strong>Medication review:</strong>{" "}
-                        {staticNotes["medium-1"]}
-                      </div>
-                    )}
-                    {editingNoteId !== "medium-1" && (
-                      <div className="note-footer">
-                        <div className="note-meta-stack">
-                          <span className="note-date">Jan 30, 2026</span>
-                          <button
-                            className="pp-evidence-icon-btn"
-                            onClick={() => setIsPanelOpen(true)}
-                            title="View Evidence"
-                          >
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <circle cx="11" cy="11" r="8"></circle>
-                              <line
-                                x1="21"
-                                y1="21"
-                                x2="16.65"
-                                y2="16.65"
-                              ></line>
-                            </svg>
-                            View Evidence
-                          </button>
-                        </div>
+                  {staticNotes["medium-1"] && (
+                    <div className="note-item medium-priority">
+                      <div className="pp-note-actions">
                         <button
-                          className="pp-note-delete-btn"
-                          onClick={() => openDeleteAlertModal("medium-1")}
-                          title="Delete"
+                          className="pp-note-edit-btn"
+                          onClick={() => startEditNote("medium-1", staticNotes["medium-1"])}
+                          title="Edit"
                         >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M3 6h18" />
-                            <path d="M8 6V4h8v2" />
-                            <path d="M19 6l-1 14H6L5 6" />
-                            <path d="M10 11v6" />
-                            <path d="M14 11v6" />
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                           </svg>
                         </button>
                       </div>
-                    )}
-                  </div>
-                  <div className="note-item medium-priority">
-                    <div className="pp-note-actions">
-                      <button
-                        className="pp-note-edit-btn"
-                        onClick={() =>
-                          startEditNote("medium-2", staticNotes["medium-2"])
-                        }
-                        title="Edit"
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                      </button>
-                    </div>
-                    {editingNoteId === "medium-2" ? (
-                      <>
-                        <textarea
-                          className="pp-note-edit-textarea"
-                          value={editingNoteText}
-                          onChange={(e) => setEditingNoteText(e.target.value)}
-                          autoFocus
-                        />
-                        <div className="pp-edit-footer-row">
-                          <div className="note-footer">
-                            <div className="note-meta-stack">
-                              <span className="note-date">Jan 25, 2026</span>
-                              <button
-                                className="pp-evidence-icon-btn"
-                                onClick={() => setIsPanelOpen(true)}
-                                title="View Evidence"
-                              >
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2.5"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <circle cx="11" cy="11" r="8"></circle>
-                                  <line
-                                    x1="21"
-                                    y1="21"
-                                    x2="16.65"
-                                    y2="16.65"
-                                  ></line>
-                                </svg>
-                                View Evidence
-                              </button>
+                      {editingNoteId === "medium-1" ? (
+                        <>
+                          <textarea
+                            className="pp-note-edit-textarea"
+                            value={editingNoteText}
+                            onChange={(e) => setEditingNoteText(e.target.value)}
+                            autoFocus
+                          />
+                          <div className="pp-edit-footer-row">
+                            <div className="note-footer">
+                              <div className="note-meta-stack">
+                                <span className="note-date">Jan 30, 2026</span>
+                                <button className="pp-evidence-icon-btn" onClick={() => setIsPanelOpen(true)} title="View Evidence">
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                  </svg>
+                                  View Evidence
+                                </button>
+                              </div>
+                            </div>
+                            <div className="pp-note-save-row">
+                              <button className="pp-note-save-btn" onClick={() => saveEditNote("medium-1", editingNoteText)}>Save</button>
+                              <button className="pp-note-cancel-btn" onClick={cancelEditNote}>Cancel</button>
                             </div>
                           </div>
-                          <div className="pp-note-save-row">
-                            <button
-                              className="pp-note-save-btn"
-                              onClick={() =>
-                                saveEditNote("medium-2", editingNoteText)
-                              }
-                            >
-                              Save
-                            </button>
-                            <button
-                              className="pp-note-cancel-btn"
-                              onClick={cancelEditNote}
-                            >
-                              Cancel
+                        </>
+                      ) : (
+                        <div className="note-text">
+                          <strong>Medication review:</strong> {staticNotes["medium-1"]}
+                        </div>
+                      )}
+                      {editingNoteId !== "medium-1" && (
+                        <div className="note-footer">
+                          <div className="note-meta-stack">
+                            <span className="note-date">Jan 30, 2026</span>
+                            <button className="pp-evidence-icon-btn" onClick={() => setIsPanelOpen(true)} title="View Evidence">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                              </svg>
+                              View Evidence
                             </button>
                           </div>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="note-text">
-                        <strong>Lab follow-up:</strong>{" "}
-                        {staticNotes["medium-2"]}
-                      </div>
-                    )}
-                    {editingNoteId !== "medium-2" && (
-                      <div className="note-footer">
-                        <div className="note-meta-stack">
-                          <span className="note-date">Jan 25, 2026</span>
                           <button
-                            className="pp-evidence-icon-btn"
-                            onClick={() => setIsPanelOpen(true)}
-                            title="View Evidence"
+                            className="pp-note-delete-btn"
+                            onClick={() => openDeleteAlertModal("medium-1")}
+                            title="Delete"
                           >
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <circle cx="11" cy="11" r="8"></circle>
-                              <line
-                                x1="21"
-                                y1="21"
-                                x2="16.65"
-                                y2="16.65"
-                              ></line>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M3 6h18" />
+                              <path d="M8 6V4h8v2" />
+                              <path d="M19 6l-1 14H6L5 6" />
+                              <path d="M10 11v6" />
+                              <path d="M14 11v6" />
                             </svg>
-                            View Evidence
                           </button>
                         </div>
+                      )}
+                    </div>
+                  )}
+                  {staticNotes["medium-2"] && (
+                    <div className="note-item medium-priority">
+                      <div className="pp-note-actions">
                         <button
-                          className="pp-note-delete-btn"
-                          onClick={() => openDeleteAlertModal("medium-2")}
-                          title="Delete"
+                          className="pp-note-edit-btn"
+                          onClick={() => startEditNote("medium-2", staticNotes["medium-2"])}
+                          title="Edit"
                         >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M3 6h18" />
-                            <path d="M8 6V4h8v2" />
-                            <path d="M19 6l-1 14H6L5 6" />
-                            <path d="M10 11v6" />
-                            <path d="M14 11v6" />
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                           </svg>
                         </button>
                       </div>
-                    )}
-                  </div>
+                      {editingNoteId === "medium-2" ? (
+                        <>
+                          <textarea
+                            className="pp-note-edit-textarea"
+                            value={editingNoteText}
+                            onChange={(e) => setEditingNoteText(e.target.value)}
+                            autoFocus
+                          />
+                          <div className="pp-edit-footer-row">
+                            <div className="note-footer">
+                              <div className="note-meta-stack">
+                                <span className="note-date">Jan 25, 2026</span>
+                                <button className="pp-evidence-icon-btn" onClick={() => setIsPanelOpen(true)} title="View Evidence">
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                  </svg>
+                                  View Evidence
+                                </button>
+                              </div>
+                            </div>
+                            <div className="pp-note-save-row">
+                              <button className="pp-note-save-btn" onClick={() => saveEditNote("medium-2", editingNoteText)}>Save</button>
+                              <button className="pp-note-cancel-btn" onClick={cancelEditNote}>Cancel</button>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="note-text">
+                          <strong>Lab follow-up:</strong> {staticNotes["medium-2"]}
+                        </div>
+                      )}
+                      {editingNoteId !== "medium-2" && (
+                        <div className="note-footer">
+                          <div className="note-meta-stack">
+                            <span className="note-date">Jan 25, 2026</span>
+                            <button className="pp-evidence-icon-btn" onClick={() => setIsPanelOpen(true)} title="View Evidence">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                              </svg>
+                              View Evidence
+                            </button>
+                          </div>
+                          <button
+                            className="pp-note-delete-btn"
+                            onClick={() => openDeleteAlertModal("medium-2")}
+                            title="Delete"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M3 6h18" />
+                              <path d="M8 6V4h8v2" />
+                              <path d="M19 6l-1 14H6L5 6" />
+                              <path d="M10 11v6" />
+                              <path d="M14 11v6" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   {/* Doctor-added new notes for Medium Priority */}
                   {newNotes.medium.map((note) => (
                     <div className="note-item medium-priority" key={note.id}>
@@ -2207,9 +1958,7 @@ const PatientProfile = () => {
                           <div className="note-text">{note.text}</div>
                           <div className="note-footer">
                             <div className="note-meta-stack">
-                              <span className="note-date">
-                                📝 Dr. Note · {note.date}
-                              </span>
+                              <span className="note-date">{note.date}</span>
                             </div>
                             <button
                               className="pp-note-delete-btn"
@@ -2253,14 +2002,7 @@ const PatientProfile = () => {
                           <div className="pp-edit-footer-row">
                             <div className="note-footer">
                               <div className="note-meta-stack">
-                                <span className="note-date">
-                                  📝 Dr. Note ·{" "}
-                                  {new Date().toLocaleDateString("en-US", {
-                                    month: "short",
-                                    day: "numeric",
-                                    year: "numeric",
-                                  })}
-                                </span>
+                                <span className="note-date">{new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
                               </div>
                             </div>
                             <div className="pp-note-save-row">
@@ -2444,10 +2186,11 @@ const PatientProfile = () => {
                   ) : analysisData?.[0]?.result?.low_priority_alerts?.length >
                     0 ? (
                     analysisData[0].result.low_priority_alerts.map(
-                      (alert, index) => {
-                        const noteId = `low-api-${index}`;
+                      (alertObj) => {
+                        const noteId = alertObj.id;
+                        const alert = alertObj.text;
                         return (
-                          <div className="note-item low-priority" key={index}>
+                          <div className="note-item low-priority" key={noteId}>
                             <div className="pp-note-actions">
                               <button
                                 className="pp-note-edit-btn"
@@ -2518,25 +2261,14 @@ const PatientProfile = () => {
                                     </div>
                                   </div>
                                   <div className="pp-note-save-row">
-                                    <button
-                                      className="pp-note-save-btn"
-                                      onClick={() => saveEditNote(noteId)}
-                                    >
-                                      Save
-                                    </button>
-                                    <button
-                                      className="pp-note-cancel-btn"
-                                      onClick={cancelEditNote}
-                                    >
-                                      Cancel
-                                    </button>
+                                    <button className="pp-note-save-btn" onClick={() => saveEditNote(noteId, editingNoteText)}>Save</button>
+                                    <button className="pp-note-cancel-btn" onClick={cancelEditNote}>Cancel</button>
                                   </div>
                                 </div>
                               </>
                             ) : (
                               <div className="note-text">
-                                <strong>Note: </strong>{" "}
-                                {staticNotes[noteId] || alert}
+                                <strong>Note: </strong> {alert}
                               </div>
                             )}
                             {editingNoteId !== noteId && (
@@ -2603,152 +2335,81 @@ const PatientProfile = () => {
                     )
                   ) : (
                     <>
-                      <div className="note-item low-priority">
-                        <div className="pp-note-actions">
-                          <button
-                            className="pp-note-edit-btn"
-                            onClick={() =>
-                              startEditNote("low-1", staticNotes["low-1"])
-                            }
-                            title="Edit"
-                          >
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                          </button>
-                        </div>
-                        {editingNoteId === "low-1" ? (
-                          <>
-                            <textarea
-                              className="pp-note-edit-textarea"
-                              value={editingNoteText}
-                              onChange={(e) =>
-                                setEditingNoteText(e.target.value)
-                              }
-                              autoFocus
-                            />
-                            <div className="pp-edit-footer-row">
-                              <div className="note-footer">
-                                <div className="note-meta-stack">
-                                  <span className="note-date">
-                                    Oct 10, 2025
-                                  </span>
-                                  <button
-                                    className="pp-evidence-icon-btn"
-                                    onClick={() => setIsPanelOpen(true)}
-                                    title="View Evidence"
-                                  >
-                                    <svg
-                                      width="14"
-                                      height="14"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2.5"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    >
-                                      <circle cx="11" cy="11" r="8"></circle>
-                                      <line
-                                        x1="21"
-                                        y1="21"
-                                        x2="16.65"
-                                        y2="16.65"
-                                      ></line>
-                                    </svg>
-                                    View Evidence
-                                  </button>
-                                </div>
-                              </div>
-                              <div className="pp-note-save-row">
-                                <button
-                                  className="pp-note-save-btn"
-                                  onClick={() =>
-                                    saveEditNote("low-1", editingNoteText)
-                                  }
-                                >
-                                  Save
-                                </button>
-                                <button
-                                  className="pp-note-cancel-btn"
-                                  onClick={cancelEditNote}
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-                          </>
-                        ) : (
-                          <div className="note-text">
-                            <strong>Note:</strong> {staticNotes["low-1"]}
-                          </div>
-                        )}
-                        {editingNoteId !== "low-1" && (
-                          <div className="note-footer">
-                            <div className="note-meta-stack">
-                              <span className="note-date">Oct 10, 2025</span>
-                              <button
-                                className="pp-evidence-icon-btn"
-                                onClick={() => setIsPanelOpen(true)}
-                                title="View Evidence"
-                              >
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2.5"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <circle cx="11" cy="11" r="8"></circle>
-                                  <line
-                                    x1="21"
-                                    y1="21"
-                                    x2="16.65"
-                                    y2="16.65"
-                                  ></line>
-                                </svg>
-                                View Evidence
-                              </button>
-                            </div>
+                      {staticNotes["low-1"] && (
+                        <div className="note-item low-priority">
+                          <div className="pp-note-actions">
                             <button
-                              className="pp-note-delete-btn"
-                              onClick={() => openDeleteAlertModal("low-1")}
-                              title="Delete"
+                              className="pp-note-edit-btn"
+                              onClick={() => startEditNote("low-1", staticNotes["low-1"])}
+                              title="Edit"
                             >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="18"
-                                height="18"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <path d="M3 6h18" />
-                                <path d="M8 6V4h8v2" />
-                                <path d="M19 6l-1 14H6L5 6" />
-                                <path d="M10 11v6" />
-                                <path d="M14 11v6" />
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                               </svg>
                             </button>
                           </div>
-                        )}
-                      </div>
+                          {editingNoteId === "low-1" ? (
+                            <>
+                              <textarea
+                                className="pp-note-edit-textarea"
+                                value={editingNoteText}
+                                onChange={(e) => setEditingNoteText(e.target.value)}
+                                autoFocus
+                              />
+                              <div className="pp-edit-footer-row">
+                                <div className="note-footer">
+                                  <div className="note-meta-stack">
+                                    <span className="note-date">Oct 10, 2025</span>
+                                    <button className="pp-evidence-icon-btn" onClick={() => setIsPanelOpen(true)} title="View Evidence">
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                      </svg>
+                                      View Evidence
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className="pp-note-save-row">
+                                  <button className="pp-note-save-btn" onClick={() => saveEditNote("low-1", editingNoteText)}>Save</button>
+                                  <button className="pp-note-cancel-btn" onClick={cancelEditNote}>Cancel</button>
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="note-text">
+                              <strong>Note:</strong> {staticNotes["low-1"]}
+                            </div>
+                          )}
+                          {editingNoteId !== "low-1" && (
+                            <div className="note-footer">
+                              <div className="note-meta-stack">
+                                <span className="note-date">Oct 10, 2025</span>
+                                <button className="pp-evidence-icon-btn" onClick={() => setIsPanelOpen(true)} title="View Evidence">
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                  </svg>
+                                  View Evidence
+                                </button>
+                              </div>
+                              <button
+                                className="pp-note-delete-btn"
+                                onClick={() => openDeleteAlertModal("low-1")}
+                                title="Delete"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M3 6h18" />
+                                  <path d="M8 6V4h8v2" />
+                                  <path d="M19 6l-1 14H6L5 6" />
+                                  <path d="M10 11v6" />
+                                  <path d="M14 11v6" />
+                                </svg>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </>
                   )}
                   {/* Doctor-added new notes for Low Priority */}
@@ -2780,9 +2441,7 @@ const PatientProfile = () => {
                           <div className="note-text">{note.text}</div>
                           <div className="note-footer">
                             <div className="note-meta-stack">
-                              <span className="note-date">
-                                📝 Dr. Note · {note.date}
-                              </span>
+                              <span className="note-date">{note.date}</span>
                             </div>
                             <button
                               className="pp-note-delete-btn"
@@ -2826,14 +2485,7 @@ const PatientProfile = () => {
                           <div className="pp-edit-footer-row">
                             <div className="note-footer">
                               <div className="note-meta-stack">
-                                <span className="note-date">
-                                  📝 Dr. Note ·{" "}
-                                  {new Date().toLocaleDateString("en-US", {
-                                    month: "short",
-                                    day: "numeric",
-                                    year: "numeric",
-                                  })}
-                                </span>
+                                <span className="note-date">{new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
                               </div>
                             </div>
                             <div className="pp-note-save-row">

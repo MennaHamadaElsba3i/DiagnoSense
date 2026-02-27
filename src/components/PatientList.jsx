@@ -504,9 +504,8 @@ const PatientList = () => {
               Stable
             </div>
             <div
-              className={`chip ${
-                activeFilter === "underReview" ? "active" : ""
-              }`}
+              className={`chip ${activeFilter === "underReview" ? "active" : ""
+                }`}
               onClick={() => setActiveFilter("underReview")}
             >
               Under Review
@@ -526,30 +525,21 @@ const PatientList = () => {
                 <div
                   className="patient-avatar"
                   style={{
-                    background: patient.gradient,
-                    width: "70px",
-                    height: "70px",
-                    fontSize: "24px",
+                    background: patient.gradient, width: '70px',
+                    height: '70px', fontSize: '24px'
                   }}
                 >
                   {patient.initials}
                 </div>
                 <div className="patient-info">
                   <h3>{patient.name}</h3>
-                  <div
-                    className="patient-meta"
-                    style={{
-                      display: "flex",
-                      justifyContent: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <p> Age: {patient.age}</p>
-
+                  <div className="patient-meta-row">
+                    <p className="patient-meta">
+                      Age: {patient.age}
+                    </p>
                     <span
-                      className={`status-badge ${
-                        patient.statusType || patient.status
-                      }`}
+                      className={`status-badge ${patient.statusType || patient.status
+                        }`}
                     >
                       {patient.statusLabel}
                     </span>
