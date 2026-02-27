@@ -932,6 +932,11 @@
         }
 
         .form-input {
+             width: 100%;
+             height: 52px;
+             box-sizing: border-box;
+             -webkit-appearance: none;
+             appearance: none;
              padding: 14px 18px;
              border: 1px solid #E6EAF2;
              border-radius: 12px;
@@ -942,11 +947,33 @@
              font-family: 'Inter', sans-serif;
         }
 
+        /* Scoped override to ensure Step 1 inputs remain exactly 52px tall avoiding any generic overrides */
+        .add-patient-step1 .form-input,
+        .add-patient-step1 .custom-select-trigger {
+             height: 52px !important;
+             min-height: 52px !important;
+             max-height: 52px !important;
+             line-height: normal !important;
+             box-sizing: border-box !important;
+             padding-top: 14px !important;
+             padding-bottom: 14px !important;
+             margin: 0 !important;
+        }
+
         .form-input:focus {
              outline: none;
              border-color: #2A66FF;
              box-shadow: 0 0 0 3px rgba(42, 102, 255, 0.08);
              background: #FFFFFF;
+        }
+
+        .form-input.target-error {
+             border-color: #EF4444;
+             background-color: #FEF2F2;
+        }
+
+        .form-input.target-error:focus {
+             box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
         }
 
         .form-input::placeholder {
@@ -1005,91 +1032,101 @@
         }
 
         /* Container */
-.custom-select-container {
-    position: relative;
-    width: 100%;
-}
+        .custom-select-container {
+             position: relative;
+             width: 100%;
+        }
 
-/* التريجر (اللي شبه الـ input) */
-.custom-select-trigger {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    background: #F8FAFF;
-    height: 52px; /* نفس ارتفاع الـ inputs التانية */
-}
+        /* التريجر (اللي شبه الـ input) */
+        .custom-select-trigger {
+             display: flex;
+             align-items: center;
+             justify-content: space-between;
+             cursor: pointer;
+             background: #F8FAFF;
+             height: 52px;
+             /* نفس ارتفاع الـ inputs التانية */
+        }
 
-.custom-select-trigger.placeholder {
-    color: #A0A8B8;
-}
+        .custom-select-trigger.placeholder {
+             color: #A0A8B8;
+        }
 
-.arrow-icon {
-    width: 18px;
-    height: 18px;
-    fill: none;
-    stroke: #2A66FF;
-    stroke-width: 2;
-    transition: transform 0.3s ease;
-}
+        .arrow-icon {
+             width: 18px;
+             height: 18px;
+             fill: none;
+             stroke: #2A66FF;
+             stroke-width: 2;
+             transition: transform 0.3s ease;
+        }
 
-.is-open .arrow-icon {
-    transform: rotate(180deg);
-}
+        .is-open .arrow-icon {
+             transform: rotate(180deg);
+        }
 
-/* القائمة نفسها (The List of Options) */
-.custom-options-list {
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 0;
-    right: 0;
-    background: #FFFFFF;
-    border-radius: 12px;
-    border: 1px solid #E6EAF2;
-    box-shadow: 0 10px 25px rgba(42, 102, 255, 0.1);
-    z-index: 1000;
-    overflow: hidden;
-    animation: slideIn 0.2s ease-out;
-}
+        /* القائمة نفسها (The List of Options) */
+        .custom-options-list {
+             position: absolute;
+             top: calc(100% + 8px);
+             left: 0;
+             right: 0;
+             background: #FFFFFF;
+             border-radius: 12px;
+             border: 1px solid #E6EAF2;
+             box-shadow: 0 10px 25px rgba(42, 102, 255, 0.1);
+             z-index: 1000;
+             overflow: hidden;
+             animation: slideIn 0.2s ease-out;
+        }
 
-/* الخيار الواحد (Individual Option) */
-.custom-option {
-    padding: 12px 16px;
-    font-size: 14px;
-    font-weight: 500;
-    color: #3A4560;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    transition: all 0.2s ease;
-}
+        /* الخيار الواحد (Individual Option) */
+        .custom-option {
+             padding: 12px 16px;
+             font-size: 14px;
+             font-weight: 500;
+             color: #3A4560;
+             cursor: pointer;
+             display: flex;
+             align-items: center;
+             justify-content: space-between;
+             transition: all 0.2s ease;
+        }
 
-/* الـ Hover اللي كنتي بتسألي عليه */
-.custom-option:hover {
-    background-color: #F0F6FF;
-    color: #2A66FF;
-    padding-left: 20px; /* حركة بسيطة شيك */
-}
+        /* الـ Hover اللي كنتي بتسألي عليه */
+        .custom-option:hover {
+             background-color: #F0F6FF;
+             color: #2A66FF;
+             padding-left: 20px;
+             /* حركة بسيطة شيك */
+        }
 
-.custom-option.selected {
-    background-color: #E9F0FF;
-    color: #2A66FF;
-    font-weight: 600;
-}
+        .custom-option.selected {
+             background-color: #E9F0FF;
+             color: #2A66FF;
+             font-weight: 600;
+        }
 
-.check-icon {
-    width: 16px;
-    height: 16px;
-    stroke: #2A66FF;
-    stroke-width: 3;
-    fill: none;
-}
+        .check-icon {
+             width: 16px;
+             height: 16px;
+             stroke: #2A66FF;
+             stroke-width: 3;
+             fill: none;
+        }
 
-@keyframes slideIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+        @keyframes slideIn {
+             from {
+                  opacity: 0;
+                  transform: translateY(-10px);
+             }
+
+             to {
+                  opacity: 1;
+                  transform: translateY(0);
+             }
+        }
+
         /* Radio & Toggle Groups */
         .radio-group {
              margin-top: 10px;

@@ -23,10 +23,11 @@ const AddPatient = () => {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const [formData, setFormData] = useState({
     fullName: "",
-    email:"",
+    email: "",
     age: "",
     phone: "",
     nationalId: "",
@@ -38,8 +39,8 @@ const AddPatient = () => {
   });
 
   const isStep1Valid =
-    formData.fullName.trim() && formData.age && selectedGender && formData.phone.trim() && formData.nationalId.trim();
-  const isStep2Valid = isSmoker !== null;
+    formData.fullName.trim() && formData.email.trim() && formData.age && selectedGender && formData.phone.trim() && formData.nationalId.trim() && Object.keys(fieldErrors).every((key) => !fieldErrors[key]);
+  const isStep2Valid = true;
 
   useEffect(() => {
     const categories = ["lab", "history", "radiology"];
@@ -77,7 +78,38 @@ const AddPatient = () => {
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
-    setFormData((prev) => ({ ...prev, [id]: value }));
+    let newValue = value;
+    let newErrors = { ...fieldErrors };
+
+    if (id === "phone" || id === "nationalId" || id === "age") {
+      const numericValue = value.replace(/\D/g, "");
+      if (value !== numericValue) {
+        if (id === "phone") newErrors[id] = "Phone number must contain numbers only.";
+        else if (id === "nationalId") newErrors[id] = "National ID must contain numbers only.";
+        else if (id === "age") newErrors[id] = "Age must contain numbers only.";
+      } else {
+        delete newErrors[id];
+      }
+      newValue = numericValue;
+    } else if (id === "fullName") {
+      const charValue = value.replace(/[0-9]/g, "");
+      if (value !== charValue) {
+        newErrors[id] = "Full Name must contain letters only.";
+      } else {
+        delete newErrors[id];
+      }
+      newValue = charValue;
+    } else if (id === "email") {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (value && !emailRegex.test(value)) {
+        newErrors.email = "Please enter a valid email address.";
+      } else {
+        delete newErrors.email;
+      }
+    }
+
+    setFieldErrors(newErrors);
+    setFormData((prev) => ({ ...prev, [id]: newValue }));
   };
 
   const handleGenderSelect = (e) => {
@@ -162,8 +194,8 @@ const AddPatient = () => {
       );
       apiFormData.append("phone_number", formData.phone || "0000000000");
 
-      apiFormData.append("is_smoker", isSmoker ? "1" : "0");
-      apiFormData.append("has_surgeries", hasSurgeries ? "1" : "0");
+      apiFormData.append("is_smoker", isSmoker === null ? "" : (isSmoker ? "1" : "0"));
+      apiFormData.append("has_surgeries", hasSurgeries === null ? "" : (hasSurgeries ? "1" : "0"));
       apiFormData.append("surgery_details", formData.surgeryText || "");
       apiFormData.append(
         "chronic_diseases",
@@ -469,43 +501,57 @@ const AddPatient = () => {
                 </p>
               </div>
 
-              <div className="form-grid">
+              <div className="form-grid add-patient-step1">
                 <div className="form-group">
                   <label className="form-label required">Full Name</label>
                   <input
                     type="text"
-                    className="form-input"
+                    className={`form-input${fieldErrors.fullName ? " target-error" : ""}`}
                     id="fullName"
                     placeholder="Enter patient's full name"
                     value={formData.fullName}
                     onChange={handleInputChange}
                   />
+                  {fieldErrors.fullName && (
+                    <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
+                      {fieldErrors.fullName}
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-group">
                   <label className="form-label required">Email</label>
                   <input
                     type="email"
-                    className="form-input"
+                    className={`form-input${fieldErrors.email ? " target-error" : ""}`}
                     id="email"
                     placeholder="Enter patient's email"
                     value={formData.email}
                     onChange={handleInputChange}
                   />
+                  {fieldErrors.email && (
+                    <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
+                      {fieldErrors.email}
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-group">
                   <label className="form-label required">Age</label>
                   <input
-                    type="number"
-                    className="form-input"
+                    type="text"
+                    inputMode="numeric"
+                    className={`form-input${fieldErrors.age ? " target-error" : ""}`}
                     id="age"
                     placeholder="Enter age"
-                    min="0"
-                    max="150"
                     value={formData.age}
                     onChange={handleInputChange}
                   />
+                  {fieldErrors.age && (
+                    <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
+                      {fieldErrors.age}
+                    </div>
+                  )}
                 </div>
 
                 {/* <div className="form-group">
@@ -528,85 +574,75 @@ const AddPatient = () => {
                   </select>
                 </div> */}
 
-                  <div className="form-group">
-  <label className="form-label required">Gender</label>
-  <div className={`custom-select-container ${isGenderOpen ? "is-open" : ""}`}>
-    <div 
-      className={`form-input custom-select-trigger ${!selectedGender ? "placeholder" : ""}`}
-      onClick={() => setIsGenderOpen(!isGenderOpen)}
-    >
-      {selectedGender ? selectedGender.charAt(0).toUpperCase() + selectedGender.slice(1) : "Select gender"}
-      <svg className="arrow-icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
-    </div>
-    
-    {isGenderOpen && (
-      <div className="custom-options-list">
-        {[
-          { value: "male", label: "Male" },
-          { value: "female", label: "Female" },
-          { value: "other", label: "Other" },
-          { value: "prefer_not_to_say", label: "Prefer not to say" }
-        ].map((opt) => (
-          <div
-            key={opt.value}
-            className={`custom-option ${selectedGender === opt.value ? "selected" : ""}`}
-            onClick={() => {
-              setSelectedGender(opt.value);
-              setIsGenderOpen(false);
-            }}
-          >
-            {opt.label}
-            {selectedGender === opt.value && <svg className="check-icon" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" /></svg>}
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-</div>
+                <div className="form-group">
+                  <label className="form-label required">Gender</label>
+                  <div className={`custom-select-container ${isGenderOpen ? "is-open" : ""}`}>
+                    <div
+                      className={`form-input custom-select-trigger ${!selectedGender ? "placeholder" : ""}`}
+                      onClick={() => setIsGenderOpen(!isGenderOpen)}
+                    >
+                      {selectedGender ? selectedGender.charAt(0).toUpperCase() + selectedGender.slice(1) : "Select gender"}
+                      <svg className="arrow-icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
+                    </div>
+
+                    {isGenderOpen && (
+                      <div className="custom-options-list">
+                        {[
+                          { value: "male", label: "Male" },
+                          { value: "female", label: "Female" },
+                          { value: "other", label: "Other" },
+                          { value: "prefer_not_to_say", label: "Prefer not to say" }
+                        ].map((opt) => (
+                          <div
+                            key={opt.value}
+                            className={`custom-option ${selectedGender === opt.value ? "selected" : ""}`}
+                            onClick={() => {
+                              setSelectedGender(opt.value);
+                              setIsGenderOpen(false);
+                            }}
+                          >
+                            {opt.label}
+                            {selectedGender === opt.value && <svg className="check-icon" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" /></svg>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <div className="form-group">
                   <label className="form-label required">Phone Number</label>
                   <input
                     type="tel"
-                    className="form-input"
+                    className={`form-input${fieldErrors.phone ? " target-error" : ""}`}
                     id="phone"
+                    inputMode="numeric"
                     placeholder="+20 XXX XXX XXXX"
                     value={formData.phone}
                     onChange={handleInputChange}
                   />
-                  <div className="helper-text">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    Optional - for follow-up communications
-                  </div>
+                  {fieldErrors.phone && (
+                    <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
+                      {fieldErrors.phone}
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label required">National ID / MRN</label>
+                  <label className="form-label required">National ID</label>
                   <input
                     type="text"
-                    className="form-input"
+                    className={`form-input${fieldErrors.nationalId ? " target-error" : ""}`}
                     id="nationalId"
+                    inputMode="numeric"
                     placeholder="Enter ID number"
                     value={formData.nationalId}
                     onChange={handleInputChange}
                   />
-                  <div className="helper-text">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    Optional - for record linkage
-                  </div>
+                  {fieldErrors.nationalId && (
+                    <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>
+                      {fieldErrors.nationalId}
+                    </div>
+                  )}
                 </div>
               </div>
 
