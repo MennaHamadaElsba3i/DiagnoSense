@@ -933,7 +933,8 @@ body {
 }
 
 .btn-primary {
-    display: inline;
+    display: flex;
+    justify-content: center;
     background: #2A66FF;
     color: #FFFFFF;
 }
