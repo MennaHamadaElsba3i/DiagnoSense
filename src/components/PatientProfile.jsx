@@ -16,6 +16,12 @@ const PatientProfile = () => {
   const [isDecisionModalOpen, setIsDecisionModalOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
+
+  const [selectedStatus, setSelectedStatus] = useState(() => {
+    const patientData = JSON.parse(localStorage.getItem("currentPatient"));
+    return patientData && patientData.status ? patientData.status : null;
+  }); // Null default
+
   const [chatMessages, setChatMessages] = useState([
     {
       type: "ai",
@@ -322,7 +328,7 @@ const PatientProfile = () => {
   };
 
   return (
-      <div className="pp-scope patient-profile-page">
+    <div className="pp-scope patient-profile-page">
       <div className="background-layer">
         <div className="ambient-ripple ripple-1"></div>
         <div className="ambient-ripple ripple-2"></div>
@@ -411,7 +417,7 @@ const PatientProfile = () => {
               className="decision-support-card"
               onClick={openDecisionSupport}
             >
-              <div className="card-header" style={{marginBottom:'0px', gap:'10px' , paddingBottom:'8px'}}>
+              <div className="card-header" style={{ marginBottom: '0px', gap: '10px', paddingBottom: '8px' }}>
                 <div className="card-icon">
                   <svg viewBox="0 0 24 24">
                     <polyline points="9 11 12 14 22 4"></polyline>
@@ -636,7 +642,7 @@ const PatientProfile = () => {
           marginRight: "0",
           marginTop: "64px",
           minHeight: "calc(100vh - 64px)",
-          width:"85%"
+          width: "85%"
         }}
       >
         <header
@@ -650,10 +656,10 @@ const PatientProfile = () => {
         >
           <div className="patient-identity">
             <div className="patient-main-info">
-              <div className="patient-avatar" style={{borderRadius:'50%'}}>NH</div>
-              <div className="patient-details" style={{marginBottom:'0px'}}>
+              <div className="patient-avatar" style={{ borderRadius: '50%' }}>NH</div>
+              <div className="patient-details" style={{ marginBottom: '0px' }}>
                 <h1>Nour Hassan</h1>
-                <p className="patient-meta">Dr. El-Sayed / Patient ID #2031</p>
+                <p className="patient-meta">Dr. El-Sayed / National ID: #30410141201075</p>
               </div>
             </div>
             <div className="header-actions">
@@ -728,9 +734,8 @@ const PatientProfile = () => {
                 Key Important Info
               </button>
               <button
-                className={`tab-btn ${
-                  activeTab === "comparative" ? "active" : ""
-                }`}
+                className={`tab-btn ${activeTab === "comparative" ? "active" : ""
+                  }`}
                 onClick={() => handleTabClick("comparative")}
               >
                 Comparative Analysis
@@ -759,16 +764,15 @@ const PatientProfile = () => {
 
         <div className="container">
           <div
-            className={`tab-content ${
-              activeTab === "overview" ? "active" : ""
-            }`}
+            className={`tab-content ${activeTab === "overview" ? "active" : ""
+              }`}
             id="overview"
           >
             <div className="overview-layout">
               <div className="card smart-summary">
                 <div
                   className="card-header"
-                  style={{ background: "none", display: "block"}}
+                  style={{ background: "none", display: "block" }}
                 >
                   <h2 className="card-title">
                     <span className="ai-pulse"></span>
@@ -780,9 +784,9 @@ const PatientProfile = () => {
                   >
                     <strong>AI Summary:</strong>{" "}
                     {isLoadingAnalysis
-                      ? "Loading..."
+                      ? "This 51-year-old male patient presented initially with sudden-onset severe headache and dizziness, later found to be caused by profound bradycardia (HR 21 bpm), requiring pacemaker implantation. After initial improvement, he developed recurrence of symptoms due to pacemaker failure, followed by surgical site infection and persistent high-grade fever. He is currently hospitalized for management of suspected pacemaker-related infection. There is no significant past medical history, no chronic illnesses, and no relevant family history."
                       : analysisData?.[0]?.result?.["ai-summary"] ||
-                        "No insights available No insights available No insights available No insights available No insights available No insights available No insights available"}
+                      "No insights available No insights available No insights available No insights available No insights available No insights available No insights available"}
                   </div>
                 </div>
 
@@ -790,22 +794,95 @@ const PatientProfile = () => {
                   className="critical-info-section"
                   style={{ marginTop: "0" }}
                 >
-                  <h3 className="section-header">
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="12" y1="16" x2="12" y2="12"></line>
-                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                    Critical Key Information
-                  </h3>
+                  <div className="section-header-container">
+                    <h3 className="section-header" style={{ marginBottom: 0 }}>
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                      </svg>
+                      Critical Key Information
+                    </h3>
+                    <div className="status-buttons-group">
+                      <span
+                        className={`status-badge stable ${selectedStatus !== "stable" ? "inactive" : ""}`}
+                        onClick={() => setSelectedStatus("stable")}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <span className="status-dot" style={{ backgroundColor: "#00C187", boxShadow: "none", animation: "none" }}></span> Stable
+                      </span>
+                      <span
+                        className={`status-badge critical ${selectedStatus !== "critical" ? "inactive" : ""}`}
+                        onClick={() => setSelectedStatus("critical")}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <span className="status-dot" style={{ backgroundColor: "#FF5C5C", boxShadow: "none", animation: "none" }}></span> Critical
+                      </span>
+                      <span
+                        className={`status-badge warning ${selectedStatus !== "warning" ? "inactive" : ""}`}
+                        onClick={() => setSelectedStatus("warning")}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <span className="status-dot" style={{ backgroundColor: "#FFA500", boxShadow: "none", animation: "none" }}></span> Under Review
+                      </span>
+                    </div>
+                  </div>
                   <div className="key-info-grid">
+                    {/* Row 1 / Col 1 */}
+                    <div className="info-item age-smoker-split">
+                      {/* Mini-field A: Age */}
+                      <div className="mini-field">
+                        <div className="info-label">
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                          </svg>
+                          Age
+                        </div>
+                        <div className="info-value">
+                          47 Years
+                        </div>
+                      </div>
+
+                      {/* Mini-field B: Smoker */}
+                      <div className="mini-field">
+                        <div className="info-label">
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <circle cx="12" cy="16" r="1"></circle>
+                          </svg>
+                          Smoker
+                        </div>
+                        <div className="info-value">
+                          No
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Row 1 / Col 2 */}
                     <div className="info-item">
                       <div className="info-label">
                         <svg
@@ -819,12 +896,14 @@ const PatientProfile = () => {
                           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                           <circle cx="12" cy="7" r="4"></circle>
                         </svg>
-                        Primary Condition
+                        Chronic Disease
                       </div>
                       <div className="info-value">
                         Type 2 Diabetes, Hypertension
                       </div>
                     </div>
+
+                    {/* Row 2 / Col 1 */}
                     <div className="info-item">
                       <div className="info-label">
                         <svg
@@ -835,43 +914,20 @@ const PatientProfile = () => {
                           stroke="currentColor"
                           strokeWidth="2"
                         >
-                          <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                          <polyline points="14 2 14 8 20 8"></polyline>
+                          <line x1="16" y1="13" x2="8" y2="13"></line>
+                          <line x1="16" y1="17" x2="8" y2="17"></line>
+                          <polyline points="10 9 9 9 8 9"></polyline>
                         </svg>
-                        Current Diagnosis
+                        Previous Surgeries
                       </div>
-
                       <div className="info-value">
-                        {isLoadingAnalysis ? (
-                          "Loading..."
-                        ) : analysisData?.[0]?.result?.current_diagnoses
-                            ?.length > 0 ? (
-                          <div
-                            style={{
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: "5px",
-                            }}
-                          >
-                            {analysisData[0].result.current_diagnoses.map(
-                              (diagnosis, index) => (
-                                <span
-                                  key={index}
-                                  style={{
-                                    display: "block",
-                                    fontSize: "13px",
-                                    lineHeight: "1.4",
-                                  }}
-                                >
-                                  • {diagnosis}
-                                </span>
-                              ),
-                            )}
-                          </div>
-                        ) : (
-                          "No diagnosis recorded"
-                        )}
+                        Appendectomy (2015)
                       </div>
                     </div>
+
+                    {/* Row 2 / Col 2 */}
                     <div
                       className="info-item"
                       style={{ background: "#FFECEC", borderColor: "#FF5C5C" }}
@@ -889,12 +945,14 @@ const PatientProfile = () => {
                           <line x1="12" y1="9" x2="12" y2="13"></line>
                           <line x1="12" y1="17" x2="12.01" y2="17"></line>
                         </svg>
-                        Critical Allergy
+                        Known Allergies
                       </div>
                       <div className="info-value" style={{ color: "#FF5C5C" }}>
                         Penicillin (Anaphylaxis)
                       </div>
                     </div>
+
+                    {/* Row 3 / Col 1 */}
                     <div className="info-item">
                       <div className="info-label">
                         <svg
@@ -905,23 +963,17 @@ const PatientProfile = () => {
                           stroke="currentColor"
                           strokeWidth="2"
                         >
-                          <rect
-                            x="3"
-                            y="4"
-                            width="18"
-                            height="18"
-                            rx="2"
-                            ry="2"
-                          ></rect>
-                          <line x1="16" y1="2" x2="16" y2="6"></line>
-                          <line x1="8" y1="2" x2="8" y2="6"></line>
+                          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                         </svg>
-                        Date of Birth
+                        Medications
                       </div>
                       <div className="info-value">
-                        March 15, 1978 (47 years)
+                        Atorvastatin 20mg, Metformin 500mg
                       </div>
                     </div>
+
+                    {/* Row 3 / Col 2 */}
                     <div className="info-item">
                       <div className="info-label">
                         <svg
@@ -932,28 +984,14 @@ const PatientProfile = () => {
                           stroke="currentColor"
                           strokeWidth="2"
                         >
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <line x1="2" y1="12" x2="22" y2="12"></line>
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="9" cy="7" r="4"></circle>
+                          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                         </svg>
-                        Blood Type
+                        Family Medical History
                       </div>
-                      <div className="info-value">O+</div>
-                    </div>
-                    <div className="info-item">
-                      <div className="info-label">
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                        </svg>
-                        Contact Number
-                      </div>
-                      <div className="info-value">+20 101 234 5678</div>
+                      <div className="info-value">Father: Hypertension</div>
                     </div>
                   </div>
                 </div>
@@ -1129,11 +1167,11 @@ const PatientProfile = () => {
                             title="Delete"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M3 6h18"/>
-                              <path d="M8 6V4h8v2"/>
-                              <path d="M19 6l-1 14H6L5 6"/>
-                              <path d="M10 11v6"/>
-                              <path d="M14 11v6"/>
+                              <path d="M3 6h18" />
+                              <path d="M8 6V4h8v2" />
+                              <path d="M19 6l-1 14H6L5 6" />
+                              <path d="M10 11v6" />
+                              <path d="M14 11v6" />
                             </svg>
                           </button>
                         </div>
@@ -1207,13 +1245,13 @@ const PatientProfile = () => {
                                   onClick={() => openDeleteAlertModal(noteId)}
                                   title="Delete"
                                 >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M3 6h18"/>
-                              <path d="M8 6V4h8v2"/>
-                              <path d="M19 6l-1 14H6L5 6"/>
-                              <path d="M10 11v6"/>
-                              <path d="M14 11v6"/>
-                            </svg>
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M3 6h18" />
+                                    <path d="M8 6V4h8v2" />
+                                    <path d="M19 6l-1 14H6L5 6" />
+                                    <path d="M10 11v6" />
+                                    <path d="M14 11v6" />
+                                  </svg>
                                 </button>
                               </div>
                             )}
@@ -1285,13 +1323,13 @@ const PatientProfile = () => {
                               onClick={() => openDeleteAlertModal("high-1")}
                               title="Delete"
                             >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M3 6h18"/>
-                              <path d="M8 6V4h8v2"/>
-                              <path d="M19 6l-1 14H6L5 6"/>
-                              <path d="M10 11v6"/>
-                              <path d="M14 11v6"/>
-                            </svg>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4h8v2" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M10 11v6" />
+                                <path d="M14 11v6" />
+                              </svg>
                             </button>
                           </div>
                         )}
@@ -1358,13 +1396,13 @@ const PatientProfile = () => {
                               onClick={() => openDeleteAlertModal("high-2")}
                               title="Delete"
                             >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M3 6h18"/>
-                              <path d="M8 6V4h8v2"/>
-                              <path d="M19 6l-1 14H6L5 6"/>
-                              <path d="M10 11v6"/>
-                              <path d="M14 11v6"/>
-                            </svg>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4h8v2" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M10 11v6" />
+                                <path d="M14 11v6" />
+                              </svg>
                             </button>
                           </div>
                         )}
@@ -1399,7 +1437,7 @@ const PatientProfile = () => {
                               title="Delete"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>
+                                <path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" />
                               </svg>
                             </button>
                           </div>
@@ -1502,13 +1540,13 @@ const PatientProfile = () => {
                           onClick={() => openDeleteAlertModal("medium-1")}
                           title="Delete"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M3 6h18"/>
-                              <path d="M8 6V4h8v2"/>
-                              <path d="M19 6l-1 14H6L5 6"/>
-                              <path d="M10 11v6"/>
-                              <path d="M14 11v6"/>
-                            </svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 6h18" />
+                            <path d="M8 6V4h8v2" />
+                            <path d="M19 6l-1 14H6L5 6" />
+                            <path d="M10 11v6" />
+                            <path d="M14 11v6" />
+                          </svg>
                         </button>
                       </div>
                     )}
@@ -1575,13 +1613,13 @@ const PatientProfile = () => {
                           onClick={() => openDeleteAlertModal("medium-2")}
                           title="Delete"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M3 6h18"/>
-                              <path d="M8 6V4h8v2"/>
-                              <path d="M19 6l-1 14H6L5 6"/>
-                              <path d="M10 11v6"/>
-                              <path d="M14 11v6"/>
-                            </svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 6h18" />
+                            <path d="M8 6V4h8v2" />
+                            <path d="M19 6l-1 14H6L5 6" />
+                            <path d="M10 11v6" />
+                            <path d="M14 11v6" />
+                          </svg>
                         </button>
                       </div>
                     )}
@@ -1614,7 +1652,7 @@ const PatientProfile = () => {
                               title="Delete"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>
+                                <path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" />
                               </svg>
                             </button>
                           </div>
@@ -1720,11 +1758,11 @@ const PatientProfile = () => {
                             title="Delete"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M3 6h18"/>
-                              <path d="M8 6V4h8v2"/>
-                              <path d="M19 6l-1 14H6L5 6"/>
-                              <path d="M10 11v6"/>
-                              <path d="M14 11v6"/>
+                              <path d="M3 6h18" />
+                              <path d="M8 6V4h8v2" />
+                              <path d="M19 6l-1 14H6L5 6" />
+                              <path d="M10 11v6" />
+                              <path d="M14 11v6" />
                             </svg>
                           </button>
                         </div>
@@ -1798,13 +1836,13 @@ const PatientProfile = () => {
                                   onClick={() => openDeleteAlertModal(noteId)}
                                   title="Delete"
                                 >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M3 6h18"/>
-                              <path d="M8 6V4h8v2"/>
-                              <path d="M19 6l-1 14H6L5 6"/>
-                              <path d="M10 11v6"/>
-                              <path d="M14 11v6"/>
-                            </svg>
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M3 6h18" />
+                                    <path d="M8 6V4h8v2" />
+                                    <path d="M19 6l-1 14H6L5 6" />
+                                    <path d="M10 11v6" />
+                                    <path d="M14 11v6" />
+                                  </svg>
                                 </button>
                               </div>
                             )}
@@ -1876,13 +1914,13 @@ const PatientProfile = () => {
                               onClick={() => openDeleteAlertModal("low-1")}
                               title="Delete"
                             >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M3 6h18"/>
-                              <path d="M8 6V4h8v2"/>
-                              <path d="M19 6l-1 14H6L5 6"/>
-                              <path d="M10 11v6"/>
-                              <path d="M14 11v6"/>
-                            </svg>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4h8v2" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M10 11v6" />
+                                <path d="M14 11v6" />
+                              </svg>
                             </button>
                           </div>
                         )}
@@ -1917,7 +1955,7 @@ const PatientProfile = () => {
                               title="Delete"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>
+                                <path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" />
                               </svg>
                             </button>
                           </div>
@@ -1952,9 +1990,8 @@ const PatientProfile = () => {
           </div>
 
           <div
-            className={`tab-content ${
-              activeTab === "comparative" ? "active" : ""
-            }`}
+            className={`tab-content ${activeTab === "comparative" ? "active" : ""
+              }`}
             id="comparative"
           >
             <div className="card">
@@ -2096,9 +2133,8 @@ const PatientProfile = () => {
 
           {/* Decision Support Tab */}
           <div
-            className={`tab-content ${
-              activeTab === "decision" ? "active" : ""
-            }`}
+            className={`tab-content ${activeTab === "decision" ? "active" : ""
+              }`}
             id="decision"
           >
             <div className="card">
@@ -2108,14 +2144,14 @@ const PatientProfile = () => {
               </h2>
               <div className="likelihood-stack">
                 {isLoadingAnalysis ||
-                !(
-                  analysisData?.[0]?.result?.likely_diagnoses?.high_likelihood
-                    ?.length > 0 ||
-                  analysisData?.[0]?.result?.likely_diagnoses?.possible
-                    ?.length > 0 ||
-                  analysisData?.[0]?.result?.likely_diagnoses?.low_likelihood
-                    ?.length > 0
-                ) ? (
+                  !(
+                    analysisData?.[0]?.result?.likely_diagnoses?.high_likelihood
+                      ?.length > 0 ||
+                    analysisData?.[0]?.result?.likely_diagnoses?.possible
+                      ?.length > 0 ||
+                    analysisData?.[0]?.result?.likely_diagnoses?.low_likelihood
+                      ?.length > 0
+                  ) ? (
                   <>
                     <div
                       className={`likelihood-card high ${expandedLikelihoods["static-0"] ? "expanded" : ""}`}
@@ -2294,11 +2330,10 @@ const PatientProfile = () => {
                       (item, index) => (
                         <div
                           key={`high-${index}`}
-                          className={`likelihood-card high ${
-                            expandedLikelihoods[`high-${index}`]
-                              ? "expanded"
-                              : ""
-                          }`}
+                          className={`likelihood-card high ${expandedLikelihoods[`high-${index}`]
+                            ? "expanded"
+                            : ""
+                            }`}
                           onClick={() => toggleLikelihood(`high-${index}`)}
                         >
                           <div className="likelihood-header">
@@ -2339,11 +2374,10 @@ const PatientProfile = () => {
                       (item, index) => (
                         <div
                           key={`poss-${index}`}
-                          className={`likelihood-card medium ${
-                            expandedLikelihoods[`poss-${index}`]
-                              ? "expanded"
-                              : ""
-                          }`}
+                          className={`likelihood-card medium ${expandedLikelihoods[`poss-${index}`]
+                            ? "expanded"
+                            : ""
+                            }`}
                           onClick={() => toggleLikelihood(`poss-${index}`)}
                         >
                           <div className="likelihood-header">
@@ -2383,11 +2417,10 @@ const PatientProfile = () => {
                       (item, index) => (
                         <div
                           key={`low-${index}`}
-                          className={`likelihood-card low ${
-                            expandedLikelihoods[`low-${index}`]
-                              ? "expanded"
-                              : ""
-                          }`}
+                          className={`likelihood-card low ${expandedLikelihoods[`low-${index}`]
+                            ? "expanded"
+                            : ""
+                            }`}
                           onClick={() => toggleLikelihood(`low-${index}`)}
                         >
                           <div className="likelihood-header">
@@ -2469,9 +2502,8 @@ const PatientProfile = () => {
 
           {/* Activity Log Tab */}
           <div
-            className={`tab-content ${
-              activeTab === "activity" ? "active" : ""
-            }`}
+            className={`tab-content ${activeTab === "activity" ? "active" : ""
+              }`}
             id="activity"
           >
             <div className="card">
