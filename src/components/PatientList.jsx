@@ -5,7 +5,7 @@ import "../css/PatientList.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 
 const PatientList = () => {
-    const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -173,10 +173,14 @@ const PatientList = () => {
           <div className="nav-main">
             <div className="nav-section">
               <div className="nav-section-title">Main</div>
-              <a href="[Final] Dashboard.html" className="nav-item" onClick={(e) => {
+              <a
+                href="[Final] Dashboard.html"
+                className="nav-item"
+                onClick={(e) => {
                   e.preventDefault();
                   navigate("/dashboard");
-                }}>
+                }}
+              >
                 <span className="nav-icon">
                   <svg viewBox="0 0 24 24">
                     <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -247,7 +251,14 @@ const PatientList = () => {
               className="decision-support-card"
               onClick={openDecisionSupport}
             >
-              <div className="card-header" style={{marginBottom:'0px', gap:'10px' , paddingBottom:'8px'}}>
+              <div
+                className="card-header"
+                style={{
+                  marginBottom: "0px",
+                  gap: "10px",
+                  paddingBottom: "8px",
+                }}
+              >
                 <div className="card-icon">
                   <svg viewBox="0 0 24 24">
                     <polyline points="9 11 12 14 22 4"></polyline>
@@ -283,8 +294,8 @@ const PatientList = () => {
           </svg>
           <input
             type="text"
-            className="search-input" 
-            style={{padding:"12px 16px 12px 44px"}}
+            className="search-input"
+            style={{ padding: "12px 16px 12px 44px" }}
             placeholder="Search patient or report…"
           />
         </div>
@@ -434,10 +445,15 @@ const PatientList = () => {
             </div>
             <div className="addbtn">
               <i className="fa-solid fa-user-plus"></i>
-              <a href="[Final] Add Patient.html" onClick={(e) => {
+              <a
+                href="[Final] Add Patient.html"
+                onClick={(e) => {
                   e.preventDefault();
                   navigate("/addpatient");
-                }}>Add New Paitent</a>
+                }}
+              >
+                Add New Paitent
+              </a>
             </div>
           </div>
 
@@ -460,7 +476,7 @@ const PatientList = () => {
             <input
               type="text"
               className="page-search"
-              style={{padding:"12px 16px 12px 44px"}}
+              style={{ padding: "12px 16px 12px 44px" }}
               placeholder="Search by name, ID, or condition…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -548,11 +564,9 @@ const PatientList = () => {
                 <div className="patient-actions">
                   <button
                     className="btn btn-primary"
-                    style={{display:"inline"}}
-                     onClick={(e) => {
-                  
-                  navigate("/patient-profile");
-                }}
+                    onClick={(e) => {
+                      navigate("/patient-profile");
+                    }}
                   >
                     View Details
                   </button>
