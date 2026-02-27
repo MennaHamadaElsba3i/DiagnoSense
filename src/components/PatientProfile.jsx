@@ -639,10 +639,8 @@ const PatientProfile = () => {
           position: "relative",
           zIndex: "1",
           marginLeft: "240px",
-          marginRight: "0",
           marginTop: "64px",
           minHeight: "calc(100vh - 64px)",
-          width: "85%"
         }}
       >
         <header
