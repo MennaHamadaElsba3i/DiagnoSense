@@ -821,8 +821,8 @@ body {
 }
 
 .patient-avatar {
-    width: 64px;
-    height: 64px;
+    width: 54px;
+    height: 54px;
     border-radius: 12px;
     background: linear-gradient(135deg, #467DFF, #2A66FF);
     display: flex;
@@ -846,7 +846,7 @@ body {
     align-items: center;
     flex-wrap: wrap;
     gap: 12px;
-    margin-bottom: 12px;
+    /* margin-bottom: 12px; */
 }
 
 .patient-meta {

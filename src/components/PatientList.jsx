@@ -521,12 +521,12 @@ const PatientList = () => {
               data-status={patient.status}
               data-patient={patient.name}
             >
-              <div className="patient-header">
+              <div className="patient-header" style={{alignItems:"center"}}>
                 <div
                   className="patient-avatar"
                   style={{
-                    background: patient.gradient, width: '70px',
-                    height: '70px', fontSize: '24px'
+                    background: patient.gradient, width: '57px',
+                    height: '57px', fontSize: '20px'
                   }}
                 >
                   {patient.initials}
