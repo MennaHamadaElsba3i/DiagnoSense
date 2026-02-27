@@ -1023,7 +1023,7 @@ body {
 }
 
 /* Status badges reused from PatientList styles */
-.status-badge {
+.critical-info-section.status-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;

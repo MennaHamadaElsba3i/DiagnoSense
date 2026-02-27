@@ -525,7 +525,9 @@ const PatientList = () => {
               <div className="patient-header">
                 <div
                   className="patient-avatar"
-                  style={{ background: patient.gradient }}
+                  style={{ background: patient.gradient ,width:'70px',
+                    height:'70px',fontSize:'24px'
+                   }}
                 >
                   {patient.initials}
                 </div>
