@@ -562,25 +562,40 @@ body {
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid #E6EAF2;
-    padding: 16px 28px;
+    padding-bottom: 20px;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-sizing: border-box;
+    align-items: start;
+    justify-content: start;
 }
 
-.patient-header::before {
-    content: "";
+/* SCOPED FIX FOR PATIENT PROFILE PAGE ONLY */
+.patient-profile-page .pp-header {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid #E6EAF2;
+    padding: 16px 32px !important;
+    /* Exactly symmetric padding */
+    width: 100%;
+    box-sizing: border-box;
+    z-index: 10;
+}
+
+/* Pseudo-element strictly scoped to avoid affecting Patient List cards */
+.patient-profile-page .pp-header::before {
+    content: '';
     position: absolute;
     top: 0;
     bottom: 0;
-    left: 0;
+    left: -10vw;
+    right: -50vw;
+    /* Safely extends white background fully to the far-right */
     background: inherit;
-    width: 200vw;
-    z-index: -1;
-    border-bottom: inherit;
     backdrop-filter: inherit;
+    border-bottom: inherit;
+    z-index: -1;
+    pointer-events: none;
 }
+
 
 .patient-identity {
     display: flex;
@@ -606,8 +621,8 @@ body {
 }
 
 .patient-avatar {
-    width: 52px;
-    height: 52px;
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
     background: linear-gradient(135deg, #2A66FF, #467DFF);
     display: flex;
@@ -656,12 +671,16 @@ body {
     transition: all 0.3s ease;
     border: none;
     outline: none;
+    display: flex;
+    justify-content: center;
 }
 
 .btn-primary {
     background: #2A66FF;
     color: white;
     box-shadow: 0 2px 6px rgba(42, 102, 255, 0.25);
+    display: flex;
+    justify-content: center;
 }
 
 .btn-primary:hover {
@@ -838,6 +857,7 @@ body {
 }
 
 .content-layer.tab-nav {
+
     position: absolute;
     top: 0;
     width: 100%;
@@ -1009,8 +1029,8 @@ body {
     gap: 6px;
     padding: 4px 12px;
     border-radius: 12px;
-    font-size: 12px;
     font-weight: 600;
+
 }
 
 .status-badge.stable {

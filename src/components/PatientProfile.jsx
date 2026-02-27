@@ -643,15 +643,7 @@ const PatientProfile = () => {
           minHeight: "calc(100vh - 64px)",
         }}
       >
-        <header
-          className="patient-header"
-          style={{
-            background: "rgba(255, 255, 255, 0.98)",
-            backdropFilter: "blur(10px)",
-            borderBottom: "1px solid #E6EAF2",
-            padding: "16px 28px",
-          }}
-        >
+        <header className="patient-header pp-header">
           <div className="patient-identity">
             <div className="patient-main-info">
               <div className="patient-avatar" style={{ borderRadius: '50%' }}>NH</div>
@@ -713,6 +705,7 @@ const PatientProfile = () => {
             <nav
               className="tab-nav"
               style={{
+                width: '96%',
                 position: "absolute",
                 top: "0",
                 "border-radius": "15px",

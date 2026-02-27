@@ -154,6 +154,7 @@
      .btn-nav:hover {
           box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3);
           transform: translateY(-2px);
+          color: white;
      }
 
      .hero {
@@ -776,7 +777,7 @@
           font-weight: 600;
           color: #0f172a;
           margin-bottom: 0.5rem;
-          text-transform: uppercase;
+          /* text-transform: uppercase; */
           letter-spacing: 0.5px;
      }
 
