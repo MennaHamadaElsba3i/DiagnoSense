@@ -70,6 +70,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/add-patient"
+          element={
+            <ProtectedRoute>
+              <AddPatient />
+            </ProtectedRoute>
+          }
+        />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
