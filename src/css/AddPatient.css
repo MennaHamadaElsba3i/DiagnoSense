@@ -916,13 +916,13 @@
              grid-column: 1 / -1;
         }
 
-       
+
         .form-label {
              font-size: 14px;
              font-weight: 600;
              color: #3A4560;
              letter-spacing: -0.1px;
-             
+
         }
 
         .form-label.required::after {
@@ -965,6 +965,16 @@
              padding-right: 44px;
              cursor: pointer;
              width: 100%;
+             height: 52px;
+             /* نفس ارتفاع الـ inputs الأخرى */
+             font-weight: 500;
+             border: 1px solid #E6EAF2;
+             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .form-select:hover {
+             border-color: #2A66FF;
+             background-color: #F0F6FF;
         }
 
         .form-select--placeholder {
@@ -976,17 +986,110 @@
              border-color: #2A66FF;
              box-shadow: 0 0 0 3px rgba(42, 102, 255, 0.08);
              background-color: #FFFFFF;
+             transform: translateY(-1px);
+        }
+
+        .form-select--placeholder {
+             color: #A0A8B8 !important;
         }
 
         .form-select option {
              color: #3A4560;
              background: #FFFFFF;
+             padding: 12px;
+             font-size: 15px;
         }
 
         .form-select option:disabled {
              color: #A0A8B8;
         }
 
+        /* Container */
+.custom-select-container {
+    position: relative;
+    width: 100%;
+}
+
+/* التريجر (اللي شبه الـ input) */
+.custom-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    background: #F8FAFF;
+    height: 52px; /* نفس ارتفاع الـ inputs التانية */
+}
+
+.custom-select-trigger.placeholder {
+    color: #A0A8B8;
+}
+
+.arrow-icon {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: #2A66FF;
+    stroke-width: 2;
+    transition: transform 0.3s ease;
+}
+
+.is-open .arrow-icon {
+    transform: rotate(180deg);
+}
+
+/* القائمة نفسها (The List of Options) */
+.custom-options-list {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: #FFFFFF;
+    border-radius: 12px;
+    border: 1px solid #E6EAF2;
+    box-shadow: 0 10px 25px rgba(42, 102, 255, 0.1);
+    z-index: 1000;
+    overflow: hidden;
+    animation: slideIn 0.2s ease-out;
+}
+
+/* الخيار الواحد (Individual Option) */
+.custom-option {
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #3A4560;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+}
+
+/* الـ Hover اللي كنتي بتسألي عليه */
+.custom-option:hover {
+    background-color: #F0F6FF;
+    color: #2A66FF;
+    padding-left: 20px; /* حركة بسيطة شيك */
+}
+
+.custom-option.selected {
+    background-color: #E9F0FF;
+    color: #2A66FF;
+    font-weight: 600;
+}
+
+.check-icon {
+    width: 16px;
+    height: 16px;
+    stroke: #2A66FF;
+    stroke-width: 3;
+    fill: none;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
         /* Radio & Toggle Groups */
         .radio-group {
              margin-top: 10px;
@@ -1395,16 +1498,18 @@
              max-width: none;
         }
 
-        .back{
-          background-color: white;
-          color: #4b4b4c ;
+        .back {
+             background-color: white;
+             color: #4b4b4c;
         }
-        .next svg{
+
+        .next svg {
              color: white;
              width: 20px;
         }
-        .back svg{
-            color: #4b4b4c;
+
+        .back svg {
+             color: #4b4b4c;
              width: 20px;
         }
 
