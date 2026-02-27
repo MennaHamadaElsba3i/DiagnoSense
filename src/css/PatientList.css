@@ -847,7 +847,7 @@ body {
     margin-bottom: 8px;
 }
 
-.status-badge {
+.patient-info.status-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;

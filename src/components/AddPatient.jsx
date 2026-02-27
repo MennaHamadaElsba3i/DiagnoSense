@@ -38,7 +38,7 @@ const AddPatient = () => {
   });
 
   const isStep1Valid =
-    formData.fullName.trim() && formData.age && selectedGender && formData.phone.trim() && formData.nationalId.trim();
+    formData.fullName.trim() && formData.age && selectedGender && formData.phone.trim() && formData.nationalId.trim() && formData.email.trim();
   const isStep2Valid = isSmoker !== null;
 
   useEffect(() => {
@@ -577,21 +577,11 @@ const AddPatient = () => {
                     value={formData.phone}
                     onChange={handleInputChange}
                   />
-                  <div className="helper-text">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    Optional - for follow-up communications
-                  </div>
+                
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label required">National ID / MRN</label>
+                  <label className="form-label required">National ID</label>
                   <input
                     type="text"
                     className="form-input"
@@ -600,17 +590,7 @@ const AddPatient = () => {
                     value={formData.nationalId}
                     onChange={handleInputChange}
                   />
-                  <div className="helper-text">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    Optional - for record linkage
-                  </div>
+                
                 </div>
               </div>
 

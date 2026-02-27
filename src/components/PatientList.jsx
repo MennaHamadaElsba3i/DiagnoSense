@@ -525,24 +525,35 @@ const PatientList = () => {
               <div className="patient-header">
                 <div
                   className="patient-avatar"
-                  style={{ background: patient.gradient ,width:'70px',
-                    height:'70px',fontSize:'24px'
-                   }}
+                  style={{
+                    background: patient.gradient,
+                    width: "70px",
+                    height: "70px",
+                    fontSize: "24px",
+                  }}
                 >
                   {patient.initials}
                 </div>
                 <div className="patient-info">
                   <h3>{patient.name}</h3>
-                  <p className="patient-meta">
-                    Age: {patient.age} • {patient.condition}
-                  </p>
-                  <span
-                    className={`status-badge ${
-                      patient.statusType || patient.status
-                    }`}
+                  <div
+                    className="patient-meta"
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      gap: "8px",
+                    }}
                   >
-                    {patient.statusLabel}
-                  </span>
+                    <p> Age: {patient.age}</p>
+
+                    <span
+                      className={`status-badge ${
+                        patient.statusType || patient.status
+                      }`}
+                    >
+                      {patient.statusLabel}
+                    </span>
+                  </div>
                 </div>
               </div>
               <div className="ai-insight" style={patient.insightStyle}>
