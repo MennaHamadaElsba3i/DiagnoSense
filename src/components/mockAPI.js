@@ -251,21 +251,18 @@ export const getPatientAnalysisAPI = async (patientId) => {
       },
     });
 
-    // 1. لو الرد 204 (نجاح بس مفيش داتا)
     if (response.status === 204) {
       return {
         success: true,
-        data: null, // أو array فاضية [] حسب ديزاينك
+        data: null, 
         message: 'No data available'
       };
     }
 
-    // 2. التأكد إن الرد فعلاً JSON قبل ما نحاول نقرأه
     const contentType = response.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
-       // لو الرد مش JSON (غالباً HTML error page)
        const text = await response.text(); 
-       console.error("Non-JSON response received:", text); // هيطبعلك الـ HTML في الكونسول عشان تشوفه
+       console.error("Non-JSON response received:", text); 
        return {
          success: false,
          message: 'Server returned an unexpected format (HTML). Check console.',
