@@ -184,11 +184,11 @@ export const googleLoginAPI = async (googleToken) => {
 };
 
 export const verifyOTPAPI = async (identity, otp) => {
-  return await apiCall('/api/verify-email/doctor', { 
+  return await apiCall('/api/verify-email/doctor', {
     method: 'POST',
-    body: JSON.stringify({ 
-      identity: identity, 
-      otp: otp 
+    body: JSON.stringify({
+      identity: identity,
+      otp: otp
     }),
   });
 };
@@ -261,12 +261,12 @@ export const getPatientAnalysisAPI = async (patientId) => {
 
     const contentType = response.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
-       const text = await response.text(); 
-       console.error("Non-JSON response received:", text); 
-       return {
-         success: false,
-         message: 'Server returned an unexpected format (HTML). Check console.',
-       };
+      const text = await response.text();
+      console.error("Non-JSON response received:", text); // هيطبعلك الـ HTML في الكونسول عشان تشوفه
+      return {
+        success: false,
+        message: 'Server returned an unexpected format (HTML). Check console.',
+      };
     }
 
     const data = await response.json();
@@ -286,8 +286,8 @@ export const getPatientAnalysisAPI = async (patientId) => {
     }
 
     return {
-        success: true,
-        data: data 
+      success: true,
+      data: data
     };
 
   } catch (error) {
@@ -297,4 +297,12 @@ export const getPatientAnalysisAPI = async (patientId) => {
       message: 'Network error. Please check your connection.',
     };
   }
+};
+
+export const getPatientsAPI = async (page = 1, perPage = 9) => {
+  const urlUsed = `/api/patients?page=${page}&per_page=${perPage}`;
+  console.log("API URL", urlUsed);
+  return await apiCall(urlUsed, {
+    method: 'GET',
+  });
 };
