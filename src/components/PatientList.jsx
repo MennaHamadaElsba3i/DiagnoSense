@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/Logo_Diagnoo.png";
 import "../css/PatientList.css";
@@ -12,18 +12,44 @@ const PatientList = () => {
   const [showModal, setShowModal] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
-  const [patients, setPatients] = useState([]);
+  const [allPatients, setAllPatients] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [lastPage, setLastPage] = useState(1);
-  const [totalPatients, setTotalPatients] = useState(0);
+  const [pageSize, setPageSize] = useState(12);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const gridRef = useRef(null);
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    if (!gridRef.current) return;
+    const observer = new ResizeObserver(() => {
+      if (gridRef.current && cardRef.current) {
+        const gridWidth = gridRef.current.clientWidth;
+        const cardWidth = cardRef.current.offsetWidth;
+        const computedStyle = window.getComputedStyle(gridRef.current);
+        const gapString = computedStyle.columnGap || computedStyle.gap;
+        const gap = parseFloat(gapString) || 24;
+
+        const columns = Math.max(1, Math.floor((gridWidth + gap) / (cardWidth + gap)));
+        const newPageSize = columns * 3;
+
+        console.log("columns:", columns);
+        console.log("pageSize:", newPageSize);
+
+        setPageSize((prev) => (prev !== newPageSize ? newPageSize : prev));
+      }
+    });
+
+    observer.observe(gridRef.current);
+    return () => observer.disconnect();
+  }, [allPatients.length]);
 
   useEffect(() => {
     const fetchPatients = async () => {
       setLoading(true);
       setError(null);
-      const res = await getPatientsAPI(currentPage);
+      const res = await getPatientsAPI();
 
       if (res.success === false) {
         setError(res.message || "Failed to load patients");
@@ -31,32 +57,16 @@ const PatientList = () => {
         return;
       }
 
-      // Resilient duck-typed backend response extraction for ANY Laravel pagination wrapper (Resource vs Standard)
-      let meta = {};
-      let items = [];
-
-      if (Array.isArray(res?.data?.data)) {
-        items = res.data.data;
-        meta = res.data.meta || res.data;
+      let rawPatients = [];
+      if (res?.data?.data?.patients && Array.isArray(res.data.data.patients)) {
+        rawPatients = res.data.data.patients;
+      } else if (Array.isArray(res?.data?.data)) {
+        rawPatients = res.data.data;
       } else if (Array.isArray(res?.data)) {
-        items = res.data;
-        meta = res.meta || res;
+        rawPatients = res.data;
       } else if (Array.isArray(res)) {
-        items = res;
+        rawPatients = res;
       }
-
-      const parsedLastPage = parseInt(meta.last_page || meta.lastPage) || 1;
-      const parsedCurrentPage = parseInt(meta.current_page || meta.currentPage) || currentPage;
-      const parsedTotal = parseInt(meta.total) || items.length;
-
-      setLastPage(parsedLastPage);
-      setTotalPatients(parsedTotal);
-
-      if (parsedCurrentPage !== currentPage) {
-        setCurrentPage(parsedCurrentPage);
-      }
-
-      const dataArray = items;
 
       const gradients = [
         "linear-gradient(135deg, #467DFF, #2A66FF)",
@@ -69,7 +79,7 @@ const PatientList = () => {
         "linear-gradient(135deg, #00C9A7, #00E5C0)"
       ];
 
-      const mappedPatients = dataArray.map((p, index) => {
+      const mappedPatients = rawPatients.map((p, index) => {
         let status = p.status ? p.status.toLowerCase() : "stable";
         let statusLabel = "🟢 Stable";
         let statusType = "";
@@ -110,15 +120,14 @@ const PatientList = () => {
         };
       });
 
-      setPatients(mappedPatients);
+      setAllPatients(mappedPatients);
       setLoading(false);
     };
 
     fetchPatients();
-  }, [currentPage]);
+  }, []);
 
-
-  const filteredPatients = patients.filter((patient) => {
+  const filteredPatients = allPatients.filter((patient) => {
     const matchesFilter =
       activeFilter === "all" ||
       (activeFilter === "critical" && patient.status === "critical") ||
@@ -131,6 +140,23 @@ const PatientList = () => {
 
     return matchesFilter && matchesSearch;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredPatients.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
+  const start = (safeCurrentPage - 1) * pageSize;
+  const end = start + pageSize;
+  const visiblePatients = filteredPatients.slice(start, end);
+
+  console.log("columns:", Math.max(1, Math.floor(pageSize / 3)));
+  console.log("pageSize:", pageSize);
+  console.log("visible:", visiblePatients.length);
 
   const openDecisionSupport = () => setShowModal(true);
   const closeDecisionSupport = () => setShowModal(false);
@@ -500,7 +526,7 @@ const PatientList = () => {
           </div>
         </div>
 
-        <div className="patient-grid">
+        <div className="patient-grid" ref={gridRef}>
           {loading ? (
             <div style={{ padding: "40px 20px", textAlign: "center", width: "100%", gridColumn: "1 / -1", color: "#6b7280" }}>
               <div style={{ marginBottom: "10px" }}><i className="fa-solid fa-spinner fa-spin fa-2x"></i></div>
@@ -516,14 +542,15 @@ const PatientList = () => {
                 Retry
               </button>
             </div>
-          ) : filteredPatients.length === 0 ? (
+          ) : visiblePatients.length === 0 ? (
             <div style={{ padding: "40px 20px", textAlign: "center", width: "100%", gridColumn: "1 / -1", color: "#6b7280" }}>
               No patients found.
             </div>
           ) : (
-            filteredPatients.map((patient) => (
+            visiblePatients.map((patient, index) => (
               <div
                 key={patient.id}
+                ref={index === 0 ? cardRef : null}
                 className="patient-card"
                 data-status={patient.status}
                 data-patient={patient.name}
@@ -589,16 +616,16 @@ const PatientList = () => {
 
         <div className="pagination">
           <button
-            disabled={currentPage <= 1 || filteredPatients.length === 0}
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={safeCurrentPage <= 1 || visiblePatients.length === 0}
+            onClick={() => setCurrentPage(safeCurrentPage - 1)}
           >
             ◂ Prev
           </button>
 
-          {Array.from({ length: lastPage }, (_, i) => i + 1).map((page) => (
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
             <button
               key={page}
-              className={currentPage === page ? "active" : ""}
+              className={safeCurrentPage === page ? "active" : ""}
               onClick={() => setCurrentPage(page)}
             >
               {page}
@@ -606,8 +633,8 @@ const PatientList = () => {
           ))}
 
           <button
-            disabled={currentPage >= lastPage || filteredPatients.length === 0}
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, lastPage))}
+            disabled={safeCurrentPage >= totalPages || visiblePatients.length === 0}
+            onClick={() => setCurrentPage(safeCurrentPage + 1)}
           >
             Next ▸
           </button>
