@@ -299,6 +299,15 @@ export const getPatientAnalysisAPI = async (patientId) => {
   }
 };
 
+export const getPatientsByStatusAPI = async (status, page = 1) => {
+  const encodedType = encodeURIComponent(status);
+  const urlUsed = `/api/patients/status/${encodedType}?page=${page}`;
+  console.log("[status-filter] finalUrl:", urlUsed);
+  return await apiCall(urlUsed, {
+    method: 'GET',
+  });
+};
+
 export const getPatientsAPI = async (page = 1, perPage = 9) => {
   const urlUsed = `/api/patients?page=${page}&per_page=${perPage}`;
   console.log("API URL", urlUsed);
