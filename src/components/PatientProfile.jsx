@@ -366,7 +366,7 @@ const PatientProfile = () => {
   };
 
   const confirmDeleteAlert = () => {
-    console.log("Deleting alert:", alertToDelete);
+    console.log("[delete-alert] id:", alertToDelete);
     if (alertToDelete && typeof alertToDelete === "string") {
       if (alertToDelete.startsWith("new-")) {
         const parts = alertToDelete.split("-");
@@ -1196,12 +1196,12 @@ const PatientProfile = () => {
 
                 <div className="note-list">
                   {isLoadingAnalysis ? (
-                    <div className="note-item high-priority">
+                    staticNotes["high-1"] && <div className="note-item high-priority">
                       <div className="pp-note-actions">
                         <button
                           className="pp-note-edit-btn"
                           onClick={() =>
-                            startEditNote("high-loading", staticNotes["high-1"])
+                            startEditNote("high-1", staticNotes["high-1"])
                           }
                           title="Edit"
                         >
@@ -1220,7 +1220,7 @@ const PatientProfile = () => {
                           </svg>
                         </button>
                       </div>
-                      {editingNoteId === "high-loading" ? (
+                      {editingNoteId === "high-1" ? (
                         <>
                           <textarea
                             className="pp-note-edit-textarea"
@@ -1263,7 +1263,7 @@ const PatientProfile = () => {
                               <button
                                 className="pp-note-save-btn"
                                 onClick={() =>
-                                  saveEditNote("high-loading", editingNoteText)
+                                  saveEditNote("high-1", editingNoteText)
                                 }
                               >
                                 Save
@@ -1282,7 +1282,7 @@ const PatientProfile = () => {
                           <strong>Critical:</strong> {staticNotes["high-1"]}
                         </div>
                       )}
-                      {editingNoteId !== "high-loading" && (
+                      {editingNoteId !== "high-1" && (
                         <div className="note-footer">
                           <div className="note-meta-stack">
                             <span className="note-date">Jan 28, 2026</span>
@@ -1314,7 +1314,7 @@ const PatientProfile = () => {
                           </div>
                           <button
                             className="pp-note-delete-btn"
-                            onClick={() => openDeleteAlertModal("high-loading")}
+                            onClick={() => openDeleteAlertModal("high-1")}
                             title="Delete"
                           >
                             <svg
@@ -2006,7 +2006,7 @@ const PatientProfile = () => {
                 <div className="priority-header">
                   <h3 className="priority-title">
                     <span className="priority-icon low"></span>
-                    Low Priority Notes
+                    Low Priority Alerts
                   </h3>
                   <button
                     className="pp-add-note-btn"
@@ -2018,12 +2018,12 @@ const PatientProfile = () => {
 
                 <div className="note-list">
                   {isLoadingAnalysis ? (
-                    <div className="note-item low-priority">
+                    staticNotes["low-1"] && <div className="note-item low-priority">
                       <div className="pp-note-actions">
                         <button
                           className="pp-note-edit-btn"
                           onClick={() =>
-                            startEditNote("low-loading", staticNotes["low-1"])
+                            startEditNote("low-1", staticNotes["low-1"])
                           }
                           title="Edit"
                         >
@@ -2042,7 +2042,7 @@ const PatientProfile = () => {
                           </svg>
                         </button>
                       </div>
-                      {editingNoteId === "low-loading" ? (
+                      {editingNoteId === "low-1" ? (
                         <>
                           <textarea
                             className="pp-note-edit-textarea"
@@ -2084,7 +2084,7 @@ const PatientProfile = () => {
                             <div className="pp-note-save-row">
                               <button
                                 className="pp-note-save-btn"
-                                onClick={() => saveEditNote("low-loading")}
+                                onClick={() => saveEditNote("low-1", editingNoteText)}
                               >
                                 Save
                               </button>
@@ -2102,7 +2102,7 @@ const PatientProfile = () => {
                           <strong>Note:</strong> {staticNotes["low-1"]}
                         </div>
                       )}
-                      {editingNoteId !== "low-loading" && (
+                      {editingNoteId !== "low-1" && (
                         <div className="note-footer">
                           <div className="note-meta-stack">
                             <span className="note-date">Oct 10, 2025</span>
@@ -2134,7 +2134,7 @@ const PatientProfile = () => {
                           </div>
                           <button
                             className="pp-note-delete-btn"
-                            onClick={() => openDeleteAlertModal("low-loading")}
+                            onClick={() => openDeleteAlertModal("low-1")}
                             title="Delete"
                           >
                             <svg
