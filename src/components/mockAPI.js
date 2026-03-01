@@ -254,7 +254,7 @@ export const getPatientAnalysisAPI = async (patientId) => {
     if (response.status === 204) {
       return {
         success: true,
-        data: null, 
+        data: null,
         message: 'No data available'
       };
     }
@@ -305,4 +305,54 @@ export const getPatientsAPI = async (page = 1, perPage = 9) => {
   return await apiCall(urlUsed, {
     method: 'GET',
   });
+};
+
+export const addPatientAPI = async (formData) => {
+  const token = getCookie('user_token');
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/patients`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        deleteCookie('user_token');
+        deleteCookie('user');
+        deleteCookie('isAuthenticated');
+      }
+      return {
+        success: false,
+        message: data.message || 'Something went wrong',
+        errors: data.errors || null,
+      };
+    }
+
+    const patientId = data?.data?.id ?? data?.patient_id ?? null;
+    if (patientId) {
+      localStorage.setItem('current_patient_id', patientId);
+    }
+
+    return {
+      success: true,
+      patient_id: patientId,
+      data: data,
+    };
+
+  } catch (error) {
+    console.error('API Error:', error);
+    console.error('Error name:', error.name);      
+    console.error('Error message:', error.message);
+    return {
+      success: false,
+      message: 'Network error. Please check your connection.',
+    };
+  }
 };

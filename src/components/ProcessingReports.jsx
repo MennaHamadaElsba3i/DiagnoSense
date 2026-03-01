@@ -1,22 +1,6 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import '../css/ProcessingReports.css';
 
-const REDIRECT_DELAY = 2000;
-
-const PATIENT_PROFILE_ROUTE = '/patient-profile';
-
 export default function ProcessingReports() {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      navigate(PATIENT_PROFILE_ROUTE);
-    }, REDIRECT_DELAY);
-
-    return () => clearTimeout(timer);
-  }, [navigate]);
-
   return (
     <>
       {/* Google Fonts */}
