@@ -254,7 +254,7 @@ export const getPatientAnalysisAPI = async (patientId) => {
     if (response.status === 204) {
       return {
         success: true,
-        data: null, 
+        data: null,
         message: 'No data available'
       };
     }
@@ -305,4 +305,16 @@ export const getPatientsAPI = async (page = 1, perPage = 9) => {
   return await apiCall(urlUsed, {
     method: 'GET',
   });
+};
+
+// Change this if backend expects a different query key (e.g. "query", "search", "name")
+const SEARCH_QUERY_KEY = "search";
+
+export const searchPatientsAPI = async (page = 1, term = "") => {
+  const trimmed = term.trim();
+  const url = `/api/search?page=${page}&${SEARCH_QUERY_KEY}=${encodeURIComponent(trimmed)}`;
+  console.log("[search] requesting", { page, term: trimmed, url });
+  const res = await apiCall(url, { method: 'GET' });
+  console.log("[search] response", { meta: res?.meta || res?.data?.meta, len: (res?.data?.length ?? res?.data?.data?.length ?? "?") });
+  return res;
 };

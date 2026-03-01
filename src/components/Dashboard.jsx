@@ -5,7 +5,7 @@ import logo from "../assets/Logo_Diagnoo.png";
 import "../css/Dashboard.css";
 
 export default function Dashboard() {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
@@ -124,7 +124,7 @@ export default function Dashboard() {
               className="decision-support-card"
               onClick={openDecisionSupport}
             >
-              <div className="card-header" style={{marginBottom:'0px', gap:'10px' , paddingBottom:'8px'}}>
+              <div className="card-header" style={{ marginBottom: '0px', gap: '10px', paddingBottom: '8px' }}>
                 <div className="card-icon">
                   <svg viewBox="0 0 24 24">
                     <polyline points="9 11 12 14 22 4"></polyline>
@@ -142,30 +142,6 @@ export default function Dashboard() {
       </aside>
 
       <nav className="top-navbar">
-        <div className="search-container">
-          <svg
-            className="search-icon"
-            width="20"
-            height="20"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-          <input
-            type="text"
-            className="search-input"
-            style={{ padding: "12px 16px 12px 44px" }}
-            placeholder="Search patient or report…"
-          />
-        </div>
-
         <div className="navbar-right">
           <div className="status-indicator">
             <span className="status-dot"></span>

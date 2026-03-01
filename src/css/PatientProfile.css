@@ -316,11 +316,10 @@ body {
     border-bottom: 1px solid rgba(230, 234, 242, 0.5);
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 24px 0 32px;
+    justify-content: flex-end;
+    padding: 0 32px;
     z-index: 90;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
-    gap: 24px;
 }
 
 .search-container {
@@ -401,28 +400,9 @@ body {
     background: white;
 }
 
-/* Scoped Patient Profile top navbar/search to match HTML reference */
+/* Scoped Patient Profile top navbar */
 .pp-scope .top-navbar {
     padding: 0 32px;
-    gap: 20px;
-}
-
-.pp-scope .search-container {
-    flex: 1;
-    max-width: 1200px;
-    position: relative;
-}
-
-.pp-scope .search-icon {
-    left: 16px;
-}
-
-.pp-scope .search-input {
-    width: 100%;
-    height: auto;
-    padding: 12px 16px 12px 44px;
-    border-radius: 12px;
-    background: rgba(248, 250, 255, 0.6);
 }
 
 .navbar-right {
