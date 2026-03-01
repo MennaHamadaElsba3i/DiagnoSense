@@ -22,7 +22,7 @@ const AddPatient = () => {
   });
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState("");
+
   const [fieldErrors, setFieldErrors] = useState({});
 
   const [formData, setFormData] = useState({
@@ -38,21 +38,35 @@ const AddPatient = () => {
     ChiefComplaint: "",
   });
 
+  // Only block Step 1's Next button for Step 1-specific field errors.
+  // Errors from other steps (step 2/3) or _general must NOT block Step 1.
+  const step1ErrorFields = ["fullName", "email", "phone", "age", "nationalId", "gender", "is_smoker"];
+  const hasStep1Errors = Object.keys(fieldErrors).some((k) => step1ErrorFields.includes(k));
+
   const isStep1Valid =
     formData.fullName.trim() &&
-    formData.email.trim() &&
+    (formData.email.trim() || formData.phone.trim()) &&
     formData.age &&
     selectedGender &&
-    formData.phone.trim() &&
     formData.nationalId.trim() &&
-    Object.keys(fieldErrors).length === 0;
+    !hasStep1Errors;
 
-  const isStep2Valid = true;
+  console.log("[step1] nextDisabled", {
+    currentStep,
+    nextDisabled: !isStep1Valid,
+    hasErrors: hasStep1Errors,
+    national_id: formData.nationalId,
+    err: fieldErrors.nationalId,
+  });
 
-  const hasAtLeastOneFile =
-    fileManager.lab.length > 0 ||
-    fileManager.history.length > 0 ||
-    fileManager.radiology.length > 0;
+  // Step 2 is valid unless surgeries=YES and the name field is empty
+  const isStep2Valid = !(hasSurgeries === true && !formData.surgeryText.trim());
+
+  console.log("[step2] surgeries validation", {
+    hasSurgeries,
+    surgeryText: formData.surgeryText,
+    canNext: isStep2Valid,
+  });
 
   useEffect(() => {
     const categories = ["lab", "history", "radiology"];
@@ -93,14 +107,30 @@ const AddPatient = () => {
       national_id: "nationalId",
       name: "fullName",
       age: "age",
+      gender: "gender",
+      is_smoker: "is_smoker",
+      previous_surgeries: "previous_surgeries",
+      previous_surgeries_name: "surgeryText",
+      chronic_diseases: "chronic_diseases",
+      medications: "medications",
+      allergies: "allergies",
+      family_history: "familyHistory",
+      current_complaint: "ChiefComplaint",
+      lab: "lab",
+      radiology: "radiology",
+      medical_history: "medical_history",
     };
 
     const newFieldErrors = {};
 
     if (result.errors) {
       Object.entries(result.errors).forEach(([backendKey, messages]) => {
-        const frontendKey = backendFieldMap[backendKey] || backendKey;
-        newFieldErrors[frontendKey] = Array.isArray(messages) ? messages[0] : messages;
+        // Handle indexed keys like "lab.0" -> "lab"
+        const baseKey = backendKey.split(".")[0];
+        const frontendKey = backendFieldMap[baseKey] || baseKey;
+        if (!newFieldErrors[frontendKey]) {
+          newFieldErrors[frontendKey] = Array.isArray(messages) ? messages[0] : messages;
+        }
       });
     }
 
@@ -124,6 +154,48 @@ const AddPatient = () => {
     return newFieldErrors;
   };
 
+  // Determine which step contains the first error and navigate to it.
+  // All errors are kept in state; only the *current step* changes.
+  const navigateToErrorStep = (errors) => {
+    const step1Fields = ["fullName", "email", "phone", "age", "nationalId", "gender", "is_smoker"];
+    const step2Fields = ["surgeryText", "previous_surgeries", "previous_surgeries_name", "chronic_diseases", "medications", "allergies", "familyHistory", "ChiefComplaint"];
+    const step3Fields = ["lab", "radiology", "medical_history"];
+    const errorKeys = Object.keys(errors);
+
+    // Debug: show which errors landed on which step
+    console.log("[422] errors keys", errorKeys);
+    console.log("[422] stepWithErrors", {
+      step1: errorKeys.filter((k) => step1Fields.includes(k)),
+      step2: errorKeys.filter((k) => step2Fields.includes(k)),
+      step3: errorKeys.filter((k) => step3Fields.includes(k)),
+    });
+
+    let targetStep = null;
+    let firstFieldId = null;
+
+    for (const key of errorKeys) {
+      if (step1Fields.includes(key)) { targetStep = 1; firstFieldId = key; break; }
+    }
+    if (!targetStep) {
+      for (const key of errorKeys) {
+        if (step2Fields.includes(key)) { targetStep = 2; firstFieldId = key; break; }
+      }
+    }
+    if (!targetStep) {
+      for (const key of errorKeys) {
+        if (step3Fields.includes(key)) { targetStep = 3; firstFieldId = key; break; }
+      }
+    }
+
+    if (targetStep) {
+      setCurrentStep(targetStep);
+      setTimeout(() => {
+        const el = document.getElementById(firstFieldId) || document.querySelector(`[name="${firstFieldId}"]`);
+        if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); el.focus?.(); }
+      }, 100);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { id, value } = e.target;
     let newValue = value;
@@ -139,12 +211,33 @@ const AddPatient = () => {
       delete newErrors[id];
     }
 
+    // Email/Phone mutual exclusivity: clear the other when one is typed
+    if (id === "email") {
+      delete newErrors.phone;
+      setFieldErrors(newErrors);
+      setFormData((prev) => ({ ...prev, email: newValue, phone: "" }));
+      return;
+    }
+    if (id === "phone") {
+      delete newErrors.email;
+      setFieldErrors(newErrors);
+      setFormData((prev) => ({ ...prev, phone: newValue, email: "" }));
+      return;
+    }
+
     setFieldErrors(newErrors);
     setFormData((prev) => ({ ...prev, [id]: newValue }));
   };
 
   const handleSmokerSelect = (value) => setIsSmoker(value === "yes");
-  const handleSurgerySelect = (value) => setHasSurgeries(value === "yes");
+  const handleSurgerySelect = (value) => {
+    const isYes = value === "yes";
+    setHasSurgeries(isYes);
+    if (!isYes) {
+      setFormData((prev) => ({ ...prev, surgeryText: "" }));
+      setFieldErrors((prev) => { const n = { ...prev }; delete n.surgeryText; return n; });
+    }
+  };
   const openLogoutModal = () => setIsLogoutModalOpen(true);
   const closeLogoutModal = () => setIsLogoutModalOpen(false);
 
@@ -156,13 +249,14 @@ const AddPatient = () => {
 
   const handleFiles = (category, files) => {
     const validFiles = Array.from(files).filter((file) => {
-      const validTypes =
-        category === "radiology"
-          ? [".pdf", ".docx", ".doc", ".jpg", ".jpeg", ".png", ".dcm"]
-          : [".pdf", ".docx", ".doc", ".jpg", ".jpeg", ".png"];
       const fileExt = "." + file.name.split(".").pop().toLowerCase();
-      return validTypes.includes(fileExt) && file.size <= 10 * 1024 * 1024;
+      return fileExt === ".pdf" && file.size <= 10 * 1024 * 1024;
     });
+    // Clear file errors for this category when new valid files added
+    const categoryErrorKey = category === "history" ? "medical_history" : category;
+    if (validFiles.length > 0) {
+      setFieldErrors((prev) => { const n = { ...prev }; delete n[categoryErrorKey]; return n; });
+    }
     setFileManager((prev) => ({
       ...prev,
       [category]: [...prev[category], ...validFiles],
@@ -175,6 +269,8 @@ const AddPatient = () => {
   };
 
   const removeFile = (category, index) => {
+    const fileName = fileManager[category][index]?.name ?? "unknown";
+    console.log("[file-remove] clicked", { section: category, fileName });
     setFileManager((prev) => ({
       ...prev,
       [category]: prev[category].filter((_, i) => i !== index),
@@ -187,27 +283,29 @@ const AddPatient = () => {
   };
 
   const handleStep1Next = () => {
-    setError("");
+    setFieldErrors({});
     goToStep(2);
   };
 
   const handleProcess = async () => {
-    setIsProcessing(true); 
-    setError("");
+    setIsProcessing(true);
+    setFieldErrors({});
 
     try {
       const apiFormData = new FormData();
 
       apiFormData.append("name", formData.fullName);
-      apiFormData.append("email", formData.email);
-      apiFormData.append("phone", formData.phone);
+      if (formData.email.trim()) apiFormData.append("email", formData.email);
+      if (formData.phone.trim()) apiFormData.append("phone", formData.phone);
       apiFormData.append("age", formData.age);
       apiFormData.append("gender", selectedGender);
       apiFormData.append("national_id", formData.nationalId);
 
       apiFormData.append("is_smoker", isSmoker ? "1" : "0");
       apiFormData.append("previous_surgeries", hasSurgeries ? "1" : "0");
-      apiFormData.append("previous_surgeries_name", formData.surgeryText || "");
+      if (hasSurgeries) {
+        apiFormData.append("previous_surgeries_name", formData.surgeryText || "");
+      }
 
       if (selectedChronicDiseases.length > 0) {
         selectedChronicDiseases.forEach((disease) => {
@@ -259,7 +357,7 @@ const AddPatient = () => {
           })
         );
 
-        setShowProcessingScreen(true); 
+        setShowProcessingScreen(true);
         navigate("/patient-profile", {
           state: {
             patientId: result.patient_id,
@@ -268,31 +366,29 @@ const AddPatient = () => {
         });
 
       } else {
+        // Log the raw 422 body so we can see every field the backend flagged
+        console.log("[add-patient] 422 raw response:", {
+          message: result.message,
+          errors: result.errors,
+        });
+
         const newFieldErrors = extractFieldErrors(result);
 
         if (Object.keys(newFieldErrors).length > 0) {
+          // Store ALL parsed errors at once — user sees every highlighted field
+          // across steps without needing multiple re-submits
           setFieldErrors(newFieldErrors);
-
-          const step1Fields = ["email", "phone", "nationalId", "fullName", "age"];
-          const hasStep1Errors = Object.keys(newFieldErrors).some((key) =>
-            step1Fields.includes(key)
-          );
-
-          if (hasStep1Errors) {
-            goToStep(1); 
-          }
-
-          setError(result.message);
+          navigateToErrorStep(newFieldErrors);
         } else {
-          setError(result.message || "Failed to process patient data. Please try again.");
+          setFieldErrors({ _general: result.message || "Failed to process patient data. Please try again." });
         }
 
-        setIsProcessing(false); 
+        setIsProcessing(false);
       }
 
     } catch (err) {
       console.error("Processing error:", err);
-      setError("An unexpected error occurred. Please try again.");
+      setFieldErrors({ _general: "An unexpected error occurred. Please try again." });
       setIsProcessing(false);
     }
 
@@ -413,8 +509,8 @@ const AddPatient = () => {
               <div className={`step-item ${currentStep === 1 ? "active" : ""} ${currentStep > 1 ? "completed" : ""}`}>
                 <div className="step-circle">
                   {currentStep > 1 ? (
-                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
                     </svg>
                   ) : "01"}
                 </div>
@@ -424,8 +520,8 @@ const AddPatient = () => {
               <div className={`step-item ${currentStep === 2 ? "active" : ""} ${currentStep > 2 ? "completed" : ""}`}>
                 <div className="step-circle">
                   {currentStep > 2 ? (
-                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
                     </svg>
                   ) : "02"}
                 </div>
@@ -441,7 +537,7 @@ const AddPatient = () => {
 
           <div className="wizard-body">
 
-            {error && (
+            {fieldErrors._general && (
               <div style={{
                 padding: "12px 16px",
                 marginBottom: "20px",
@@ -451,7 +547,7 @@ const AddPatient = () => {
                 color: "#991B1B",
                 fontSize: "14px",
               }}>
-                {error}
+                {fieldErrors._general}
               </div>
             )}
 
@@ -487,6 +583,7 @@ const AddPatient = () => {
                     placeholder="Enter patient's email"
                     value={formData.email}
                     onChange={handleInputChange}
+                    disabled={!!formData.phone.trim()}
                   />
                   {fieldErrors.email && (
                     <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>{fieldErrors.email}</div>
@@ -553,6 +650,7 @@ const AddPatient = () => {
                     placeholder="+20 XXX XXX XXXX"
                     value={formData.phone}
                     onChange={handleInputChange}
+                    disabled={!!formData.email.trim()}
                   />
                   {fieldErrors.phone && (
                     <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>{fieldErrors.phone}</div>
@@ -645,8 +743,11 @@ const AddPatient = () => {
 
               {hasSurgeries && (
                 <div className="form-group" id="surgeryDetails">
-                  <label className="form-label">Please specify surgeries</label>
-                  <textarea className="form-textarea" id="surgeryText" placeholder="List previous surgeries and approximate dates..." value={formData.surgeryText} onChange={handleInputChange}></textarea>
+                  <label className="form-label required">Please specify surgeries</label>
+                  <textarea className={`form-textarea${fieldErrors.surgeryText ? " target-error" : ""}`} id="surgeryText" placeholder="List previous surgeries and approximate dates..." value={formData.surgeryText} onChange={handleInputChange}></textarea>
+                  {fieldErrors.surgeryText && (
+                    <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>{fieldErrors.surgeryText}</div>
+                  )}
                 </div>
               )}
 
@@ -707,7 +808,7 @@ const AddPatient = () => {
                       <p className="upload-card-subtitle">
                         {category === "lab" ? "Blood work, urinalysis, biochemistry panels"
                           : category === "history" ? "Patient records, visit notes, prescriptions"
-                          : "X-rays, CT scans, MRI, DICOM images"}
+                            : "X-rays, CT scans, MRI, DICOM images"}
                       </p>
                     </div>
 
@@ -717,7 +818,7 @@ const AddPatient = () => {
                       </svg>
                       <div className="dropzone-text">Click to upload or drag files</div>
                       <div className="dropzone-formats">
-                        {category === "radiology" ? "PDF, DOCX, JPG, PNG, DICOM (Max 10MB)" : "PDF, DOCX, JPG, PNG (Max 10MB)"}
+                        PDF (Max 10MB)
                       </div>
                     </div>
 
@@ -726,7 +827,7 @@ const AddPatient = () => {
                       className="file-input-hidden"
                       id={`${category}Input`}
                       multiple
-                      accept={category === "radiology" ? ".pdf,.docx,.doc,.jpg,.jpeg,.png,.dcm" : ".pdf,.docx,.doc,.jpg,.jpeg,.png"}
+                      accept="application/pdf,.pdf"
                       onChange={(e) => handleFileInputChange(category, e)}
                     />
 
@@ -739,26 +840,28 @@ const AddPatient = () => {
                             </svg>
                           </div>
                           <span className="file-name">{file.name}</span>
-                          <svg className="file-status-check" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          <svg className="file-status-check" viewBox="0 0 24 24" fill="none" stroke="#00C187" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                            <polyline points="22 4 12 14.01 9 11.01" />
                           </svg>
-                          <button className="file-remove-btn" onClick={() => removeFile(category, index)}>
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <button className="file-remove-btn" onClick={(e) => { e.stopPropagation(); removeFile(category, index); }}>
+                            <svg width="18" height="18" fill="none" stroke="#FF5C5C" viewBox="0 0 24 24" style={{ display: "block", flexShrink: 0 }}>
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                           </button>
                         </div>
                       ))}
                     </div>
+
+                    {/* Show backend file error for this category */}
+                    {fieldErrors[category === "history" ? "medical_history" : category] && (
+                      <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "8px" }}>
+                        {fieldErrors[category === "history" ? "medical_history" : category]}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
-
-              {!hasAtLeastOneFile && (
-                <p style={{ color: "#EF4444", fontSize: "13px", textAlign: "center", marginTop: "12px" }}>
-                  Please upload at least one file to proceed.
-                </p>
-              )}
 
               <div className="wizard-actions" style={{ gap: "50%" }}>
                 <button className="back" onClick={() => goToStep(2)} disabled={isProcessing}>
@@ -771,7 +874,7 @@ const AddPatient = () => {
                 <button
                   className={`next ${isProcessing ? "loading" : ""}`}
                   onClick={handleProcess}
-                  disabled={isProcessing || !hasAtLeastOneFile}
+                  disabled={isProcessing}
                 >
                   {isProcessing ? (
                     <>

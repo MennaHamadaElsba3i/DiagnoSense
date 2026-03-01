@@ -1443,6 +1443,43 @@
              color: #FF5C5C;
         }
 
+        /* Ensure file icons are always visible */
+        .file-status-check {
+             opacity: 1 !important;
+             visibility: visible !important;
+             display: inline-block !important;
+             flex-shrink: 0;
+        }
+
+        .file-remove-btn {
+             opacity: 1 !important;
+             visibility: visible !important;
+        }
+
+        /* Disabled input styling (email/phone mutual exclusivity) */
+        .form-input:disabled {
+             background: #F0F2F5;
+             color: #A0A8B8;
+             cursor: not-allowed;
+             border-color: #E6EAF2;
+        }
+
+        /* Textarea error styling */
+        .form-textarea.target-error {
+             border-color: #EF4444;
+             background-color: #FEF2F2;
+        }
+
+        .form-textarea.target-error:focus {
+             box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+        }
+
+        /* Stepper completed check icon */
+        .step-item.completed .step-circle svg {
+             stroke: #FFFFFF;
+             color: #FFFFFF;
+        }
+
         /* Navigation Buttons */
         .wizard-actions {
              /* gap: 60%; */
