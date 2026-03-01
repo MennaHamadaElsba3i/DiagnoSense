@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import logo from "../assets/Logo_Diagnoo.png";
 import "../css/PatientList.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
-import { getPatientsAPI } from "./mockAPI";
+import { getPatientsAPI, searchPatientsAPI } from "./mockAPI";
 
 const PatientList = () => {
   const navigate = useNavigate();
@@ -12,8 +12,9 @@ const PatientList = () => {
   const [showModal, setShowModal] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
-  const [allPatients, setAllPatients] = useState([]);
+  const [patients, setPatients] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,30 +44,46 @@ const PatientList = () => {
 
     observer.observe(gridRef.current);
     return () => observer.disconnect();
-  }, [allPatients.length]);
+  }, [patients.length]);
 
-  useEffect(() => {
-    const fetchPatients = async () => {
-      setLoading(true);
-      setError(null);
-      const res = await getPatientsAPI();
+  const fetchPatients = async (pageNumber) => {
+    setLoading(true);
+    setError(null);
+    console.log("[patients] fetching page", pageNumber);
+
+    try {
+      const res = await getPatientsAPI(pageNumber);
+      console.log("[patients] rawResponse", res);
 
       if (res.success === false) {
+        console.log("[patients] error", res.message);
         setError(res.message || "Failed to load patients");
         setLoading(false);
         return;
       }
 
       let rawPatients = [];
-      if (res?.data?.data?.patients && Array.isArray(res.data.data.patients)) {
-        rawPatients = res.data.data.patients;
-      } else if (Array.isArray(res?.data?.data)) {
-        rawPatients = res.data.data;
-      } else if (Array.isArray(res?.data)) {
+      let meta = {};
+
+      if (res?.meta) {
+        meta = res.meta;
+      } else if (res?.data?.meta) {
+        meta = res.data.meta;
+      } else if (res?.data?.data?.meta) {
+        meta = res.data.data.meta;
+      }
+
+      if (Array.isArray(res?.data)) {
         rawPatients = res.data;
+      } else if (res?.data?.data && Array.isArray(res.data.data)) {
+        rawPatients = res.data.data;
+      } else if (res?.data?.data?.patients && Array.isArray(res.data.data.patients)) {
+        rawPatients = res.data.data.patients;
       } else if (Array.isArray(res)) {
         rawPatients = res;
       }
+
+      console.log("[patients] parsed meta", meta, "listLen", rawPatients?.length);
 
       const gradients = [
         "linear-gradient(135deg, #467DFF, #2A66FF)",
@@ -120,39 +137,114 @@ const PatientList = () => {
         };
       });
 
-      setAllPatients(mappedPatients);
+      setPatients(mappedPatients);
+      setCurrentPage(Number(meta?.current_page || pageNumber));
+      setLastPage(Number(meta?.last_page || 1));
+
+      console.log("[patients] state", {
+        scheduledCurrentPage: Number(meta?.current_page || pageNumber),
+        scheduledLastPage: Number(meta?.last_page || 1),
+        listLen: mappedPatients.length
+      });
+
       setLoading(false);
-    };
+    } catch (err) {
+      console.log("[patients] error fetch exception", err);
+      setError("An error occurred while fetching patients.");
+      setLoading(false);
+    }
+  };
 
-    fetchPatients();
-  }, []);
+  // ── Search fetch (reuses same response parsing + patient mapping as fetchPatients) ──
+  const fetchSearch = async (pageNumber, term) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await searchPatientsAPI(pageNumber, term);
+      if (res.success === false) {
+        setError(res.message || "Search failed");
+        setPatients([]);
+        setLastPage(1);
+        setLoading(false);
+        return;
+      }
 
-  const filteredPatients = allPatients.filter((patient) => {
-    const matchesFilter =
-      activeFilter === "all" ||
+      let rawPatients = [];
+      let meta = {};
+      if (res?.meta) meta = res.meta;
+      else if (res?.data?.meta) meta = res.data.meta;
+      else if (res?.data?.data?.meta) meta = res.data.data.meta;
+
+      if (Array.isArray(res?.data)) rawPatients = res.data;
+      else if (res?.data?.data && Array.isArray(res.data.data)) rawPatients = res.data.data;
+      else if (Array.isArray(res)) rawPatients = res;
+
+      console.log("[search] parsed", { meta, rawLen: rawPatients.length, firstItem: rawPatients[0] });
+
+      const gradients = [
+        "linear-gradient(135deg, #467DFF, #2A66FF)",
+        "linear-gradient(135deg, #FF5C5C, #FF8A8A)",
+        "linear-gradient(135deg, #FFA500, #FFB84D)",
+        "linear-gradient(135deg, #00C187, #00E5A0)",
+        "linear-gradient(135deg, #9D5CFF, #B380FF)",
+        "linear-gradient(135deg, #2A66FF, #5A8BFF)",
+        "linear-gradient(135deg, #FF6B9D, #FF8FB3)",
+        "linear-gradient(135deg, #00C9A7, #00E5C0)"
+      ];
+      const mappedPatients = rawPatients.map((p, index) => {
+        let status = p.status ? p.status.toLowerCase() : "stable";
+        let statusLabel = "🟢 Stable";
+        let statusType = "";
+        let insightStyle = {};
+        if (status === "critical") { statusLabel = "🔴 Critical"; insightStyle = { borderLeftColor: "#FF5C5C", background: "#FFECEC" }; }
+        else if (status === "under review" || status === "underreview" || status === "warning") { status = "underReview"; statusLabel = "🟡 Under Review"; statusType = "warning"; insightStyle = { borderLeftColor: "#FFA500" }; }
+        const nameParts = p.name ? p.name.split(" ") : ["U", "N"];
+        let initials = "UN";
+        if (nameParts.length > 1 && nameParts[0] && nameParts[1]) initials = `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
+        else if (p.name && p.name.length >= 2) initials = p.name.substring(0, 2).toUpperCase();
+        return {
+          id: p.id || index, initials: p.initials || initials, name: p.name || "Unknown Patient",
+          age: p.age || "N/A", condition: p.condition || p.disease || "Not specified",
+          status, statusLabel, statusType,
+          aiInsight: p.aiInsight || p.ai_insight || "No new insights available.",
+          lastVisit: p.lastVisit || p.last_visit || "N/A",
+          nextAppointment: p.nextAppointment || p.next_appointment || "N/A",
+          gradient: p.gradient || gradients[index % gradients.length], insightStyle,
+        };
+      });
+
+      setPatients(mappedPatients);
+      setCurrentPage(Number(meta?.current_page || pageNumber));
+      setLastPage(Number(meta?.last_page || 1));
+      console.log("[search] state", { currentPage: Number(meta?.current_page || pageNumber), lastPage: Number(meta?.last_page || 1), listLen: mappedPatients.length });
+      setLoading(false);
+    } catch (err) {
+      console.log("[search] error", err);
+      setError("An error occurred while searching.");
+      setLoading(false);
+    }
+  };
+
+  // ── Single unified effect: search mode vs list mode ──
+  useEffect(() => {
+    const trimmed = searchTerm.trim();
+    if (trimmed) {
+      fetchSearch(currentPage, trimmed);
+    } else {
+      fetchPatients(currentPage);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, searchTerm]);
+
+  // Status chip filter only (text search is now backend-driven)
+  const filteredPatients = patients.filter((patient) => {
+    return activeFilter === "all" ||
       (activeFilter === "critical" && patient.status === "critical") ||
       (activeFilter === "stable" && patient.status === "stable") ||
       (activeFilter === "underReview" && patient.statusType === "warning");
-
-    const matchesSearch =
-      patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.condition.toLowerCase().includes(searchTerm.toLowerCase());
-
-    return matchesFilter && matchesSearch;
   });
 
-  const totalPages = Math.max(1, Math.ceil(filteredPatients.length / pageSize));
-  const safeCurrentPage = Math.min(currentPage, totalPages);
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [totalPages, currentPage]);
-
-  const start = (safeCurrentPage - 1) * pageSize;
-  const end = start + pageSize;
-  const visiblePatients = filteredPatients.slice(start, end);
+  const visiblePatients = filteredPatients;
 
   console.log("columns:", Math.max(1, Math.floor(pageSize / 3)));
   console.log("pageSize:", pageSize);
@@ -286,30 +378,6 @@ const PatientList = () => {
       </aside>
 
       <nav className="top-navbar">
-        <div className="search-container">
-          <svg
-            className="search-icon"
-            width="20"
-            height="20"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-          <input
-            type="text"
-            className="search-input"
-            style={{ padding: "12px 16px 12px 44px" }}
-            placeholder="Search patient or report…"
-          />
-        </div>
-
         <div className="navbar-right">
           <div className="status-indicator">
             <span className="status-dot"></span>
@@ -616,16 +684,16 @@ const PatientList = () => {
 
         <div className="pagination">
           <button
-            disabled={safeCurrentPage <= 1 || visiblePatients.length === 0}
-            onClick={() => setCurrentPage(safeCurrentPage - 1)}
+            disabled={currentPage <= 1 || patients.length === 0}
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
           >
             ◂ Prev
           </button>
 
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+          {Array.from({ length: lastPage }, (_, i) => i + 1).map((page) => (
             <button
               key={page}
-              className={safeCurrentPage === page ? "active" : ""}
+              className={currentPage === page ? "active" : ""}
               onClick={() => setCurrentPage(page)}
             >
               {page}
@@ -633,8 +701,8 @@ const PatientList = () => {
           ))}
 
           <button
-            disabled={safeCurrentPage >= totalPages || visiblePatients.length === 0}
-            onClick={() => setCurrentPage(safeCurrentPage + 1)}
+            disabled={currentPage >= lastPage || patients.length === 0}
+            onClick={() => setCurrentPage(p => Math.min(lastPage, p + 1))}
           >
             Next ▸
           </button>

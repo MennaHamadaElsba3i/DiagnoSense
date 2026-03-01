@@ -512,29 +512,6 @@ const PatientProfile = () => {
       </aside>
 
       <nav className="top-navbar">
-        <div className="search-container">
-          <svg
-            className="search-icon"
-            width="20"
-            height="20"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Search patient or report…"
-          />
-        </div>
-
         <div className="navbar-right">
           <div className="status-indicator">
             <span className="status-dot"></span>
@@ -814,9 +791,8 @@ const PatientProfile = () => {
                 Key Important Info
               </button>
               <button
-                className={`tab-btn ${
-                  activeTab === "comparative" ? "active" : ""
-                }`}
+                className={`tab-btn ${activeTab === "comparative" ? "active" : ""
+                  }`}
                 onClick={() => handleTabClick("comparative")}
               >
                 Comparative Analysis
@@ -845,9 +821,8 @@ const PatientProfile = () => {
 
         <div className="container">
           <div
-            className={`tab-content ${
-              activeTab === "overview" ? "active" : ""
-            }`}
+            className={`tab-content ${activeTab === "overview" ? "active" : ""
+              }`}
             id="overview"
           >
             <div className="overview-layout">
@@ -868,7 +843,7 @@ const PatientProfile = () => {
                     {isLoadingAnalysis
                       ? "This 51-year-old male patient presented initially with sudden-onset severe headache and dizziness, later found to be caused by profound bradycardia (HR 21 bpm), requiring pacemaker implantation. After initial improvement, he developed recurrence of symptoms due to pacemaker failure, followed by surgical site infection and persistent high-grade fever. He is currently hospitalized for management of suspected pacemaker-related infection. There is no significant past medical history, no chronic illnesses, and no relevant family history."
                       : analysisData?.[0]?.result?.["ai-summary"] ||
-                        "No insights available No insights available No insights available No insights available No insights available No insights available No insights available"}
+                      "No insights available No insights available No insights available No insights available No insights available No insights available No insights available"}
                   </div>
                 </div>
 
@@ -2513,9 +2488,8 @@ const PatientProfile = () => {
           </div>
 
           <div
-            className={`tab-content ${
-              activeTab === "comparative" ? "active" : ""
-            }`}
+            className={`tab-content ${activeTab === "comparative" ? "active" : ""
+              }`}
             id="comparative"
           >
             <div className="card">
@@ -2657,9 +2631,8 @@ const PatientProfile = () => {
 
           {/* Decision Support Tab */}
           <div
-            className={`tab-content ${
-              activeTab === "decision" ? "active" : ""
-            }`}
+            className={`tab-content ${activeTab === "decision" ? "active" : ""
+              }`}
             id="decision"
           >
             <div className="card">
@@ -2669,14 +2642,14 @@ const PatientProfile = () => {
               </h2>
               <div className="likelihood-stack">
                 {isLoadingAnalysis ||
-                !(
-                  analysisData?.[0]?.result?.likely_diagnoses?.high_likelihood
-                    ?.length > 0 ||
-                  analysisData?.[0]?.result?.likely_diagnoses?.possible
-                    ?.length > 0 ||
-                  analysisData?.[0]?.result?.likely_diagnoses?.low_likelihood
-                    ?.length > 0
-                ) ? (
+                  !(
+                    analysisData?.[0]?.result?.likely_diagnoses?.high_likelihood
+                      ?.length > 0 ||
+                    analysisData?.[0]?.result?.likely_diagnoses?.possible
+                      ?.length > 0 ||
+                    analysisData?.[0]?.result?.likely_diagnoses?.low_likelihood
+                      ?.length > 0
+                  ) ? (
                   <>
                     <div
                       className={`likelihood-card high ${expandedLikelihoods["static-0"] ? "expanded" : ""}`}
@@ -2865,11 +2838,10 @@ const PatientProfile = () => {
                       (item, index) => (
                         <div
                           key={`high-${index}`}
-                          className={`likelihood-card high ${
-                            expandedLikelihoods[`high-${index}`]
-                              ? "expanded"
-                              : ""
-                          }`}
+                          className={`likelihood-card high ${expandedLikelihoods[`high-${index}`]
+                            ? "expanded"
+                            : ""
+                            }`}
                           onClick={() => toggleLikelihood(`high-${index}`)}
                         >
                           <div className="likelihood-header">
@@ -2910,11 +2882,10 @@ const PatientProfile = () => {
                       (item, index) => (
                         <div
                           key={`poss-${index}`}
-                          className={`likelihood-card medium ${
-                            expandedLikelihoods[`poss-${index}`]
-                              ? "expanded"
-                              : ""
-                          }`}
+                          className={`likelihood-card medium ${expandedLikelihoods[`poss-${index}`]
+                            ? "expanded"
+                            : ""
+                            }`}
                           onClick={() => toggleLikelihood(`poss-${index}`)}
                         >
                           <div className="likelihood-header">
@@ -2954,11 +2925,10 @@ const PatientProfile = () => {
                       (item, index) => (
                         <div
                           key={`low-${index}`}
-                          className={`likelihood-card low ${
-                            expandedLikelihoods[`low-${index}`]
-                              ? "expanded"
-                              : ""
-                          }`}
+                          className={`likelihood-card low ${expandedLikelihoods[`low-${index}`]
+                            ? "expanded"
+                            : ""
+                            }`}
                           onClick={() => toggleLikelihood(`low-${index}`)}
                         >
                           <div className="likelihood-header">
@@ -3040,9 +3010,8 @@ const PatientProfile = () => {
 
           {/* Activity Log Tab */}
           <div
-            className={`tab-content ${
-              activeTab === "activity" ? "active" : ""
-            }`}
+            className={`tab-content ${activeTab === "activity" ? "active" : ""
+              }`}
             id="activity"
           >
             <div className="card">
