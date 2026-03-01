@@ -282,7 +282,7 @@ const AddPatient = () => {
             goToStep(1); 
           }
 
-          setError("Please fix the highlighted fields before continuing.");
+          setError(result.message);
         } else {
           setError(result.message || "Failed to process patient data. Please try again.");
         }
