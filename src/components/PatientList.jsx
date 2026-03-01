@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import logo from "../assets/Logo_Diagnoo.png";
 import "../css/PatientList.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
-import { getPatientsAPI, searchPatientsAPI } from "./mockAPI";
+import { getPatientsAPI, searchPatientsAPI, getPatientsByStatusAPI } from "./mockAPI";
 
 const PatientList = () => {
   const navigate = useNavigate();
@@ -225,26 +225,111 @@ const PatientList = () => {
     }
   };
 
-  // ── Single unified effect: search mode vs list mode ──
+  // ── Status fetch ──
+  const fetchByStatus = async (pageNumber, status) => {
+    setLoading(true);
+    setError(null);
+
+    const STATUS_MAP = {
+      critical: "critical",
+      stable: "stable",
+      underReview: "under review"
+    };
+
+    const statusSlug = STATUS_MAP[status] || status;
+
+    console.log("[status-filter] clicked:", status, "mapped:", statusSlug);
+
+    try {
+      const res = await getPatientsByStatusAPI(statusSlug, pageNumber);
+      if (res.success === false) {
+        setError(res.message || "Failed to load patients by status");
+        setPatients([]);
+        setLastPage(1);
+        setLoading(false);
+        return;
+      }
+
+      let rawPatients = [];
+      let meta = {};
+      if (res?.meta) meta = res.meta;
+      else if (res?.data?.meta) meta = res.data.meta;
+      else if (res?.data?.data?.meta) meta = res.data.data.meta;
+
+      if (Array.isArray(res?.data)) rawPatients = res.data;
+      else if (res?.data?.data && Array.isArray(res.data.data)) rawPatients = res.data.data;
+      else if (Array.isArray(res)) rawPatients = res;
+
+      console.log("[status-filter] response first:", rawPatients?.[0]);
+      console.log(`[status] parsed ${statusSlug}`, { meta, rawLen: rawPatients.length });
+
+      const gradients = [
+        "linear-gradient(135deg, #467DFF, #2A66FF)",
+        "linear-gradient(135deg, #FF5C5C, #FF8A8A)",
+        "linear-gradient(135deg, #FFA500, #FFB84D)",
+        "linear-gradient(135deg, #00C187, #00E5A0)",
+        "linear-gradient(135deg, #9D5CFF, #B380FF)",
+        "linear-gradient(135deg, #2A66FF, #5A8BFF)",
+        "linear-gradient(135deg, #FF6B9D, #FF8FB3)",
+        "linear-gradient(135deg, #00C9A7, #00E5C0)"
+      ];
+      const mappedPatients = rawPatients.map((p, index) => {
+        let pStatus = p.status ? p.status.toLowerCase() : "stable";
+        let statusLabel = "🟢 Stable";
+        let statusType = "";
+        let insightStyle = {};
+        if (pStatus === "critical") { statusLabel = "🔴 Critical"; insightStyle = { borderLeftColor: "#FF5C5C", background: "#FFECEC" }; }
+        else if (pStatus === "under review" || pStatus === "underreview" || pStatus === "warning" || pStatus === "under_review") { pStatus = "underReview"; statusLabel = "🟡 Under Review"; statusType = "warning"; insightStyle = { borderLeftColor: "#FFA500" }; }
+        const nameParts = p.name ? p.name.split(" ") : ["U", "N"];
+        let initials = "UN";
+        if (nameParts.length > 1 && nameParts[0] && nameParts[1]) initials = `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
+        else if (p.name && p.name.length >= 2) initials = p.name.substring(0, 2).toUpperCase();
+        return {
+          id: p.id || index, initials: p.initials || initials, name: p.name || "Unknown Patient",
+          age: p.age || "N/A", condition: p.condition || p.disease || "Not specified",
+          status: pStatus, statusLabel, statusType,
+          aiInsight: p.aiInsight || p.ai_insight || "No new insights available.",
+          lastVisit: p.lastVisit || p.last_visit || "N/A",
+          nextAppointment: p.nextAppointment || p.next_appointment || "N/A",
+          gradient: p.gradient || gradients[index % gradients.length], insightStyle,
+        };
+      });
+
+      setPatients(mappedPatients);
+      setCurrentPage(Number(meta?.current_page || pageNumber));
+      setLastPage(Number(meta?.last_page || 1));
+      setLoading(false);
+    } catch (err) {
+      console.log(`[status] error ${statusSlug}`, err);
+      setError("An error occurred while fetching patients by status.");
+      setLoading(false);
+    }
+  };
+
+  // ── Single unified effect: search vs status vs list mode ──
   useEffect(() => {
     const trimmed = searchTerm.trim();
+
+    let currentMode = "list";
     if (trimmed) {
+      currentMode = "search";
+    } else if (activeFilter !== "all") {
+      currentMode = "status";
+    }
+
+    console.log("[PatientList] mode", currentMode, "filter", activeFilter, "page", currentPage);
+
+    if (currentMode === "search") {
       fetchSearch(currentPage, trimmed);
+    } else if (currentMode === "status") {
+      fetchByStatus(currentPage, activeFilter);
     } else {
       fetchPatients(currentPage);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, searchTerm]);
+  }, [currentPage, searchTerm, activeFilter]);
 
-  // Status chip filter only (text search is now backend-driven)
-  const filteredPatients = patients.filter((patient) => {
-    return activeFilter === "all" ||
-      (activeFilter === "critical" && patient.status === "critical") ||
-      (activeFilter === "stable" && patient.status === "stable") ||
-      (activeFilter === "underReview" && patient.statusType === "warning");
-  });
-
-  const visiblePatients = filteredPatients;
+  const visiblePatients = patients;
 
   console.log("columns:", Math.max(1, Math.floor(pageSize / 3)));
   console.log("pageSize:", pageSize);
