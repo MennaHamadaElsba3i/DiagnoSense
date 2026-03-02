@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-// import { Link } from "react-router-dom";
-// import { useNavigate } from "react-router-dom";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { getPatientAnalysisAPI } from "./mockAPI";
+import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
+import { getPatientAnalysisAPI, getPatientOverviewAPI } from "./mockAPI";
 import EvidencePanel from "../components/EvidencePanel.jsx";
 
 import logo from "../assets/Logo_Diagnoo.png";
@@ -11,6 +9,12 @@ import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 
 const PatientProfile = () => {
   const navigate = useNavigate();
+  const { patientId } = useParams();
+
+  // ── Overview API state ──
+  const [overviewData, setOverviewData] = useState(null);
+  const [overviewLoading, setOverviewLoading] = useState(true);
+  const [overviewError, setOverviewError] = useState(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   const [activeTab, setActiveTab] = useState("overview");
@@ -160,6 +164,50 @@ const PatientProfile = () => {
 
     fetchAnalysisData();
   }, [keyInfoData]);
+
+  // ── Fetch Patient Overview on mount ──
+  useEffect(() => {
+    if (!patientId) {
+      setOverviewLoading(false);
+      return;
+    }
+    console.log("[overview] patientId", patientId);
+
+    const fetchOverview = async () => {
+      setOverviewLoading(true);
+      setOverviewError(null);
+      try {
+        const res = await getPatientOverviewAPI(patientId);
+        console.log("[overview] response", res);
+        if (res.success === false) {
+          console.error("[overview] error", res.message);
+          setOverviewError(res.message || "Failed to load patient overview");
+        } else {
+          // API shape: { success: true, data: [ {...patientObject...} ] }
+          // Extract the first element of the array; fall back gracefully
+          const raw = res?.data;
+          const patient = Array.isArray(raw) ? raw[0] : (raw ?? res);
+          console.log("[overview] extracted patient", patient);
+          setOverviewData(patient);
+
+          // Sync status pill: normalize to "stable" | "critical" | "under review"
+          const normalized = (patient?.status || "").toLowerCase().trim().replaceAll("_", " ");
+          if (normalized === "stable" || normalized === "critical" || normalized === "under review") {
+            setSelectedStatus(normalized);
+          } else {
+            setSelectedStatus("");
+          }
+        }
+      } catch (err) {
+        console.error("[overview] fetch exception", err);
+        setOverviewError("Network error while loading overview");
+      } finally {
+        setOverviewLoading(false);
+      }
+    };
+
+    fetchOverview();
+  }, [patientId]);
 
   const [selectedReport, setSelectedReport] = useState(null);
 
@@ -730,12 +778,16 @@ const PatientProfile = () => {
           <div className="patient-identity">
             <div className="patient-main-info">
               <div className="patient-avatar" style={{ borderRadius: "50%" }}>
-                NH
+                {overviewData?.patientName
+                  ? overviewData.patientName.split(" ").filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase()
+                  : "NH"}
               </div>
               <div className="patient-details" style={{ marginBottom: "0px" }}>
-                <h1>Nour Hassan</h1>
+                <h1>{overviewLoading ? "Loading…" : (overviewData?.patientName ?? "N/A")}</h1>
                 <p className="patient-meta">
-                  Dr. El-Sayed / National ID: #30410141201075
+                  {overviewLoading
+                    ? "Loading…"
+                    : `${overviewData?.doctorName ? `Dr. ${overviewData.doctorName}` : "N/A"} / National ID: #${overviewData?.patientId ?? "N/A"}`}
                 </p>
               </div>
             </div>
@@ -865,10 +917,11 @@ const PatientProfile = () => {
                     style={{ marginTop: "-10px", marginBottom: "0" }}
                   >
                     <strong>AI Summary:</strong>{" "}
-                    {isLoadingAnalysis
-                      ? "This 51-year-old male patient presented initially with sudden-onset severe headache and dizziness, later found to be caused by profound bradycardia (HR 21 bpm), requiring pacemaker implantation. After initial improvement, he developed recurrence of symptoms due to pacemaker failure, followed by surgical site infection and persistent high-grade fever. He is currently hospitalized for management of suspected pacemaker-related infection. There is no significant past medical history, no chronic illnesses, and no relevant family history."
-                      : analysisData?.[0]?.result?.["ai-summary"] ||
-                        "No insights available No insights available No insights available No insights available No insights available No insights available No insights available"}
+                    {overviewLoading
+                      ? "Loading…"
+                      : (overviewData?.smart_summary
+                        || analysisData?.[0]?.result?.["ai-summary"]
+                        || "No insights available")}
                   </div>
                 </div>
 
@@ -924,8 +977,8 @@ const PatientProfile = () => {
                         Critical
                       </span>
                       <span
-                        className={`status-badge warning ${selectedStatus !== "warning" ? "inactive" : ""}`}
-                        onClick={() => setSelectedStatus("warning")}
+                        className={`status-badge warning ${selectedStatus !== "under review" ? "inactive" : ""}`}
+                        onClick={() => setSelectedStatus("under review")}
                         style={{ cursor: "pointer" }}
                       >
                         <span
@@ -967,7 +1020,7 @@ const PatientProfile = () => {
                           </svg>
                           Age
                         </div>
-                        <div className="info-value">47 Years</div>
+                        <div className="info-value">{overviewLoading ? "…" : (overviewData?.age != null ? `${overviewData.age} Years` : "N/A")}</div>
                       </div>
 
                       {/* Mini-field B: Smoker */}
@@ -987,7 +1040,7 @@ const PatientProfile = () => {
                           </svg>
                           Smoker
                         </div>
-                        <div className="info-value">No</div>
+                        <div className="info-value">{overviewLoading ? "…" : (overviewData?.smoker != null ? String(overviewData.smoker) : "N/A")}</div>
                       </div>
                     </div>
 
@@ -1008,7 +1061,7 @@ const PatientProfile = () => {
                         Chronic Disease
                       </div>
                       <div className="info-value">
-                        Type 2 Diabetes, Hypertension
+                        {overviewLoading ? "…" : (overviewData?.chronicDiseases ?? "N/A")}
                       </div>
                     </div>
 
@@ -1031,7 +1084,7 @@ const PatientProfile = () => {
                         </svg>
                         Previous Surgeries
                       </div>
-                      <div className="info-value">Appendectomy (2015)</div>
+                      <div className="info-value">{overviewLoading ? "…" : (overviewData?.previousSurgeries ?? "N/A")}</div>
                     </div>
 
                     {/* Row 2 / Col 2 */}
@@ -1055,7 +1108,7 @@ const PatientProfile = () => {
                         Known Allergies
                       </div>
                       <div className="info-value" style={{ color: "#FF5C5C" }}>
-                        Penicillin (Anaphylaxis)
+                        {overviewLoading ? "…" : (overviewData?.allergies ?? "N/A")}
                       </div>
                     </div>
 
@@ -1083,7 +1136,7 @@ const PatientProfile = () => {
                         Medications
                       </div>
                       <div className="info-value">
-                        Atorvastatin 20mg, Metformin 500mg
+                        {overviewLoading ? "…" : (overviewData?.medications ?? "N/A")}
                       </div>
                     </div>
 
@@ -1105,7 +1158,7 @@ const PatientProfile = () => {
                         </svg>
                         Family Medical History
                       </div>
-                      <div className="info-value">Father: Hypertension</div>
+                      <div className="info-value">{overviewLoading ? "…" : (overviewData?.familyHistory ?? "N/A")}</div>
                     </div>
                   </div>
                 </div>

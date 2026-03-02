@@ -754,8 +754,8 @@ const PatientList = () => {
                   <div className="patient-actions">
                     <button
                       className="btn btn-primary"
-                      onClick={(e) => {
-                        navigate("/patient-profile");
+                      onClick={() => {
+                        navigate(`/patient-profile/${patient.id}`);
                       }}
                     >
                       View Details

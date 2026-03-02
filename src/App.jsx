@@ -71,6 +71,14 @@ function App() {
           }
         />
         <Route
+          path="/patient-profile/:patientId"
+          element={
+            <ProtectedRoute>
+              <PatientProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/add-patient"
           element={
             <ProtectedRoute>

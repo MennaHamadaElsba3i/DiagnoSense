@@ -404,3 +404,6 @@ export const getPatientKeyInfoAPI = async (patientId, token) => {
     return { success: false };
   }
 };
+export const getPatientOverviewAPI = async (patientId) => {
+  return await apiCall(`/api/patients/${patientId}/overview`, { method: 'GET' });
+};
