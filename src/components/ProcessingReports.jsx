@@ -1,9 +1,50 @@
+import { useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { getPatientKeyInfoAPI } from './mockAPI.js'; // adjust path if needed
 import '../css/ProcessingReports.css';
 
 export default function ProcessingReports() {
+  const { state } = useLocation();
+  const navigate = useNavigate();
+  const pollingRef = useRef(null);
+  const hasNavigated = useRef(false);
+
+  useEffect(() => {
+    const patientId = state?.patientId;
+    const token = state?.token;
+
+    // Safety check — if missing, do nothing
+    if (!patientId || !token) {
+      console.warn("ProcessingReports: missing patientId or token", state);
+      return;
+    }
+
+    console.log("Starting polling for patientId:", patientId);
+
+    pollingRef.current = setInterval(async () => {
+      const result = await getPatientKeyInfoAPI(patientId, token);
+
+      console.log("Endpoint 2 response:", result); // <-- debug log
+
+      if (result?.success && result?.data && !hasNavigated.current) {
+        hasNavigated.current = true;         // prevent double navigation
+        clearInterval(pollingRef.current);
+
+        navigate('/patient-profile', {
+          state: {
+            keyInfoData: result.data,
+            patientId: patientId,
+          },
+        });
+      }
+    }, 4000); // polls every 4 seconds
+
+    // Cleanup on unmount
+    return () => clearInterval(pollingRef.current);
+  }, []);   // runs once on mount
+
   return (
     <>
-      {/* Google Fonts */}
       <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
         rel="stylesheet"

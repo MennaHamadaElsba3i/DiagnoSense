@@ -5,6 +5,8 @@ import ProcessingReports from "../components/ProcessingReports";
 import logo from "../assets/Logo_Diagnoo.png";
 import "../css/AddPatient.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
+import { getCookie } from "./cookieUtils"; 
+
 
 const AddPatient = () => {
   const navigate = useNavigate();
@@ -357,11 +359,11 @@ const AddPatient = () => {
           })
         );
 
-        setShowProcessingScreen(true);
-        navigate("/patient-profile", {
+        const token = getCookie('user_token');
+        navigate("/loading", {
           state: {
-            patientId: result.patient_id,
-            message: result.message,
+            patientId: result.data.data.patient_id,
+            token: token,
           },
         });
 

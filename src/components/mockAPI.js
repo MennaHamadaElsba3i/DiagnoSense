@@ -349,6 +349,9 @@ export const addPatientAPI = async (formData) => {
       localStorage.setItem('current_patient_id', patientId);
     }
 
+    console.log("raw API data:", data); // add this
+    console.log("extracted patientId:", patientId); // add this
+
     return {
       success: true,
       patient_id: patientId,
@@ -357,7 +360,7 @@ export const addPatientAPI = async (formData) => {
 
   } catch (error) {
     console.error('API Error:', error);
-    console.error('Error name:', error.name);      
+    console.error('Error name:', error.name);
     console.error('Error message:', error.message);
     return {
       success: false,
@@ -375,4 +378,29 @@ export const searchPatientsAPI = async (page = 1, term = "") => {
   const res = await apiCall(url, { method: 'GET' });
   console.log("[search] response", { meta: res?.meta || res?.data?.meta, len: (res?.data?.length ?? res?.data?.data?.length ?? "?") });
   return res;
+};
+
+export const getPatientKeyInfoAPI = async (patientId, token) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/patients/${patientId}/key-info`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+      },
+    });
+
+    console.log("key-info status:", response.status);
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      return { success: false };
+    }
+
+    return data;
+
+  } catch {
+    return { success: false };
+  }
 };
