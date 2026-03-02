@@ -30,7 +30,7 @@ export default function ProcessingReports() {
         hasNavigated.current = true;         // prevent double navigation
         clearInterval(pollingRef.current);
 
-        navigate('/patient-profile', {
+        navigate(`/patient-profile/${patientId}`, {
           state: {
             keyInfoData: result.data,
             patientId: patientId,

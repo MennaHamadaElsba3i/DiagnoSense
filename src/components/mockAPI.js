@@ -381,6 +381,11 @@ export const searchPatientsAPI = async (page = 1, term = "") => {
 };
 
 export const getPatientKeyInfoAPI = async (patientId, token) => {
+  // If no token provided, use apiCall which auto-reads token from cookies
+  if (!token) {
+    return await apiCall(`/api/patients/${patientId}/key-info`, { method: 'GET' });
+  }
+  // Token explicitly provided (e.g. ProcessingReports polling)
   try {
     const response = await fetch(`${API_BASE_URL}/api/patients/${patientId}/key-info`, {
       method: 'GET',
@@ -390,16 +395,12 @@ export const getPatientKeyInfoAPI = async (patientId, token) => {
         'ngrok-skip-browser-warning': 'true',
       },
     });
-
     console.log("key-info status:", response.status);
     const data = await response.json();
-
     if (!response.ok || !data.success) {
       return { success: false };
     }
-
     return data;
-
   } catch {
     return { success: false };
   }

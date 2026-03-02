@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
-import { getPatientAnalysisAPI, getPatientOverviewAPI } from "./mockAPI";
+import { getPatientAnalysisAPI, getPatientOverviewAPI, getPatientKeyInfoAPI } from "./mockAPI";
 import EvidencePanel from "../components/EvidencePanel.jsx";
 
 import logo from "../assets/Logo_Diagnoo.png";
@@ -32,9 +32,14 @@ const PatientProfile = () => {
   const location = useLocation();
   const keyInfoData = location.state?.keyInfoData || null;
 
-  const highAlerts = keyInfoData?.high || [];
-  const mediumAlerts = keyInfoData?.medium || [];
-  const lowAlerts = keyInfoData?.low || [];
+  // ── Key info fetched from backend (View Details path) ──
+  const [keyInfo, setKeyInfo] = useState(null);
+
+  // Always prefer state-passed data (Add Patient flow); fall back to fetched data (View Details flow)
+  const effectiveKeyInfo = keyInfoData ?? keyInfo;
+  const highAlerts = effectiveKeyInfo?.high || [];
+  const mediumAlerts = effectiveKeyInfo?.medium || [];
+  const lowAlerts = effectiveKeyInfo?.low || [];
 
   const [chatMessages, setChatMessages] = useState([
     {
@@ -114,56 +119,33 @@ const PatientProfile = () => {
   //     fetchAnalysisData();
   //   }, []);
 
+  // ── Fetch Key Important Info from backend (View Details path) ──
   useEffect(() => {
     if (keyInfoData) {
-      setAnalysisData(keyInfoData);
+      // Add Patient flow: data already passed via navigation state — skip fetch
+      console.log("[keyInfo] source: navigation state", keyInfoData);
       setIsLoadingAnalysis(false);
       return;
     }
-    const fetchAnalysisData = async () => {
-      const patientData = JSON.parse(localStorage.getItem("currentPatient"));
-
-      if (patientData && patientData.patient_id) {
-        setIsLoadingAnalysis(true);
-
-        const result = await getPatientAnalysisAPI(patientData.patient_id);
-
-        if (result.success) {
-          console.log("Analysis Data Raw:", result.data);
-          console.log(highAlerts);
-          let transformedData = result.data;
-          if (
-            transformedData &&
-            transformedData[0] &&
-            transformedData[0].result
-          ) {
-            transformedData = [...transformedData];
-            const resultObj = { ...transformedData[0].result };
-            ["high", "medium", "low"].forEach((priority) => {
-              const key = `${priority}_priority_alerts`;
-              if (Array.isArray(resultObj[key])) {
-                resultObj[key] = resultObj[key].map((alertText) => ({
-                  id: `${priority}-api-${Math.random().toString(36).substr(2, 9)}`,
-                  text:
-                    typeof alertText === "string"
-                      ? alertText
-                      : alertText.text || "",
-                }));
-              }
-            });
-            transformedData[0].result = resultObj;
-          }
-          setAnalysisData(transformedData);
-        } else {
-          console.error(result.message);
-        }
-
-        setIsLoadingAnalysis(false);
+    if (!patientId) {
+      setIsLoadingAnalysis(false);
+      return;
+    }
+    console.log("[keyInfo] source: backend fetch, patientId:", patientId);
+    const fetchKeyInfo = async () => {
+      setIsLoadingAnalysis(true);
+      const res = await getPatientKeyInfoAPI(patientId);
+      console.log("[keyInfo] API response:", res);
+      if (res && res.success !== false) {
+        const payload = res?.data ?? res;
+        setKeyInfo(payload);
+      } else {
+        console.error("[keyInfo] fetch failed:", res?.message);
       }
+      setIsLoadingAnalysis(false);
     };
-
-    fetchAnalysisData();
-  }, [keyInfoData]);
+    fetchKeyInfo();
+  }, [patientId, keyInfoData]);
 
   // ── Fetch Patient Overview on mount ──
   useEffect(() => {
@@ -866,9 +848,8 @@ const PatientProfile = () => {
                 Key Important Info
               </button>
               <button
-                className={`tab-btn ${
-                  activeTab === "comparative" ? "active" : ""
-                }`}
+                className={`tab-btn ${activeTab === "comparative" ? "active" : ""
+                  }`}
                 onClick={() => handleTabClick("comparative")}
               >
                 Comparative Analysis
@@ -897,9 +878,8 @@ const PatientProfile = () => {
 
         <div className="container">
           <div
-            className={`tab-content ${
-              activeTab === "overview" ? "active" : ""
-            }`}
+            className={`tab-content ${activeTab === "overview" ? "active" : ""
+              }`}
             id="overview"
           >
             <div className="overview-layout">
@@ -1188,19 +1168,136 @@ const PatientProfile = () => {
                 <div className="note-list">
                   {isLoadingAnalysis
                     ? // الجزء ده بيظهر فقط وقت التحميل (Static Notes)
-                      staticNotes["high-1"] && (
-                        <div className="note-item high-priority">
-                          <div className="pp-note-actions">
-                            <button
-                              className="pp-note-edit-btn"
-                              onClick={() =>
-                                startEditNote("high-1", staticNotes["high-1"])
+                    staticNotes["high-1"] && (
+                      <div className="note-item high-priority">
+                        <div className="pp-note-actions">
+                          <button
+                            className="pp-note-edit-btn"
+                            onClick={() =>
+                              startEditNote("high-1", staticNotes["high-1"])
+                            }
+                            title="Edit"
+                          >
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                          </button>
+                        </div>
+                        {editingNoteId === "high-1" ? (
+                          <>
+                            <textarea
+                              className="pp-note-edit-textarea"
+                              value={editingNoteText}
+                              onChange={(e) =>
+                                setEditingNoteText(e.target.value)
                               }
-                              title="Edit"
+                              autoFocus
+                            />
+                            <div className="pp-edit-footer-row">
+                              <div className="note-footer">
+                                <div className="note-meta-stack">
+                                  <span className="note-date">
+                                    Jan 28, 2026
+                                  </span>
+                                  <button
+                                    className="pp-evidence-icon-btn"
+                                    onClick={() => setIsPanelOpen(true)}
+                                    title="View Evidence"
+                                  >
+                                    <svg
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2.5"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <circle cx="11" cy="11" r="8"></circle>
+                                      <line
+                                        x1="21"
+                                        y1="21"
+                                        x2="16.65"
+                                        y2="16.65"
+                                      ></line>
+                                    </svg>
+                                    View Evidence
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="pp-note-save-row">
+                                <button
+                                  className="pp-note-save-btn"
+                                  onClick={() =>
+                                    saveEditNote("high-1", editingNoteText)
+                                  }
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  className="pp-note-cancel-btn"
+                                  onClick={cancelEditNote}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="note-text">
+                            <strong>Critical:</strong> {staticNotes["high-1"]}
+                          </div>
+                        )}
+                        {editingNoteId !== "high-1" && (
+                          <div className="note-footer">
+                            <div className="note-meta-stack">
+                              <span className="note-date">Jan 28, 2026</span>
+                              <button
+                                className="pp-evidence-icon-btn"
+                                onClick={() => setIsPanelOpen(true)}
+                                title="View Evidence"
+                              >
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <circle cx="11" cy="11" r="8"></circle>
+                                  <line
+                                    x1="21"
+                                    y1="21"
+                                    x2="16.65"
+                                    y2="16.65"
+                                  ></line>
+                                </svg>
+                                View Evidence
+                              </button>
+                            </div>
+                            <button
+                              className="pp-note-delete-btn"
+                              onClick={() => openDeleteAlertModal("high-1")}
+                              title="Delete"
                             >
                               <svg
-                                width="14"
-                                height="14"
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="18"
+                                height="18"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
@@ -1208,116 +1305,41 @@ const PatientProfile = () => {
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                               >
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4h8v2" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M10 11v6" />
+                                <path d="M14 11v6" />
                               </svg>
                             </button>
                           </div>
-                          {editingNoteId === "high-1" ? (
-                            <>
-                              <textarea
-                                className="pp-note-edit-textarea"
-                                value={editingNoteText}
-                                onChange={(e) =>
-                                  setEditingNoteText(e.target.value)
-                                }
-                                autoFocus
-                              />
-                              <div className="pp-edit-footer-row">
-                                <div className="note-footer">
-                                  <div className="note-meta-stack">
-                                    <span className="note-date">
-                                      Jan 28, 2026
-                                    </span>
-                                    <button
-                                      className="pp-evidence-icon-btn"
-                                      onClick={() => setIsPanelOpen(true)}
-                                      title="View Evidence"
-                                    >
-                                      <svg
-                                        width="14"
-                                        height="14"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2.5"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                      >
-                                        <circle cx="11" cy="11" r="8"></circle>
-                                        <line
-                                          x1="21"
-                                          y1="21"
-                                          x2="16.65"
-                                          y2="16.65"
-                                        ></line>
-                                      </svg>
-                                      View Evidence
-                                    </button>
-                                  </div>
-                                </div>
-                                <div className="pp-note-save-row">
-                                  <button
-                                    className="pp-note-save-btn"
-                                    onClick={() =>
-                                      saveEditNote("high-1", editingNoteText)
-                                    }
-                                  >
-                                    Save
-                                  </button>
-                                  <button
-                                    className="pp-note-cancel-btn"
-                                    onClick={cancelEditNote}
-                                  >
-                                    Cancel
-                                  </button>
-                                </div>
-                              </div>
-                            </>
-                          ) : (
-                            <div className="note-text">
-                              <strong>Critical:</strong> {staticNotes["high-1"]}
-                            </div>
-                          )}
-                          {editingNoteId !== "high-1" && (
-                            <div className="note-footer">
-                              <div className="note-meta-stack">
-                                <span className="note-date">Jan 28, 2026</span>
-                                <button
-                                  className="pp-evidence-icon-btn"
-                                  onClick={() => setIsPanelOpen(true)}
-                                  title="View Evidence"
-                                >
-                                  <svg
-                                    width="14"
-                                    height="14"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.5"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <circle cx="11" cy="11" r="8"></circle>
-                                    <line
-                                      x1="21"
-                                      y1="21"
-                                      x2="16.65"
-                                      y2="16.65"
-                                    ></line>
-                                  </svg>
-                                  View Evidence
-                                </button>
-                              </div>
+                        )}
+                      </div>
+                    )
+                    : highAlerts?.length > 0
+                      ? // عرض البيانات الحقيقية من الـ API
+                      highAlerts.map((alertObj) => {
+                        const noteId = alertObj.id;
+                        const alertInsight = alertObj.insight; // استخدام insight من الـ JSON بتاعك
+                        const alertTitle =
+                          alertObj.title || alertObj.is_manual; // استخدام title لو موجود أو نوع النوت
+
+                        return (
+                          <div
+                            className="note-item high-priority"
+                            key={noteId}
+                          >
+                            <div className="pp-note-actions">
                               <button
-                                className="pp-note-delete-btn"
-                                onClick={() => openDeleteAlertModal("high-1")}
-                                title="Delete"
+                                className="pp-note-edit-btn"
+                                onClick={() =>
+                                  startEditNote(noteId, alertInsight)
+                                }
+                                title="Edit"
                               >
                                 <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="18"
-                                  height="18"
+                                  width="14"
+                                  height="14"
                                   viewBox="0 0 24 24"
                                   fill="none"
                                   stroke="currentColor"
@@ -1325,41 +1347,128 @@ const PatientProfile = () => {
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
                                 >
-                                  <path d="M3 6h18" />
-                                  <path d="M8 6V4h8v2" />
-                                  <path d="M19 6l-1 14H6L5 6" />
-                                  <path d="M10 11v6" />
-                                  <path d="M14 11v6" />
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                 </svg>
                               </button>
                             </div>
-                          )}
-                        </div>
-                      )
-                    : highAlerts?.length > 0
-                      ? // عرض البيانات الحقيقية من الـ API
-                        highAlerts.map((alertObj) => {
-                          const noteId = alertObj.id;
-                          const alertInsight = alertObj.insight; // استخدام insight من الـ JSON بتاعك
-                          const alertTitle =
-                            alertObj.title || alertObj.is_manual; // استخدام title لو موجود أو نوع النوت
-
-                          return (
-                            <div
-                              className="note-item high-priority"
-                              key={noteId}
-                            >
-                              <div className="pp-note-actions">
-                                <button
-                                  className="pp-note-edit-btn"
-                                  onClick={() =>
-                                    startEditNote(noteId, alertInsight)
+                            {editingNoteId === noteId ? (
+                              <>
+                                <textarea
+                                  className="pp-note-edit-textarea"
+                                  value={editingNoteText}
+                                  onChange={(e) =>
+                                    setEditingNoteText(e.target.value)
                                   }
-                                  title="Edit"
+                                  autoFocus
+                                />
+                                <div className="pp-edit-footer-row">
+                                  <div className="note-footer">
+                                    <div className="note-meta-stack">
+                                      <span className="note-date">
+                                        {alertObj.is_manual === "AI Generated"
+                                          ? "🤖"
+                                          : "📝"}{" "}
+                                        {alertObj.is_manual} · {alertObj.date}
+                                      </span>
+                                      <button
+                                        className="pp-evidence-icon-btn"
+                                        onClick={() => setIsPanelOpen(true)}
+                                        title="View Evidence"
+                                      >
+                                        <svg
+                                          width="14"
+                                          height="14"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth="2.5"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        >
+                                          <circle
+                                            cx="11"
+                                            cy="11"
+                                            r="8"
+                                          ></circle>
+                                          <line
+                                            x1="21"
+                                            y1="21"
+                                            x2="16.65"
+                                            y2="16.65"
+                                          ></line>
+                                        </svg>
+                                        View Evidence
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className="pp-note-save-row">
+                                    <button
+                                      className="pp-note-save-btn"
+                                      onClick={() =>
+                                        saveEditNote(noteId, editingNoteText)
+                                      }
+                                    >
+                                      Save
+                                    </button>
+                                    <button
+                                      className="pp-note-cancel-btn"
+                                      onClick={cancelEditNote}
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="note-text">
+                                <strong>{alertTitle}: </strong> {alertInsight}
+                              </div>
+                            )}
+                            {editingNoteId !== noteId && (
+                              <div className="note-footer">
+                                <div className="note-meta-stack">
+                                  <span className="note-date">
+                                    {alertObj.is_manual === "AI Generated"
+                                      ? "🤖"
+                                      : "📝"}{" "}
+                                    {alertObj.is_manual} · {alertObj.date}
+                                  </span>
+                                  <button
+                                    className="pp-evidence-icon-btn"
+                                    onClick={() => setIsPanelOpen(true)}
+                                    title="View Evidence"
+                                  >
+                                    <svg
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2.5"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <circle cx="11" cy="11" r="8"></circle>
+                                      <line
+                                        x1="21"
+                                        y1="21"
+                                        x2="16.65"
+                                        y2="16.65"
+                                      ></line>
+                                    </svg>
+                                    View Evidence
+                                  </button>
+                                </div>
+                                <button
+                                  className="pp-note-delete-btn"
+                                  onClick={() => openDeleteAlertModal(noteId)}
+                                  title="Delete"
                                 >
                                   <svg
-                                    width="14"
-                                    height="14"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="18"
+                                    height="18"
                                     viewBox="0 0 24 24"
                                     fill="none"
                                     stroke="currentColor"
@@ -1367,147 +1476,18 @@ const PatientProfile = () => {
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
                                   >
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    <path d="M3 6h18" />
+                                    <path d="M8 6V4h8v2" />
+                                    <path d="M19 6l-1 14H6L5 6" />
+                                    <path d="M10 11v6" />
+                                    <path d="M14 11v6" />
                                   </svg>
                                 </button>
                               </div>
-                              {editingNoteId === noteId ? (
-                                <>
-                                  <textarea
-                                    className="pp-note-edit-textarea"
-                                    value={editingNoteText}
-                                    onChange={(e) =>
-                                      setEditingNoteText(e.target.value)
-                                    }
-                                    autoFocus
-                                  />
-                                  <div className="pp-edit-footer-row">
-                                    <div className="note-footer">
-                                      <div className="note-meta-stack">
-                                        <span className="note-date">
-                                          {alertObj.is_manual === "AI Generated"
-                                            ? "🤖"
-                                            : "📝"}{" "}
-                                          {alertObj.is_manual} · {alertObj.date}
-                                        </span>
-                                        <button
-                                          className="pp-evidence-icon-btn"
-                                          onClick={() => setIsPanelOpen(true)}
-                                          title="View Evidence"
-                                        >
-                                          <svg
-                                            width="14"
-                                            height="14"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth="2.5"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                          >
-                                            <circle
-                                              cx="11"
-                                              cy="11"
-                                              r="8"
-                                            ></circle>
-                                            <line
-                                              x1="21"
-                                              y1="21"
-                                              x2="16.65"
-                                              y2="16.65"
-                                            ></line>
-                                          </svg>
-                                          View Evidence
-                                        </button>
-                                      </div>
-                                    </div>
-                                    <div className="pp-note-save-row">
-                                      <button
-                                        className="pp-note-save-btn"
-                                        onClick={() =>
-                                          saveEditNote(noteId, editingNoteText)
-                                        }
-                                      >
-                                        Save
-                                      </button>
-                                      <button
-                                        className="pp-note-cancel-btn"
-                                        onClick={cancelEditNote}
-                                      >
-                                        Cancel
-                                      </button>
-                                    </div>
-                                  </div>
-                                </>
-                              ) : (
-                                <div className="note-text">
-                                  <strong>{alertTitle}: </strong> {alertInsight}
-                                </div>
-                              )}
-                              {editingNoteId !== noteId && (
-                                <div className="note-footer">
-                                  <div className="note-meta-stack">
-                                    <span className="note-date">
-                                      {alertObj.is_manual === "AI Generated"
-                                        ? "🤖"
-                                        : "📝"}{" "}
-                                      {alertObj.is_manual} · {alertObj.date}
-                                    </span>
-                                    <button
-                                      className="pp-evidence-icon-btn"
-                                      onClick={() => setIsPanelOpen(true)}
-                                      title="View Evidence"
-                                    >
-                                      <svg
-                                        width="14"
-                                        height="14"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2.5"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                      >
-                                        <circle cx="11" cy="11" r="8"></circle>
-                                        <line
-                                          x1="21"
-                                          y1="21"
-                                          x2="16.65"
-                                          y2="16.65"
-                                        ></line>
-                                      </svg>
-                                      View Evidence
-                                    </button>
-                                  </div>
-                                  <button
-                                    className="pp-note-delete-btn"
-                                    onClick={() => openDeleteAlertModal(noteId)}
-                                    title="Delete"
-                                  >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="18"
-                                      height="18"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    >
-                                      <path d="M3 6h18" />
-                                      <path d="M8 6V4h8v2" />
-                                      <path d="M19 6l-1 14H6L5 6" />
-                                      <path d="M10 11v6" />
-                                      <path d="M14 11v6" />
-                                    </svg>
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })
+                            )}
+                          </div>
+                        );
+                      })
                       : null}
 
                   {/* Doctor-added new notes (الجزء الخاص بإضافة نوت جديدة يدوياً) */}
@@ -1631,16 +1611,170 @@ const PatientProfile = () => {
                 <div className="note-list">
                   {isLoadingAnalysis
                     ? // تعرض النوتس الثابتة فقط أثناء التحميل
-                      staticNotes["medium-1"] && (
-                        <div className="note-item medium-priority">
+                    staticNotes["medium-1"] && (
+                      <div className="note-item medium-priority">
+                        <div className="pp-note-actions">
+                          <button
+                            className="pp-note-edit-btn"
+                            onClick={() =>
+                              startEditNote(
+                                "medium-1",
+                                staticNotes["medium-1"],
+                              )
+                            }
+                            title="Edit"
+                          >
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                          </button>
+                        </div>
+                        {editingNoteId === "medium-1" ? (
+                          <>
+                            <textarea
+                              className="pp-note-edit-textarea"
+                              value={editingNoteText}
+                              onChange={(e) =>
+                                setEditingNoteText(e.target.value)
+                              }
+                              autoFocus
+                            />
+                            <div className="pp-edit-footer-row">
+                              <div className="note-footer">
+                                <div className="note-meta-stack">
+                                  <span className="note-date">
+                                    Jan 30, 2026
+                                  </span>
+                                  <button
+                                    className="pp-evidence-icon-btn"
+                                    onClick={() => setIsPanelOpen(true)}
+                                    title="View Evidence"
+                                  >
+                                    <svg
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2.5"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <circle cx="11" cy="11" r="8"></circle>
+                                      <line
+                                        x1="21"
+                                        y1="21"
+                                        x2="16.65"
+                                        y2="16.65"
+                                      ></line>
+                                    </svg>
+                                    View Evidence
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="pp-note-save-row">
+                                <button
+                                  className="pp-note-save-btn"
+                                  onClick={() =>
+                                    saveEditNote("medium-1", editingNoteText)
+                                  }
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  className="pp-note-cancel-btn"
+                                  onClick={cancelEditNote}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="note-text">
+                            <strong>Observation:</strong>{" "}
+                            {staticNotes["medium-1"]}
+                          </div>
+                        )}
+                        {editingNoteId !== "medium-1" && (
+                          <div className="note-footer">
+                            <div className="note-meta-stack">
+                              <span className="note-date">Jan 30, 2026</span>
+                              <button
+                                className="pp-evidence-icon-btn"
+                                onClick={() => setIsPanelOpen(true)}
+                                title="View Evidence"
+                              >
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <circle cx="11" cy="11" r="8"></circle>
+                                  <line
+                                    x1="21"
+                                    y1="21"
+                                    x2="16.65"
+                                    y2="16.65"
+                                  ></line>
+                                </svg>
+                                View Evidence
+                              </button>
+                            </div>
+                            <button
+                              className="pp-note-delete-btn"
+                              onClick={() => openDeleteAlertModal("medium-1")}
+                              title="Delete"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4h8v2" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M10 11v6" />
+                                <path d="M14 11v6" />
+                              </svg>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )
+                    : mediumAlerts?.length > 0
+                      ? // عرض البيانات الحقيقية من السيرفر
+                      mediumAlerts.map((alertObj) => (
+                        <div
+                          className="note-item medium-priority"
+                          key={alertObj.id}
+                        >
                           <div className="pp-note-actions">
                             <button
                               className="pp-note-edit-btn"
                               onClick={() =>
-                                startEditNote(
-                                  "medium-1",
-                                  staticNotes["medium-1"],
-                                )
+                                startEditNote(alertObj.id, alertObj.insight)
                               }
                               title="Edit"
                             >
@@ -1659,7 +1793,7 @@ const PatientProfile = () => {
                               </svg>
                             </button>
                           </div>
-                          {editingNoteId === "medium-1" ? (
+                          {editingNoteId === alertObj.id ? (
                             <>
                               <textarea
                                 className="pp-note-edit-textarea"
@@ -1673,7 +1807,10 @@ const PatientProfile = () => {
                                 <div className="note-footer">
                                   <div className="note-meta-stack">
                                     <span className="note-date">
-                                      Jan 30, 2026
+                                      {alertObj.is_manual === "AI Generated"
+                                        ? "🤖"
+                                        : "📝"}{" "}
+                                      {alertObj.is_manual} · {alertObj.date}
                                     </span>
                                     <button
                                       className="pp-evidence-icon-btn"
@@ -1690,7 +1827,11 @@ const PatientProfile = () => {
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
                                       >
-                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <circle
+                                          cx="11"
+                                          cy="11"
+                                          r="8"
+                                        ></circle>
                                         <line
                                           x1="21"
                                           y1="21"
@@ -1706,7 +1847,10 @@ const PatientProfile = () => {
                                   <button
                                     className="pp-note-save-btn"
                                     onClick={() =>
-                                      saveEditNote("medium-1", editingNoteText)
+                                      saveEditNote(
+                                        alertObj.id,
+                                        editingNoteText,
+                                      )
                                     }
                                   >
                                     Save
@@ -1722,14 +1866,21 @@ const PatientProfile = () => {
                             </>
                           ) : (
                             <div className="note-text">
-                              <strong>Observation:</strong>{" "}
-                              {staticNotes["medium-1"]}
+                              <strong>
+                                {alertObj.title || alertObj.is_manual}:
+                              </strong>{" "}
+                              {alertObj.insight}
                             </div>
                           )}
-                          {editingNoteId !== "medium-1" && (
+                          {editingNoteId !== alertObj.id && (
                             <div className="note-footer">
                               <div className="note-meta-stack">
-                                <span className="note-date">Jan 30, 2026</span>
+                                <span className="note-date">
+                                  {alertObj.is_manual === "AI Generated"
+                                    ? "🤖"
+                                    : "📝"}{" "}
+                                  {alertObj.is_manual} · {alertObj.date}
+                                </span>
                                 <button
                                   className="pp-evidence-icon-btn"
                                   onClick={() => setIsPanelOpen(true)}
@@ -1758,7 +1909,9 @@ const PatientProfile = () => {
                               </div>
                               <button
                                 className="pp-note-delete-btn"
-                                onClick={() => openDeleteAlertModal("medium-1")}
+                                onClick={() =>
+                                  openDeleteAlertModal(alertObj.id)
+                                }
                                 title="Delete"
                               >
                                 <svg
@@ -1782,180 +1935,7 @@ const PatientProfile = () => {
                             </div>
                           )}
                         </div>
-                      )
-                    : mediumAlerts?.length > 0
-                      ? // عرض البيانات الحقيقية من السيرفر
-                        mediumAlerts.map((alertObj) => (
-                          <div
-                            className="note-item medium-priority"
-                            key={alertObj.id}
-                          >
-                            <div className="pp-note-actions">
-                              <button
-                                className="pp-note-edit-btn"
-                                onClick={() =>
-                                  startEditNote(alertObj.id, alertObj.insight)
-                                }
-                                title="Edit"
-                              >
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                              </button>
-                            </div>
-                            {editingNoteId === alertObj.id ? (
-                              <>
-                                <textarea
-                                  className="pp-note-edit-textarea"
-                                  value={editingNoteText}
-                                  onChange={(e) =>
-                                    setEditingNoteText(e.target.value)
-                                  }
-                                  autoFocus
-                                />
-                                <div className="pp-edit-footer-row">
-                                  <div className="note-footer">
-                                    <div className="note-meta-stack">
-                                      <span className="note-date">
-                                        {alertObj.is_manual === "AI Generated"
-                                          ? "🤖"
-                                          : "📝"}{" "}
-                                        {alertObj.is_manual} · {alertObj.date}
-                                      </span>
-                                      <button
-                                        className="pp-evidence-icon-btn"
-                                        onClick={() => setIsPanelOpen(true)}
-                                        title="View Evidence"
-                                      >
-                                        <svg
-                                          width="14"
-                                          height="14"
-                                          viewBox="0 0 24 24"
-                                          fill="none"
-                                          stroke="currentColor"
-                                          strokeWidth="2.5"
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                        >
-                                          <circle
-                                            cx="11"
-                                            cy="11"
-                                            r="8"
-                                          ></circle>
-                                          <line
-                                            x1="21"
-                                            y1="21"
-                                            x2="16.65"
-                                            y2="16.65"
-                                          ></line>
-                                        </svg>
-                                        View Evidence
-                                      </button>
-                                    </div>
-                                  </div>
-                                  <div className="pp-note-save-row">
-                                    <button
-                                      className="pp-note-save-btn"
-                                      onClick={() =>
-                                        saveEditNote(
-                                          alertObj.id,
-                                          editingNoteText,
-                                        )
-                                      }
-                                    >
-                                      Save
-                                    </button>
-                                    <button
-                                      className="pp-note-cancel-btn"
-                                      onClick={cancelEditNote}
-                                    >
-                                      Cancel
-                                    </button>
-                                  </div>
-                                </div>
-                              </>
-                            ) : (
-                              <div className="note-text">
-                                <strong>
-                                  {alertObj.title || alertObj.is_manual}:
-                                </strong>{" "}
-                                {alertObj.insight}
-                              </div>
-                            )}
-                            {editingNoteId !== alertObj.id && (
-                              <div className="note-footer">
-                                <div className="note-meta-stack">
-                                  <span className="note-date">
-                                    {alertObj.is_manual === "AI Generated"
-                                      ? "🤖"
-                                      : "📝"}{" "}
-                                    {alertObj.is_manual} · {alertObj.date}
-                                  </span>
-                                  <button
-                                    className="pp-evidence-icon-btn"
-                                    onClick={() => setIsPanelOpen(true)}
-                                    title="View Evidence"
-                                  >
-                                    <svg
-                                      width="14"
-                                      height="14"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2.5"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    >
-                                      <circle cx="11" cy="11" r="8"></circle>
-                                      <line
-                                        x1="21"
-                                        y1="21"
-                                        x2="16.65"
-                                        y2="16.65"
-                                      ></line>
-                                    </svg>
-                                    View Evidence
-                                  </button>
-                                </div>
-                                <button
-                                  className="pp-note-delete-btn"
-                                  onClick={() =>
-                                    openDeleteAlertModal(alertObj.id)
-                                  }
-                                  title="Delete"
-                                >
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="18"
-                                    height="18"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <path d="M3 6h18" />
-                                    <path d="M8 6V4h8v2" />
-                                    <path d="M19 6l-1 14H6L5 6" />
-                                    <path d="M10 11v6" />
-                                    <path d="M14 11v6" />
-                                  </svg>
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        ))
+                      ))
                       : null}
 
                   {/* ملاحظات الطبيب المضافة يدوياً */}
@@ -2075,13 +2055,141 @@ const PatientProfile = () => {
                 <div className="note-list">
                   {isLoadingAnalysis
                     ? // نوت افتراضية تظهر أثناء التحميل
-                      staticNotes["low-1"] && (
-                        <div className="note-item low-priority">
+                    staticNotes["low-1"] && (
+                      <div className="note-item low-priority">
+                        <div className="pp-note-actions">
+                          <button
+                            className="pp-note-edit-btn"
+                            onClick={() =>
+                              startEditNote("low-1", staticNotes["low-1"])
+                            }
+                            title="Edit"
+                          >
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                          </button>
+                        </div>
+                        {editingNoteId === "low-1" ? (
+                          <>
+                            <textarea
+                              className="pp-note-edit-textarea"
+                              value={editingNoteText}
+                              onChange={(e) =>
+                                setEditingNoteText(e.target.value)
+                              }
+                              autoFocus
+                            />
+                            <div className="pp-edit-footer-row">
+                              <div className="note-footer">
+                                <div className="note-meta-stack">
+                                  <span className="note-date">
+                                    Oct 10, 2025
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="pp-note-save-row">
+                                <button
+                                  className="pp-note-save-btn"
+                                  onClick={() =>
+                                    saveEditNote("low-1", editingNoteText)
+                                  }
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  className="pp-note-cancel-btn"
+                                  onClick={cancelEditNote}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="note-text">
+                            <strong>Note:</strong> {staticNotes["low-1"]}
+                          </div>
+                        )}
+                        {editingNoteId !== "low-1" && (
+                          <div className="note-footer">
+                            <div className="note-meta-stack">
+                              <span className="note-date">Oct 10, 2025</span>
+                              <button
+                                className="pp-evidence-icon-btn"
+                                onClick={() => setIsPanelOpen(true)}
+                                title="View Evidence"
+                              >
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <circle cx="11" cy="11" r="8"></circle>
+                                  <line
+                                    x1="21"
+                                    y1="21"
+                                    x2="16.65"
+                                    y2="16.65"
+                                  ></line>
+                                </svg>
+                                View Evidence
+                              </button>
+                            </div>
+                            <button
+                              className="pp-note-delete-btn"
+                              onClick={() => openDeleteAlertModal("low-1")}
+                              title="Delete"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4h8v2" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M10 11v6" />
+                                <path d="M14 11v6" />
+                              </svg>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )
+                    : lowAlerts?.length > 0
+                      ? // عرض بيانات السيرفر لـ Low Priority
+                      lowAlerts.map((alertObj) => (
+                        <div
+                          className="note-item low-priority"
+                          key={alertObj.id}
+                        >
                           <div className="pp-note-actions">
                             <button
                               className="pp-note-edit-btn"
                               onClick={() =>
-                                startEditNote("low-1", staticNotes["low-1"])
+                                startEditNote(alertObj.id, alertObj.insight)
                               }
                               title="Edit"
                             >
@@ -2100,7 +2208,7 @@ const PatientProfile = () => {
                               </svg>
                             </button>
                           </div>
-                          {editingNoteId === "low-1" ? (
+                          {editingNoteId === alertObj.id ? (
                             <>
                               <textarea
                                 className="pp-note-edit-textarea"
@@ -2114,7 +2222,7 @@ const PatientProfile = () => {
                                 <div className="note-footer">
                                   <div className="note-meta-stack">
                                     <span className="note-date">
-                                      Oct 10, 2025
+                                      {alertObj.date}
                                     </span>
                                   </div>
                                 </div>
@@ -2122,7 +2230,10 @@ const PatientProfile = () => {
                                   <button
                                     className="pp-note-save-btn"
                                     onClick={() =>
-                                      saveEditNote("low-1", editingNoteText)
+                                      saveEditNote(
+                                        alertObj.id,
+                                        editingNoteText,
+                                      )
                                     }
                                   >
                                     Save
@@ -2138,17 +2249,21 @@ const PatientProfile = () => {
                             </>
                           ) : (
                             <div className="note-text">
-                              <strong>Note:</strong> {staticNotes["low-1"]}
+                              <strong>
+                                {alertObj.title || "Minor Alert"}:
+                              </strong>{" "}
+                              {alertObj.insight}
                             </div>
                           )}
-                          {editingNoteId !== "low-1" && (
+                          {editingNoteId !== alertObj.id && (
                             <div className="note-footer">
                               <div className="note-meta-stack">
-                                <span className="note-date">Oct 10, 2025</span>
+                                <span className="note-date">
+                                  {alertObj.date}
+                                </span>
                                 <button
                                   className="pp-evidence-icon-btn"
                                   onClick={() => setIsPanelOpen(true)}
-                                  title="View Evidence"
                                 >
                                   <svg
                                     width="14"
@@ -2173,7 +2288,9 @@ const PatientProfile = () => {
                               </div>
                               <button
                                 className="pp-note-delete-btn"
-                                onClick={() => openDeleteAlertModal("low-1")}
+                                onClick={() =>
+                                  openDeleteAlertModal(alertObj.id)
+                                }
                                 title="Delete"
                               >
                                 <svg
@@ -2197,144 +2314,7 @@ const PatientProfile = () => {
                             </div>
                           )}
                         </div>
-                      )
-                    : lowAlerts?.length > 0
-                      ? // عرض بيانات السيرفر لـ Low Priority
-                        lowAlerts.map((alertObj) => (
-                          <div
-                            className="note-item low-priority"
-                            key={alertObj.id}
-                          >
-                            <div className="pp-note-actions">
-                              <button
-                                className="pp-note-edit-btn"
-                                onClick={() =>
-                                  startEditNote(alertObj.id, alertObj.insight)
-                                }
-                                title="Edit"
-                              >
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                              </button>
-                            </div>
-                            {editingNoteId === alertObj.id ? (
-                              <>
-                                <textarea
-                                  className="pp-note-edit-textarea"
-                                  value={editingNoteText}
-                                  onChange={(e) =>
-                                    setEditingNoteText(e.target.value)
-                                  }
-                                  autoFocus
-                                />
-                                <div className="pp-edit-footer-row">
-                                  <div className="note-footer">
-                                    <div className="note-meta-stack">
-                                      <span className="note-date">
-                                        {alertObj.date}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <div className="pp-note-save-row">
-                                    <button
-                                      className="pp-note-save-btn"
-                                      onClick={() =>
-                                        saveEditNote(
-                                          alertObj.id,
-                                          editingNoteText,
-                                        )
-                                      }
-                                    >
-                                      Save
-                                    </button>
-                                    <button
-                                      className="pp-note-cancel-btn"
-                                      onClick={cancelEditNote}
-                                    >
-                                      Cancel
-                                    </button>
-                                  </div>
-                                </div>
-                              </>
-                            ) : (
-                              <div className="note-text">
-                                <strong>
-                                  {alertObj.title || "Minor Alert"}:
-                                </strong>{" "}
-                                {alertObj.insight}
-                              </div>
-                            )}
-                            {editingNoteId !== alertObj.id && (
-                              <div className="note-footer">
-                                <div className="note-meta-stack">
-                                  <span className="note-date">
-                                    {alertObj.date}
-                                  </span>
-                                  <button
-                                    className="pp-evidence-icon-btn"
-                                    onClick={() => setIsPanelOpen(true)}
-                                  >
-                                    <svg
-                                      width="14"
-                                      height="14"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2.5"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    >
-                                      <circle cx="11" cy="11" r="8"></circle>
-                                      <line
-                                        x1="21"
-                                        y1="21"
-                                        x2="16.65"
-                                        y2="16.65"
-                                      ></line>
-                                    </svg>
-                                    View Evidence
-                                  </button>
-                                </div>
-                                <button
-                                  className="pp-note-delete-btn"
-                                  onClick={() =>
-                                    openDeleteAlertModal(alertObj.id)
-                                  }
-                                  title="Delete"
-                                >
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="18"
-                                    height="18"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <path d="M3 6h18" />
-                                    <path d="M8 6V4h8v2" />
-                                    <path d="M19 6l-1 14H6L5 6" />
-                                    <path d="M10 11v6" />
-                                    <path d="M14 11v6" />
-                                  </svg>
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        ))
+                      ))
                       : null}
 
                   {/* ملاحظات الطبيب المضافة يدوياً لـ Low Priority */}
@@ -2440,9 +2420,8 @@ const PatientProfile = () => {
           </div>
 
           <div
-            className={`tab-content ${
-              activeTab === "comparative" ? "active" : ""
-            }`}
+            className={`tab-content ${activeTab === "comparative" ? "active" : ""
+              }`}
             id="comparative"
           >
             <div className="card">
@@ -2584,9 +2563,8 @@ const PatientProfile = () => {
 
           {/* Decision Support Tab */}
           <div
-            className={`tab-content ${
-              activeTab === "decision" ? "active" : ""
-            }`}
+            className={`tab-content ${activeTab === "decision" ? "active" : ""
+              }`}
             id="decision"
           >
             <div className="card">
@@ -2596,14 +2574,14 @@ const PatientProfile = () => {
               </h2>
               <div className="likelihood-stack">
                 {isLoadingAnalysis ||
-                !(
-                  analysisData?.[0]?.result?.likely_diagnoses?.high_likelihood
-                    ?.length > 0 ||
-                  analysisData?.[0]?.result?.likely_diagnoses?.possible
-                    ?.length > 0 ||
-                  analysisData?.[0]?.result?.likely_diagnoses?.low_likelihood
-                    ?.length > 0
-                ) ? (
+                  !(
+                    analysisData?.[0]?.result?.likely_diagnoses?.high_likelihood
+                      ?.length > 0 ||
+                    analysisData?.[0]?.result?.likely_diagnoses?.possible
+                      ?.length > 0 ||
+                    analysisData?.[0]?.result?.likely_diagnoses?.low_likelihood
+                      ?.length > 0
+                  ) ? (
                   <>
                     <div
                       className={`likelihood-card high ${expandedLikelihoods["static-0"] ? "expanded" : ""}`}
@@ -2792,11 +2770,10 @@ const PatientProfile = () => {
                       (item, index) => (
                         <div
                           key={`high-${index}`}
-                          className={`likelihood-card high ${
-                            expandedLikelihoods[`high-${index}`]
-                              ? "expanded"
-                              : ""
-                          }`}
+                          className={`likelihood-card high ${expandedLikelihoods[`high-${index}`]
+                            ? "expanded"
+                            : ""
+                            }`}
                           onClick={() => toggleLikelihood(`high-${index}`)}
                         >
                           <div className="likelihood-header">
@@ -2837,11 +2814,10 @@ const PatientProfile = () => {
                       (item, index) => (
                         <div
                           key={`poss-${index}`}
-                          className={`likelihood-card medium ${
-                            expandedLikelihoods[`poss-${index}`]
-                              ? "expanded"
-                              : ""
-                          }`}
+                          className={`likelihood-card medium ${expandedLikelihoods[`poss-${index}`]
+                            ? "expanded"
+                            : ""
+                            }`}
                           onClick={() => toggleLikelihood(`poss-${index}`)}
                         >
                           <div className="likelihood-header">
@@ -2881,11 +2857,10 @@ const PatientProfile = () => {
                       (item, index) => (
                         <div
                           key={`low-${index}`}
-                          className={`likelihood-card low ${
-                            expandedLikelihoods[`low-${index}`]
-                              ? "expanded"
-                              : ""
-                          }`}
+                          className={`likelihood-card low ${expandedLikelihoods[`low-${index}`]
+                            ? "expanded"
+                            : ""
+                            }`}
                           onClick={() => toggleLikelihood(`low-${index}`)}
                         >
                           <div className="likelihood-header">
@@ -2967,9 +2942,8 @@ const PatientProfile = () => {
 
           {/* Activity Log Tab */}
           <div
-            className={`tab-content ${
-              activeTab === "activity" ? "active" : ""
-            }`}
+            className={`tab-content ${activeTab === "activity" ? "active" : ""
+              }`}
             id="activity"
           >
             <div className="card">
