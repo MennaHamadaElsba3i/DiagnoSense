@@ -357,7 +357,7 @@ export const addPatientAPI = async (formData) => {
 
   } catch (error) {
     console.error('API Error:', error);
-    console.error('Error name:', error.name);      
+    console.error('Error name:', error.name);
     console.error('Error message:', error.message);
     return {
       success: false,
@@ -375,4 +375,8 @@ export const searchPatientsAPI = async (page = 1, term = "") => {
   const res = await apiCall(url, { method: 'GET' });
   console.log("[search] response", { meta: res?.meta || res?.data?.meta, len: (res?.data?.length ?? res?.data?.data?.length ?? "?") });
   return res;
+};
+
+export const getPatientOverviewAPI = async (patientId) => {
+  return await apiCall(`/api/patients/${patientId}/overview`, { method: 'GET' });
 };
