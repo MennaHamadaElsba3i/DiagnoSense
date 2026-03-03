@@ -99,6 +99,24 @@ const PatientProfile = () => {
     },
   ]);
 
+  // ── Helper: professional empty-state messages per field ──
+  const isEmpty = (v) => !v || String(v).trim() === "" || String(v).trim().toUpperCase() === "N/A" || String(v).trim().toUpperCase() === "NA";
+  const formatKeyInfo = (field, value) => {
+    if (field === "age") return (value != null && !isEmpty(value)) ? `${value} Years` : "Not provided";
+    if (field === "smoker") return (value != null && !isEmpty(value)) ? String(value) : "Not provided";
+    if (field === "chronicDiseases") {
+      if (!value || isEmpty(value)) return "No chronic diseases reported";
+      if (Array.isArray(value)) return value.length ? value.join(", ") : "No chronic diseases reported";
+      const parts = String(value).split(",").map(s => s.trim()).filter(Boolean);
+      return parts.length ? parts.join(", ") : "No chronic diseases reported";
+    }
+    if (field === "previousSurgeries") return isEmpty(value) ? "No previous surgeries reported" : value;
+    if (field === "allergies") return isEmpty(value) ? "No known allergies reported" : value;
+    if (field === "medications") return isEmpty(value) ? "No medications reported" : value;
+    if (field === "familyHistory") return isEmpty(value) ? "No family medical history reported" : value;
+    return isEmpty(value) ? "Not provided" : value;
+  };
+
   //   useEffect(() => {
   //     const fetchAnalysisData = async () => {
   //       const patientData = JSON.parse(localStorage.getItem("currentPatient"));
@@ -1000,7 +1018,7 @@ const PatientProfile = () => {
                           </svg>
                           Age
                         </div>
-                        <div className="info-value">{overviewLoading ? "…" : (overviewData?.age != null ? `${overviewData.age} Years` : "N/A")}</div>
+                        <div className="info-value">{overviewLoading ? "…" : formatKeyInfo("age", overviewData?.age)}</div>
                       </div>
 
                       {/* Mini-field B: Smoker */}
@@ -1020,7 +1038,7 @@ const PatientProfile = () => {
                           </svg>
                           Smoker
                         </div>
-                        <div className="info-value">{overviewLoading ? "…" : (overviewData?.smoker != null ? String(overviewData.smoker) : "N/A")}</div>
+                        <div className="info-value">{overviewLoading ? "…" : formatKeyInfo("smoker", overviewData?.smoker)}</div>
                       </div>
                     </div>
 
@@ -1041,7 +1059,7 @@ const PatientProfile = () => {
                         Chronic Disease
                       </div>
                       <div className="info-value">
-                        {overviewLoading ? "…" : (overviewData?.chronicDiseases ?? "N/A")}
+                        {overviewLoading ? "…" : formatKeyInfo("chronicDiseases", overviewData?.chronicDiseases)}
                       </div>
                     </div>
 
@@ -1064,7 +1082,7 @@ const PatientProfile = () => {
                         </svg>
                         Previous Surgeries
                       </div>
-                      <div className="info-value">{overviewLoading ? "…" : (overviewData?.previousSurgeries ?? "N/A")}</div>
+                      <div className="info-value">{overviewLoading ? "…" : formatKeyInfo("previousSurgeries", overviewData?.previousSurgeries)}</div>
                     </div>
 
                     {/* Row 2 / Col 2 */}
@@ -1088,7 +1106,7 @@ const PatientProfile = () => {
                         Known Allergies
                       </div>
                       <div className="info-value" style={{ color: "#FF5C5C" }}>
-                        {overviewLoading ? "…" : (overviewData?.allergies ?? "N/A")}
+                        {overviewLoading ? "…" : formatKeyInfo("allergies", overviewData?.allergies)}
                       </div>
                     </div>
 
@@ -1116,7 +1134,7 @@ const PatientProfile = () => {
                         Medications
                       </div>
                       <div className="info-value">
-                        {overviewLoading ? "…" : (overviewData?.medications ?? "N/A")}
+                        {overviewLoading ? "…" : formatKeyInfo("medications", overviewData?.medications)}
                       </div>
                     </div>
 
@@ -1138,7 +1156,7 @@ const PatientProfile = () => {
                         </svg>
                         Family Medical History
                       </div>
-                      <div className="info-value">{overviewLoading ? "…" : (overviewData?.familyHistory ?? "N/A")}</div>
+                      <div className="info-value">{overviewLoading ? "…" : formatKeyInfo("familyHistory", overviewData?.familyHistory)}</div>
                     </div>
                   </div>
                 </div>
