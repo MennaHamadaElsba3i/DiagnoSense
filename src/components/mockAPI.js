@@ -415,3 +415,10 @@ export const addPatientKeyInfoNoteAPI = async (patientId, { insight, priority })
     body: JSON.stringify({ insight, priority }),
   });
 };
+
+export const patchKeyPointAPI = async (keyPointId, { insight }) => {
+  return await apiCall(`/api/key-points/${keyPointId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ insight }),
+  });
+};

@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
-import { getPatientAnalysisAPI, getPatientOverviewAPI, getPatientKeyInfoAPI, addPatientKeyInfoNoteAPI } from "./mockAPI";
+import { getPatientAnalysisAPI, getPatientOverviewAPI, getPatientKeyInfoAPI, addPatientKeyInfoNoteAPI, patchKeyPointAPI } from "./mockAPI";
 import EvidencePanel from "../components/EvidencePanel.jsx";
 
 import logo from "../assets/Logo_Diagnoo.png";
@@ -32,6 +32,8 @@ const PatientProfile = () => {
   //  Add-note API state 
   const [keyInfoOverride, setKeyInfoOverride] = useState({ high: [], medium: [], low: [] });
   const [addNoteToast, setAddNoteToast] = useState(null); // null | error string
+  const [savingNoteId, setSavingNoteId] = useState(null); // tracks which new note is being saved
+  const [editSavingId, setEditSavingId] = useState(null); // tracks which existing note edit is being saved
 
   const location = useLocation();
   const keyInfoData = location.state?.keyInfoData || null;
@@ -244,7 +246,8 @@ const PatientProfile = () => {
 
   const saveNewNote = async (priority, id) => {
     const insight = (newNoteTexts[id] || "").trim();
-    if (!insight) return; // empty-text guard
+    if (!insight || savingNoteId === id) return; // empty-text guard + prevent double submit
+    setSavingNoteId(id);
 
     if (!patientId) {
       console.error("[add-note] patientId is missing - cannot submit");
@@ -276,6 +279,8 @@ const PatientProfile = () => {
     } catch (err) {
       console.error("[add-note] exception:", err);
       setAddNoteToast("Failed to add note");
+    } finally {
+      setSavingNoteId(null);
     }
   };
 
@@ -323,9 +328,61 @@ const PatientProfile = () => {
     setEditingNoteText(currentText);
   };
 
-  const saveEditNote = (id, newText) => {
+  const saveEditNote = async (id, newText) => {
     console.log("Saving note:", id, "with text:", newText);
-    if (id.includes("-api-")) {
+
+    // Detect if this is a backend-managed note (numeric id) vs a static/hardcoded note
+    const isBackendNote = typeof id === "number" || (typeof id === "string" && /^\d+$/.test(id));
+
+    if (isBackendNote) {
+      // ── PATCH /api/key-points/{id} ──
+      if (editSavingId === id) return; // prevent double submit
+      setEditSavingId(id);
+      try {
+        const res = await patchKeyPointAPI(id, { insight: newText });
+        console.log("[edit-note] PATCH response:", res);
+
+        if (res && res.success) {
+          const updatedInsight = res.data?.insight ?? newText;
+
+          // Helper: update insight by id in a priority array
+          const updateById = (arr) =>
+            (arr || []).map((item) =>
+              String(item.id) === String(id) ? { ...item, insight: updatedInsight } : item
+            );
+
+          // Update keyInfo (base fetched data)
+          setKeyInfo((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              high: updateById(prev.high),
+              medium: updateById(prev.medium),
+              low: updateById(prev.low),
+            };
+          });
+
+          // Update keyInfoOverride (doctor-added notes)
+          setKeyInfoOverride((prev) => ({
+            ...prev,
+            high: updateById(prev.high),
+            medium: updateById(prev.medium),
+            low: updateById(prev.low),
+          }));
+
+          setEditingNoteId(null);
+          setEditingNoteText("");
+        } else {
+          console.error("[edit-note] API error:", res?.message);
+          setAddNoteToast("Failed to update note");
+        }
+      } catch (err) {
+        console.error("[edit-note] exception:", err);
+        setAddNoteToast("Failed to update note");
+      } finally {
+        setEditSavingId(null);
+      }
+    } else if (id.includes("-api-")) {
       const priority = id.split("-")[0];
       setAnalysisData((prev) => {
         if (!prev || !prev[0] || !prev[0].result) return prev;
@@ -340,15 +397,17 @@ const PatientProfile = () => {
         newData[0].result = resultObj;
         return newData;
       });
+      setEditingNoteId(null);
+      setEditingNoteText("");
     } else {
       setStaticNotes((prev) => {
         const updated = { ...prev, [id]: newText };
         console.log("Updated staticNotes:", updated);
         return updated;
       });
+      setEditingNoteId(null);
+      setEditingNoteText("");
     }
-    setEditingNoteId(null);
-    setEditingNoteText("");
   };
 
   const cancelEditNote = () => {
@@ -1293,8 +1352,9 @@ const PatientProfile = () => {
                                   onClick={() =>
                                     saveEditNote("high-1", editingNoteText)
                                   }
+                                  disabled={editSavingId === "high-1"}
                                 >
-                                  Save
+                                  {editSavingId === "high-1" ? "Saving..." : "Save"}
                                 </button>
                                 <button
                                   className="pp-note-cancel-btn"
@@ -1460,8 +1520,9 @@ const PatientProfile = () => {
                                       onClick={() =>
                                         saveEditNote(noteId, editingNoteText)
                                       }
+                                      disabled={editSavingId === noteId}
                                     >
-                                      Save
+                                      {editSavingId === noteId ? "Saving..." : "Save"}
                                     </button>
                                     <button
                                       className="pp-note-cancel-btn"
@@ -1628,8 +1689,9 @@ const PatientProfile = () => {
                               <button
                                 className="pp-note-save-btn"
                                 onClick={() => saveNewNote("high", note.id)}
+                                disabled={savingNoteId === note.id}
                               >
-                                Save
+                                {savingNoteId === note.id ? "Saving..." : "Save"}
                               </button>
                               <button
                                 className="pp-note-cancel-btn"
@@ -1740,8 +1802,9 @@ const PatientProfile = () => {
                                   onClick={() =>
                                     saveEditNote("medium-1", editingNoteText)
                                   }
+                                  disabled={editSavingId === "medium-1"}
                                 >
-                                  Save
+                                  {editSavingId === "medium-1" ? "Saving..." : "Save"}
                                 </button>
                                 <button
                                   className="pp-note-cancel-btn"
@@ -1906,8 +1969,9 @@ const PatientProfile = () => {
                                           editingNoteText,
                                         )
                                       }
+                                      disabled={editSavingId === alertObj.id}
                                     >
-                                      Save
+                                      {editSavingId === alertObj.id ? "Saving..." : "Save"}
                                     </button>
                                     <button
                                       className="pp-note-cancel-btn"
@@ -2075,8 +2139,9 @@ const PatientProfile = () => {
                               <button
                                 className="pp-note-save-btn"
                                 onClick={() => saveNewNote("medium", note.id)}
+                                disabled={savingNoteId === note.id}
                               >
-                                Save
+                                {savingNoteId === note.id ? "Saving..." : "Save"}
                               </button>
                               <button
                                 className="pp-note-cancel-btn"
@@ -2159,8 +2224,9 @@ const PatientProfile = () => {
                                   onClick={() =>
                                     saveEditNote("low-1", editingNoteText)
                                   }
+                                  disabled={editSavingId === "low-1"}
                                 >
-                                  Save
+                                  {editSavingId === "low-1" ? "Saving..." : "Save"}
                                 </button>
                                 <button
                                   className="pp-note-cancel-btn"
@@ -2292,8 +2358,9 @@ const PatientProfile = () => {
                                           editingNoteText,
                                         )
                                       }
+                                      disabled={editSavingId === alertObj.id}
                                     >
-                                      Save
+                                      {editSavingId === alertObj.id ? "Saving..." : "Save"}
                                     </button>
                                     <button
                                       className="pp-note-cancel-btn"
@@ -2459,8 +2526,9 @@ const PatientProfile = () => {
                               <button
                                 className="pp-note-save-btn"
                                 onClick={() => saveNewNote("low", note.id)}
+                                disabled={savingNoteId === note.id}
                               >
-                                Save
+                                {savingNoteId === note.id ? "Saving..." : "Save"}
                               </button>
                               <button
                                 className="pp-note-cancel-btn"
