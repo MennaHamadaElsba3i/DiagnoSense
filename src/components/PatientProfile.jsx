@@ -292,7 +292,9 @@ const PatientProfile = () => {
       console.log("[add-note] response:", res);
 
       if (res && res.success) {
-        const newNote = res.data;
+        // Backend may return { data: { id, ... } } or { data: { data: { id, ... } } }
+        const newNote = res.data?.data ?? res.data;
+        console.log("[add-note] note saved — id:", newNote?.id, "| full note:", newNote);
 
         // Append to override – effectiveKeyInfo merges baseKeyInfo + keyInfoOverride,
         // so a single insert here is enough for both Add Patient and View Details flows.
@@ -647,6 +649,14 @@ const PatientProfile = () => {
             };
           });
         }
+
+        // Remove from keyInfoOverride (doctor-added notes saved in the current session)
+        setKeyInfoOverride((prev) => ({
+          ...prev,
+          high: (prev.high || []).filter((a) => String(a.id) !== id),
+          medium: (prev.medium || []).filter((a) => String(a.id) !== id),
+          low: (prev.low || []).filter((a) => String(a.id) !== id),
+        }));
 
         // Also remove from navigation-state-passed keyInfoData path
         if (id.includes("-api-")) {
