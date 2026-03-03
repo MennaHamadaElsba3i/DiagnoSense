@@ -408,3 +408,10 @@ export const getPatientKeyInfoAPI = async (patientId, token) => {
 export const getPatientOverviewAPI = async (patientId) => {
   return await apiCall(`/api/patients/${patientId}/overview`, { method: 'GET' });
 };
+
+export const addPatientKeyInfoNoteAPI = async (patientId, { insight, priority }) => {
+  return await apiCall(`/api/patients/${patientId}/key-info`, {
+    method: 'POST',
+    body: JSON.stringify({ insight, priority }),
+  });
+};
