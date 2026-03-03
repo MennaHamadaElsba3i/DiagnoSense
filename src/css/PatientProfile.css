@@ -1042,6 +1042,70 @@ body {
     transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
+/* ── Status badge active/inactive — scoped to Patient Profile only ──
+   Uses shared CSS variables from :root (index.css).
+   PatientList uses the same token values for its non-interactive badges,
+   so both pages are visually consistent.                                  */
+
+/* ── INACTIVE: clearly visible (72% opacity) with soft tinted background ── */
+.pp-scope.patient-profile-page .status-badge.inactive {
+    opacity: 0.72 !important;
+    transition: opacity 0.2s ease, background 0.2s ease, border-color 0.2s ease !important;
+}
+
+.pp-scope.patient-profile-page .status-badge.stable.inactive {
+    background: var(--status-stable-bg-soft) !important;
+    border: 1px solid var(--status-stable-border) !important;
+    color: var(--status-stable-text) !important;
+    box-shadow: none !important;
+}
+
+.pp-scope.patient-profile-page .status-badge.critical.inactive {
+    background: var(--status-critical-bg-soft) !important;
+    border: 1px solid var(--status-critical-border) !important;
+    color: var(--status-critical-text) !important;
+    box-shadow: none !important;
+}
+
+.pp-scope.patient-profile-page .status-badge.warning.inactive {
+    background: var(--status-warning-bg-soft) !important;
+    border: 1px solid var(--status-warning-border) !important;
+    color: var(--status-warning-text) !important;
+    box-shadow: none !important;
+}
+
+.pp-scope.patient-profile-page .status-badge.inactive:hover {
+    opacity: 0.9 !important;
+}
+
+/* ── ACTIVE: full opacity, stronger tint, subtle glow ── */
+.pp-scope.patient-profile-page .status-badge.active {
+    opacity: 1 !important;
+    font-weight: 700 !important;
+    transition: opacity 0.2s ease, background 0.2s ease, border-color 0.2s ease !important;
+}
+
+.pp-scope.patient-profile-page .status-badge.stable.active {
+    background: var(--status-stable-bg-strong) !important;
+    border: 1px solid var(--status-stable-border-strong) !important;
+    color: var(--status-stable-text-strong) !important;
+    box-shadow: 0 0 0 3px rgba(0, 193, 135, 0.12) !important;
+}
+
+.pp-scope.patient-profile-page .status-badge.critical.active {
+    background: var(--status-critical-bg-strong) !important;
+    border: 1px solid var(--status-critical-border-strong) !important;
+    color: var(--status-critical-text-strong) !important;
+    box-shadow: 0 0 0 3px rgba(255, 92, 92, 0.12) !important;
+}
+
+.pp-scope.patient-profile-page .status-badge.warning.active {
+    background: var(--status-warning-bg-strong) !important;
+    border: 1px solid var(--status-warning-border-strong) !important;
+    color: var(--status-warning-text-strong) !important;
+    box-shadow: 0 0 0 3px rgba(255, 165, 0, 0.12) !important;
+}
+
 .key-info-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -2315,6 +2379,11 @@ button.pp-note-delete-btn:hover {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }

@@ -162,10 +162,36 @@ export const resetPasswordAPI = async (reset_token, password, password_confirmat
   });
 };
 
+const FRONTEND_CALLBACK_URL = 'http://localhost:5173/auth/google/callback';
+
 export const getGoogleRedirectAPI = async () => {
-  return await apiCall('/api/google/redirect', {
-    method: 'GET',
-  });
+  return await apiCall(
+    `/api/google/redirect?redirect_uri=${encodeURIComponent(FRONTEND_CALLBACK_URL)}`,
+    { method: 'GET' }
+  );
+};
+
+export const googleCallbackAPI = async (code) => {
+  const result = await apiCall(
+    `/api/google/callback?code=${encodeURIComponent(code)}&redirect_uri=${encodeURIComponent(FRONTEND_CALLBACK_URL)}`,
+    { method: 'GET' }
+  );
+
+  // Backend returns: { success: true, data: { user: {...} }, token: "..." }
+  const token = result?.token || result?.data?.token;
+  const user = result?.data?.user || result?.data;
+
+  if (token) {
+    setCookie('user_token', token, 7);
+    setCookie('isAuthenticated', 'true', 7);
+    if (user) {
+      setJsonCookie('user', user, 7);
+    }
+    // Also mirror to localStorage for axios-based callers
+    localStorage.setItem('user_token', token);
+  }
+
+  return { success: !!token, token, user, raw: result };
 };
 
 export const googleLoginAPI = async (googleToken) => {
@@ -435,4 +461,16 @@ export const deleteKeyPointAPI = async (keyPointId) => {
 
   console.log('[deleteKeyPoint] full backend response:', result);
   return result;
+};
+
+/**
+ * PATCH /api/patients/{patientId}/status
+ * @param {number|string} patientId
+ * @param {"stable"|"critical"|"under review"} status  — must match backend exactly
+ */
+export const updatePatientStatusAPI = async (patientId, status) => {
+  return await apiCall(`/api/patients/${patientId}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  });
 };

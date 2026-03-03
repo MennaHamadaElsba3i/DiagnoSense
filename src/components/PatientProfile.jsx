@@ -8,6 +8,7 @@ import {
   addPatientKeyInfoNoteAPI,
   patchKeyPointAPI,
   deleteKeyPointAPI,
+  updatePatientStatusAPI,
 } from "./mockAPI";
 import EvidencePanel from "../components/EvidencePanel.jsx";
 
@@ -32,10 +33,10 @@ const PatientProfile = () => {
   const [chatInput, setChatInput] = useState("");
 
   const [selectedStatus, setSelectedStatus] = useState(() => {
-    const patientData = JSON.parse(localStorage.getItem("currentPatient"));
-    return patientData && patientData.status ? patientData.status : "warning";
-  }); // Default to "warning" if no status is found
-
+    const raw = (JSON.parse(localStorage.getItem("currentPatient"))?.status || "").toLowerCase().trim().replaceAll("_", " ");
+    return ["stable", "critical", "under review"].includes(raw) ? raw : "under review";
+  });
+  const [isStatusUpdating, setIsStatusUpdating] = useState(false);
 
 
   //  Add-note API state 
@@ -120,6 +121,61 @@ const PatientProfile = () => {
       badgeClass: "badge-info",
     },
   ]);
+
+  // ── Update patient status via PATCH ──
+  const handleStatusChange = async (newStatus) => {
+    if (!patientId) {
+      console.warn("[status] patientId missing – cannot update");
+      return;
+    }
+    if (isStatusUpdating || newStatus === selectedStatus) return;
+
+    const prevStatus = selectedStatus;
+    setSelectedStatus(newStatus);        // optimistic update
+    setIsStatusUpdating(true);
+
+    try {
+      const res = await updatePatientStatusAPI(patientId, newStatus);
+      if (res && res.success) {
+        // Confirm with backend's canonical value (normalised)
+        const confirmed = (res.data?.status || newStatus)
+          .toLowerCase().trim().replaceAll("_", " ");
+        const valid = ["stable", "critical", "under review"].includes(confirmed);
+        setSelectedStatus(valid ? confirmed : newStatus);
+
+        // Notify PatientList of the change
+        window.dispatchEvent(
+          new CustomEvent("patientStatusUpdated", {
+            detail: { patientId, status: valid ? confirmed : newStatus },
+          })
+        );
+        // No success toast — the active badge highlight is the visual feedback
+      } else {
+        setSelectedStatus(prevStatus);   // rollback
+        const isAuthError =
+          res?.message?.includes("401") || res?.message?.includes("403") ||
+          res?.message?.toLowerCase().includes("unauthorized") ||
+          res?.message?.toLowerCase().includes("forbidden");
+        Swal.fire({
+          icon: "error",
+          title: isAuthError ? "Access Denied" : "Update Failed",
+          text: res?.message || "Failed to update patient status.",
+          confirmButtonColor: "#FF5C5C",
+        });
+      }
+    } catch (err) {
+      console.error("[status] exception:", err);
+      setSelectedStatus(prevStatus);     // rollback
+      Swal.fire({
+        icon: "error",
+        title: "Network Error",
+        text: "Could not reach the server. Please try again.",
+        confirmButtonColor: "#FF5C5C",
+      });
+    } finally {
+      setIsStatusUpdating(false);
+    }
+  };
 
   // ── Helper: professional empty-state messages per field ──
   const isEmpty = (v) =>
@@ -1219,9 +1275,9 @@ const PatientProfile = () => {
                     </h3>
                     <div className="status-buttons-group">
                       <span
-                        className={`status-badge stable ${selectedStatus !== "stable" ? "inactive" : ""}`}
-                        onClick={() => setSelectedStatus("stable")}
-                        style={{ cursor: "pointer" }}
+                        className={`status-badge stable ${selectedStatus === "stable" ? "active" : "inactive"}`}
+                        onClick={() => handleStatusChange("stable")}
+                        style={{ cursor: isStatusUpdating ? "not-allowed" : "pointer" }}
                       >
                         <span
                           className="status-dot"
@@ -1234,9 +1290,9 @@ const PatientProfile = () => {
                         Stable
                       </span>
                       <span
-                        className={`status-badge critical ${selectedStatus !== "critical" ? "inactive" : ""}`}
-                        onClick={() => setSelectedStatus("critical")}
-                        style={{ cursor: "pointer" }}
+                        className={`status-badge critical ${selectedStatus === "critical" ? "active" : "inactive"}`}
+                        onClick={() => handleStatusChange("critical")}
+                        style={{ cursor: isStatusUpdating ? "not-allowed" : "pointer" }}
                       >
                         <span
                           className="status-dot"
@@ -1249,9 +1305,9 @@ const PatientProfile = () => {
                         Critical
                       </span>
                       <span
-                        className={`status-badge warning ${selectedStatus !== "under review" ? "inactive" : ""}`}
-                        onClick={() => setSelectedStatus("under review")}
-                        style={{ cursor: "pointer" }}
+                        className={`status-badge warning ${selectedStatus === "under review" ? "active" : "inactive"}`}
+                        onClick={() => handleStatusChange("under review")}
+                        style={{ cursor: isStatusUpdating ? "not-allowed" : "pointer" }}
                       >
                         <span
                           className="status-dot"

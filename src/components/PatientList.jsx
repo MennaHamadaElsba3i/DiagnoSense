@@ -329,6 +329,41 @@ const PatientList = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, searchTerm, activeFilter]);
 
+  // ── Sync status from PatientProfile updates ──
+  useEffect(() => {
+    const handleStatusSync = (e) => {
+      const { patientId: updatedId, status: updatedStatus } = e.detail;
+
+      if (activeFilter !== "all") {
+        // Filter is active: refetch to remove patients that no longer match
+        if (activeFilter === "critical") fetchByStatus(currentPage, "critical");
+        else if (activeFilter === "stable") fetchByStatus(currentPage, "stable");
+        else if (activeFilter === "underReview") fetchByStatus(currentPage, "underReview");
+      } else {
+        // No filter: update the matching card's status label/style in-place
+        const STATUS_META = {
+          "stable": { statusLabel: "🟢 Stable", statusType: "", insightStyle: {} },
+          "critical": { statusLabel: "🔴 Critical", statusType: "", insightStyle: { borderLeftColor: "#FF5C5C", background: "#FFECEC" } },
+          "under review": { statusLabel: "🟡 Under Review", statusType: "warning", insightStyle: { borderLeftColor: "#FFA500" } },
+        };
+        const displayStatus =
+          updatedStatus === "under review" ? "underReview" : updatedStatus;
+        const meta = STATUS_META[updatedStatus] ?? STATUS_META["stable"];
+
+        setPatients((prev) =>
+          prev.map((p) =>
+            String(p.id) === String(updatedId)
+              ? { ...p, status: displayStatus, ...meta }
+              : p
+          )
+        );
+      }
+    };
+
+    window.addEventListener("patientStatusUpdated", handleStatusSync);
+    return () => window.removeEventListener("patientStatusUpdated", handleStatusSync);
+  }, [activeFilter, currentPage]); // re-bind when filter or page changes
+
   const visiblePatients = patients;
 
   console.log("columns:", Math.max(1, Math.floor(pageSize / 3)));

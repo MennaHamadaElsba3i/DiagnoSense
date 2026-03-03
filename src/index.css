@@ -2,6 +2,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -15,7 +16,40 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* ── Shared status-badge tokens (authoritative source) ──
+     Sourced from PatientList.css; reused in PatientProfile.css.
+     "soft"  = subtle tinted background for inactive state
+     "strong"= richer tinted background for active state        */
+
+  /* Stable (green) */
+  --status-stable-bg: #E6FFF5;
+  --status-stable-text: #00C187;
+  --status-stable-border: rgba(0, 193, 135, 0.35);
+  --status-stable-bg-soft: rgba(0, 193, 135, 0.07);
+  --status-stable-bg-strong: rgba(0, 193, 135, 0.18);
+  --status-stable-border-strong: rgba(0, 193, 135, 0.55);
+  --status-stable-text-strong: #00A870;
+
+  /* Critical (red) */
+  --status-critical-bg: #FFECEC;
+  --status-critical-text: #FF5C5C;
+  --status-critical-border: rgba(255, 92, 92, 0.35);
+  --status-critical-bg-soft: rgba(255, 92, 92, 0.07);
+  --status-critical-bg-strong: rgba(255, 92, 92, 0.18);
+  --status-critical-border-strong: rgba(255, 92, 92, 0.55);
+  --status-critical-text-strong: #E04040;
+
+  /* Warning / Under Review (amber) */
+  --status-warning-bg: #FFF4E6;
+  --status-warning-text: #FFA500;
+  --status-warning-border: rgba(255, 165, 0, 0.35);
+  --status-warning-bg-soft: rgba(255, 165, 0, 0.07);
+  --status-warning-bg-strong: rgba(255, 165, 0, 0.20);
+  --status-warning-border-strong: rgba(255, 165, 0, 0.65);
+  --status-warning-text-strong: #CC8800;
 }
+
 
 a {
   font-weight: 500;
