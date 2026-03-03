@@ -422,3 +422,17 @@ export const patchKeyPointAPI = async (keyPointId, { insight }) => {
     body: JSON.stringify({ insight }),
   });
 };
+export const deleteKeyPointAPI = async (keyPointId) => {
+  const token = getCookie('user_token');
+  console.log('[deleteKeyPoint] sending request — keyPointId:', keyPointId, '| token:', token);
+
+  const result = await apiCall(`/api/key-points/${keyPointId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  console.log('[deleteKeyPoint] full backend response:', result);
+  return result;
+};
