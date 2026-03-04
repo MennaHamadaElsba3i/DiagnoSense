@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Swal from "sweetalert2";
 import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import {
@@ -9,6 +9,7 @@ import {
   patchKeyPointAPI,
   deleteKeyPointAPI,
   updatePatientStatusAPI,
+  getDecisionSupportAPI,
 } from "./mockAPI";
 import EvidencePanel from "../components/EvidencePanel.jsx";
 
@@ -26,6 +27,12 @@ const PatientProfile = () => {
   const [overviewError, setOverviewError] = useState(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // ── Decision Support API state ──
+  const [decisionSupport, setDecisionSupport] = useState([]);
+  const [decisionSupportLoading, setDecisionSupportLoading] = useState(false);
+  const [decisionSupportError, setDecisionSupportError] = useState(null);
+  const [decisionSupportLoadedFor, setDecisionSupportLoadedFor] = useState(null);
 
   const [activeTab, setActiveTab] = useState("overview");
   const [isDecisionModalOpen, setIsDecisionModalOpen] = useState(false);
@@ -513,9 +520,49 @@ const PatientProfile = () => {
     }
   }, [chatMessages, isChatOpen]);
 
+  // ── Reset Decision Support when patient changes ──
+  useEffect(() => {
+    setDecisionSupport([]);
+    setDecisionSupportError(null);
+    setDecisionSupportLoadedFor(null);
+  }, [patientId]);
+
+  // ── Fetch Decision Support from backend ──
+  const fetchDecisionSupport = async () => {
+    if (!patientId) return;
+    setDecisionSupportLoading(true);
+    setDecisionSupportError(null);
+    try {
+      const res = await getDecisionSupportAPI(patientId);
+      console.log("[decision-support] response:", res);
+      if (res && res.success) {
+        setDecisionSupport(Array.isArray(res.data) ? res.data : []);
+        setDecisionSupportLoadedFor(patientId);
+      } else {
+        const is401 =
+          res?.message?.toLowerCase().includes("unauthenticated") ||
+          res?.message?.includes("401");
+        if (is401) {
+          setDecisionSupportError("401");
+          navigate("/login");
+        } else {
+          setDecisionSupportError(res?.message || "Failed to load decision support.");
+        }
+      }
+    } catch (err) {
+      console.error("[decision-support] exception:", err);
+      setDecisionSupportError("Network error. Please check your connection.");
+    } finally {
+      setDecisionSupportLoading(false);
+    }
+  };
+
   const handleTabClick = (tabId) => {
     setActiveTab(tabId);
     window.scrollTo({ top: 0, behavior: "smooth" });
+    if (tabId === "decision" && patientId && decisionSupportLoadedFor !== patientId) {
+      fetchDecisionSupport();
+    }
   };
 
   const toggleAccordion = (index) => {
@@ -2985,330 +3032,168 @@ const PatientProfile = () => {
                 <span className="ai-pulse"></span>
                 AI-Powered Decision Support
               </h2>
-              <div className="likelihood-stack">
-                {isLoadingAnalysis ||
-                  !(
-                    analysisData?.[0]?.result?.likely_diagnoses?.high_likelihood
-                      ?.length > 0 ||
-                    analysisData?.[0]?.result?.likely_diagnoses?.possible
-                      ?.length > 0 ||
-                    analysisData?.[0]?.result?.likely_diagnoses?.low_likelihood
-                      ?.length > 0
-                  ) ? (
-                  <>
-                    <div
-                      className={`likelihood-card high ${expandedLikelihoods["static-0"] ? "expanded" : ""}`}
-                      onClick={() => toggleLikelihood("static-0")}
-                    >
-                      <div className="likelihood-header">
-                        <div>
-                          <div
-                            style={{
-                              fontSize: "11px",
-                              color: "#FF5C5C",
-                              marginBottom: "3px",
-                              fontWeight: 600,
-                            }}
-                          >
-                            HIGH LIKELIHOOD
-                          </div>
-                          <div className="likelihood-title">
-                            Pacemaker-related infection (device or lead
-                            infection)
-                          </div>
-                        </div>
-                        <div
-                          className="confidence"
-                          style={{ color: "#FF5C5C" }}
-                        >
-                          94%
-                        </div>
-                      </div>
-                      <div className="reasoning">
-                        <strong>Clinical Reasoning:</strong> Based on elevated
-                        ALT (48 U/L), BMI 29.4, cholesterol trend showing mild
-                        elevation, and ultrasound findings consistent with fatty
-                        infiltration. Patient's metabolic profile and lifestyle
-                        factors support this diagnosis.
-                      </div>
-                    </div>
-                    <div
-                      className={`likelihood-card high ${expandedLikelihoods["static-1"] ? "expanded" : ""}`}
-                      onClick={() => toggleLikelihood("static-1")}
-                    >
-                      <div className="likelihood-header">
-                        <div>
-                          <div
-                            style={{
-                              fontSize: "11px",
-                              color: "#FF5C5C",
-                              marginBottom: "3px",
-                              fontWeight: 600,
-                            }}
-                          >
-                            HIGH LIKELIHOOD
-                          </div>
-                          <div className="likelihood-title">
-                            Symptomatic sinus node dysfunction or high-grade AV
-                            block
-                          </div>
-                        </div>
-                        <div
-                          className="confidence"
-                          style={{ color: "#FF5C5C" }}
-                        >
-                          76%
-                        </div>
-                      </div>
-                      <div className="reasoning">
-                        <strong>Clinical Reasoning:</strong> Elevated fasting
-                        glucose (102 mg/dL), HbA1c at 6.1%, central obesity (BMI
-                        29.4), and history of Type 2 Diabetes suggest ongoing
-                        insulin resistance despite treatment. Recommend insulin
-                        sensitivity assessment.
-                      </div>
-                    </div>
-                    <div
-                      className={`likelihood-card medium ${expandedLikelihoods["static-2"] ? "expanded" : ""}`}
-                      onClick={() => toggleLikelihood("static-2")}
-                    >
-                      <div className="likelihood-header">
-                        <div>
-                          <div
-                            style={{
-                              fontSize: "11px",
-                              color: "#FFA500",
-                              marginBottom: "3px",
-                              fontWeight: 600,
-                            }}
-                          >
-                            POSSIBLE
-                          </div>
-                          <div className="likelihood-title">
-                            Infective endocarditis related to pacemaker leads
-                          </div>
-                        </div>
-                        <div
-                          className="confidence"
-                          style={{ color: "#FFA500" }}
-                        >
-                          5%
-                        </div>
-                      </div>
-                      <div className="reasoning">
-                        <strong>Clinical Reasoning:</strong> Patient presents
-                        with 3 of 5 criteria: elevated fasting glucose (102
-                        mg/dL), increased waist circumference, and dyslipidemia.
-                        Blood pressure has normalized with treatment. Requires
-                        continued monitoring.
-                      </div>
-                    </div>
-                    <div
-                      className={`likelihood-card medium ${expandedLikelihoods["static-3"] ? "expanded" : ""}`}
-                      onClick={() => toggleLikelihood("static-3")}
-                    >
-                      <div className="likelihood-header">
-                        <div>
-                          <div
-                            style={{
-                              fontSize: "11px",
-                              color: "#FFA500",
-                              marginBottom: "3px",
-                              fontWeight: 600,
-                            }}
-                          >
-                            POSSIBLE
-                          </div>
-                          <div className="likelihood-title">
-                            Systemic bacterial infection secondary to surgical
-                            site infection
-                          </div>
-                        </div>
-                        <div
-                          className="confidence"
-                          style={{ color: "#FFA500" }}
-                        >
-                          3%
-                        </div>
-                      </div>
-                      <div className="reasoning">
-                        <strong>Clinical Reasoning:</strong> Multiple risk
-                        factors present including diabetes, hypertension
-                        (controlled), dyslipidemia, and overweight status.
-                        10-year cardiovascular risk score suggests moderate
-                        elevation. Lifestyle modifications showing positive
-                        effect.
-                      </div>
-                    </div>
-                    <div
-                      className={`likelihood-card low ${expandedLikelihoods["static-4"] ? "expanded" : ""}`}
-                      onClick={() => toggleLikelihood("static-4")}
-                    >
-                      <div className="likelihood-header">
-                        <div>
-                          <div
-                            style={{
-                              fontSize: "11px",
-                              color: "#8A94A6",
-                              marginBottom: "3px",
-                              fontWeight: 600,
-                            }}
-                          >
-                            LOW LIKELIHOOD
-                          </div>
-                          <div className="likelihood-title">
-                            Primary neurological disorder causing headache and
-                            dizziness
-                          </div>
-                        </div>
-                        <div
-                          className="confidence"
-                          style={{ color: "#8A94A6" }}
-                        >
-                          1%
-                        </div>
-                      </div>
-                      <div className="reasoning">
-                        <strong>Clinical Reasoning:</strong> Negative hepatitis
-                        panel from previous testing. ALT elevation is mild and
-                        pattern more consistent with metabolic causes. No risk
-                        factors or symptoms suggestive of viral infection.
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    {/* 1. High Likelihood Section (Red) */}
-                    {analysisData?.[0]?.result?.likely_diagnoses?.high_likelihood?.map(
-                      (item, index) => (
-                        <div
-                          key={`high-${index}`}
-                          className={`likelihood-card high ${expandedLikelihoods[`high-${index}`]
-                            ? "expanded"
-                            : ""
-                            }`}
-                          onClick={() => toggleLikelihood(`high-${index}`)}
-                        >
-                          <div className="likelihood-header">
-                            <div>
-                              <div
-                                style={{
-                                  fontSize: "11px",
-                                  color: "#FF5C5C",
-                                  marginBottom: "3px",
-                                  fontWeight: 600,
-                                }}
-                              >
-                                HIGH LIKELIHOOD
-                              </div>
-                              <div className="likelihood-title">
-                                {item.condition}
-                              </div>
-                            </div>
-                            <div
-                              className="confidence"
-                              style={{ color: "#FF5C5C" }}
-                            >
-                              {item.probability}
-                            </div>
-                          </div>
-                          <div className="reasoning">
-                            <strong>AI Analysis:</strong> This condition shows a
-                            strong correlation with the patient's reported
-                            symptoms and recent lab results. (Probability:{" "}
-                            {item.probability})
-                          </div>
-                        </div>
-                      ),
-                    )}
 
-                    {/* 2. Possible Diagnoses Section (Orange) */}
-                    {analysisData?.[0]?.result?.likely_diagnoses?.possible?.map(
-                      (item, index) => (
-                        <div
-                          key={`poss-${index}`}
-                          className={`likelihood-card medium ${expandedLikelihoods[`poss-${index}`]
-                            ? "expanded"
-                            : ""
-                            }`}
-                          onClick={() => toggleLikelihood(`poss-${index}`)}
-                        >
-                          <div className="likelihood-header">
-                            <div>
-                              <div
-                                style={{
-                                  fontSize: "11px",
-                                  color: "#FFA500",
-                                  marginBottom: "3px",
-                                  fontWeight: 600,
-                                }}
-                              >
-                                POSSIBLE DIAGNOSIS
-                              </div>
-                              <div className="likelihood-title">
-                                {item.condition}
-                              </div>
-                            </div>
-                            <div
-                              className="confidence"
-                              style={{ color: "#FFA500" }}
-                            >
-                              {item.probability}
-                            </div>
-                          </div>
-                          <div className="reasoning">
-                            <strong>AI Analysis:</strong> Potential diagnosis
-                            based on partial symptom match. Further
-                            investigation suggested.
-                          </div>
-                        </div>
-                      ),
-                    )}
+              {/* ── Loading state ── */}
+              {decisionSupportLoading && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      style={{
+                        background: "rgba(42,102,255,0.05)",
+                        borderRadius: "12px",
+                        padding: "20px",
+                        animation: "pulse 1.5s ease-in-out infinite",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                        <div style={{ height: "14px", width: "40%", background: "rgba(0,0,0,0.08)", borderRadius: "6px" }} />
+                        <div style={{ height: "22px", width: "90px", background: "rgba(0,0,0,0.06)", borderRadius: "20px" }} />
+                      </div>
+                      <div style={{ height: "12px", width: "100%", background: "rgba(0,0,0,0.06)", borderRadius: "6px", marginBottom: "8px" }} />
+                      <div style={{ height: "12px", width: "80%", background: "rgba(0,0,0,0.04)", borderRadius: "6px" }} />
+                    </div>
+                  ))}
+                </div>
+              )}
 
-                    {/* 3. Low Likelihood Section (Blue/Grey) */}
-                    {analysisData?.[0]?.result?.likely_diagnoses?.low_likelihood?.map(
-                      (item, index) => (
-                        <div
-                          key={`low-${index}`}
-                          className={`likelihood-card low ${expandedLikelihoods[`low-${index}`]
-                            ? "expanded"
-                            : ""
-                            }`}
-                          onClick={() => toggleLikelihood(`low-${index}`)}
-                        >
-                          <div className="likelihood-header">
-                            <div>
-                              <div
-                                style={{
-                                  fontSize: "11px",
-                                  color: "#8A94A6",
-                                  marginBottom: "3px",
-                                  fontWeight: 600,
-                                }}
-                              >
-                                LOW LIKELIHOOD
-                              </div>
-                              <div className="likelihood-title">
-                                {item.condition}
-                              </div>
-                            </div>
+              {/* ── Error state ── */}
+              {!decisionSupportLoading && decisionSupportError && (
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: "48px 24px",
+                    color: decisionSupportError === "401" ? "#FF5C5C" : "#8A94A6",
+                  }}
+                >
+                  <svg
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ marginBottom: "16px", opacity: 0.6 }}
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  <p style={{ fontSize: "15px", fontWeight: 600, marginBottom: "8px" }}>
+                    {decisionSupportError === "401"
+                      ? "Session Expired"
+                      : "Unable to Load Decision Support"}
+                  </p>
+                  <p style={{ fontSize: "13px", opacity: 0.75, marginBottom: "20px" }}>
+                    {decisionSupportError === "401"
+                      ? "Your session has expired. Please log in again to continue."
+                      : decisionSupportError}
+                  </p>
+                  {decisionSupportError === "401" ? (
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => navigate("/login")}
+                    >
+                      Go to Login
+                    </button>
+                  ) : (
+                    <button
+                      className="btn btn-secondary"
+                      onClick={fetchDecisionSupport}
+                    >
+                      Retry
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* ── Empty state ── */}
+              {!decisionSupportLoading && !decisionSupportError && decisionSupport.length === 0 && decisionSupportLoadedFor === patientId && (
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: "48px 24px",
+                    color: "#8A94A6",
+                  }}
+                >
+                  <svg
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ marginBottom: "16px", opacity: 0.5 }}
+                  >
+                    <path d="M9 11l3 3L22 4" />
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                  </svg>
+                  <p style={{ fontSize: "15px", fontWeight: 600, marginBottom: "6px" }}>
+                    No decision support available yet.
+                  </p>
+                  <p style={{ fontSize: "13px", opacity: 0.7 }}>
+                    Decision support data will appear here once reports are processed.
+                  </p>
+                </div>
+              )}
+
+              {/* ── Data state ── */}
+              {!decisionSupportLoading && !decisionSupportError && decisionSupport.length > 0 && (
+                <div className="likelihood-stack">
+                  {decisionSupport.map((item) => {
+                    const statusUpper = (item.status || "").toUpperCase();
+                    const isHigh = statusUpper.includes("HIGH");
+                    const isLow = statusUpper.includes("LOW");
+                    const statusColor = isHigh ? "#FF5C5C" : isLow ? "#8A94A6" : "#FFA500";
+                    const cardClass = isHigh ? "high" : isLow ? "low" : "medium";
+
+                    return (
+                      <div
+                        key={item.id}
+                        className={`likelihood-card ${cardClass} ${expandedLikelihoods[item.id] ? "expanded" : ""}`}
+                        onClick={() => toggleLikelihood(item.id)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <div className="likelihood-header">
+                          <div>
                             <div
-                              className="confidence"
-                              style={{ color: "#8A94A6" }}
+                              style={{
+                                fontSize: "11px",
+                                color: statusColor,
+                                marginBottom: "3px",
+                                fontWeight: 600,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.5px",
+                              }}
                             >
-                              {item.probability}
+                              {item.status}
                             </div>
+                            <div className="likelihood-title">{item.condition}</div>
                           </div>
-                          <div className="reasoning">
-                            <strong>AI Analysis:</strong> Considered unlikely
-                            but monitored for differential diagnosis exclusion.
+                          <div
+                            className="confidence"
+                            style={{
+                              color: statusColor,
+                              flexShrink: 0,
+                              marginLeft: "16px",
+                            }}
+                          >
+                            {item.probability}
                           </div>
                         </div>
-                      ),
-                    )}
-                  </>
-                )}
-              </div>
+                        <div className="reasoning">
+                          <strong>Clinical Reasoning:</strong>{" "}
+                          {item.clinical_reasoning}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
@@ -3355,8 +3240,7 @@ const PatientProfile = () => {
 
           {/* Activity Log Tab */}
           <div
-            className={`tab-content ${activeTab === "activity" ? "active" : ""
-              }`}
+            className={`tab-content ${activeTab === "activity" ? "active" : ""}`}
             id="activity"
           >
             <div className="card">
@@ -3373,25 +3257,24 @@ const PatientProfile = () => {
               <div className="activity-timeline">
                 <div className="activity-item">
                   <div className="activity-text">
-                    🕒 Dr. Ahmed uploaded new lab results
+                    Dr. Ahmed uploaded new lab results
                   </div>
                   <div className="activity-time">Oct 31, 2025 - 2:30 PM</div>
                 </div>
                 <div className="activity-item">
                   <div className="activity-text">
-                    ✅ AI summary verified by Dr. Sarah
+                    AI summary verified by Dr. Sarah
                   </div>
                   <div className="activity-time">Oct 30, 2025 - 11:15 AM</div>
                 </div>
-                {/* More activity items... */}
               </div>
             </div>
           </div>
-        </div >
-      </div >
+        </div>
+      </div>
 
       {/* Chatbot Trigger */}
-      < div className="chatbot-trigger" onClick={toggleChat} >
+      <div className="chatbot-trigger" onClick={toggleChat}>
         <svg
           width="28"
           height="28"
@@ -3402,10 +3285,10 @@ const PatientProfile = () => {
         >
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
         </svg>
-      </div >
+      </div>
 
       {/* Chatbot Panel */}
-      < div
+      <div
         className={`chatbot-panel ${isChatOpen ? "active" : ""}`}
         id="chatPanel"
       >
@@ -3426,7 +3309,7 @@ const PatientProfile = () => {
               cursor: "pointer",
             }}
           >
-            ×
+            x
           </button>
         </div>
         <div className="chat-messages" id="chatMessages">
@@ -3449,12 +3332,12 @@ const PatientProfile = () => {
             Send
           </button>
         </div>
-      </div >
+      </div>
       <EvidencePanel
         isOpen={isPanelOpen}
         onClose={() => setIsPanelOpen(false)}
       />
-    </div >
+    </div>
   );
 };
 

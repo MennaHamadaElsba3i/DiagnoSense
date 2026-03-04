@@ -474,3 +474,15 @@ export const updatePatientStatusAPI = async (patientId, status) => {
     body: JSON.stringify({ status }),
   });
 };
+
+/**
+ * GET /api/patients/{patientId}/decision-support
+ * Returns decision support data for a given patient.
+ * Token is injected automatically by apiCall (reads user_token cookie).
+ * 401 handling (cookie cleanup) is also done inside apiCall.
+ */
+export const getDecisionSupportAPI = async (patientId) => {
+  return await apiCall(`/api/patients/${patientId}/decision-support`, {
+    method: 'GET',
+  });
+};
