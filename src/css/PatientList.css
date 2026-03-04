@@ -749,12 +749,15 @@ body {
     padding: 10px 20px;
     border-radius: 11px;
     display: flex;
+    align-items: center;
     gap: 5px;
 }
 
 .addbtn a {
     text-decoration: none;
     color: white;
+    display: flex;
+    align-items: center;
 }
 
 .head {

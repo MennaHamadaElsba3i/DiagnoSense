@@ -642,7 +642,6 @@ const PatientList = () => {
               </p>
             </div>
             <div className="addbtn">
-              <i className="fa-solid fa-user-plus"></i>
               <a
                 href="[Final] Add Patient.html"
                 onClick={(e) => {
@@ -650,7 +649,24 @@ const PatientList = () => {
                   navigate("/addpatient");
                 }}
               >
-                Add New Paitent
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ display: "inline-block", verticalAlign: "middle", marginRight: "7px", marginBottom: "1px" }}
+                >
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="8.5" cy="7" r="4" />
+                  <line x1="20" y1="8" x2="20" y2="14" />
+                  <line x1="23" y1="11" x2="17" y2="11" />
+                </svg>
+                Add New Patient
               </a>
             </div>
           </div>
@@ -675,7 +691,7 @@ const PatientList = () => {
               type="text"
               className="page-search"
               style={{ padding: "12px 16px 12px 44px" }}
-              placeholder="Search by name, ID, or condition…"
+              placeholder="Search by name or national ID"
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);

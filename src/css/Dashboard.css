@@ -722,6 +722,20 @@
          margin-bottom: 20px;
     }
 
+    /* ── Scoped override: dashboard welcome-panel stats grid ──
+       Diagnosense.css also defines .stats-grid (for the landing page)
+       with max-width + margin:auto which squeezes dashboard cards.
+       The .welcome-panel scope wins due to higher specificity and
+       guarantees no leakage to other pages. */
+    .welcome-panel .stats-grid {
+         display: grid;
+         grid-template-columns: repeat(4, minmax(0, 1fr));
+         gap: 16px;
+         width: 100%;
+         max-width: none;
+         margin: 0 0 20px 0;
+    }
+
     .stat-box {
          background: linear-gradient(135deg, #fafbff 0%, #f8faff 100%);
          padding: 18px 20px;
@@ -734,6 +748,8 @@
          align-items: center;
          justify-content: space-between;
          gap: 12px;
+         min-width: 0;
+         /* allow shrinking inside grid */
     }
 
     .stat-box::before {
@@ -1262,6 +1278,10 @@
               grid-template-columns: repeat(2, 1fr);
          }
 
+         .welcome-panel .stats-grid {
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+         }
+
          .pie-chart-container {
               flex-direction: column;
               gap: 24px;
@@ -1294,6 +1314,10 @@
          }
 
          .stats-grid {
+              grid-template-columns: 1fr;
+         }
+
+         .welcome-panel .stats-grid {
               grid-template-columns: 1fr;
          }
     }
