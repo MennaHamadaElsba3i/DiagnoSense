@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/Logo_Diagnoo.png";
+import stethoscope from "../assets/Stethoscope.png";
+import closeIcon from "../assets/close.png";
+import openIcon from "../assets/open.png";
+import { useSidebar } from "../components/SidebarContext";
 import "../css/PatientList.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import { getPatientsAPI, searchPatientsAPI, getPatientsByStatusAPI } from "./mockAPI";
@@ -11,6 +15,7 @@ const PatientList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const { isSidebarCollapsed, toggleSidebar } = useSidebar();
 
   const [patients, setPatients] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -100,7 +105,7 @@ const PatientList = () => {
         let status = p.status ? p.status.toLowerCase() : "stable";
         let statusLabel = "🟢 Stable";
         let statusType = "";
-        let insightStyle = {};
+        let insightStyle = { borderLeftColor: "#00C187", background: "#F4FDF8" };
 
         if (status === "critical") {
           statusLabel = "🔴 Critical";
@@ -109,7 +114,7 @@ const PatientList = () => {
           status = "underReview";
           statusLabel = "🟡 Under Review";
           statusType = "warning";
-          insightStyle = { borderLeftColor: "#FFA500" };
+          insightStyle = { borderLeftColor: "#FFA500", background: "#FFF4E6" };
         }
 
         const nameParts = p.name ? p.name.split(" ") : ["U", "N"];
@@ -195,9 +200,9 @@ const PatientList = () => {
         let status = p.status ? p.status.toLowerCase() : "stable";
         let statusLabel = "🟢 Stable";
         let statusType = "";
-        let insightStyle = {};
+        let insightStyle = { borderLeftColor: "#00C187", background: "#F4FDF8" };
         if (status === "critical") { statusLabel = "🔴 Critical"; insightStyle = { borderLeftColor: "#FF5C5C", background: "#FFECEC" }; }
-        else if (status === "under review" || status === "underreview" || status === "warning") { status = "underReview"; statusLabel = "🟡 Under Review"; statusType = "warning"; insightStyle = { borderLeftColor: "#FFA500" }; }
+        else if (status === "under review" || status === "underreview" || status === "warning") { status = "underReview"; statusLabel = "🟡 Under Review"; statusType = "warning"; insightStyle = { borderLeftColor: "#FFA500", background: "#FFF4E6" }; }
         const nameParts = p.name ? p.name.split(" ") : ["U", "N"];
         let initials = "UN";
         if (nameParts.length > 1 && nameParts[0] && nameParts[1]) initials = `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
@@ -277,9 +282,9 @@ const PatientList = () => {
         let pStatus = p.status ? p.status.toLowerCase() : "stable";
         let statusLabel = "🟢 Stable";
         let statusType = "";
-        let insightStyle = {};
+        let insightStyle = { borderLeftColor: "#00C187", background: "#F4FDF8" };
         if (pStatus === "critical") { statusLabel = "🔴 Critical"; insightStyle = { borderLeftColor: "#FF5C5C", background: "#FFECEC" }; }
-        else if (pStatus === "under review" || pStatus === "underreview" || pStatus === "warning" || pStatus === "under_review") { pStatus = "underReview"; statusLabel = "🟡 Under Review"; statusType = "warning"; insightStyle = { borderLeftColor: "#FFA500" }; }
+        else if (pStatus === "under review" || pStatus === "underreview" || pStatus === "warning" || pStatus === "under_review") { pStatus = "underReview"; statusLabel = "🟡 Under Review"; statusType = "warning"; insightStyle = { borderLeftColor: "#FFA500", background: "#FFF4E6" }; }
         const nameParts = p.name ? p.name.split(" ") : ["U", "N"];
         let initials = "UN";
         if (nameParts.length > 1 && nameParts[0] && nameParts[1]) initials = `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
@@ -342,9 +347,9 @@ const PatientList = () => {
       } else {
         // No filter: update the matching card's status label/style in-place
         const STATUS_META = {
-          "stable": { statusLabel: "🟢 Stable", statusType: "", insightStyle: {} },
+          "stable": { statusLabel: "🟢 Stable", statusType: "", insightStyle: { borderLeftColor: "#00C187", background: "#F4FDF8" } },
           "critical": { statusLabel: "🔴 Critical", statusType: "", insightStyle: { borderLeftColor: "#FF5C5C", background: "#FFECEC" } },
-          "under review": { statusLabel: "🟡 Under Review", statusType: "warning", insightStyle: { borderLeftColor: "#FFA500" } },
+          "under review": { statusLabel: "🟡 Under Review", statusType: "warning", insightStyle: { borderLeftColor: "#FFA500", background: "#FFF4E6" } },
         };
         const displayStatus =
           updatedStatus === "under review" ? "underReview" : updatedStatus;
@@ -384,12 +389,25 @@ const PatientList = () => {
     <>
       <div className="background-pattern"></div>
 
-      <aside className="sidebar">
+      <aside className={`sidebar${isSidebarCollapsed ? " collapsed" : ""}`}>
         <div className="sidebar-logo">
           <span className="logo-text">
-            <img src={logo} alt="" />
+            <img className="logo-expanded" src={logo} alt="" />
+            <img className="logo-collapsed" src={stethoscope} alt="DiagnoSense" />
           </span>
         </div>
+        <button
+          className="sidebar-toggle"
+          onClick={toggleSidebar}
+          aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <img
+            src={isSidebarCollapsed ? openIcon : closeIcon}
+            alt={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="sidebar-toggle-icon"
+          />
+        </button>
 
         <nav className="sidebar-nav">
           <div className="nav-main">
@@ -409,7 +427,7 @@ const PatientList = () => {
                     <polyline points="9 22 9 12 15 12 15 22"></polyline>
                   </svg>
                 </span>
-                <span>Overview</span>
+                <span>Dashboard</span>
               </a>
               <a href="[Final] Patient List.html" className="nav-item active">
                 <span className="nav-icon">
@@ -424,16 +442,9 @@ const PatientList = () => {
               </a>
               <a href="[Final] Subscription.html" className="nav-item">
                 <span className="nav-icon">
-                  <svg viewBox="0 0 24 24">
-                    <rect
-                      x="3"
-                      y="11"
-                      width="18"
-                      height="11"
-                      rx="2"
-                      ry="2"
-                    ></rect>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                   </svg>
                 </span>
                 <span>Subscription</span>
@@ -497,13 +508,8 @@ const PatientList = () => {
         </nav>
       </aside>
 
-      <nav className="top-navbar">
+      <nav className={`top-navbar${isSidebarCollapsed ? " collapsed" : ""}`}>
         <div className="navbar-right">
-          <div className="status-indicator">
-            <span className="status-dot"></span>
-            <span>Online</span>
-          </div>
-
           <div className="credits-badge">
             <span className="credits-icon">
               <svg
@@ -631,7 +637,7 @@ const PatientList = () => {
         </div>
       )}
 
-      <div className="main-content">
+      <div className={`main-content${isSidebarCollapsed ? " collapsed" : ""}`}>
         <div className="page-header">
           <div className="head">
             <div className="title">
@@ -783,6 +789,33 @@ const PatientList = () => {
                       </span>
                     </div>
                   </div>
+                  <button
+                    className="patient-card-delete-btn"
+                    aria-label="Delete patient (coming soon)"
+                    title="Delete patient (coming soon)"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log('[PatientList] Delete clicked for patient id:', patient.id, '— endpoint not yet available.');
+                    }}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M3 6h18" />
+                      <path d="M8 6V4h8v2" />
+                      <path d="M19 6l-1 14H6L5 6" />
+                      <path d="M10 11v6" />
+                      <path d="M14 11v6" />
+                    </svg>
+                  </button>
                 </div>
                 <div className="ai-insight" style={patient.insightStyle}>
                   <p>

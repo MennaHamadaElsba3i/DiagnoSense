@@ -1321,3 +1321,124 @@
               grid-template-columns: 1fr;
          }
     }
+
+    /* ═══════════════════════════════════════════
+       Sidebar collapse — JS-driven toggle state
+       ═══════════════════════════════════════════ */
+
+    /* Smooth transitions on sidebar width and content offsets */
+    .sidebar {
+         transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+         /* overflow intentionally NOT hidden — toggle btn sits at right:-13px outside bounds.
+            Text labels are hidden via display:none in .sidebar.collapsed rules below. */
+    }
+
+    .top-navbar {
+         transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .main-content {
+         transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Collapsed sidebar: shrink to icon-rail */
+    .sidebar.collapsed {
+         width: 72px;
+    }
+
+    .top-navbar.collapsed {
+         left: 72px;
+    }
+
+    .main-content.collapsed {
+         margin-left: 72px;
+    }
+
+    /* In collapsed mode: hide text labels, section titles, and the bottom card */
+    .sidebar.collapsed .nav-section-title {
+         display: none;
+    }
+
+    .sidebar.collapsed .nav-item>span:last-child {
+         display: none;
+    }
+
+    .sidebar.collapsed .nav-bottom {
+         display: none;
+    }
+
+    /* Centre icons when collapsed */
+    .sidebar.collapsed .nav-item {
+         justify-content: center;
+         padding: 11px;
+    }
+
+    /* Logo area: swap full logo <-> stethoscope icon */
+    .sidebar-logo .logo-expanded {
+         display: block;
+    }
+
+    .sidebar-logo .logo-collapsed {
+         display: none;
+         width: 40px;
+         height: 40px;
+         object-fit: contain;
+         border-radius: 8px;
+    }
+
+    .sidebar.collapsed .sidebar-logo .logo-expanded {
+         display: none;
+    }
+
+    .sidebar.collapsed .sidebar-logo .logo-collapsed {
+         display: block;
+    }
+
+    .sidebar.collapsed .sidebar-logo {
+         justify-content: center;
+         padding: 14px 0;
+    }
+
+    .sidebar.collapsed .logo-text {
+         justify-content: center;
+    }
+
+    /* ── Toggle button — absolute edge handle on sidebar right ── */
+    .sidebar-toggle {
+         position: absolute;
+         top: 18px;
+         right: -14px;
+         width: 28px;
+         height: 28px;
+         background: #ffffff;
+         border: 1px solid #dde3ee;
+         border-radius: 9999px;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         cursor: pointer;
+         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10), 0 1px 3px rgba(0, 0, 0, 0.06);
+         z-index: 110;
+         transition: background 0.18s ease, border-color 0.18s ease,
+              box-shadow 0.18s ease;
+         padding: 0;
+         flex-shrink: 0;
+    }
+
+    .sidebar-toggle-icon {
+         width: 16px;
+         height: 16px;
+         display: block;
+         object-fit: contain;
+    }
+
+    .sidebar-toggle:hover {
+         background: #eef3ff;
+         border-color: #b8c8f0;
+         box-shadow: 0 4px 12px rgba(42, 102, 255, 0.15), 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+
+    .sidebar-toggle:focus-visible {
+         outline: 2px solid #2a66ff;
+         outline-offset: 2px;
+    }

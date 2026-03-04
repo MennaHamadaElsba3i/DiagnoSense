@@ -12,6 +12,7 @@ import DiagnoSense from "./components/DiagnoSense.jsx";
 import GoogleCallback from "./components/GoogleCallback.jsx";
 import EvidencePanel from './components/EvidencePanel';
 import "./App.css";
+import { SidebarProvider } from "./components/SidebarContext";
 import { getCookie } from "./components/cookieUtils";
 
 const ProtectedRoute = ({ children }) => {
@@ -39,7 +40,9 @@ function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <SidebarProvider>
+                <Dashboard />
+              </SidebarProvider>
             </ProtectedRoute>
           }
         />
@@ -48,7 +51,9 @@ function App() {
           path="/patients"
           element={
             <ProtectedRoute>
-              <PatientList />
+              <SidebarProvider>
+                <PatientList />
+              </SidebarProvider>
             </ProtectedRoute>
           }
         />
@@ -57,7 +62,9 @@ function App() {
           path="/addpatient"
           element={
             <ProtectedRoute>
-              <AddPatient />
+              <SidebarProvider>
+                <AddPatient />
+              </SidebarProvider>
             </ProtectedRoute>
           }
         />
@@ -66,7 +73,9 @@ function App() {
           path="/patient-profile"
           element={
             <ProtectedRoute>
-              <PatientProfile />
+              <SidebarProvider>
+                <PatientProfile />
+              </SidebarProvider>
             </ProtectedRoute>
           }
         />
@@ -74,7 +83,9 @@ function App() {
           path="/patient-profile/:patientId"
           element={
             <ProtectedRoute>
-              <PatientProfile />
+              <SidebarProvider>
+                <PatientProfile />
+              </SidebarProvider>
             </ProtectedRoute>
           }
         />
@@ -82,7 +93,9 @@ function App() {
           path="/add-patient"
           element={
             <ProtectedRoute>
-              <AddPatient />
+              <SidebarProvider>
+                <AddPatient />
+              </SidebarProvider>
             </ProtectedRoute>
           }
         />

@@ -10,10 +10,15 @@ import {
   deleteKeyPointAPI,
   updatePatientStatusAPI,
   getDecisionSupportAPI,
+  getPatientActivitiesAPI,
 } from "./mockAPI";
 import EvidencePanel from "../components/EvidencePanel.jsx";
 
 import logo from "../assets/Logo_Diagnoo.png";
+import stethoscope from "../assets/Stethoscope.png";
+import closeIcon from "../assets/close.png";
+import openIcon from "../assets/open.png";
+import { useSidebar } from "../components/SidebarContext";
 import "../css/PatientProfile.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 
@@ -33,6 +38,12 @@ const PatientProfile = () => {
   const [decisionSupportLoading, setDecisionSupportLoading] = useState(false);
   const [decisionSupportError, setDecisionSupportError] = useState(null);
   const [decisionSupportLoadedFor, setDecisionSupportLoadedFor] = useState(null);
+
+  // ── Activity Log API state ──
+  const [activities, setActivities] = useState([]);
+  const [activitiesLoading, setActivitiesLoading] = useState(false);
+  const [activitiesError, setActivitiesError] = useState(null);
+  const [activitiesLoadedFor, setActivitiesLoadedFor] = useState(null);
 
   const [activeTab, setActiveTab] = useState("overview");
   const [isDecisionModalOpen, setIsDecisionModalOpen] = useState(false);
@@ -528,6 +539,13 @@ const PatientProfile = () => {
     setDecisionSupportLoadedFor(null);
   }, [patientId]);
 
+  // ── Reset Activity Log when patient changes ──
+  useEffect(() => {
+    setActivities([]);
+    setActivitiesError(null);
+    setActivitiesLoadedFor(null);
+  }, [patientId]);
+
   // ── Fetch Decision Support from backend ──
   const fetchDecisionSupport = async () => {
     if (!patientId) return;
@@ -558,11 +576,36 @@ const PatientProfile = () => {
     }
   };
 
+  // ── Fetch Activity Log from backend ──
+  const fetchActivities = async () => {
+    if (!patientId) return;
+    setActivitiesLoading(true);
+    setActivitiesError(null);
+    try {
+      const res = await getPatientActivitiesAPI(patientId);
+      console.log("[activity-log] response:", res);
+      if (res && res.success) {
+        setActivities(Array.isArray(res.data) ? res.data : []);
+        setActivitiesLoadedFor(patientId);
+      } else {
+        setActivitiesError(res?.message || "Failed to load activity log.");
+      }
+    } catch (err) {
+      console.error("[activity-log] exception:", err);
+      setActivitiesError("Network error. Please check your connection.");
+    } finally {
+      setActivitiesLoading(false);
+    }
+  };
+
   const handleTabClick = (tabId) => {
     setActiveTab(tabId);
     window.scrollTo({ top: 0, behavior: "smooth" });
     if (tabId === "decision" && patientId && decisionSupportLoadedFor !== patientId) {
       fetchDecisionSupport();
+    }
+    if (tabId === "activity" && patientId && activitiesLoadedFor !== patientId) {
+      fetchActivities();
     }
   };
 
@@ -646,6 +689,7 @@ const PatientProfile = () => {
   };
 
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const { isSidebarCollapsed, toggleSidebar } = useSidebar();
 
   const openLogoutModal = () => setIsLogoutModalOpen(true);
   const closeLogoutModal = () => setIsLogoutModalOpen(false);
@@ -815,12 +859,25 @@ const PatientProfile = () => {
         <div className="ambient-ripple ripple-3"></div>
       </div>
 
-      <aside className="sidebar">
+      <aside className={`sidebar${isSidebarCollapsed ? " collapsed" : ""}`}>
         <div className="sidebar-logo">
           <span className="logo-text">
-            <img src={logo} alt="DiagnoSense" />
+            <img className="logo-expanded" src={logo} alt="DiagnoSense" />
+            <img className="logo-collapsed" src={stethoscope} alt="DiagnoSense" />
           </span>
         </div>
+        <button
+          className="sidebar-toggle"
+          onClick={toggleSidebar}
+          aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <img
+            src={isSidebarCollapsed ? openIcon : closeIcon}
+            alt={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="sidebar-toggle-icon"
+          />
+        </button>
 
         <nav className="sidebar-nav">
           <div className="nav-main">
@@ -833,7 +890,7 @@ const PatientProfile = () => {
                     <polyline points="9 22 9 12 15 12 15 22"></polyline>
                   </svg>
                 </span>
-                <span>Overview</span>
+                <span>Dashboard</span>
               </Link>
               <Link to="/patients" className="nav-item">
                 <span className="nav-icon">
@@ -848,16 +905,9 @@ const PatientProfile = () => {
               </Link>
               <Link to="/subscription" className="nav-item">
                 <span className="nav-icon">
-                  <svg viewBox="0 0 24 24">
-                    <rect
-                      x="3"
-                      y="11"
-                      width="18"
-                      height="11"
-                      rx="2"
-                      ry="2"
-                    ></rect>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                   </svg>
                 </span>
                 <span>Subscription</span>
@@ -921,13 +971,8 @@ const PatientProfile = () => {
         </nav>
       </aside>
 
-      <nav className="top-navbar">
+      <nav className={`top-navbar${isSidebarCollapsed ? " collapsed" : ""}`}>
         <div className="navbar-right">
-          <div className="status-indicator">
-            <span className="status-dot"></span>
-            <span>Online</span>
-          </div>
-
           <div className="credits-badge">
             <span className="credits-icon">
               <svg
@@ -1137,9 +1182,10 @@ const PatientProfile = () => {
         style={{
           position: "relative",
           zIndex: "1",
-          marginLeft: "240px",
+          marginLeft: isSidebarCollapsed ? "72px" : "240px",
           marginTop: "64px",
           minHeight: "calc(100vh - 64px)",
+          transition: "margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
         }}
       >
         <header className="patient-header pp-header">
@@ -3255,20 +3301,33 @@ const PatientProfile = () => {
               >
                 Recent Activity
               </h3>
-              <div className="activity-timeline">
-                <div className="activity-item">
-                  <div className="activity-text">
-                    Dr. Ahmed uploaded new lab results
-                  </div>
-                  <div className="activity-time">Oct 31, 2025 - 2:30 PM</div>
+
+              {/* Loading */}
+              {activitiesLoading && (
+                <p style={{ color: "#8A94A6", fontSize: "14px" }}>Loading...</p>
+              )}
+
+              {/* Error */}
+              {!activitiesLoading && activitiesError && (
+                <p style={{ color: "#FF5C5C", fontSize: "14px" }}>{activitiesError}</p>
+              )}
+
+              {/* Empty */}
+              {!activitiesLoading && !activitiesError && activitiesLoadedFor === patientId && activities.length === 0 && (
+                <p style={{ color: "#8A94A6", fontSize: "14px" }}>No activity yet.</p>
+              )}
+
+              {/* Data */}
+              {!activitiesLoading && !activitiesError && activities.length > 0 && (
+                <div className="activity-timeline">
+                  {activities.map((activity) => (
+                    <div className="activity-item" key={activity.id}>
+                      <div className="activity-text">{activity.message}</div>
+                      <div className="activity-time">{activity.time_ago || activity.created_at}</div>
+                    </div>
+                  ))}
                 </div>
-                <div className="activity-item">
-                  <div className="activity-text">
-                    AI summary verified by Dr. Sarah
-                  </div>
-                  <div className="activity-time">Oct 30, 2025 - 11:15 AM</div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

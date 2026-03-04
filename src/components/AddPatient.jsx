@@ -3,9 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { addPatientAPI } from "./mockAPI";
 import ProcessingReports from "../components/ProcessingReports";
 import logo from "../assets/Logo_Diagnoo.png";
+import stethoscope from "../assets/Stethoscope.png";
+import closeIcon from "../assets/close.png";
+import openIcon from "../assets/open.png";
+import { useSidebar } from "../components/SidebarContext";
 import "../css/AddPatient.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
-import { getCookie } from "./cookieUtils"; 
+import { getCookie } from "./cookieUtils";
 
 
 const AddPatient = () => {
@@ -24,6 +28,7 @@ const AddPatient = () => {
   });
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const { isSidebarCollapsed, toggleSidebar } = useSidebar();
 
   const [fieldErrors, setFieldErrors] = useState({});
 
@@ -410,12 +415,25 @@ const AddPatient = () => {
         <div className="wave"></div>
       </div>
 
-      <aside className="sidebar">
+      <aside className={`sidebar${isSidebarCollapsed ? " collapsed" : ""}`}>
         <div className="sidebar-logo">
           <span className="logo-text">
-            <img src={logo} alt="" />
+            <img className="logo-expanded" src={logo} alt="" />
+            <img className="logo-collapsed" src={stethoscope} alt="DiagnoSense" />
           </span>
         </div>
+        <button
+          className="sidebar-toggle"
+          onClick={toggleSidebar}
+          aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <img
+            src={isSidebarCollapsed ? openIcon : closeIcon}
+            alt={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="sidebar-toggle-icon"
+          />
+        </button>
         <nav className="sidebar-nav">
           <div className="nav-main">
             <div className="nav-section">
@@ -427,7 +445,7 @@ const AddPatient = () => {
                     <polyline points="9 22 9 12 15 12 15 22"></polyline>
                   </svg>
                 </span>
-                <span>Overview</span>
+                <span>Dashboard</span>
               </a>
               <a href="/patients" className="nav-item">
                 <span className="nav-icon">
@@ -442,9 +460,9 @@ const AddPatient = () => {
               </a>
               <a href="#" className="nav-item">
                 <span className="nav-icon">
-                  <svg viewBox="0 0 24 24">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                   </svg>
                 </span>
                 <span>Subscription</span>
@@ -474,12 +492,8 @@ const AddPatient = () => {
         </nav>
       </aside>
 
-      <nav className="top-navbar">
+      <nav className={`top-navbar${isSidebarCollapsed ? " collapsed" : ""}`}>
         <div className="navbar-right">
-          <div className="status-indicator">
-            <span className="status-dot"></span>
-            <span>Online</span>
-          </div>
           <div className="credits-badge">
             <span className="credits-icon">
               <svg viewBox="0 0 24 24" style={{ width: "18px", height: "18px", stroke: "currentColor", fill: "none", strokeWidth: 2 }}>
@@ -502,7 +516,7 @@ const AddPatient = () => {
 
       <LogoutConfirmation isOpen={isLogoutModalOpen} onClose={closeLogoutModal} />
 
-      <div className="main-content">
+      <div className={`main-content${isSidebarCollapsed ? " collapsed" : ""}`}>
         <div className="page-header"></div>
 
         <div className="wizard-card">

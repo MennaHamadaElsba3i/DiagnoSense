@@ -1138,3 +1138,61 @@ body {
         flex-direction: column;
     }
 }
+
+/* ── Patient card action row ───────────────────────────────────────────── */
+.patient-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+}
+
+/* Push trash button to the far right of the card header */
+.patient-header {
+    justify-content: flex-start !important;
+}
+
+.patient-card .patient-header .patient-card-delete-btn {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+/* ── Trash / delete button — header variant, eye-comfort style ───────── */
+button.patient-card-delete-btn {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Resting state: very soft, unobtrusive */
+    border: 1px solid rgba(156, 163, 175, 0.35);
+    background: rgba(156, 163, 175, 0.08);
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+    flex-shrink: 0;
+    color: #9ca3af;
+    padding: 0;
+}
+
+button.patient-card-delete-btn svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+    flex-shrink: 0;
+}
+
+button.patient-card-delete-btn svg,
+button.patient-card-delete-btn svg * {
+    stroke: currentColor;
+    fill: none;
+}
+
+/* Hover: escalates to the familiar red tone */
+button.patient-card-delete-btn:hover {
+    background: rgba(225, 29, 72, 0.10);
+    border-color: rgba(225, 29, 72, 0.45);
+    color: #e11d48;
+    transform: scale(1.08);
+}

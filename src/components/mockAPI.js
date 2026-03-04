@@ -486,3 +486,15 @@ export const getDecisionSupportAPI = async (patientId) => {
     method: 'GET',
   });
 };
+
+/**
+ * GET /api/patients/{patientId}/activities
+ * Returns activity history for a given patient.
+ * Token is injected automatically by apiCall (reads user_token cookie).
+ * 401 handling (cookie cleanup) is also done inside apiCall.
+ */
+export const getPatientActivitiesAPI = async (patientId) => {
+  return await apiCall(`/api/patients/${patientId}/activities`, {
+    method: 'GET',
+  });
+};

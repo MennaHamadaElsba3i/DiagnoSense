@@ -2,12 +2,17 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import logo from "../assets/Logo_Diagnoo.png";
+import stethoscope from "../assets/Stethoscope.png";
+import closeIcon from "../assets/close.png";
+import openIcon from "../assets/open.png";
+import { useSidebar } from "../components/SidebarContext";
 import "../css/Dashboard.css";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const { isSidebarCollapsed, toggleSidebar } = useSidebar();
 
   const openDecisionSupport = () => {
     setIsModalOpen(true);
@@ -32,16 +37,34 @@ export default function Dashboard() {
 
   return (
     <>
-      <aside className="sidebar">
+      <aside className={`sidebar${isSidebarCollapsed ? " collapsed" : ""}`}>
         <div className="sidebar-logo">
           <span className="logo-text">
             <img
+              className="logo-expanded"
               src={logo}
               alt="DiagnoSense Logo"
               onError={(e) => (e.target.style.display = "none")}
             />
+            <img
+              className="logo-collapsed"
+              src={stethoscope}
+              alt="DiagnoSense"
+            />
           </span>
         </div>
+        <button
+          className="sidebar-toggle"
+          onClick={toggleSidebar}
+          aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <img
+            src={isSidebarCollapsed ? openIcon : closeIcon}
+            alt={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="sidebar-toggle-icon"
+          />
+        </button>
         <nav className="sidebar-nav">
           <div className="nav-main">
             <div className="nav-section">
@@ -53,7 +76,7 @@ export default function Dashboard() {
                     <polyline points="9 22 9 12 15 12 15 22"></polyline>
                   </svg>
                 </span>
-                <span>Overview</span>
+                <span>Dashboard</span>
               </a>
               <a
                 href="#"
@@ -75,16 +98,9 @@ export default function Dashboard() {
               </a>
               <a href="#" className="nav-item">
                 <span className="nav-icon">
-                  <svg viewBox="0 0 24 24">
-                    <rect
-                      x="3"
-                      y="11"
-                      width="18"
-                      height="11"
-                      rx="2"
-                      ry="2"
-                    ></rect>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                   </svg>
                 </span>
                 <span>Subscription</span>
@@ -141,13 +157,8 @@ export default function Dashboard() {
         </nav>
       </aside>
 
-      <nav className="top-navbar">
+      <nav className={`top-navbar${isSidebarCollapsed ? " collapsed" : ""}`}>
         <div className="navbar-right">
-          <div className="status-indicator">
-            <span className="status-dot"></span>
-            <span>Online</span>
-          </div>
-
           <div className="credits-badge">
             <span className="credits-icon">
               <svg viewBox="0 0 24 24">
@@ -256,7 +267,7 @@ export default function Dashboard() {
         onClose={closeLogoutModal}
       />
 
-      <main className="main-content">
+      <main className={`main-content${isSidebarCollapsed ? " collapsed" : ""}`}>
         <div className="dashboard-grid">
           <div className="card welcome-panel">
             <div>
