@@ -1,0 +1,96 @@
+[33m74384a6[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Merge branch 'main' of https://github.com/MennaHamadaElsba3i/DiagnoSense
+[33m05663c7[m Merge branch 'main' of https://github.com/MennaHamadaElsba3i/DiagnoSense
+[33me4e3b93[m Integrated edit note endpoint
+[33m56632d3[m integrate delete note endpoint
+[33m9524e81[m Integrated add note endpoint
+[33m6dd7246[m fixed information in the overview tab
+[33mb2e9d73[m fixing overview and key important endpoints
+[33mc2df608[m Accept
+[33mea37d68[m integrate with key info endpoint  is done
+[33m143f447[m Integrated overview tab  endpoint
+[33m739de41[m fixing few errors in add patient
+[33m7cecab7[m Merge branch 'main' of https://github.com/MennaHamadaElsba3i/DiagnoSense
+[33m9c847db[m fixed edit and delete buttons in key imprtant info
+[33m93b8cf0[m Merge branch 'main' of https://github.com/MennaHamadaElsba3i/DiagnoSense
+[33mfa17967[m edit error message
+[33m2faaa6d[m Merge branch 'main' of https://github.com/MennaHamadaElsba3i/DiagnoSense
+[33md4f0aaf[m Integrated filter endpoint
+[33m600e1da[m accept 'main' of https://github.com/MennaHamadaElsba3i/DiagnoSense
+[33mc5fb35b[m integrate the add new patient and uploading files
+[33mf2f3d57[m Integrated search endpoint
+[33md4f45dd[m pagination fixed with the backend logic and added comments
+[33m7faf8d1[m pagination fixed with the backend logic
+[33maf11ddd[m Merge branch 'main' of https://github.com/MennaHamadaElsba3i/DiagnoSense
+[33m3455283[m accept changes
+[33mcc0213c[m added pagination dynamically
+[33m361a938[m Pagination fixed
+[33m1cab254[m Patient list endpoint integrated
+[33m1072f89[m edit pl
+[33md98a110[m edit avataer in pl
+[33mb3dba3c[m Merge branch 'main' of https://github.com/MennaHamadaElsba3i/DiagnoSense
+[33m734be66[m accept changes
+[33m5b6b535[m replaced diseases in the patient card by the status
+[33m762c7e8[m add validations (name/email/age/phone/national ID), clean personal info form, and make medical form fully optional
+[33ma4a48b7[m medical form style fixed + medium priority alert delete/edit buttons fixed
+[33m5d094c0[m medical form style fixed + medium priority alert delete/edit buttons fixed
+[33m6d13971[m edit drop down style
+[33me46c365[m edit patient profile avatar and status
+[33m80442be[m edit edit file button + default status
+[33m14a7149[m Confirmation modal added in the delete of the add note
+[33m0880302[m Patient Header layout fixed
+[33m3e09f77[m Patient Header layout fixed
+[33med50c5e[m edit style
+[33mea5b347[m edit style
+[33m36c560a[m Merge branch 'main' of https://github.com/MennaHamadaElsba3i/DiagnoSense
+[33m19ed017[m edit style
+[33m0bf55c7[m Status buttons added and modified the Critical Key information
+[33m9b3cd96[m Merge branch 'main' of https://github.com/MennaHamadaElsba3i/DiagnoSense
+[33m965b6af[m edit style
+[33me2a393b[m Added (Add Note + Edit Note + Delete Alert) + Modified View Evidence
+[33mc41e028[m View Evidence and Edit buttons added
+[33m3823dcb[m resized the buttons
+[33me256863[m resized the buttons
+[33m7802452[m first edit in form
+[33m6fffecb[m Merge branch 'main' of https://github.com/MennaHamadaElsba3i/DiagnoSense
+[33mf2302fc[m accept edits
+[33m4e88491[m Decision Support Fixed
+[33m72f6838[m Decision Support Fixed
+[33mcb18c54[m Merge branch 'main' of https://github.com/MennaHamadaElsba3i/DiagnoSense
+[33maaebad6[m accept
+[33m9dc677a[m Search bar fixed and Verify Summary removed
+[33mff54b95[m Saving
+[33m7f7cb54[m Search bar fixed
+[33mb973cbb[m edit style
+[33m40b9e16[m edit style
+[33m3f1d935[m edit style
+[33m37fde4c[m Merge branch 'main' of https://github.com/MennaHamadaElsba3i/DiagnoSense
+[33m1398af1[m add the source an loading page
+[33m38bf25e[m Fixing the sidebar
+[33maca0bc4[m change succsess message
+[33mf2ca16e[m Merge branch 'main' of https://github.com/MennaHamadaElsba3i/DiagnoSense
+[33m971bba4[m Change Server url
+[33m54c0c04[m Resolved all conflics and merged it
+[33md28c2e0[m Save Changes
+[33mbbee963[m update changes
+[33m522883b[m fix the style
+[33m591b23f[m fix small bug
+[33mea3a618[m accept changes
+[33m325d186[m update forget-password endpoint
+[33mbe584ca[m Login Successfully
+[33m8338a1e[m Change Title
+[33mb627490[m Merge branch 'main' of https://github.com/MennaHamadaElsba3i/DiagnoSense
+[33mafd2873[m test 2
+[33mde1ee8b[m Merge branch 'main' of https://github.com/MennaHamadaElsba3i/DiagnoSense
+[33m92f0009[m nms
+[33me08c0cf[m test
+[33mfbf9ff4[m Yarab
+[33m49b2998[m First upload
+[33m48a13cd[m The error messages have been handled, and the design has been adjusted.
+[33m48dd038[m merge updates safely
+[33mfaece87[m The reset password page API has been integrated, and the resend OTP functionality has been handled
+[33maf2bb44[m The reset password page API has been integrated, and the resend OTP functionality has been handled
+[33m6efc603[m The reset password page API has been integrated, and the resend OTP functionality has been handled
+[33md5641de[m Update README.md
+[33m02670ea[m Resolve merge conflicts
+[33m44e1f78[m First Commit
+[33m5515f69[m Initial commit
