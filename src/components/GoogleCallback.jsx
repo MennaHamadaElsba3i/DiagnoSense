@@ -1,19 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { googleCallbackAPI } from "./mockAPI";
+import { setCookie } from "./cookieUtils";
 
 /**
  * GoogleCallback
  *
- * Mounted at /auth/google/callback.
- * Google OAuth redirects here with ?code=... after the user picks their account.
+ * Mounted at /auth/google/callback (unprotected route).
+ * Backend now redirects here with ?token=... directly in the URL.
  *
  * Flow:
- *  1. Read `code` from the URL query string.
- *  2. POST it to the backend via googleCallbackAPI (GET /api/google/callback?code=...).
- *  3. Backend returns { success, token, data: { user } }.
- *  4. Token is stored in cookies + localStorage inside googleCallbackAPI.
- *  5. Navigate to /dashboard.
+ *  1. Read `token` from the URL query string.
+ *  2. If missing → show error and redirect to /login.
+ *  3. Store token in cookie "user_token" (same key as normal login).
+ *  4. Navigate to /dashboard.
  */
 const GoogleCallback = () => {
   const navigate = useNavigate();
@@ -21,46 +20,21 @@ const GoogleCallback = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const code = searchParams.get("code");
+    const token = searchParams.get("token");
 
-    if (!code) {
-      // No auth code — something went wrong, send back to login.
-      navigate("/login", { replace: true });
+    if (!token) {
+      // No token in URL — send back to login.
+      setError("Sign-in failed: no token received. Redirecting to login…");
+      setTimeout(() => navigate("/login", { replace: true }), 2000);
       return;
     }
 
-    let cancelled = false;
+    // Store token identically to normal login (setCookie "user_token", 7 days)
+    setCookie("user_token", token, 7);
+    setCookie("isAuthenticated", "true", 7);
 
-    const exchangeCode = async () => {
-      try {
-        const result = await googleCallbackAPI(code);
-
-        if (cancelled) return;
-
-        if (result.success) {
-          navigate("/dashboard", { replace: true });
-        } else {
-          console.error("[GoogleCallback] auth failed:", result);
-          setError("Google sign-in failed. Please try again.");
-          setTimeout(() => {
-            if (!cancelled) navigate("/login", { replace: true });
-          }, 2500);
-        }
-      } catch (err) {
-        if (cancelled) return;
-        console.error("[GoogleCallback] unexpected error:", err);
-        setError("An unexpected error occurred. Redirecting to login…");
-        setTimeout(() => {
-          if (!cancelled) navigate("/login", { replace: true });
-        }, 2500);
-      }
-    };
-
-    exchangeCode();
-
-    return () => {
-      cancelled = true;
-    };
+    // Navigate to dashboard — ProtectedRoute reads getCookie("user_token") which is now set
+    navigate("/dashboard", { replace: true });
   }, [searchParams, navigate]);
 
   return (
