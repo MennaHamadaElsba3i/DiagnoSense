@@ -55,13 +55,16 @@ const PatientProfile = () => {
   const location = useLocation();
   const keyInfoData = location.state?.keyInfoData || null;
 
+  // Tracks whether we've already seeded keyInfo from navigation state
+  const [keyInfoSeeded, setKeyInfoSeeded] = useState(false);
+
   // ── Key info fetched from backend (View Details path) ──
   const [keyInfo, setKeyInfo] = useState(null);
 
-  // Always prefer state-passed data (Add Patient flow); fall back to fetched data (View Details flow)
-  // Always prefer state-passed data (Add Patient flow); fall back to fetched data (View Details flow)
-  // keyInfoOverride accumulates doctor-added notes for both flows (keyInfoData is read-only nav state)
-  const baseKeyInfo = keyInfoData ?? keyInfo;
+  // keyInfo is the single source of truth for both flows.
+  // In Add Patient flow it is seeded from navigation state then overwritten by the backend fetch.
+  // keyInfoOverride accumulates doctor-added notes for both flows.
+  const baseKeyInfo = keyInfo;
   const effectiveKeyInfo = {
     high: [...(baseKeyInfo?.high || []), ...(keyInfoOverride.high || [])],
     medium: [...(baseKeyInfo?.medium || []), ...(keyInfoOverride.medium || [])],
@@ -238,23 +241,21 @@ const PatientProfile = () => {
   //     fetchAnalysisData();
   //   }, []);
 
-  // ── Fetch Key Important Info from backend (View Details path) ──
+  // ── Fetch Key Important Info from backend (both flows) ──
   useEffect(() => {
-    if (keyInfoData) {
-      // Add Patient flow: data already passed via navigation state — skip fetch
-      console.log("[keyInfo] source: navigation state", keyInfoData);
-      setIsLoadingAnalysis(false);
-      return;
-    }
     if (!patientId) {
       setIsLoadingAnalysis(false);
       return;
     }
-    console.log("[keyInfo] source: backend fetch, patientId:", patientId);
+    // Seed keyInfo with navigation-state data so the UI isn't blank during the fetch.
+    // The fetch will overwrite this with real mutable state, enabling edit/delete in both flows.
+    if (keyInfoData && !keyInfoSeeded) {
+      setKeyInfo(keyInfoData);
+      setKeyInfoSeeded(true);
+    }
     const fetchKeyInfo = async () => {
       setIsLoadingAnalysis(true);
       const res = await getPatientKeyInfoAPI(patientId);
-      console.log("[keyInfo] API response:", res);
       if (res && res.success !== false) {
         const payload = res?.data ?? res;
         setKeyInfo(payload);
@@ -264,7 +265,7 @@ const PatientProfile = () => {
       setIsLoadingAnalysis(false);
     };
     fetchKeyInfo();
-  }, [patientId, keyInfoData]);
+  }, [patientId]);
 
   // ── Fetch Patient Overview on mount ──
   useEffect(() => {
