@@ -575,6 +575,16 @@ export const createVisitItem = async (visitId, payload) => {
 };
 
 /**
+ * GET /api/patients/{patientId}/items
+ * Returns all tasks, medications, and next_visit_date for a patient.
+ * Token is injected automatically by apiCall (reads user_token cookie).
+ * Response shape: { success: true, data: { tasks: [], medications: [], next_visit_date: string|null } }
+ */
+export const getPatientVisitItems = async (patientId) => {
+  return await apiCall(`/api/patients/${patientId}/items`, { method: 'GET' });
+};
+
+/**
  * GET /api/visits?patient_id={patientId}
  * Fetches the patient's most recent / upcoming visit that has a next_visit_date.
  * Returns { next_visit_date, id, status } or null if unavailable.
