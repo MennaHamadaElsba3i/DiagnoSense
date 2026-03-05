@@ -585,6 +585,28 @@ export const getPatientVisitItems = async (patientId) => {
 };
 
 /**
+ * DELETE /api/patients/{patientId}/medications/{medicationId}
+ * Deletes a single medication for a patient.
+ * Success: { success: true, message: "Medication deleted successfully" }
+ */
+export const deletePatientMedication = async (patientId, medicationId) => {
+  return await apiCall(`/api/patients/${patientId}/medications/${medicationId}`, {
+    method: 'DELETE',
+  });
+};
+
+/**
+ * DELETE /api/patients/{patientId}/tasks/{taskId}
+ * Deletes a single task for a patient.
+ * Success: { success: true, message: "Task deleted successfully" }
+ */
+export const deletePatientTask = async (patientId, taskId) => {
+  return await apiCall(`/api/patients/${patientId}/tasks/${taskId}`, {
+    method: 'DELETE',
+  });
+};
+
+/**
  * GET /api/visits?patient_id={patientId}
  * Fetches the patient's most recent / upcoming visit that has a next_visit_date.
  * Returns { next_visit_date, id, status } or null if unavailable.
