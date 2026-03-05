@@ -47,6 +47,9 @@ const PatientProfile = () => {
   const [activitiesLoadedFor, setActivitiesLoadedFor] = useState(null);
 
   const [activeTab, setActiveTab] = useState("overview");
+
+  // ── Next Visit Date (lifted from MedicationsAndTasksTab so it survives tab switches) ──
+  const [nextVisitDate, setNextVisitDate] = useState(null); // "YYYY-MM-DD" raw string
   const [isDecisionModalOpen, setIsDecisionModalOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
@@ -303,6 +306,10 @@ const PatientProfile = () => {
           const patient = Array.isArray(raw) ? raw[0] : (raw ?? res);
           console.log("[overview] extracted patient", patient);
           setOverviewData(patient);
+
+          // Seed next visit date from overview if backend includes it
+          const nvd = patient?.next_visit_date || patient?.next_appointment_date || patient?.next_appointment || null;
+          if (nvd) setNextVisitDate(nvd);
 
           // Sync status pill: normalize to "stable" | "critical" | "under review"
           const normalized = (patient?.status || "")
@@ -3260,7 +3267,11 @@ const PatientProfile = () => {
             className={`tab-content ${activeTab === "medications-tasks" ? "active" : ""}`}
             id="medications-tasks"
           >
-            <MedicationsAndTasksTab patientId={patientId} />
+            <MedicationsAndTasksTab
+              patientId={patientId}
+              initialNextVisitDate={nextVisitDate}
+              onNextVisitSaved={(date) => setNextVisitDate(date)}
+            />
           </div>
 
           {/* Activity Log Tab */}

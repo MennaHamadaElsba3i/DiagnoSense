@@ -1,6 +1,46 @@
 /* src/css/PatientProfile.css */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
 
+/* ── Medications & Tasks tab: scoped form helpers ── */
+.medications-tasks-tab .notes-full {
+    grid-column: 1 / -1;
+    /* span full width inside the 2-column grid */
+    width: 100%;
+}
+
+.medications-tasks-tab .field-error {
+    color: #e53935;
+    font-size: 12px;
+    margin-top: 4px;
+    margin-bottom: 0;
+}
+
+.medications-tasks-tab .input-error {
+    border-color: #e53935 !important;
+}
+
+.medications-tasks-tab .flow-back-icon {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: transparent;
+    border: none;
+    padding: 4px 6px;
+    line-height: 1;
+    cursor: pointer;
+    color: #3A4560;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 7px;
+    transition: opacity 0.15s, background 0.15s;
+}
+
+.medications-tasks-tab .flow-back-icon:hover {
+    opacity: 0.75;
+    background: rgba(42, 102, 255, 0.06);
+}
+
+
 /* * {
     margin: 0;
     padding: 0;

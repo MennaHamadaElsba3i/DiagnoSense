@@ -369,6 +369,23 @@ const PatientList = () => {
     return () => window.removeEventListener("patientStatusUpdated", handleStatusSync);
   }, [activeFilter, currentPage]); // re-bind when filter or page changes
 
+  // ── Sync next visit date from PatientProfile updates ──
+  useEffect(() => {
+    const handleNextVisitSync = (e) => {
+      const { patientId: updatedId, next_visit_date } = e.detail;
+      setPatients((prev) =>
+        prev.map((p) =>
+          String(p.id) === String(updatedId)
+            ? { ...p, nextAppointment: next_visit_date }
+            : p
+        )
+      );
+    };
+    window.addEventListener("patientNextVisitUpdated", handleNextVisitSync);
+    return () => window.removeEventListener("patientNextVisitUpdated", handleNextVisitSync);
+  }, []); // no dependencies — only needs to run once
+
+
   const visiblePatients = patients;
 
   console.log("columns:", Math.max(1, Math.floor(pageSize / 3)));

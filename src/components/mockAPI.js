@@ -553,3 +553,87 @@ export const createVisitAPI = async ({ patient_id, has_next_visit, next_visit_da
     };
   }
 };
+
+/**
+ * POST /api/visits/{visitId}/items
+ * Creates a task or medication under a specific visit.
+ * Content-Type: application/json
+ *
+ * @param {number|string} visitId  - ID returned from POST /api/visits (response.data.id)
+ * @param {object} payload
+ * @param {"save"|"save_and_create_another"} payload.action
+ * @param {"task"|"medication"} payload.type
+ *
+ * If type="task":   payload.title (required), payload.description, payload.notes, payload.Due_date
+ * If type="medication": payload.name, payload.dosage, payload.frequency (all required), payload.duration, payload.notes
+ */
+export const createVisitItem = async (visitId, payload) => {
+  return await apiCall(`/api/visits/${visitId}/items`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+};
+
+/**
+ * GET /api/visits?patient_id={patientId}
+ * Fetches the patient's most recent / upcoming visit that has a next_visit_date.
+ * Returns { next_visit_date, id, status } or null if unavailable.
+ *
+ * Gracefully handles 404/405 (no dedicated GET endpoint) by returning null.
+ */
+export const getPatientNextVisitAPI = async (patientId) => {
+  const token = getCookie('user_token');
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/visits?patient_id=${patientId}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+    });
+
+    // Endpoint might not support GET — fail silently
+    if (!response.ok) {
+      if (response.status === 401) {
+        deleteCookie('user_token');
+        deleteCookie('user');
+        deleteCookie('isAuthenticated');
+      }
+      console.warn('[getPatientNextVisit] endpoint returned', response.status, '— no GET visits support');
+      return null;
+    }
+
+    const data = await response.json();
+    console.log('[getPatientNextVisit] raw response', data);
+
+    // Shape 1: { success: true, data: [ { next_visit_date, id, status }, ... ] }
+    if (data?.success && Array.isArray(data?.data)) {
+      // Find the most recent visit that has a next_visit_date
+      const visits = data.data;
+      const withDate = visits.filter((v) => v.next_visit_date);
+      if (!withDate.length) return null;
+      // Sort descending by id (or created_at) and take the most recent
+      withDate.sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
+      return withDate[0];
+    }
+
+    // Shape 2: { success: true, data: { next_visit_date, ... } }
+    if (data?.success && data?.data?.next_visit_date) {
+      return data.data;
+    }
+
+    // Shape 3: flat object { next_visit_date, ... }
+    if (data?.next_visit_date) {
+      return data;
+    }
+
+    return null;
+  } catch (error) {
+    console.warn('[getPatientNextVisit] fetch error', error);
+    return null;
+  }
+};
+
+
