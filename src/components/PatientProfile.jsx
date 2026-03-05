@@ -21,6 +21,7 @@ import openIcon from "../assets/open.png";
 import { useSidebar } from "../components/SidebarContext";
 import "../css/PatientProfile.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
+import MedicationsAndTasksTab from "../components/MedicationsAndTasksTab.jsx";
 
 const PatientProfile = () => {
   const navigate = useNavigate();
@@ -1313,10 +1314,10 @@ const PatientProfile = () => {
                 Decision Support
               </button>
               <button
-                className={`tab-btn ${activeTab === "tasks" ? "active" : ""}`}
-                onClick={() => handleTabClick("tasks")}
+                className={`tab-btn ${activeTab === "medications-tasks" ? "active" : ""}`}
+                onClick={() => handleTabClick("medications-tasks")}
               >
-                Tasks & Follow-ups
+                Medications & Tasks
               </button>
               <button
                 className={`tab-btn ${activeTab === "activity" ? "active" : ""}`}
@@ -3254,45 +3255,12 @@ const PatientProfile = () => {
             </div>
           </div>
 
-          {/* Tasks & Follow-ups Tab */}
+          {/* Medications & Tasks Tab */}
           <div
-            className={`tab-content ${activeTab === "tasks" ? "active" : ""}`}
-            id="tasks"
+            className={`tab-content ${activeTab === "medications-tasks" ? "active" : ""}`}
+            id="medications-tasks"
           >
-            <div className="card">
-              <h3
-                style={{
-                  fontSize: "16px",
-                  fontWeight: 600,
-                  color: "#0E1A34",
-                  marginBottom: "18px",
-                }}
-              >
-                Upcoming Tasks
-              </h3>
-              <div className="task-list">
-                {tasks.map((task) => (
-                  <div
-                    className="task-item"
-                    key={task.id}
-                    onClick={() => toggleTask(task.id)}
-                  >
-                    <div
-                      className={`task-checkbox ${task.done ? "checked" : ""}`}
-                    ></div>
-                    <div className={`task-text ${task.done ? "done" : ""}`}>
-                      {task.text}
-                    </div>
-                    <span className={`badge ${task.badgeClass}`}>
-                      {task.badge}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <button className="btn btn-primary" style={{ marginTop: "20px" }}>
-                + Add New Follow-up
-              </button>
-            </div>
+            <MedicationsAndTasksTab />
           </div>
 
           {/* Activity Log Tab */}
