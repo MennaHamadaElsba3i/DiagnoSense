@@ -198,6 +198,19 @@
              align-items: center;
              justify-content: center;
              font-size: 18px;
+             background: transparent !important;
+             background-color: transparent !important;
+             border-radius: 0 !important;
+             border: none !important;
+             box-shadow: none !important;
+        }
+
+        .nav-icon * {
+             background: transparent !important;
+             background-color: transparent !important;
+             border-radius: 0 !important;
+             border: none !important;
+             box-shadow: none !important;
         }
 
         .nav-icon svg {
@@ -208,6 +221,12 @@
              stroke-width: 2;
              stroke-linecap: round;
              stroke-linejoin: round;
+             background: transparent !important;
+             background-color: transparent !important;
+             border-radius: 0 !important;
+             border: none !important;
+             box-shadow: none !important;
+             padding: 0 !important;
         }
 
         .nav-bottom {

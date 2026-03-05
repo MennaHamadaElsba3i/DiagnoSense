@@ -46,11 +46,21 @@ export default function Dashboard() {
               alt="DiagnoSense Logo"
               onError={(e) => (e.target.style.display = "none")}
             />
-            <img
-              className="logo-collapsed"
-              src={stethoscope}
-              alt="DiagnoSense"
-            />
+            <div className="sidebar-logo-slot">
+              <img
+                className="logo-collapsed"
+                src={stethoscope}
+                alt="DiagnoSense"
+              />
+              <button
+                className="logo-expand-btn"
+                onClick={toggleSidebar}
+                aria-label="Expand sidebar"
+                title="Expand sidebar"
+              >
+                <img src={openIcon} alt="Expand sidebar" />
+              </button>
+            </div>
           </span>
         </div>
         <button

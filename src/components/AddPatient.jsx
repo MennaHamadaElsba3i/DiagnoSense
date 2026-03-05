@@ -419,7 +419,17 @@ const AddPatient = () => {
         <div className="sidebar-logo">
           <span className="logo-text">
             <img className="logo-expanded" src={logo} alt="" />
-            <img className="logo-collapsed" src={stethoscope} alt="DiagnoSense" />
+            <div className="sidebar-logo-slot">
+              <img className="logo-collapsed" src={stethoscope} alt="DiagnoSense" />
+              <button
+                className="logo-expand-btn"
+                onClick={toggleSidebar}
+                aria-label="Expand sidebar"
+                title="Expand sidebar"
+              >
+                <img src={openIcon} alt="Expand sidebar" />
+              </button>
+            </div>
           </span>
         </div>
         <button

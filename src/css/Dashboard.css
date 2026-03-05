@@ -127,6 +127,19 @@
          align-items: center;
          justify-content: center;
          font-size: 18px;
+         background: transparent !important;
+         background-color: transparent !important;
+         border-radius: 0 !important;
+         border: none !important;
+         box-shadow: none !important;
+    }
+
+    .nav-icon * {
+         background: transparent !important;
+         background-color: transparent !important;
+         border-radius: 0 !important;
+         border: none !important;
+         box-shadow: none !important;
     }
 
     .nav-icon svg {
@@ -137,6 +150,12 @@
          stroke-width: 2;
          stroke-linecap: round;
          stroke-linejoin: round;
+         background: transparent !important;
+         background-color: transparent !important;
+         border-radius: 0 !important;
+         border: none !important;
+         box-shadow: none !important;
+         padding: 0 !important;
     }
 
     .nav-bottom {
@@ -1373,25 +1392,91 @@
          padding: 11px;
     }
 
-    /* Logo area: swap full logo <-> stethoscope icon */
+    /* Logo area: full logo (expanded state) */
     .sidebar-logo .logo-expanded {
          display: block;
     }
 
-    .sidebar-logo .logo-collapsed {
+    /* Collapsed logo slot: hidden in expanded, shown in collapsed.
+       Fixed dimensions prevent any reflow when children swap. */
+    .sidebar-logo-slot {
          display: none;
+         position: relative;
          width: 40px;
          height: 40px;
-         object-fit: contain;
-         border-radius: 8px;
+         align-items: center;
+         justify-content: center;
+    }
+
+    /* Both children overlap in the same absolute position */
+    .sidebar-logo-slot .logo-collapsed,
+    .sidebar-logo-slot .logo-expand-btn {
+         position: absolute;
+         left: 50%;
+         top: 50%;
+         transform: translate(-50%, -50%);
+         transition: opacity 0.15s, visibility 0.15s;
     }
 
     .sidebar.collapsed .sidebar-logo .logo-expanded {
          display: none;
     }
 
-    .sidebar.collapsed .sidebar-logo .logo-collapsed {
+    /* Show the slot container in collapsed state */
+    .sidebar.collapsed .sidebar-logo-slot {
+         display: flex;
+    }
+
+    /* Default collapsed: stethoscope visible, expand button hidden */
+    .sidebar.collapsed .logo-collapsed {
+         opacity: 1;
+         visibility: visible;
+         pointer-events: none;
+    }
+
+    .sidebar.collapsed .logo-expand-btn {
+         opacity: 0;
+         visibility: hidden;
+         pointer-events: none;
+    }
+
+    /* Hover anywhere on collapsed sidebar: swap */
+    .sidebar.collapsed:hover .logo-collapsed {
+         opacity: 0;
+         visibility: hidden;
+    }
+
+    .sidebar.collapsed:hover .logo-expand-btn {
+         opacity: 1;
+         visibility: visible;
+         pointer-events: auto;
+    }
+
+    /* Expand button styling */
+    .logo-expand-btn {
+         background: transparent;
+         border: none;
+         padding: 0;
+         line-height: 0;
+         cursor: pointer;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+    }
+
+    .logo-expand-btn img {
+         width: 18px;
+         height: 18px;
          display: block;
+         object-fit: contain;
+    }
+
+    /* Stethoscope image sizing */
+    .sidebar-logo-slot .logo-collapsed {
+         width: 40px;
+         height: 40px;
+         object-fit: contain;
+         border-radius: 8px;
     }
 
     .sidebar.collapsed .sidebar-logo {
@@ -1403,42 +1488,48 @@
          justify-content: center;
     }
 
-    /* ── Toggle button — absolute edge handle on sidebar right ── */
+    /* ── Toggle button — absolute, inside sidebar header ── */
     .sidebar-toggle {
          position: absolute;
          top: 18px;
-         right: -14px;
-         width: 28px;
-         height: 28px;
-         background: #ffffff;
-         border: 1px solid #dde3ee;
-         border-radius: 9999px;
-         display: flex;
+         right: 8px;
+         background: transparent;
+         border: none;
+         border-radius: 0;
+         padding: 0;
+         display: inline-flex;
          align-items: center;
          justify-content: center;
          cursor: pointer;
-         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10), 0 1px 3px rgba(0, 0, 0, 0.06);
+         box-shadow: none;
          z-index: 110;
-         transition: background 0.18s ease, border-color 0.18s ease,
-              box-shadow 0.18s ease;
-         padding: 0;
+         transition: opacity 0.3s, visibility 0.3s;
          flex-shrink: 0;
-    }
-
-    .sidebar-toggle-icon {
-         width: 16px;
-         height: 16px;
-         display: block;
-         object-fit: contain;
-    }
-
-    .sidebar-toggle:hover {
-         background: #eef3ff;
-         border-color: #b8c8f0;
-         box-shadow: 0 4px 12px rgba(42, 102, 255, 0.15), 0 1px 3px rgba(0, 0, 0, 0.06);
+         line-height: 0;
     }
 
     .sidebar-toggle:focus-visible {
-         outline: 2px solid #2a66ff;
+         outline: 2px solid rgba(0, 0, 0, 0.25);
          outline-offset: 2px;
+         border-radius: 4px;
+    }
+
+    /* Collapsed sidebar: fully hide the edge toggle — logo-expand-btn handles expansion */
+    .sidebar.collapsed .sidebar-toggle {
+         opacity: 0;
+         visibility: hidden;
+         pointer-events: none;
+    }
+
+    .sidebar-toggle-icon {
+         width: 18px;
+         height: 18px;
+         display: block;
+         object-fit: contain;
+         transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .sidebar-toggle:hover .sidebar-toggle-icon {
+         opacity: 0.8;
+         transform: scale(1.05);
     }

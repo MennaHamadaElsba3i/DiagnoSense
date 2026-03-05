@@ -143,6 +143,19 @@ body {
     align-items: center;
     justify-content: center;
     font-size: 18px;
+    background: transparent !important;
+    background-color: transparent !important;
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.nav-icon * {
+    background: transparent !important;
+    background-color: transparent !important;
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
 .nav-icon svg {
@@ -153,6 +166,12 @@ body {
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
+    background: transparent !important;
+    background-color: transparent !important;
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
 }
 
 .nav-bottom {
@@ -846,7 +865,7 @@ body {
 .patient-meta-row {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 12px;
     /* margin-bottom: 12px; */
 }
@@ -855,6 +874,7 @@ body {
     font-size: 14px;
     color: #8A94A6;
     margin-bottom: 0;
+    white-space: nowrap;
 }
 
 .patient-info.status-badge {
@@ -865,6 +885,10 @@ body {
     border-radius: 12px;
     font-size: 12px;
     font-weight: 600;
+}
+
+.status-badge {
+    flex-shrink: 0;
 }
 
 .status-badge.stable {
@@ -1153,15 +1177,19 @@ body {
     justify-content: flex-start !important;
 }
 
+.patient-card {
+    position: relative;
+}
+
 .patient-card .patient-header .patient-card-delete-btn {
     margin-left: auto;
-    flex-shrink: 0;
+    margin-bottom: 6px;
 }
 
 /* ── Trash / delete button — header variant, eye-comfort style ───────── */
 button.patient-card-delete-btn {
-    width: 30px;
-    height: 30px;
+    width: 26px;
+    height: 26px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1177,8 +1205,8 @@ button.patient-card-delete-btn {
 }
 
 button.patient-card-delete-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     display: block;
     flex-shrink: 0;
 }

@@ -393,7 +393,17 @@ const PatientList = () => {
         <div className="sidebar-logo">
           <span className="logo-text">
             <img className="logo-expanded" src={logo} alt="" />
-            <img className="logo-collapsed" src={stethoscope} alt="DiagnoSense" />
+            <div className="sidebar-logo-slot">
+              <img className="logo-collapsed" src={stethoscope} alt="DiagnoSense" />
+              <button
+                className="logo-expand-btn"
+                onClick={toggleSidebar}
+                aria-label="Expand sidebar"
+                title="Expand sidebar"
+              >
+                <img src={openIcon} alt="Expand sidebar" />
+              </button>
+            </div>
           </span>
         </div>
         <button
@@ -775,8 +785,37 @@ const PatientList = () => {
                   >
                     {patient.initials}
                   </div>
-                  <div className="patient-info">
-                    <h3>{patient.name}</h3>
+                  <div className="patient-info" style={{ flexGrow: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h3>{patient.name}</h3>
+                      <button
+                        className="patient-card-delete-btn"
+                        aria-label="Delete patient (coming soon)"
+                        title="Delete patient (coming soon)"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          console.log('[PatientList] Delete clicked for patient id:', patient.id, '— endpoint not yet available.');
+                        }}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M3 6h18" />
+                          <path d="M8 6V4h8v2" />
+                          <path d="M19 6l-1 14H6L5 6" />
+                          <path d="M10 11v6" />
+                          <path d="M14 11v6" />
+                        </svg>
+                      </button>
+                    </div>
                     <div className="patient-meta-row">
                       <p className="patient-meta">
                         Age: {patient.age}
@@ -789,33 +828,6 @@ const PatientList = () => {
                       </span>
                     </div>
                   </div>
-                  <button
-                    className="patient-card-delete-btn"
-                    aria-label="Delete patient (coming soon)"
-                    title="Delete patient (coming soon)"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      console.log('[PatientList] Delete clicked for patient id:', patient.id, '— endpoint not yet available.');
-                    }}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M3 6h18" />
-                      <path d="M8 6V4h8v2" />
-                      <path d="M19 6l-1 14H6L5 6" />
-                      <path d="M10 11v6" />
-                      <path d="M14 11v6" />
-                    </svg>
-                  </button>
                 </div>
                 <div className="ai-insight" style={patient.insightStyle}>
                   <p>
