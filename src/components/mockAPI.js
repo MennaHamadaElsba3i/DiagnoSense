@@ -498,3 +498,58 @@ export const getPatientActivitiesAPI = async (patientId) => {
     method: 'GET',
   });
 };
+
+/**
+ * POST /api/visits
+ * Sent as application/x-www-form-urlencoded (not JSON) — backend requirement.
+ * @param {object} params
+ * @param {number|string} params.patient_id
+ * @param {boolean}       params.has_next_visit
+ * @param {string}        [params.next_visit_date]  - "YYYY-MM-DD", required when has_next_visit=true
+ * @param {"save"|"next"} params.action
+ */
+export const createVisitAPI = async ({ patient_id, has_next_visit, next_visit_date, action }) => {
+  const token = getCookie('user_token');
+
+  const params = new URLSearchParams();
+  params.append('patient_id', patient_id);
+  params.append('has_next_visit', has_next_visit ? '1' : '0');
+  if (next_visit_date) params.append('next_visit_date', next_visit_date);
+  params.append('action', action);
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/visits`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+      body: params.toString(),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        deleteCookie('user_token');
+        deleteCookie('user');
+        deleteCookie('isAuthenticated');
+      }
+      return {
+        success: false,
+        message: data.message || 'Something went wrong',
+        errors: data.errors || null,
+      };
+    }
+
+    return data;
+  } catch (error) {
+    console.error('API Error:', error);
+    return {
+      success: false,
+      message: 'Network error. Please check your connection.',
+    };
+  }
+};

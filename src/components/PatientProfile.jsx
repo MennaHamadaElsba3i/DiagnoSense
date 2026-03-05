@@ -3260,7 +3260,7 @@ const PatientProfile = () => {
             className={`tab-content ${activeTab === "medications-tasks" ? "active" : ""}`}
             id="medications-tasks"
           >
-            <MedicationsAndTasksTab />
+            <MedicationsAndTasksTab patientId={patientId} />
           </div>
 
           {/* Activity Log Tab */}
