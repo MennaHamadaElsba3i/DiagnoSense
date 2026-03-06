@@ -845,7 +845,6 @@ body {
     width: 54px;
     height: 54px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #467DFF, #2A66FF);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -853,6 +852,22 @@ body {
     font-size: 24px;
     font-weight: 600;
     flex-shrink: 0;
+}
+
+/* Status-matched avatar colours */
+.patient-card .patient-avatar.avatar-stable {
+    background: linear-gradient(135deg, #00C187, #00E5A0);
+    color: #ffffff;
+}
+
+.patient-card .patient-avatar.avatar-critical {
+    background: linear-gradient(135deg, #FF5C5C, #FF8A8A);
+    color: #ffffff;
+}
+
+.patient-card .patient-avatar.avatar-under-review {
+    background: linear-gradient(135deg, #FFA500, #FFB84D);
+    color: #ffffff;
 }
 
 .patient-info h3 {
