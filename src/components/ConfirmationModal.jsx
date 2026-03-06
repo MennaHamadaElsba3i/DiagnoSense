@@ -2,6 +2,15 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { logoutAPI } from "./mockAPI";
 import { deleteCookie } from "./cookieUtils";
+import ConfirmModal from "./ConfirmModal";
+
+const LogoutIcon = () => (
+  <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+    <polyline points="16 17 21 12 16 7"></polyline>
+    <line x1="21" y1="12" x2="9" y2="12"></line>
+  </svg>
+);
 
 const LogoutConfirmation = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -29,83 +38,23 @@ const LogoutConfirmation = ({ isOpen, onClose }) => {
     setIsLoggingOut(false);
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal-overlay active" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose}>
-          <svg viewBox="0 0 24 24">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-
-        <div className="modal-header">
-          <div
-            className="modal-icon"
-            style={{
-              background: "linear-gradient(135deg, #2A66FF 0%, #467DFF 100%)",
-            }}
-          >
-            <svg viewBox="0 0 24 24" stroke="white" fill="none" strokeWidth="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <path d="M10 16l4-4-4-4"></path>
-              <path d="M14 12H8"></path>
-            </svg>
-          </div>
-          <h2 className="modal-title">Confirm Logout</h2>
-          <p className="modal-subtitle">
-            Are you sure you want to log out of your account?
-          </p>
-        </div>
-
-        <div className="modal-body">
-          {error && (
-            <div
-              className="error-message"
-              style={{
-                marginBottom: "20px",
-                textAlign: "center",
-                color: "#ff4444",
-              }}
-            >
-              {error}
-            </div>
-          )}
-
-          <p
-            className="modal-text"
-            style={{ textAlign: "center", marginBottom: "20px" }}
-          >
-            You will be redirected to the login page after logging out.
-          </p>
-        </div>
-
-        <div className="modal-footer">
-          <button
-            className="modal-button modal-button-secondary"
-            onClick={onClose}
-            disabled={isLoggingOut}
-          >
-            Cancel
-          </button>
-          <button
-            className="modal-button modal-button-primary"
-            onClick={handleConfirmLogout}
-            disabled={isLoggingOut}
-            style={{
-              background: isLoggingOut
-                ? "#ccc"
-                : "linear-gradient(135deg, #2A66FF, #467DFF)",
-              cursor: isLoggingOut ? "not-allowed" : "pointer",
-            }}
-          >
-            {isLoggingOut ? "Logging out..." : "Yes, Logout"}
-          </button>
-        </div>
-      </div>
-    </div>
+    <ConfirmModal
+      isOpen={isOpen}
+      onClose={onClose}
+      onConfirm={handleConfirmLogout}
+      title="Logout"
+      description={
+        <>
+          {error && <span style={{ color: "#ff4444", display: "block", marginBottom: "8px" }}>{error}</span>}
+          Are you sure you want to logout?
+        </>
+      }
+      confirmText={isLoggingOut ? "Logging out..." : "Logout"}
+      cancelText="Cancel"
+      variant="danger"
+      icon={<LogoutIcon />}
+    />
   );
 };
 

@@ -22,6 +22,16 @@ import { useSidebar } from "../components/SidebarContext";
 import "../css/PatientProfile.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import MedicationsAndTasksTab from "../components/MedicationsAndTasksTab.jsx";
+import ConfirmModal from "./ConfirmModal.jsx";
+
+const TrashIcon = () => (
+  <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6"></polyline>
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+    <line x1="10" y1="11" x2="10" y2="17"></line>
+    <line x1="14" y1="11" x2="14" y2="17"></line>
+  </svg>
+);
 
 const PatientProfile = () => {
   const navigate = useNavigate();
@@ -612,7 +622,7 @@ const PatientProfile = () => {
     if (tabId === "decision" && patientId && decisionSupportLoadedFor !== patientId) {
       fetchDecisionSupport();
     }
-    if (tabId === "activity" && patientId && activitiesLoadedFor !== patientId) {
+    if (tabId === "activity" && patientId) {
       fetchActivities();
     }
   };
@@ -1030,89 +1040,16 @@ const PatientProfile = () => {
       />
 
       {/* Delete Alert Confirmation Modal */}
-      {isDeleteAlertModalOpen && (
-        <div className="modal-overlay active" onClick={closeDeleteAlertModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={closeDeleteAlertModal}>
-              <svg viewBox="0 0 24 24">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-            <div className="modal-header">
-              <div
-                className="modal-icon"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #ff4444 0%, #cc0000 100%)",
-                }}
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  stroke="white"
-                  fill="none"
-                  strokeWidth="2"
-                >
-                  <polyline points="3 6 5 6 21 6"></polyline>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                  <line x1="10" y1="11" x2="10" y2="17"></line>
-                  <line x1="14" y1="11" x2="14" y2="17"></line>
-                </svg>
-              </div>
-              <h2 className="modal-title">Delete alert?</h2>
-              <p className="modal-subtitle">
-                Are you sure you want to delete this alert?
-              </p>
-            </div>
-            <div className="modal-footer">
-              <button
-                className="modal-button modal-button-secondary"
-                onClick={closeDeleteAlertModal}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="modal-button modal-button-primary"
-                onClick={confirmDeleteAlert}
-                disabled={isDeleting}
-                style={{
-                  background: "linear-gradient(135deg, #ff4444, #cc0000)",
-                  opacity: isDeleting ? 0.7 : 1,
-                  cursor: isDeleting ? "not-allowed" : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                  minWidth: "90px",
-                }}
-              >
-                {isDeleting ? (
-                  <>
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="white"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      style={{
-                        animation: "spin 0.8s linear infinite",
-                      }}
-                    >
-                      <path d="M12 2a10 10 0 0 1 10 10" />
-                    </svg>
-                    Deleting...
-                  </>
-                ) : (
-                  "Delete"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        isOpen={isDeleteAlertModalOpen}
+        onClose={closeDeleteAlertModal}
+        onConfirm={confirmDeleteAlert}
+        title="Delete Key Info"
+        description="Are you sure you want to delete this alert?"
+        confirmText={isDeleting ? "Deleting..." : "Delete"}
+        variant="danger"
+        icon={<TrashIcon />}
+      />
 
       <div
         className={`modal-overlay ${isDecisionModalOpen ? "active" : ""}`}
@@ -3100,25 +3037,19 @@ const PatientProfile = () => {
 
               {/* ── Loading state ── */}
               {decisionSupportLoading && (
-                <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                  {[1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      style={{
-                        background: "rgba(42,102,255,0.05)",
-                        borderRadius: "12px",
-                        padding: "20px",
-                        animation: "pulse 1.5s ease-in-out infinite",
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                        <div style={{ height: "14px", width: "40%", background: "rgba(0,0,0,0.08)", borderRadius: "6px" }} />
-                        <div style={{ height: "22px", width: "90px", background: "rgba(0,0,0,0.06)", borderRadius: "20px" }} />
-                      </div>
-                      <div style={{ height: "12px", width: "100%", background: "rgba(0,0,0,0.06)", borderRadius: "6px", marginBottom: "8px" }} />
-                      <div style={{ height: "12px", width: "80%", background: "rgba(0,0,0,0.04)", borderRadius: "6px" }} />
-                    </div>
-                  ))}
+                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "200px" }}>
+                  <svg
+                    width="40"
+                    height="40"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#2A66FF"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    style={{ animation: "spin 1s linear infinite" }}
+                  >
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                  </svg>
                 </div>
               )}
 
@@ -3293,7 +3224,9 @@ const PatientProfile = () => {
 
               {/* Loading */}
               {activitiesLoading && (
-                <p style={{ color: "#8A94A6", fontSize: "14px" }}>Loading...</p>
+                <p style={{ color: "#8A94A6", fontSize: "14px", marginBottom: "12px", fontStyle: "italic" }}>
+                  {activities.length > 0 ? "Refreshing..." : "Loading..."}
+                </p>
               )}
 
               {/* Error */}
@@ -3307,8 +3240,8 @@ const PatientProfile = () => {
               )}
 
               {/* Data */}
-              {!activitiesLoading && !activitiesError && activities.length > 0 && (
-                <div className="activity-timeline">
+              {!activitiesError && activities.length > 0 && (
+                <div className="activity-timeline" style={{ opacity: activitiesLoading ? 0.6 : 1, transition: "opacity 0.2s" }}>
                   {activities.map((activity) => (
                     <div className="activity-item" key={activity.id}>
                       <div className="activity-text">{activity.message}</div>
