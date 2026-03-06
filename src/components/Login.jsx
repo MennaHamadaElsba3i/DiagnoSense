@@ -8,6 +8,7 @@ const Login = ({ onForgotPassword }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,9 +22,9 @@ const Login = ({ onForgotPassword }) => {
 
     if (result.success) {
       console.log(result.data);
-      setCookie("user_token", result.data.token, 7);
-      setJsonCookie("user", result.data.user, 7);
-      setCookie("isAuthenticated", "true", 7);
+      setCookie("user_token", result.data.token, rememberMe);
+      setJsonCookie("user", result.data.user, rememberMe);
+      setCookie("isAuthenticated", "true", rememberMe);
 
       navigate("/dashboard");
     } else {
@@ -76,7 +77,11 @@ const Login = ({ onForgotPassword }) => {
 
         <div className="form-options">
           <label className="remember-me">
-            <input type="checkbox" />
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+            />
             Remember Me
           </label>
           <a

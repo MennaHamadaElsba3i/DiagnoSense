@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import logo from "../assets/Logo_Diagnoo.png";
@@ -13,6 +13,25 @@ export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const { isSidebarCollapsed, toggleSidebar } = useSidebar();
+  const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
+  const avatarMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (avatarMenuRef.current && !avatarMenuRef.current.contains(event.target)) {
+        setIsAvatarMenuOpen(false);
+      }
+    };
+    const handleEscape = (event) => {
+      if (event.key === "Escape") setIsAvatarMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
 
   const openDecisionSupport = () => {
     setIsModalOpen(true);
@@ -115,6 +134,22 @@ export default function Dashboard() {
                 </span>
                 <span>Subscription</span>
               </a>
+              <a
+                href="#"
+                className="nav-item"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate("/settings");
+                }}
+              >
+                <span className="nav-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                  </svg>
+                </span>
+                <span>Settings</span>
+              </a>
               <a href="#" className="nav-item">
                 <span className="nav-icon">
                   <svg viewBox="0 0 24 24">
@@ -124,23 +159,6 @@ export default function Dashboard() {
                   </svg>
                 </span>
                 <span>Support</span>
-              </a>
-              <a
-                href="#"
-                className="nav-item"
-                onClick={(e) => {
-                  e.preventDefault();
-                  openLogoutModal();
-                }}
-              >
-                <span className="nav-icon">
-                  <svg viewBox="0 0 24 24" width="24" height="24">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M10 16l4-4-4-4"></path>
-                    <path d="M14 12H8"></path>
-                  </svg>
-                </span>
-                <span>Logout</span>
               </a>
             </div>
           </div>
@@ -187,7 +205,87 @@ export default function Dashboard() {
             <span className="notification-badge"></span>
           </button>
 
-          <div className="user-avatar">LA</div>
+          <div
+            className="user-avatar-container"
+            style={{ position: "relative" }}
+            ref={avatarMenuRef}
+          >
+            <div
+              className="user-avatar"
+              onClick={() => setIsAvatarMenuOpen(!isAvatarMenuOpen)}
+              style={{ cursor: "pointer", userSelect: "none" }}
+            >
+              LA
+            </div>
+            {isAvatarMenuOpen && (
+              <div
+                className="avatar-dropdown-menu"
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 10px)",
+                  right: 0,
+                  backgroundColor: "var(--surface-color, #ffffff)",
+                  border: "1px solid var(--border-color, #e5e7eb)",
+                  borderRadius: "12px",
+                  boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                  padding: "8px",
+                  minWidth: "180px",
+                  zIndex: 1000,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "4px"
+                }}
+              >
+                <div
+                  className="dropdown-item"
+                  onClick={() => { setIsAvatarMenuOpen(false); navigate("/settings"); }}
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    color: "var(--text-primary, #111827)",
+                    fontSize: "14px",
+                    transition: "background-color 0.2s"
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--hover-bg, #f3f4f6)"}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                  Profile Settings
+                </div>
+                <div
+                  className="dropdown-item"
+                  onClick={() => { setIsAvatarMenuOpen(false); openLogoutModal(); }}
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    color: "var(--danger-color, #ef4444)",
+                    fontSize: "14px",
+                    transition: "background-color 0.2s"
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--danger-bg-subtle, #fee2e2)"}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                  </svg>
+                  Logout
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </nav>
 

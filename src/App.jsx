@@ -11,6 +11,7 @@ import ProcessingReports from "./components/ProcessingReports.jsx";
 import DiagnoSense from "./components/DiagnoSense.jsx";
 import GoogleCallback from "./components/GoogleCallback.jsx";
 import EvidencePanel from './components/EvidencePanel';
+import Settings from './components/Settings.jsx';
 import "./App.css";
 import { SidebarProvider } from "./components/SidebarContext";
 import { getCookie } from "./components/cookieUtils";
@@ -53,6 +54,17 @@ function App() {
             <ProtectedRoute>
               <SidebarProvider>
                 <PatientList />
+              </SidebarProvider>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <SidebarProvider>
+                <Settings />
               </SidebarProvider>
             </ProtectedRoute>
           }

@@ -667,5 +667,13 @@ export const getPatientNextVisitAPI = async (patientId) => {
     return null;
   }
 };
-
-
+/**
+ * DELETE /api/patients/{patientId}
+ * Deletes a single patient.
+ * Success: { success: true, message: "Patient deleted successfully" }
+ */
+export const deletePatientAPI = async (patientId) => {
+  return await apiCall(`/api/patients/${patientId}`, {
+    method: 'DELETE',
+  });
+};

@@ -6,8 +6,100 @@ import closeIcon from "../assets/close.png";
 import openIcon from "../assets/open.png";
 import { useSidebar } from "../components/SidebarContext";
 import "../css/PatientList.css";
+import ConfirmModal from "./ConfirmModal";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
-import { getPatientsAPI, searchPatientsAPI, getPatientsByStatusAPI } from "./mockAPI";
+import { getPatientsAPI, searchPatientsAPI, getPatientsByStatusAPI, deletePatientAPI } from "./mockAPI"; const AIInsightBlock = ({ patient, onOpenModal }) => {
+  const containerRef = useRef(null);
+  const textRef = useRef(null);
+  const moreRef = useRef(null);
+  const [displayLength, setDisplayLength] = useState(patient.aiInsight.length);
+  const [isTruncated, setIsTruncated] = useState(false);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const textNode = textRef.current;
+    if (!container || !textNode) return;
+
+    let rafId;
+    const measure = () => {
+      const insight = patient.aiInsight;
+
+      textNode.textContent = insight;
+      if (moreRef.current) moreRef.current.style.display = 'none';
+
+      if (container.scrollHeight <= container.clientHeight) {
+        setDisplayLength((prev) => {
+          if (prev !== insight.length) {
+            setIsTruncated(false);
+            return insight.length;
+          }
+          return prev;
+        });
+        return;
+      }
+
+      if (moreRef.current) moreRef.current.style.display = 'inline';
+
+      let low = 0;
+      let high = insight.length;
+      let best = 0;
+
+      while (low <= high) {
+        let mid = Math.floor((low + high) / 2);
+        textNode.textContent = insight.slice(0, mid).trimEnd() + "… ";
+        if (container.scrollHeight <= container.clientHeight) {
+          best = mid;
+          low = mid + 1;
+        } else {
+          high = mid - 1;
+        }
+      }
+
+      setDisplayLength((prev) => {
+        if (prev !== best) {
+          setIsTruncated(true);
+          return best;
+        }
+        return prev;
+      });
+
+      textNode.textContent = insight.slice(0, best).trimEnd() + "… ";
+    };
+
+    measure();
+
+    const resizeObserver = new ResizeObserver(() => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(measure);
+    });
+
+    resizeObserver.observe(container);
+
+    return () => {
+      resizeObserver.disconnect();
+      cancelAnimationFrame(rafId);
+    };
+  }, [patient.aiInsight]);
+
+  const previewText = isTruncated ? patient.aiInsight.slice(0, displayLength).trimEnd() + "… " : patient.aiInsight;
+
+  return (
+    <div className="ai-insight" style={patient.insightStyle}>
+      <p ref={containerRef} style={{ margin: 0, padding: 0, maxHeight: '59px', overflow: 'hidden' }}>
+        <strong>AI Insight: </strong>
+        <span ref={textRef} className="ai-insight-text">{previewText}</span>
+        <button
+          ref={moreRef}
+          className="ai-insight-more"
+          onClick={(e) => { e.stopPropagation(); onOpenModal(patient.aiInsight); }}
+          style={{ display: isTruncated ? 'inline' : 'none' }}
+        >
+          View more
+        </button>
+      </p>
+    </div>
+  );
+};
 
 const PatientList = () => {
   const navigate = useNavigate();
@@ -15,7 +107,35 @@ const PatientList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [selectedInsight, setSelectedInsight] = useState(null);
   const { isSidebarCollapsed, toggleSidebar } = useSidebar();
+  const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
+  const avatarMenuRef = useRef(null);
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [patientToDelete, setPatientToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (avatarMenuRef.current && !avatarMenuRef.current.contains(event.target)) {
+        setIsAvatarMenuOpen(false);
+      }
+    };
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setIsAvatarMenuOpen(false);
+        setSelectedInsight(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
 
   const [patients, setPatients] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -136,7 +256,7 @@ const PatientList = () => {
           statusType: statusType,
           aiInsight: p.aiInsight || p.ai_insight || "No new insights available.",
           lastVisit: p.lastVisit || p.last_visit || "N/A",
-          nextAppointment: p.nextAppointment || p.next_appointment || "N/A",
+          nextAppointment: p.nextAppointment || p.next_appointment || p.next_visit_date || p.next_visit || p.next_appointment_date || p?.visit?.next_visit_date || "No appointment scheduled",
           gradient: p.gradient || gradients[index % gradients.length],
           insightStyle: insightStyle,
         };
@@ -213,7 +333,7 @@ const PatientList = () => {
           status, statusLabel, statusType,
           aiInsight: p.aiInsight || p.ai_insight || "No new insights available.",
           lastVisit: p.lastVisit || p.last_visit || "N/A",
-          nextAppointment: p.nextAppointment || p.next_appointment || "N/A",
+          nextAppointment: p.nextAppointment || p.next_appointment || p.next_visit_date || p.next_visit || p.next_appointment_date || p?.visit?.next_visit_date || "No appointment scheduled",
           gradient: p.gradient || gradients[index % gradients.length], insightStyle,
         };
       });
@@ -295,7 +415,7 @@ const PatientList = () => {
           status: pStatus, statusLabel, statusType,
           aiInsight: p.aiInsight || p.ai_insight || "No new insights available.",
           lastVisit: p.lastVisit || p.last_visit || "N/A",
-          nextAppointment: p.nextAppointment || p.next_appointment || "N/A",
+          nextAppointment: p.nextAppointment || p.next_appointment || p.next_visit_date || p.next_visit || p.next_appointment_date || p?.visit?.next_visit_date || "No appointment scheduled",
           gradient: p.gradient || gradients[index % gradients.length], insightStyle,
         };
       });
@@ -401,6 +521,36 @@ const PatientList = () => {
 
   const openLogoutModal = () => setIsLogoutModalOpen(true);
   const closeLogoutModal = () => setIsLogoutModalOpen(false);
+  const openInsightModal = (insight) => setSelectedInsight(insight);
+  const closeInsightModal = () => setSelectedInsight(null);
+
+  const handleConfirmDelete = async () => {
+    if (!patientToDelete) return;
+    setIsDeleting(true);
+    setDeleteError("");
+
+    try {
+      const result = await deletePatientAPI(patientToDelete.id);
+      if (result && result.success === false) {
+        setDeleteError(result.message || "Failed to delete patient. Please try again.");
+      } else {
+        const trimmed = searchTerm.trim();
+        if (trimmed) {
+          fetchSearch(currentPage, trimmed);
+        } else if (activeFilter !== "all") {
+          fetchByStatus(currentPage, activeFilter);
+        } else {
+          fetchPatients(currentPage);
+        }
+        setIsDeleteModalOpen(false);
+        setPatientToDelete(null);
+      }
+    } catch (err) {
+      setDeleteError("An error occurred while deleting the patient.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <>
@@ -476,6 +626,22 @@ const PatientList = () => {
                 </span>
                 <span>Subscription</span>
               </a>
+              <a
+                href="#"
+                className="nav-item"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate("/settings");
+                }}
+              >
+                <span className="nav-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                  </svg>
+                </span>
+                <span>Settings</span>
+              </a>
               <a href="[Final] Support.html" className="nav-item">
                 <span className="nav-icon">
                   <svg viewBox="0 0 24 24">
@@ -485,23 +651,6 @@ const PatientList = () => {
                   </svg>
                 </span>
                 <span>Support</span>
-              </a>
-              <a
-                href="#"
-                className="nav-item"
-                onClick={(e) => {
-                  e.preventDefault();
-                  openLogoutModal();
-                }}
-              >
-                <span className="nav-icon">
-                  <svg viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M10 16l4-4-4-4"></path>
-                    <path d="M14 12H8"></path>
-                  </svg>
-                </span>
-                <span>Logout</span>
               </a>
             </div>
           </div>
@@ -565,12 +714,85 @@ const PatientList = () => {
           </button>
 
           <div
-            className="user-avatar"
-            onClick={() =>
-              (window.location.href = "[semiFinalAwy] Settings.html")
-            }
+            className="user-avatar-container"
+            style={{ position: "relative" }}
+            ref={avatarMenuRef}
           >
-            LA
+            <div
+              className="user-avatar"
+              onClick={() => setIsAvatarMenuOpen(!isAvatarMenuOpen)}
+              style={{ cursor: "pointer", userSelect: "none" }}
+            >
+              LA
+            </div>
+            {isAvatarMenuOpen && (
+              <div
+                className="avatar-dropdown-menu"
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 10px)",
+                  right: 0,
+                  backgroundColor: "var(--surface-color, #ffffff)",
+                  border: "1px solid var(--border-color, #e5e7eb)",
+                  borderRadius: "12px",
+                  boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                  padding: "8px",
+                  minWidth: "180px",
+                  zIndex: 1000,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "4px"
+                }}
+              >
+                <div
+                  className="dropdown-item"
+                  onClick={() => { setIsAvatarMenuOpen(false); navigate("/settings"); }}
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    color: "var(--text-primary, #111827)",
+                    fontSize: "14px",
+                    transition: "background-color 0.2s"
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--hover-bg, #f3f4f6)"}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                  Profile Settings
+                </div>
+                <div
+                  className="dropdown-item"
+                  onClick={() => { setIsAvatarMenuOpen(false); openLogoutModal(); }}
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    color: "var(--danger-color, #ef4444)",
+                    fontSize: "14px",
+                    transition: "background-color 0.2s"
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--danger-bg-subtle, #fee2e2)"}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                  </svg>
+                  Logout
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </nav>
@@ -579,6 +801,34 @@ const PatientList = () => {
         isOpen={isLogoutModalOpen}
         onClose={closeLogoutModal}
       />
+
+      {selectedInsight && (
+        <div
+          className="modal-overlay active"
+          onClick={(e) =>
+            e.target.className.includes("modal-overlay") &&
+            closeInsightModal()
+          }
+          style={{ zIndex: 1100 }}
+        >
+          <div className="modal-content">
+            <button className="modal-close" onClick={closeInsightModal}>
+              <svg viewBox="0 0 24 24">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+            <div className="modal-header" style={{ marginBottom: "16px" }}>
+              <h2 className="modal-title" style={{ fontSize: "20px" }}>AI Insight</h2>
+            </div>
+            <div className="modal-body" style={{ marginBottom: "0" }}>
+              <p className="modal-text" style={{ whiteSpace: "pre-wrap", margin: "0", fontSize: "14px", lineHeight: "1.6" }}>
+                {selectedInsight}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showModal && (
         <div
@@ -665,45 +915,10 @@ const PatientList = () => {
       )}
 
       <div className={`main-content${isSidebarCollapsed ? " collapsed" : ""}`}>
-        <div className="page-header">
-          <div className="head">
-            <div className="title">
-              <h1>Patient List</h1>
-              <p className="page-header-subtitle">
-                Manage and review all patients with real-time AI updates and
-                insights.
-              </p>
-            </div>
-            <div className="addbtn">
-              <a
-                href="[Final] Add Patient.html"
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate("/addpatient");
-                }}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  style={{ display: "inline-block", verticalAlign: "middle", marginRight: "7px", marginBottom: "1px" }}
-                >
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="8.5" cy="7" r="4" />
-                  <line x1="20" y1="8" x2="20" y2="14" />
-                  <line x1="23" y1="11" x2="17" y2="11" />
-                </svg>
-                Add New Patient
-              </a>
-            </div>
-          </div>
-
+        <div className="patients-page-header">
+          <h2 className="patients-title">Patient List</h2>
+        </div>
+        <div className="patients-top-row">
           <div className="page-search-container">
             <svg
               className="page-search-icon"
@@ -733,33 +948,62 @@ const PatientList = () => {
             />
           </div>
 
-          <div className="filter-chips">
-            <div
-              className={`chip ${activeFilter === "all" ? "active" : ""}`}
-              onClick={() => { setActiveFilter("all"); setCurrentPage(1); }}
+          <div className="addbtn">
+            <a
+              href="[Final] Add Patient.html"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/addpatient");
+              }}
             >
-              <i className="fa-solid fa-user-plus"></i>
-              <span>All Patients</span>
-            </div>
-            <div
-              className={`chip ${activeFilter === "critical" ? "active" : ""}`}
-              onClick={() => { setActiveFilter("critical"); setCurrentPage(1); }}
-            >
-              Critical
-            </div>
-            <div
-              className={`chip ${activeFilter === "stable" ? "active" : ""}`}
-              onClick={() => { setActiveFilter("stable"); setCurrentPage(1); }}
-            >
-              Stable
-            </div>
-            <div
-              className={`chip ${activeFilter === "underReview" ? "active" : ""
-                }`}
-              onClick={() => { setActiveFilter("underReview"); setCurrentPage(1); }}
-            >
-              Under Review
-            </div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ display: "inline-block", verticalAlign: "middle", marginRight: "7px", marginBottom: "1px" }}
+              >
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="8.5" cy="7" r="4" />
+                <line x1="20" y1="8" x2="20" y2="14" />
+                <line x1="23" y1="11" x2="17" y2="11" />
+              </svg>
+              Add New Patient
+            </a>
+          </div>
+        </div>
+
+        <div className="filter-chips">
+          <div
+            className={`chip ${activeFilter === "all" ? "active" : ""}`}
+            onClick={() => { setActiveFilter("all"); setCurrentPage(1); }}
+          >
+            <i className="fa-solid fa-user-plus"></i>
+            <span>All Patients</span>
+          </div>
+          <div
+            className={`chip ${activeFilter === "critical" ? "active" : ""}`}
+            onClick={() => { setActiveFilter("critical"); setCurrentPage(1); }}
+          >
+            Critical
+          </div>
+          <div
+            className={`chip ${activeFilter === "stable" ? "active" : ""}`}
+            onClick={() => { setActiveFilter("stable"); setCurrentPage(1); }}
+          >
+            Stable
+          </div>
+          <div
+            className={`chip ${activeFilter === "underReview" ? "active" : ""
+              }`}
+            onClick={() => { setActiveFilter("underReview"); setCurrentPage(1); }}
+          >
+            Under Review
           </div>
         </div>
 
@@ -807,11 +1051,13 @@ const PatientList = () => {
                       <h3>{patient.name}</h3>
                       <button
                         className="patient-card-delete-btn"
-                        aria-label="Delete patient (coming soon)"
-                        title="Delete patient (coming soon)"
+                        aria-label="Delete patient"
+                        title="Delete patient"
                         onClick={(e) => {
                           e.stopPropagation();
-                          console.log('[PatientList] Delete clicked for patient id:', patient.id, '— endpoint not yet available.');
+                          setPatientToDelete(patient);
+                          setIsDeleteModalOpen(true);
+                          setDeleteError("");
                         }}
                       >
                         <svg
@@ -846,11 +1092,7 @@ const PatientList = () => {
                     </div>
                   </div>
                 </div>
-                <div className="ai-insight" style={patient.insightStyle}>
-                  <p>
-                    <strong>AI Insight:</strong> {patient.aiInsight}
-                  </p>
-                </div>
+                <AIInsightBlock patient={patient} onOpenModal={openInsightModal} />
                 <div className="patient-details">
                   <div className="detail-row">
                     <span className="detail-label">Last Visit</span>
@@ -905,7 +1147,40 @@ const PatientList = () => {
             Next ▸
           </button>
         </div>
-      </div>
+      </div >
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          if (!isDeleting) {
+            setIsDeleteModalOpen(false);
+            setPatientToDelete(null);
+          }
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Patient"
+        description={
+          <>
+            Are you sure you want to delete this patient?
+            {deleteError && (
+              <div style={{ color: "var(--danger-color, #ef4444)", marginTop: "8px", fontSize: "14px", whiteSpace: "pre-wrap" }}>
+                {deleteError}
+              </div>
+            )}
+          </>
+        }
+        confirmText={isDeleting ? "Deleting..." : "Delete"}
+        cancelText="Cancel"
+        variant="danger"
+        icon={
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+        }
+      />
     </>
   );
 };

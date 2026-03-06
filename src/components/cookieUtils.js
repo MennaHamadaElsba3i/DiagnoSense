@@ -1,24 +1,31 @@
+export const setCookie = (name, value, days_or_remember) => {
+     // Overloading `days_or_remember`: if it is precisely the boolean `true` or `false`,
+     // we treat it as the `rememberMe` flag. Previously it was `days` (number).
+     // When `true`, use localStorage (persistent). Otherwise use sessionStorage (session-only).
+     const rememberMe = days_or_remember === true;
 
-export const setCookie = (name, value, days) => {
-     const expires = new Date();
-     expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-     document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+     if (rememberMe) {
+          localStorage.setItem(name, value);
+          // ensure it's removed from sessionStorage so we don't have duplicates
+          sessionStorage.removeItem(name);
+     } else {
+          sessionStorage.setItem(name, value);
+          localStorage.removeItem(name);
+     }
 };
 
-export const setJsonCookie = (name, value, days) => {
+export const setJsonCookie = (name, value, rememberMe) => {
      const jsonValue = JSON.stringify(value);
-     setCookie(name, jsonValue, days);
+     setCookie(name, jsonValue, rememberMe);
 };
 
 export const getCookie = (name) => {
-     const nameEQ = name + "=";
-     const ca = document.cookie.split(';');
-     for (let i = 0; i < ca.length; i++) {
-          let c = ca[i];
-          while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-          if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
-     }
-     return null;
+     // Check localStorage first, fallback to sessionStorage
+     let val = localStorage.getItem(name);
+     if (val !== null) return val;
+
+     val = sessionStorage.getItem(name);
+     return val;
 };
 
 export const getJsonCookie = (name) => {
@@ -34,5 +41,6 @@ export const getJsonCookie = (name) => {
 };
 
 export const deleteCookie = (name) => {
-     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
+     localStorage.removeItem(name);
+     sessionStorage.removeItem(name);
 };
