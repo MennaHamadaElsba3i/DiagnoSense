@@ -12,6 +12,7 @@ import DiagnoSense from "./components/DiagnoSense.jsx";
 import GoogleCallback from "./components/GoogleCallback.jsx";
 import EvidencePanel from './components/EvidencePanel';
 import Settings from './components/Settings.jsx';
+import Subscription from './components/subscription.jsx';
 import "./App.css";
 import { SidebarProvider } from "./components/SidebarContext";
 import { getCookie } from "./components/cookieUtils";
@@ -65,6 +66,17 @@ function App() {
             <ProtectedRoute>
               <SidebarProvider>
                 <Settings />
+              </SidebarProvider>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/subscription"
+          element={
+            <ProtectedRoute>
+              <SidebarProvider>
+                <Subscription />
               </SidebarProvider>
             </ProtectedRoute>
           }
