@@ -13,6 +13,7 @@ import GoogleCallback from "./components/GoogleCallback.jsx";
 import EvidencePanel from './components/EvidencePanel';
 import Settings from './components/Settings.jsx';
 import Subscription from './components/subscription.jsx';
+import Integration from "./components/integration.jsx";
 import "./App.css";
 import { SidebarProvider } from "./components/SidebarContext";
 import { getCookie } from "./components/cookieUtils";
@@ -34,6 +35,7 @@ function App() {
 
         <Route path="/loading" element={<ProcessingReports />} />
         <Route path="/evidence" element={<EvidencePanel />} />
+        <Route path="/integration" element={<Integration />} />
 
         {/* Google OAuth callback - backend redirects here after sign in */}
         <Route path="/google-callback" element={<GoogleCallback />} />

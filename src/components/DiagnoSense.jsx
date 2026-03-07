@@ -1,5 +1,6 @@
 import "../css/Diagnosense.css";
 import { useNavigate } from "react-router-dom";
+import LandingNav from "./LandingNav";
 import dlogo from "../assets/Logo_Diagnoo.png";
 
 export default function DiagnoSense() {
@@ -19,35 +20,7 @@ export default function DiagnoSense() {
         <div className="floating-icon">🔬</div>
       </div>
 
-      <nav>
-        <div className="logo" style={{ width: "160px" }}>
-          <img src={dlogo} alt="" style={{ width: "160px" }} />
-        </div>
-        <ul className="nav-links" style={{ marginBottom: "0px" }}>
-          <li>
-            <a href="#home">Home</a>
-          </li>
-          <li>
-            <a href="#challenges">Challenges</a>
-          </li>
-          <li>
-            <a href="#features">Features</a>
-          </li>
-          <li>
-            <a href="#contact">Contact</a>
-          </li>
-        </ul>
-        <a
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            navigate("/login");
-          }}
-          className="btn-nav"
-        >
-          Get Started
-        </a>
-      </nav>
+      <LandingNav />
 
       <section className="hero" id="home">
         <div className="hero-content">
