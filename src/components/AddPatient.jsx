@@ -529,7 +529,11 @@ const AddPatient = () => {
 
       <nav className={`top-navbar${isSidebarCollapsed ? " collapsed" : ""}`}>
         <div className="navbar-right">
-          <div className="credits-badge">
+          <div
+            className="credits-badge"
+            onClick={() => navigate('/subscription', { state: { tab: 'billing' } })}
+            style={{ cursor: "pointer" }}
+          >
             <span className="credits-icon">
               <svg viewBox="0 0 24 24" style={{ width: "18px", height: "18px", stroke: "currentColor", fill: "none", strokeWidth: 2 }}>
                 <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>

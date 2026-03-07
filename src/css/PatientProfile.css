@@ -40,6 +40,81 @@
     background: rgba(42, 102, 255, 0.06);
 }
 
+/* ── React DatePicker customized for Next Visit ── */
+.medications-tasks-tab .datepicker-wrapper {
+    width: 100%;
+}
+
+.medications-tasks-tab .react-datepicker-wrapper {
+    width: 100%;
+}
+
+.medications-tasks-tab .step1-datepicker-input {
+    border: none;
+    background: transparent;
+    font-size: 15px;
+    font-weight: 600;
+    color: #0E1A34;
+    outline: none;
+    width: 100%;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.medications-tasks-tab .styled-datepicker {
+    width: 100%;
+    cursor: pointer;
+}
+
+.medications-tasks-tab .react-datepicker {
+    font-family: 'Inter', sans-serif;
+    border: 1px solid #E6EAF2;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    background: #fff;
+    overflow: hidden;
+    z-index: 1000;
+}
+
+.medications-tasks-tab .react-datepicker__header {
+    background: #F8FAFF;
+    border-bottom: 1px solid #E6EAF2;
+    padding-top: 10px;
+}
+
+.medications-tasks-tab .react-datepicker__current-month,
+.medications-tasks-tab .react-datepicker-time__header {
+    font-weight: 600;
+    color: #0E1A34;
+}
+
+.medications-tasks-tab .react-datepicker__day--selected,
+.medications-tasks-tab .react-datepicker__day--keyboard-selected {
+    background-color: #2A66FF !important;
+    color: white !important;
+    font-weight: 600;
+    border-radius: 8px;
+}
+
+.medications-tasks-tab .react-datepicker__day:hover {
+    background-color: #E9F0FF;
+    border-radius: 8px;
+}
+
+.medications-tasks-tab .react-datepicker__time-container {
+    border-left: 1px solid #E6EAF2;
+}
+
+.medications-tasks-tab .react-datepicker__time-list-item--selected {
+    background-color: #2A66FF !important;
+    color: white !important;
+    font-weight: 600;
+}
+
+.medications-tasks-tab .react-datepicker__time-list-item:hover {
+    background-color: #E9F0FF !important;
+    color: #0E1A34 !important;
+}
 
 /* * {
     margin: 0;
