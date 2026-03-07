@@ -959,30 +959,23 @@ body {
     padding: 24px 32px 32px;
 }
 
-/* Tabs bar section directly under patient header */
-.tabs-bar {
-    background: rgba(255, 255, 255, 0.98);
-    border-bottom: 1px solid #E6EAF2;
-}
-
 /* Tabs */
-.content-layer.container {
+.content-layer .container {
     position: relative;
 }
 
-.content-layer.tab-nav {
-
-    position: absolute;
-    top: 0;
-    width: 100%;
+.content-layer .tab-nav {
+    position: relative;
     display: flex;
+    width: 100%;
+    box-sizing: border-box;
     gap: 16px;
     margin-bottom: 24px;
     background: white;
-    padding: 8px 0;
-    border-radius: 0;
-    box-shadow: none;
-    justify-content: flex-start;
+    padding: 12px 24px;
+    border-radius: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    justify-content: space-between;
     align-items: center;
     flex-wrap: nowrap;
     overflow-x: auto;

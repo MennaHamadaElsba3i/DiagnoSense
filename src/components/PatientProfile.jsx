@@ -1169,62 +1169,48 @@ const PatientProfile = () => {
           </div>
         </header>
 
-        <div className="tabs-bar" style={{ background: "none" }}>
-          <div
-            className="container"
-            style={{ position: "relative", background: "none" }}
-          >
-            <nav
-              className="tab-nav"
-              style={{
-                width: "96%",
-                position: "absolute",
-                top: "0",
-                "border-radius": "15px",
-              }}
-            >
-              <button
-                className={`tab-btn ${activeTab === "overview" ? "active" : ""}`}
-                onClick={() => handleTabClick("overview")}
-              >
-                Overview
-              </button>
-              <button
-                className={`tab-btn ${activeTab === "keyinfo" ? "active" : ""}`}
-                onClick={() => handleTabClick("keyinfo")}
-              >
-                Key Important Info
-              </button>
-              <button
-                className={`tab-btn ${activeTab === "comparative" ? "active" : ""
-                  }`}
-                onClick={() => handleTabClick("comparative")}
-              >
-                Comparative Analysis
-              </button>
-              <button
-                className={`tab-btn ${activeTab === "decision" ? "active" : ""}`}
-                onClick={() => handleTabClick("decision")}
-              >
-                Decision Support
-              </button>
-              <button
-                className={`tab-btn ${activeTab === "medications-tasks" ? "active" : ""}`}
-                onClick={() => handleTabClick("medications-tasks")}
-              >
-                Medications & Tasks
-              </button>
-              <button
-                className={`tab-btn ${activeTab === "activity" ? "active" : ""}`}
-                onClick={() => handleTabClick("activity")}
-              >
-                Activity Log
-              </button>
-            </nav>
-          </div>
-        </div>
+
 
         <div className="container">
+          <nav className="tab-nav">
+            <button
+              className={`tab-btn ${activeTab === "overview" ? "active" : ""}`}
+              onClick={() => handleTabClick("overview")}
+            >
+              Overview
+            </button>
+            <button
+              className={`tab-btn ${activeTab === "keyinfo" ? "active" : ""}`}
+              onClick={() => handleTabClick("keyinfo")}
+            >
+              Key Important Info
+            </button>
+            <button
+              className={`tab-btn ${activeTab === "comparative" ? "active" : ""
+                }`}
+              onClick={() => handleTabClick("comparative")}
+            >
+              Comparative Analysis
+            </button>
+            <button
+              className={`tab-btn ${activeTab === "decision" ? "active" : ""}`}
+              onClick={() => handleTabClick("decision")}
+            >
+              Decision Support
+            </button>
+            <button
+              className={`tab-btn ${activeTab === "medications-tasks" ? "active" : ""}`}
+              onClick={() => handleTabClick("medications-tasks")}
+            >
+              Medications & Tasks
+            </button>
+            <button
+              className={`tab-btn ${activeTab === "activity" ? "active" : ""}`}
+              onClick={() => handleTabClick("activity")}
+            >
+              Activity Log
+            </button>
+          </nav>
           <div
             className={`tab-content ${activeTab === "overview" ? "active" : ""
               }`}
