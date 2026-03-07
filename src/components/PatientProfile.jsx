@@ -24,6 +24,7 @@ import "../css/PatientProfile.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import MedicationsAndTasksTab from "../components/MedicationsAndTasksTab.jsx";
 import ConfirmModal from "./ConfirmModal.jsx";
+import NotificationsPanel from "./NotificationsPanel";
 
 const TrashIcon = () => (
   <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -60,6 +61,7 @@ const PatientProfile = () => {
   const [activeTab, setActiveTab] = useState("overview");
 
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const avatarMenuRef = useRef(null);
 
   useEffect(() => {
@@ -924,7 +926,7 @@ const PatientProfile = () => {
             <span>Credits: 1,247</span>
           </div>
 
-          <button className="icon-btn">
+          <button className="icon-btn" onClick={() => setIsNotificationsOpen(true)}>
             <svg viewBox="0 0 24 24">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
@@ -3268,6 +3270,7 @@ const PatientProfile = () => {
         isOpen={isPanelOpen}
         onClose={() => setIsPanelOpen(false)}
       />
+      <NotificationsPanel isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
     </div>
   );
 };

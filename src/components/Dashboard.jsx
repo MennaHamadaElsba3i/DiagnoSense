@@ -9,11 +9,13 @@ import openIcon from "../assets/open.png";
 import { useSidebar } from "../components/SidebarContext";
 import Sidebar from "./Sidebar";
 import "../css/Dashboard.css";
+import NotificationsPanel from "./NotificationsPanel";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const { isSidebarCollapsed, toggleSidebar } = useSidebar();
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const avatarMenuRef = useRef(null);
@@ -76,7 +78,7 @@ export default function Dashboard() {
             <span>Credits: 1,247</span>
           </div>
 
-          <button className="icon-btn">
+          <button className="icon-btn" onClick={() => setIsNotificationsOpen(true)}>
             <svg viewBox="0 0 24 24">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
@@ -523,6 +525,7 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
+      <NotificationsPanel isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
     </>
   );
 }

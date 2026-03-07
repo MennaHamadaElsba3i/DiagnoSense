@@ -9,6 +9,7 @@ import Sidebar from "./Sidebar";
 import "../css/PatientList.css";
 import ConfirmModal from "./ConfirmModal";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
+import NotificationsPanel from "./NotificationsPanel";
 import { getPatientsAPI, searchPatientsAPI, getPatientsByStatusAPI, deletePatientAPI } from "./mockAPI"; const AIInsightBlock = ({ patient, onOpenModal }) => {
   const containerRef = useRef(null);
   const textRef = useRef(null);
@@ -108,6 +109,7 @@ const PatientList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [selectedInsight, setSelectedInsight] = useState(null);
   const { isSidebarCollapsed, toggleSidebar } = useSidebar();
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
@@ -584,7 +586,7 @@ const PatientList = () => {
             <span>Credits: 1,247</span>
           </div>
 
-          <button className="icon-btn">
+          <button className="icon-btn" onClick={() => setIsNotificationsOpen(true)}>
             <svg viewBox="0 0 24 24">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
@@ -1030,6 +1032,7 @@ const PatientList = () => {
           </svg>
         }
       />
+      <NotificationsPanel isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
     </>
   );
 };

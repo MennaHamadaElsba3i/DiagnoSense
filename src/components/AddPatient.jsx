@@ -10,11 +10,13 @@ import { useSidebar } from "../components/SidebarContext";
 import "../css/AddPatient.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import { getCookie } from "./cookieUtils";
+import NotificationsPanel from "./NotificationsPanel";
 
 
 const AddPatient = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [showProcessingScreen, setShowProcessingScreen] = useState(false);
   const [selectedGender, setSelectedGender] = useState(null);
   const [isSmoker, setIsSmoker] = useState(null);
@@ -542,7 +544,7 @@ const AddPatient = () => {
             </span>
             <span>Credits: 1,247</span>
           </div>
-          <button className="icon-btn">
+          <button className="icon-btn" onClick={() => setIsNotificationsOpen(true)}>
             <svg viewBox="0 0 24 24">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
@@ -1031,6 +1033,7 @@ const AddPatient = () => {
           </div>
         </div>
       </div>
+      <NotificationsPanel isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
     </div>
   );
 };
