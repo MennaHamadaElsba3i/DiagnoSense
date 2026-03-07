@@ -14,6 +14,7 @@ import EvidencePanel from './components/EvidencePanel';
 import Settings from './components/Settings.jsx';
 import Subscription from './components/subscription.jsx';
 import Integration from "./components/integration.jsx";
+import Support from "./components/support.jsx";
 import "./App.css";
 import { SidebarProvider } from "./components/SidebarContext";
 import { getCookie } from "./components/cookieUtils";
@@ -121,6 +122,16 @@ function App() {
             <ProtectedRoute>
               <SidebarProvider>
                 <AddPatient />
+              </SidebarProvider>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/support"
+          element={
+            <ProtectedRoute>
+              <SidebarProvider>
+                <Support />
               </SidebarProvider>
             </ProtectedRoute>
           }

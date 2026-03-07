@@ -23,7 +23,6 @@ import Sidebar from "./Sidebar";
 import "../css/PatientProfile.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import MedicationsAndTasksTab from "../components/MedicationsAndTasksTab.jsx";
-import ConfirmModal from "./ConfirmModal.jsx";
 import NotificationsPanel from "./NotificationsPanel";
 
 const TrashIcon = () => (
@@ -83,7 +82,6 @@ const PatientProfile = () => {
 
   // ── Next Visit Date (lifted from MedicationsAndTasksTab so it survives tab switches) ──
   const [nextVisitDate, setNextVisitDate] = useState(null); // "YYYY-MM-DD" raw string
-  const [isDecisionModalOpen, setIsDecisionModalOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
 
@@ -721,13 +719,6 @@ const PatientProfile = () => {
     }, 800);
   };
 
-  const openDecisionSupport = () => setIsDecisionModalOpen(true);
-  const closeDecisionSupport = () => setIsDecisionModalOpen(false);
-  const upgradeToProPlan = () => {
-    navigate("/subscription", { state: { tab: "plans" } });
-    closeDecisionSupport();
-  };
-
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const { isSidebarCollapsed, toggleSidebar } = useSidebar();
 
@@ -899,7 +890,7 @@ const PatientProfile = () => {
         <div className="ambient-ripple ripple-3"></div>
       </div>
 
-      <Sidebar activePage="patients" openDecisionSupport={openDecisionSupport} />
+      <Sidebar activePage="patients" />
 
       <nav className={`top-navbar${isSidebarCollapsed ? " collapsed" : ""}`}>
         <div className="navbar-right">
@@ -1033,54 +1024,6 @@ const PatientProfile = () => {
         confirmText={isDeleting ? "Deleting..." : "Delete"}
         variant="danger"
         icon={<TrashIcon />}
-      />
-
-      <ConfirmModal
-        isOpen={isDecisionModalOpen}
-        onClose={closeDecisionSupport}
-        onConfirm={upgradeToProPlan}
-        title="Decision Support"
-        description={
-          <>
-            <p style={{ margin: "0 0 16px 0" }}>
-              Enhance your diagnostic accuracy with our advanced AI-powered
-              Decision Support system. Get intelligent recommendations based on
-              patient data, symptoms, and medical history.
-            </p>
-            <ul style={{ margin: 0, paddingLeft: "20px", display: "flex", flexDirection: "column", gap: "8px" }}>
-              <li style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
-                <svg viewBox="0 0 24 24" width="16" height="16" style={{ marginTop: "3px", flexShrink: 0, fill: "none", stroke: "currentColor", strokeWidth: 2 }}>
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
-                <span>Real-time diagnostic suggestions based on latest medical research</span>
-              </li>
-              <li style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
-                <svg viewBox="0 0 24 24" width="16" height="16" style={{ marginTop: "3px", flexShrink: 0, fill: "none", stroke: "currentColor", strokeWidth: 2 }}>
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
-                <span>Comprehensive differential diagnosis lists with confidence scores</span>
-              </li>
-              <li style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
-                <svg viewBox="0 0 24 24" width="16" height="16" style={{ marginTop: "3px", flexShrink: 0, fill: "none", stroke: "currentColor", strokeWidth: 2 }}>
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
-                <span>Treatment recommendations and drug interaction warnings</span>
-              </li>
-            </ul>
-          </>
-        }
-        confirmText="Upgrade to Pro"
-        cancelText="Maybe Later"
-        variant="primary"
-        icon={
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 11l3 3L22 4"></path>
-            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
-          </svg>
-        }
       />
 
       <div
