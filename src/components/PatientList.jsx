@@ -6,6 +6,7 @@ import closeIcon from "../assets/close.png";
 import openIcon from "../assets/open.png";
 import { useSidebar } from "../components/SidebarContext";
 import Sidebar from "./Sidebar";
+import ConfirmModal from "./ConfirmModal";
 import "../css/PatientList.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import NotificationsPanel from "./NotificationsPanel";
@@ -98,6 +99,116 @@ import { getPatientsAPI, searchPatientsAPI, getPatientsByStatusAPI, deletePatien
           View more
         </button>
       </p>
+    </div>
+  );
+};
+
+const PatientCard = ({ patient, index, cardRef, navigate, setPatientToDelete, setIsDeleteModalOpen, setDeleteError, openInsightModal }) => {
+  const normalizedStatus =
+    patient.status?.toLowerCase().replace(/[\s_]+/g, "-") === "under-review" || patient.status?.toLowerCase() === "underreview" || patient.status?.toLowerCase() === "warning"
+      ? "under-review"
+      : patient.status?.toLowerCase().includes("critical")
+        ? "critical"
+        : "stable";
+
+  const nameRef = useRef(null);
+  const [isTwoLines, setIsTwoLines] = useState(false);
+
+  useEffect(() => {
+    if (nameRef.current) {
+      // 24px is one line height. If it exceeds 30px, we definitively know it has wrapped to 2 lines.
+      if (nameRef.current.clientHeight > 30) {
+        setIsTwoLines(true);
+      } else {
+        setIsTwoLines(false);
+      }
+    }
+  }, [patient.name]);
+
+  return (
+    <div
+      ref={index === 0 ? cardRef : null}
+      className={`patient-card ${isTwoLines ? 'name-two-lines' : 'name-single-line'}`}
+      data-status={patient.status}
+      data-patient={patient.name}
+    >
+      <div className="patient-header" style={{ alignItems: "center", border: 'none', marginBottom: '0px' }}>
+        <div
+          className={`patient-avatar avatar-${normalizedStatus}`}
+          style={{ width: '57px', height: '57px', fontSize: '20px' }}
+        >
+          {patient.initials}
+        </div>
+        <div className="patient-info" style={{ flexGrow: 1 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <h3 ref={nameRef} title={patient.name}>{patient.name}</h3>
+            <button
+              className="patient-card-delete-btn"
+              aria-label="Delete patient"
+              title="Delete patient"
+              onClick={(e) => {
+                e.stopPropagation();
+                setPatientToDelete(patient);
+                setIsDeleteModalOpen(true);
+                setDeleteError("");
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 6h18" />
+                <path d="M8 6V4h8v2" />
+                <path d="M19 6l-1 14H6L5 6" />
+                <path d="M10 11v6" />
+                <path d="M14 11v6" />
+              </svg>
+            </button>
+          </div>
+          <div className="patient-meta-row">
+            <p className="patient-meta">
+              Age: {patient.age}
+            </p>
+            <span
+              className={`status-badge ${patient.statusType || patient.status}`}
+            >
+              {patient.statusLabel}
+            </span>
+          </div>
+        </div>
+      </div>
+      <AIInsightBlock patient={patient} onOpenModal={openInsightModal} />
+      <div className="patient-details">
+        <div className="detail-row">
+          <span className="detail-label">Last Visit</span>
+          <span className="detail-value">{patient.lastVisit}</span>
+        </div>
+        <div className="detail-row">
+          <span className="detail-label">Next Appointment</span>
+          <span className="detail-value">
+            {patient.nextAppointment}
+          </span>
+        </div>
+      </div>
+      <div className="pa">
+        <div className="patient-actions">
+          <button
+            className="btn btn-primary"
+            onClick={() => {
+              navigate(`/patient-profile/${patient.id}`);
+            }}
+          >
+            View Details
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
@@ -816,103 +927,19 @@ const PatientList = () => {
               No patients found.
             </div>
           ) : (
-            visiblePatients.map((patient, index) => {
-              const normalizedStatus =
-                patient.status?.toLowerCase().replace(/[\s_]+/g, "-") === "under-review" || patient.status?.toLowerCase() === "underreview" || patient.status?.toLowerCase() === "warning"
-                  ? "under-review"
-                  : patient.status?.toLowerCase().includes("critical")
-                    ? "critical"
-                    : "stable";
-
-              return (
-                <div
-                  key={patient.id}
-                  ref={index === 0 ? cardRef : null}
-                  className="patient-card"
-                  data-status={patient.status}
-                  data-patient={patient.name}
-                >
-                  <div className="patient-header" style={{ alignItems: "center", border: 'none', marginBottom: '0px' }}>
-                    <div
-                      className={`patient-avatar avatar-${normalizedStatus}`}
-                      style={{ width: '57px', height: '57px', fontSize: '20px' }}
-                    >
-                      {patient.initials}
-                    </div>
-                    <div className="patient-info" style={{ flexGrow: 1 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h3>{patient.name}</h3>
-                        <button
-                          className="patient-card-delete-btn"
-                          aria-label="Delete patient"
-                          title="Delete patient"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setPatientToDelete(patient);
-                            setIsDeleteModalOpen(true);
-                            setDeleteError("");
-                          }}
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M3 6h18" />
-                            <path d="M8 6V4h8v2" />
-                            <path d="M19 6l-1 14H6L5 6" />
-                            <path d="M10 11v6" />
-                            <path d="M14 11v6" />
-                          </svg>
-                        </button>
-                      </div>
-                      <div className="patient-meta-row">
-                        <p className="patient-meta">
-                          Age: {patient.age}
-                        </p>
-                        <span
-                          className={`status-badge ${patient.statusType || patient.status
-                            }`}
-                        >
-                          {patient.statusLabel}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <AIInsightBlock patient={patient} onOpenModal={openInsightModal} />
-                  <div className="patient-details">
-                    <div className="detail-row">
-                      <span className="detail-label">Last Visit</span>
-                      <span className="detail-value">{patient.lastVisit}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Next Appointment</span>
-                      <span className="detail-value">
-                        {patient.nextAppointment}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="pa">
-                    <div className="patient-actions">
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => {
-                          navigate(`/patient-profile/${patient.id}`);
-                        }}
-                      >
-                        View Details
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
+            visiblePatients.map((patient, index) => (
+              <PatientCard
+                key={patient.id}
+                patient={patient}
+                index={index}
+                cardRef={cardRef}
+                navigate={navigate}
+                setPatientToDelete={setPatientToDelete}
+                setIsDeleteModalOpen={setIsDeleteModalOpen}
+                setDeleteError={setDeleteError}
+                openInsightModal={openInsightModal}
+              />
+            ))
           )}
         </div>
 

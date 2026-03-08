@@ -1,0 +1,140 @@
+/* Scoped CSS for ConfirmModal */
+.cm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cm-box {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 400px;
+  padding: 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  animation: cm-fadeIn 0.2s ease-out;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@keyframes cm-fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.cm-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cm-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cm-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.cm-icon-danger {
+  background: #FFEBEB;
+  color: #FF4444;
+}
+
+.cm-icon-danger svg {
+  stroke: currentColor;
+}
+
+.cm-icon-primary {
+  background: #E9F0FF;
+  color: #2A66FF;
+}
+
+.cm-icon-primary svg {
+  stroke: currentColor;
+}
+
+.cm-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0E1A34;
+}
+
+.cm-desc {
+  margin: 0;
+  font-size: 14px;
+  color: #4A5568;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.cm-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.cm-btn-cancel {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+  background: white;
+  color: #4A5568;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cm-btn-cancel:hover {
+  background: #F7FAFC;
+}
+
+.cm-btn-confirm {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cm-btn-danger {
+  background: #FF4444;
+}
+
+.cm-btn-danger:hover {
+  background: #E63939;
+}
+
+.cm-btn-primary {
+  background: #2A66FF;
+}
+
+.cm-btn-primary:hover {
+  background: #1C51D9;
+}
