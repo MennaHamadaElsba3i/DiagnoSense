@@ -202,16 +202,29 @@ body {
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.03);
 }
 
-.sidebar-logo {
-    padding: 10px 0;
+.sidebar-header {
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: space-between;
+    padding: 16px 20px;
     border-bottom: 1px solid rgba(230, 234, 242, 0.5);
 }
 
+.sidebar.collapsed .sidebar-header {
+    padding: 16px 0;
+    justify-content: center;
+}
+
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 .sidebar-logo span img {
-    width: 180px;
+    height: 34px;
+    width: auto;
+    object-fit: contain;
 }
 
 .logo-text {

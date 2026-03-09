@@ -23,34 +23,36 @@ export default function Sidebar({ activePage }) {
   return (
     <>
       <aside className={`sidebar${isSidebarCollapsed ? " collapsed" : ""}`}>
-        <div className="sidebar-logo">
-          <span className="logo-text">
-            <img className="logo-expanded" src={logo} alt="" />
-            <div className="sidebar-logo-slot">
-              <img className="logo-collapsed" src={stethoscope} alt="DiagnoSense" />
-              <button
-                className="logo-expand-btn"
-                onClick={toggleSidebar}
-                aria-label="Expand sidebar"
-                title="Expand sidebar"
-              >
-                <img src={openIcon} alt="Expand sidebar" />
-              </button>
-            </div>
-          </span>
+        <div className="sidebar-header">
+          <div className="sidebar-logo">
+            <span className="logo-text">
+              <img className="logo-expanded" src={logo} alt="" />
+              <div className="sidebar-logo-slot">
+                <img className="logo-collapsed" src={stethoscope} alt="DiagnoSense" />
+                <button
+                  className="logo-expand-btn"
+                  onClick={toggleSidebar}
+                  aria-label="Expand sidebar"
+                  title="Expand sidebar"
+                >
+                  <img src={openIcon} alt="Expand sidebar" />
+                </button>
+              </div>
+            </span>
+          </div>
+          <button
+            className="sidebar-toggle"
+            onClick={toggleSidebar}
+            aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            <img
+              src={isSidebarCollapsed ? openIcon : closeIcon}
+              alt={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              className="sidebar-toggle-icon"
+            />
+          </button>
         </div>
-        <button
-          className="sidebar-toggle"
-          onClick={toggleSidebar}
-          aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          <img
-            src={isSidebarCollapsed ? openIcon : closeIcon}
-            alt={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="sidebar-toggle-icon"
-          />
-        </button>
 
         <nav className="sidebar-nav">
           <div className="nav-main">
