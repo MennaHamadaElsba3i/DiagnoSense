@@ -73,7 +73,8 @@ body .decision-support-card .card-cta-btn {
   }
 
   body .sidebar-logo span img {
-    width: 44px;
+    height: 28px;
+    width: auto;
   }
 
   body .nav-section-title {
@@ -118,6 +119,7 @@ body .decision-support-card .card-cta-btn {
 }
 
 @media (max-width: 480px) {
+
   body .main-content,
   body .content-layer {
     padding: 16px;

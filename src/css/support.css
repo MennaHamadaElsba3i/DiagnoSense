@@ -1,5 +1,26 @@
+.support-page .sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(230, 234, 242, 0.5);
+}
+
+.support-page .sidebar.collapsed .sidebar-header {
+    padding: 16px 0;
+    justify-content: center;
+}
+
+.support-page .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 .support-page .sidebar-logo span img {
-    width: 180px;
+    height: 34px;
+    width: auto;
+    object-fit: contain;
 }
 
 
