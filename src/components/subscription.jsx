@@ -5,12 +5,13 @@ import Sidebar from "./Sidebar";
 import LogoutConfirmation from "./ConfirmationModal.jsx";
 import "../css/subscription.css";
 import Swal from "sweetalert2";
-import { chargeWalletAPI } from "./mockAPI.js"; // adjust path if needed
+import { chargeWalletAPI } from "./mockAPI.js"; 
 import NotificationsPanel from "./NotificationsPanel";
 
 function Subscription() {
   const navigate = useNavigate();
   const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
   const { isSidebarCollapsed, toggleSidebar } = useSidebar();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -40,7 +41,35 @@ function Subscription() {
   const openLogoutModal = () => setIsLogoutModalOpen(true);
   const closeLogoutModal = () => setIsLogoutModalOpen(false);
 
-  const [activeTab, setActiveTab] = useState(location.state?.tab || "plans");
+ useEffect(() => {
+  const searchParams = new URLSearchParams(location.search);
+  const status = searchParams.get("status");
+  const currentTab = searchParams.get("tab") || "billing";
+
+  if (status === "success") {
+    Swal.fire({
+      icon: "success",
+      title: "Payment Successful",
+      text: "Your wallet has been topped up successfully.",
+      confirmButtonColor: "#10b981",
+    }).then(() => {
+      navigate("/subscription", { replace: true, state: { tab: currentTab } });
+    }); 
+  } 
+  else if (status === "canceled" || status === "cancel" || status === "failed") {
+    Swal.fire({
+      icon: "warning",
+      title: "Payment Cancelled",
+      text: "The payment process was not completed. No credits were added.",
+      confirmButtonColor: "#f59e0b"
+    }).then(() => {
+      navigate("/subscription", { replace: true,state: { tab: currentTab } });
+    });
+  }
+}, [location.search, navigate]);
+  const [activeTab, setActiveTab] = useState(
+  searchParams.get("tab") || location.state?.tab || "plans"
+);
 
   useEffect(() => {
     if (location.state?.tab) {
@@ -51,7 +80,7 @@ function Subscription() {
   const [selectedAmt, setSelectedAmt] = useState(null);
   const [isCharged, setIsCharged] = useState(false);
   const [chargeHint, setChargeHint] = useState("");
-  const [historyFilter, setHistoryFilter] = useState("30days"); // '30days', '6months', '1year'
+  const [historyFilter, setHistoryFilter] = useState("30days"); 
 
   const handleTabSwitch = (tabId) => setActiveTab(tabId);
 
@@ -84,20 +113,6 @@ function Subscription() {
     setChargeHint("");
   };
 
-  // const doCharge = () => {
-  //   const val = parseFloat(chargeAmt);
-  //   if (!val || val <= 0) return;
-
-  //   setIsCharged(true);
-  //   setChargeHint(`✓ E£ ${val.toLocaleString()} charged successfully.`);
-  //   setTimeout(() => {
-  //     setIsCharged(false);
-  //     setChargeAmt("");
-  //     setChargeHint("");
-  //     setSelectedAmt(null);
-  //   }, 3000);
-  // };
-
 const doCharge = async () => {
     const val = parseFloat(chargeAmt);
     if (!val || val < 50) {
@@ -121,30 +136,23 @@ const doCharge = async () => {
       Swal.fire({
         icon: "error",
         title: "Charge Failed",
-        text: result.message || "Something went wrong while charging credits",
+        text: result.message,
       });
       return;
     }
 
-    Swal.fire({
-      icon: "success",
-      title: "Success!",
-      text: result.message || `E£ ${val.toLocaleString()} charged successfully.`,
-    }).then(() => {
-      // Handle checkout/payment URL if the backend returns one
-      const paymentUrl =
-        result.payment_url ||
-        result.checkout_url ||
-        result.url ||
-        (result.data &&
-          (result.data.payment_url ||
-            result.data.checkout_url ||
-            result.data.url));
-      
-      if (paymentUrl) {
-        window.location.href = paymentUrl;
-      }
-    });
+    const paymentUrl =
+      result.payment_url ||
+      result.checkout_url ||
+      result.url ||
+      (result.data &&
+        (result.data.payment_url ||
+          result.data.checkout_url ||
+          result.data.url));
+
+    if (paymentUrl) {
+      window.location.href = paymentUrl;
+    }
 
     setChargeAmt("");
     setSelectedAmt(null);

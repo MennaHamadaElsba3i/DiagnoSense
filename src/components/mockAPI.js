@@ -684,16 +684,11 @@ export const deletePatientAPI = async (patientId) => {
  * @param {number} balance - The balance to charge
  */
 export const chargeWalletAPI = async (balance) => {
-  const token = getCookie('user_token');
-  const params = new URLSearchParams();
-  params.append('balance', balance);
+  const success_url = `${window.location.origin}/subscription?tab=billing`;
+  const cancel_url = `${window.location.origin}/subscription?tab=billing`;
 
   return await apiCall('/api/wallet/charge', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      ...(token && { 'Authorization': `Bearer ${token}` }),
-    },
-    body: params.toString(),
+    body: JSON.stringify({ balance, success_url, cancel_url }),
   });
 };
