@@ -206,7 +206,7 @@ const AuthPage = () => {
               <span className="logo-text">
                 <img
                   src={logo}
-                  style={{marginBottom:'10px', width:'190px'}}
+                  style={{marginBottom:'10px', width:'165px'}}
                   alt="DiagnoSense Logo"
                   onError={(e) => (e.target.style.display = "none")}
                 />
