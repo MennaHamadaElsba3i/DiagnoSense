@@ -24,6 +24,7 @@ import "../css/PatientProfile.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import MedicationsAndTasksTab from "../components/MedicationsAndTasksTab.jsx";
 import NotificationsPanel from "./NotificationsPanel";
+import ConfirmModal from "./ConfirmModal.jsx";
 
 const TrashIcon = () => (
   <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

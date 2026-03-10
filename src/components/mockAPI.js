@@ -677,3 +677,23 @@ export const deletePatientAPI = async (patientId) => {
     method: 'DELETE',
   });
 };
+
+/**
+ * POST /wallet/charge
+ * Charges the doctor's wallet with the specified balance.
+ * @param {number} balance - The balance to charge
+ */
+export const chargeWalletAPI = async (balance) => {
+  const token = getCookie('user_token');
+  const params = new URLSearchParams();
+  params.append('balance', balance);
+
+  return await apiCall('/api/wallet/charge', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+    },
+    body: params.toString(),
+  });
+};

@@ -339,9 +339,10 @@ const AddPatient = () => {
         selectedChronicDiseases.forEach((disease) => {
           apiFormData.append("chronic_diseases[]", disease);
         });
-      } else {
-        apiFormData.append("chronic_diseases[]", "");
-      }
+      } 
+      // else {
+      //   apiFormData.append("chronic_diseases[]", "");
+      // }
 
       apiFormData.append("medications", formData.medications || "");
       apiFormData.append("allergies", formData.allergies || "");
