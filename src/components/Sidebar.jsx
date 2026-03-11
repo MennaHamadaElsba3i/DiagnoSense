@@ -26,7 +26,7 @@ export default function Sidebar({ activePage }) {
         <div className="sidebar-header">
           <div className="sidebar-logo">
             <span className="logo-text">
-              <img className="logo-expanded" src={logo} alt="" />
+              <img className="logo-expanded" src={logo} alt="" style={{ height: "45px" }} />
               <div className="sidebar-logo-slot">
                 <img className="logo-collapsed" src={stethoscope} alt="DiagnoSense" />
                 <button

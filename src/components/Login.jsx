@@ -40,7 +40,9 @@ const Login = ({ onForgotPassword }) => {
     if (result.url) {
       window.location.href = result.url;
     } else {
-      setError(result.message || "Failed to load Google login. Please try again.");
+      setError(
+        result.message || "Failed to load Google login. Please try again.",
+      );
     }
     setGoogleLoading(false);
   };
@@ -98,6 +100,11 @@ const Login = ({ onForgotPassword }) => {
 
         <button
           type="submit"
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
           className={`btn-primary ${isLoading ? "loading" : ""}`}
         >
           {!isLoading && "Login"}

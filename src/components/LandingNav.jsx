@@ -8,8 +8,8 @@ export default function LandingNav() {
 
   return (
     <nav>
-      <div className="logo" style={{ width: "160px" }}>
-        <img src={dlogo} alt="" style={{ width: "160px" }} />
+      <div className="logo" style={{ width: "140px" }}>
+        <img src={dlogo} alt="" style={{ width: "140px" }} />
       </div>
       <ul className="nav-links" style={{ marginBottom: "0px" }}>
         <li>

@@ -677,3 +677,18 @@ export const deletePatientAPI = async (patientId) => {
     method: 'DELETE',
   });
 };
+
+/**
+ * POST /wallet/charge
+ * Charges the doctor's wallet with the specified balance.
+ * @param {number} balance - The balance to charge
+ */
+export const chargeWalletAPI = async (balance) => {
+  const success_url = `${window.location.origin}/subscription?tab=billing`;
+  const cancel_url = `${window.location.origin}/subscription?tab=billing`;
+
+  return await apiCall('/api/wallet/charge', {
+    method: 'POST',
+    body: JSON.stringify({ balance, success_url, cancel_url }),
+  });
+};
