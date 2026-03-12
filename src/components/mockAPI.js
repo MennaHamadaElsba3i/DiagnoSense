@@ -730,3 +730,13 @@ export const subscribeToPayPerUseAPI = async () => {
     method: 'POST',
   });
 };
+
+/**
+ * GET /api/subscription/current
+ * Returns current billing mode, wallet balance, usage, and plan details.
+ */
+export const getCurrentSubscriptionAPI = async () => {
+  return await apiCall('/api/subscription/current', {
+    method: 'GET',
+  });
+};

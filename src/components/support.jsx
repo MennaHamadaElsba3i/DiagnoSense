@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSidebar } from "./SidebarContext";
+import { useSubscription } from "./SubscriptionContext";
 import Sidebar from "./Sidebar";
 import LogoutConfirmation from "./ConfirmationModal.jsx";
 import NotificationsPanel from "./NotificationsPanel";
@@ -9,6 +10,8 @@ import "../css/support.css";
 function Support() {
   const navigate = useNavigate();
   const { isSidebarCollapsed } = useSidebar();
+  const { subscriptionData, isSubLoading } = useSubscription();
+  const walletBalance = subscriptionData?.wallet_balance != null ? subscriptionData.wallet_balance.toLocaleString() : "—";
 
   // Shared app shell state
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -133,7 +136,7 @@ function Support() {
                 <line x1="1" y1="10" x2="23" y2="10"></line>
               </svg>
             </span>
-            <span>Credits: 1,247</span>
+            <span>Credits: {isSubLoading ? "..." : walletBalance}</span>
           </div>
           <button className="icon-btn" onClick={() => setIsNotificationsOpen(true)}>
             <svg viewBox="0 0 24 24">

@@ -6,6 +6,7 @@ import stethoscope from "../assets/Stethoscope.png";
 import closeIcon from "../assets/close.png";
 import openIcon from "../assets/open.png";
 import { useSidebar } from "../components/SidebarContext";
+import { useSubscription } from "../components/SubscriptionContext";
 import Sidebar from "./Sidebar";
 import "../css/Dashboard.css";
 import NotificationsPanel from "./NotificationsPanel";
@@ -15,6 +16,8 @@ export default function Dashboard() {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const { isSidebarCollapsed, toggleSidebar } = useSidebar();
+  const { subscriptionData, isSubLoading } = useSubscription();
+  const walletBalance = subscriptionData?.wallet_balance != null ? subscriptionData.wallet_balance.toLocaleString() : "—";
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const avatarMenuRef = useRef(null);
 
@@ -60,7 +63,7 @@ export default function Dashboard() {
                 <line x1="1" y1="10" x2="23" y2="10"></line>
               </svg>
             </span>
-            <span>Credits: 1,247</span>
+            <span>Credits: {isSubLoading ? "..." : walletBalance}</span>
           </div>
 
           <button className="icon-btn" onClick={() => setIsNotificationsOpen(true)}>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSidebar } from "./SidebarContext";
+import { useSubscription } from "./SubscriptionContext";
 import Sidebar from "./Sidebar";
 import LogoutConfirmation from "./ConfirmationModal.jsx";
 import "../css/subscription.css";
@@ -17,6 +18,10 @@ function Subscription() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const avatarMenuRef = useRef(null);
+  const { subscriptionData, isSubLoading, refreshSubscription } = useSubscription();
+  const walletBalance = subscriptionData?.wallet_balance != null ? subscriptionData.wallet_balance.toLocaleString() : "—";
+  const isPayPerUse = subscriptionData?.billing_mode === "pay_per_use";
+  const isSubscription = subscriptionData?.billing_mode === "subscription";
   const [transactions, setTransactions] = useState([]); // State لتخزين المعاملات
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
@@ -70,6 +75,7 @@ function Subscription() {
         confirmButtonColor: "#10b981",
       }).then(() => {
         fetchTransactions();
+        refreshSubscription();
         navigate("/subscription", { replace: true, state: { tab: currentTab } });
       });
     }
@@ -158,6 +164,7 @@ function Subscription() {
       if (result.success) {
         setSelectedPlanId("Pay-per-use");
         localStorage.setItem("currentPlanId", "Pay-per-use");
+        refreshSubscription();
 
         Swal.fire({
           icon: "success",
@@ -186,6 +193,7 @@ function Subscription() {
     if (result.success) {
       setSelectedPlanId(planId);
       localStorage.setItem("currentPlanId", planId);
+      refreshSubscription();
 
       Swal.fire({
         icon: "success",
@@ -294,7 +302,7 @@ function Subscription() {
                 <line x1="1" y1="10" x2="23" y2="10"></line>
               </svg>
             </span>
-            <span>Credits: 1,247</span>
+            <span>Credits: {isSubLoading ? "..." : walletBalance}</span>
           </div>
           <button
             className="icon-btn"
@@ -437,25 +445,52 @@ function Subscription() {
         <div className="subscription-page">
           <div className="subscription-container">
             <div className="current-banner">
-              <div>
-                <div className="banner-plan-row">
-                  <span className="banner-plan-name">Pro Plan</span>
-                  <span className="active-badge">
-                    <span className="active-dot"></span> Active
-                  </span>
-                </div>
-                <div className="banner-renewal">
-                  Next renewal: Dec 12, 2025 · Chatbot + Comparative Analysis
-                </div>
-              </div>
-              <div className="banner-right">
-                <div className="banner-price">
-                  E£ 6,000<span>/month</span>
-                </div>
-                <button className="btn-cancel-sub" onClick={cancelSub}>
-                  Cancel Subscription
-                </button>
-              </div>
+              {isSubLoading ? (
+                <div style={{ padding: "8px 0", color: "var(--text-secondary)" }}>Loading current plan...</div>
+              ) : isSubscription ? (
+                <>
+                  <div>
+                    <div className="banner-plan-row">
+                      <span className="banner-plan-name">{subscriptionData.plan_name} Plan</span>
+                      <span className="active-badge">
+                        <span className="active-dot"></span> {subscriptionData.status === "active" ? "Active" : subscriptionData.status}
+                      </span>
+                    </div>
+                    <div className="banner-renewal">
+                      Next renewal: {subscriptionData.expires_at}{subscriptionData.features?.length ? " · " + subscriptionData.features.join(", ") : ""}
+                    </div>
+                  </div>
+                  <div className="banner-right">
+                    <div className="banner-price">
+                      {walletBalance} <span>credits</span>
+                    </div>
+                    <button className="btn-cancel-sub" onClick={cancelSub}>
+                      Cancel Subscription
+                    </button>
+                  </div>
+                </>
+              ) : isPayPerUse ? (
+                <>
+                  <div>
+                    <div className="banner-plan-row">
+                      <span className="banner-plan-name">Pay-Per-Use</span>
+                      <span className="active-badge">
+                        <span className="active-dot"></span> Active
+                      </span>
+                    </div>
+                    <div className="banner-renewal">
+                      {subscriptionData.display_text || "You are currently using the Pay-Per-Use plan."}
+                    </div>
+                  </div>
+                  <div className="banner-right">
+                    <div className="banner-price">
+                      {walletBalance} <span>credits</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div style={{ padding: "8px 0", color: "var(--text-secondary)" }}>No active plan</div>
+              )}
             </div>
 
             <div className="tabs">
@@ -601,40 +636,57 @@ function Subscription() {
             <div
               className={`tab-panel ${activeTab === "usage" ? "active" : ""}`}
             >
-              <div className="usage-plan-bar">
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "10px" }}
-                >
-                  <span className="u-plan-name">Pro Plan</span>
-                  <span className="u-cycle">
-                    Current cycle: Nov 12 – Dec 12, 2024
-                  </span>
-                </div>
-                <span className="green-badge">
-                  <span className="g-dot"></span> Active
-                </span>
-              </div>
-              <div className="usage-box">
-                <div className="u-big">
-                  150 <span>/ 220 files</span>
-                </div>
-                <div className="u-lbl">Total files used this cycle</div>
-                <div className="u-track">
-                  <div className="u-fill" style={{ width: "68.2%" }}></div>
-                </div>
-                <div className="u-foot">
-                  <div className="u-left">
-                    <span>0</span>
-                    <span className="u-remain">70 files remaining</span>
+              {isSubLoading ? (
+                <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-secondary)" }}>Loading usage data...</div>
+              ) : isSubscription ? (
+                <>
+                  <div className="usage-plan-bar">
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: "10px" }}
+                    >
+                      <span className="u-plan-name">{subscriptionData.plan_name} Plan</span>
+                      <span className="u-cycle">
+                        Current cycle: {subscriptionData.starts_at} – {subscriptionData.expires_at}
+                      </span>
+                    </div>
+                    <span className="green-badge">
+                      <span className="g-dot"></span> {subscriptionData.status === "active" ? "Active" : subscriptionData.status}
+                    </span>
                   </div>
-                  <span>220</span>
+                  <div className="usage-box">
+                    <div className="u-big">
+                      {subscriptionData.usage?.used ?? 0} <span>/ {subscriptionData.usage?.total ?? 0} files</span>
+                    </div>
+                    <div className="u-lbl">Total files used this cycle</div>
+                    <div className="u-track">
+                      <div className="u-fill" style={{ width: `${subscriptionData.usage?.percentage ?? 0}%` }}></div>
+                    </div>
+                    <div className="u-foot">
+                      <div className="u-left">
+                        <span>0</span>
+                        <span className="u-remain">{subscriptionData.usage?.remaining ?? 0} files remaining</span>
+                      </div>
+                      <span>{subscriptionData.usage?.total ?? 0}</span>
+                    </div>
+                  </div>
+                </>
+              ) : isPayPerUse ? (
+                <div className="usage-box" style={{ textAlign: "center", padding: "2rem" }}>
+                  <div className="u-lbl" style={{ fontSize: "15px", marginBottom: "8px" }}>
+                    {subscriptionData.display_text || "You are currently using the Pay-Per-Use plan."}
+                  </div>
+                  <div className="u-lbl">
+                    Each file costs E£ {subscriptionData.price_per_file ?? 25}. Usage tracking is per-file.
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-secondary)" }}>No plan data available.</div>
+              )}
               <div className="credits-banner">
                 <div>
                   <div className="cr-lbl">Available Credits</div>
                   <div className="cr-val">
-                    1,247 <em>credits</em>
+                    {isSubLoading ? "..." : walletBalance} <em>credits</em>
                   </div>
                 </div>
                 <button

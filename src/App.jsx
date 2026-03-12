@@ -17,6 +17,7 @@ import Integration from "./components/integration.jsx";
 import Support from "./components/support.jsx";
 import "./App.css";
 import { SidebarProvider } from "./components/SidebarContext";
+import { SubscriptionProvider } from "./components/SubscriptionContext";
 import { getCookie } from "./components/cookieUtils";
 
 const ProtectedRoute = ({ children }) => {
@@ -46,7 +47,9 @@ function App() {
           element={
             <ProtectedRoute>
               <SidebarProvider>
-                <Dashboard />
+                <SubscriptionProvider>
+                  <Dashboard />
+                </SubscriptionProvider>
               </SidebarProvider>
             </ProtectedRoute>
           }
@@ -57,7 +60,9 @@ function App() {
           element={
             <ProtectedRoute>
               <SidebarProvider>
-                <PatientList />
+                <SubscriptionProvider>
+                  <PatientList />
+                </SubscriptionProvider>
               </SidebarProvider>
             </ProtectedRoute>
           }
@@ -68,7 +73,9 @@ function App() {
           element={
             <ProtectedRoute>
               <SidebarProvider>
-                <Settings />
+                <SubscriptionProvider>
+                  <Settings />
+                </SubscriptionProvider>
               </SidebarProvider>
             </ProtectedRoute>
           }
@@ -79,7 +86,9 @@ function App() {
           element={
             <ProtectedRoute>
               <SidebarProvider>
-                <Subscription />
+                <SubscriptionProvider>
+                  <Subscription />
+                </SubscriptionProvider>
               </SidebarProvider>
             </ProtectedRoute>
           }
@@ -90,7 +99,9 @@ function App() {
           element={
             <ProtectedRoute>
               <SidebarProvider>
-                <AddPatient />
+                <SubscriptionProvider>
+                  <AddPatient />
+                </SubscriptionProvider>
               </SidebarProvider>
             </ProtectedRoute>
           }
@@ -101,7 +112,9 @@ function App() {
           element={
             <ProtectedRoute>
               <SidebarProvider>
-                <PatientProfile />
+                <SubscriptionProvider>
+                  <PatientProfile />
+                </SubscriptionProvider>
               </SidebarProvider>
             </ProtectedRoute>
           }
@@ -111,7 +124,9 @@ function App() {
           element={
             <ProtectedRoute>
               <SidebarProvider>
-                <PatientProfile />
+                <SubscriptionProvider>
+                  <PatientProfile />
+                </SubscriptionProvider>
               </SidebarProvider>
             </ProtectedRoute>
           }
@@ -121,7 +136,9 @@ function App() {
           element={
             <ProtectedRoute>
               <SidebarProvider>
-                <AddPatient />
+                <SubscriptionProvider>
+                  <AddPatient />
+                </SubscriptionProvider>
               </SidebarProvider>
             </ProtectedRoute>
           }
@@ -131,7 +148,9 @@ function App() {
           element={
             <ProtectedRoute>
               <SidebarProvider>
-                <Support />
+                <SubscriptionProvider>
+                  <Support />
+                </SubscriptionProvider>
               </SidebarProvider>
             </ProtectedRoute>
           }
@@ -143,3 +162,4 @@ function App() {
 }
 
 export default App;
+
