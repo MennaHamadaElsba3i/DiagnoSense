@@ -692,3 +692,14 @@ export const chargeWalletAPI = async (balance) => {
     body: JSON.stringify({ balance, success_url, cancel_url }),
   });
 };
+
+
+/**
+ * GET /api/transactions
+ * Fetches the wallet transaction history.
+ */
+export const getTransactionsAPI = async () => {
+  return await apiCall('/api/transactions', {
+    method: 'GET',
+  });
+};

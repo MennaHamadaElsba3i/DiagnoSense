@@ -5,7 +5,7 @@ import Sidebar from "./Sidebar";
 import LogoutConfirmation from "./ConfirmationModal.jsx";
 import "../css/subscription.css";
 import Swal from "sweetalert2";
-import { chargeWalletAPI } from "./mockAPI.js"; 
+import { chargeWalletAPI, getTransactionsAPI } from "./mockAPI.js";
 import NotificationsPanel from "./NotificationsPanel";
 
 function Subscription() {
@@ -17,6 +17,22 @@ function Subscription() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const avatarMenuRef = useRef(null);
+  const [transactions, setTransactions] = useState([]); // State لتخزين المعاملات
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
+  const fetchTransactions = async () => {
+    setIsLoadingHistory(true);
+    const result = await getTransactionsAPI();
+    console.log("--- Transactions API Full Response ---", result);
+    if (result.success && Array.isArray(result.data)) {
+      setTransactions(result.data);
+    }
+    setIsLoadingHistory(false);
+  };
+
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -41,35 +57,36 @@ function Subscription() {
   const openLogoutModal = () => setIsLogoutModalOpen(true);
   const closeLogoutModal = () => setIsLogoutModalOpen(false);
 
- useEffect(() => {
-  const searchParams = new URLSearchParams(location.search);
-  const status = searchParams.get("status");
-  const currentTab = searchParams.get("tab") || "billing";
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const status = searchParams.get("status");
+    const currentTab = searchParams.get("tab") || "billing";
 
-  if (status === "success") {
-    Swal.fire({
-      icon: "success",
-      title: "Payment Successful",
-      text: "Your wallet has been topped up successfully.",
-      confirmButtonColor: "#10b981",
-    }).then(() => {
-      navigate("/subscription", { replace: true, state: { tab: currentTab } });
-    }); 
-  } 
-  else if (status === "canceled" || status === "cancel" || status === "failed") {
-    Swal.fire({
-      icon: "warning",
-      title: "Payment Cancelled",
-      text: "The payment process was not completed. No credits were added.",
-      confirmButtonColor: "#f59e0b"
-    }).then(() => {
-      navigate("/subscription", { replace: true,state: { tab: currentTab } });
-    });
-  }
-}, [location.search, navigate]);
+    if (status === "success") {
+      Swal.fire({
+        icon: "success",
+        title: "Payment Successful",
+        text: "Your wallet has been topped up successfully.",
+        confirmButtonColor: "#10b981",
+      }).then(() => {
+        fetchTransactions();
+        navigate("/subscription", { replace: true, state: { tab: currentTab } });
+      });
+    }
+    else if (status === "canceled" || status === "cancel" || status === "failed") {
+      Swal.fire({
+        icon: "warning",
+        title: "Payment Cancelled",
+        text: "The payment process was not completed. No credits were added.",
+        confirmButtonColor: "#f59e0b"
+      }).then(() => {
+        navigate("/subscription", { replace: true, state: { tab: currentTab } });
+      });
+    }
+  }, [location.search, navigate]);
   const [activeTab, setActiveTab] = useState(
-  searchParams.get("tab") || location.state?.tab || "plans"
-);
+    searchParams.get("tab") || location.state?.tab || "plans"
+  );
 
   useEffect(() => {
     if (location.state?.tab) {
@@ -80,7 +97,7 @@ function Subscription() {
   const [selectedAmt, setSelectedAmt] = useState(null);
   const [isCharged, setIsCharged] = useState(false);
   const [chargeHint, setChargeHint] = useState("");
-  const [historyFilter, setHistoryFilter] = useState("30days"); 
+  const [historyFilter, setHistoryFilter] = useState("30days");
 
   const handleTabSwitch = (tabId) => setActiveTab(tabId);
 
@@ -113,7 +130,7 @@ function Subscription() {
     setChargeHint("");
   };
 
-const doCharge = async () => {
+  const doCharge = async () => {
     const val = parseFloat(chargeAmt);
     if (!val || val < 50) {
       Swal.fire({
@@ -252,8 +269,8 @@ const doCharge = async () => {
                     transition: "background-color 0.2s",
                   }}
                   onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor =
-                      "var(--hover-bg, #f3f4f6)")
+                  (e.currentTarget.style.backgroundColor =
+                    "var(--hover-bg, #f3f4f6)")
                   }
                   onMouseLeave={(e) =>
                     (e.currentTarget.style.backgroundColor = "transparent")
@@ -292,8 +309,8 @@ const doCharge = async () => {
                     transition: "background-color 0.2s",
                   }}
                   onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor =
-                      "var(--danger-bg-subtle, #fee2e2)")
+                  (e.currentTarget.style.backgroundColor =
+                    "var(--danger-bg-subtle, #fee2e2)")
                   }
                   onMouseLeave={(e) =>
                     (e.currentTarget.style.backgroundColor = "transparent")
@@ -666,70 +683,31 @@ const doCharge = async () => {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td className="td-d">Nov 12, 2024</td>
-                      <td className="td-desc">Pro Plan — Monthly</td>
-                      <td className="td-amt">E£ 6,000</td>
-                      <td>
-                        <span className="paid">✓ Paid</span>
-                      </td>
-                      <td>
-                        <button
-                          className="btn-dl"
-                          onClick={() => dlInv("Nov 12")}
-                        >
-                          ↓ Download
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="td-d">Oct 12, 2024</td>
-                      <td className="td-desc">Pro Plan — Monthly</td>
-                      <td className="td-amt">E£ 6,000</td>
-                      <td>
-                        <span className="paid">✓ Paid</span>
-                      </td>
-                      <td>
-                        <button
-                          className="btn-dl"
-                          onClick={() => dlInv("Oct 12")}
-                        >
-                          ↓ Download
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="td-d">Sep 12, 2024</td>
-                      <td className="td-desc">Pro Plan — Monthly</td>
-                      <td className="td-amt">E£ 6,000</td>
-                      <td>
-                        <span className="paid">✓ Paid</span>
-                      </td>
-                      <td>
-                        <button
-                          className="btn-dl"
-                          onClick={() => dlInv("Sep 12")}
-                        >
-                          ↓ Download
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="td-d">Aug 20, 2024</td>
-                      <td className="td-desc">Credits Top-up</td>
-                      <td className="td-amt">E£ 500</td>
-                      <td>
-                        <span className="paid">✓ Paid</span>
-                      </td>
-                      <td>
-                        <button
-                          className="btn-dl"
-                          onClick={() => dlInv("Aug 20")}
-                        >
-                          ↓ Download
-                        </button>
-                      </td>
-                    </tr>
+                    {transactions.length > 0 ? (
+                      transactions.map((tx) => (
+                        <tr key={tx.id}>
+                          <td className="td-d">{tx.date}</td>
+                          <td className="td-desc">{tx.description}</td>
+                          <td className="td-amt">E£ {tx.amount}</td>
+                          <td>
+                            <span className={tx.status === "completed" ? "paid" : "pending"}>
+                              {tx.status}
+                            </span>
+                          </td>
+                          <td>
+                            <button className="btn-dl" onClick={() => dlInv(tx.date)}>
+                              ↓ Download
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" style={{ textAlign: "center", padding: "20px" }}>
+                          {isLoadingHistory ? "Loading history..." : "No transactions found."}
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
