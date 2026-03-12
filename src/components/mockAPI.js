@@ -701,4 +701,16 @@ export const getSubscriptionPlansAPI = async () => {
   return await apiCall('/api/subscription/plans', {
     method: 'GET',
   });
-};
+};
+
+/**
+ * POST /api/subscription/subscribe
+ * Subscribes user to a specific plan.
+ */
+export const subscribeToPlanAPI = async (plan_id) => {
+  return await apiCall('/api/subscription/subscribe', {
+    method: 'POST',
+    body: JSON.stringify({ plan_id }),
+  });
+};
+

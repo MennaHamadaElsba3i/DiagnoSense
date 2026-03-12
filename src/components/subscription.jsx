@@ -5,7 +5,7 @@ import Sidebar from "./Sidebar";
 import LogoutConfirmation from "./ConfirmationModal.jsx";
 import "../css/subscription.css";
 import Swal from "sweetalert2";
-import { chargeWalletAPI, getSubscriptionPlansAPI } from "./mockAPI.js"; 
+import { chargeWalletAPI, getSubscriptionPlansAPI, subscribeToPlanAPI } from "./mockAPI.js"; 
 import NotificationsPanel from "./NotificationsPanel";
 
 function Subscription() {
@@ -86,6 +86,7 @@ function Subscription() {
   const [isPlansLoading, setIsPlansLoading] = useState(true);
   const [plansError, setPlansError] = useState(null);
   const [selectedPlanId, setSelectedPlanId] = useState(null);
+  const [subscribingPlanId, setSubscribingPlanId] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -119,15 +120,30 @@ function Subscription() {
     }
   };
 
-  const startPlan = (plan) => {
-    if (typeof plan === 'string') {
-      window.alert(`You selected the ${plan} plan!\nRedirecting to checkout...`);
-      return;
+  const startPlan = async (plan) => {
+    const planId = plan?.id || plan;
+    
+    setSelectedPlanId(planId);
+    setSubscribingPlanId(planId);
+
+    const result = await subscribeToPlanAPI(planId);
+    
+    setSubscribingPlanId(null);
+
+    if (result.success) {
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: result.message || "Successfully subscribed to the plan!",
+        confirmButtonColor: "#10b981",
+      });
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Subscription Failed",
+        text: result.message || "Something went wrong. Please try again.",
+      });
     }
-    setSelectedPlanId(plan.id);
-    window.alert(
-      `You selected the ${plan.name} plan!\nRedirecting to checkout...`,
-    );
   };
 
   const pickAmt = (amt) => {
@@ -447,8 +463,10 @@ const doCharge = async () => {
                       <button
                         className="btn-plan"
                         onClick={() => startPlan(plan)}
+                        disabled={subscribingPlanId === plan.id}
+                        style={{ cursor: subscribingPlanId === plan.id ? 'not-allowed' : 'pointer' }}
                       >
-                        Get Started
+                        {subscribingPlanId === plan.id ? "Subscribing..." : "Get Started"}
                       </button>
                     </div>
                   ))
