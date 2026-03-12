@@ -193,6 +193,8 @@
   border: 1.5px solid var(--border);
   position: relative;
   transition: box-shadow 0.2s, transform 0.2s;
+  display: flex;
+  flex-direction: column;
 }
 
 .subscription-page .plan-card:hover {
@@ -294,6 +296,7 @@
   cursor: pointer;
   font-family: inherit;
   transition: all 0.15s;
+  margin-top: auto;
 }
 
 .subscription-page .btn-plan:hover {

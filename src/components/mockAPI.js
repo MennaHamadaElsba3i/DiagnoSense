@@ -713,4 +713,14 @@ export const subscribeToPlanAPI = async (plan_id) => {
     body: JSON.stringify({ plan_id }),
   });
 };
+
+/**
+ * POST /api/subscription/pay-per-use
+ * Switches user to Pay-Per-Use mode.
+ */
+export const subscribeToPayPerUseAPI = async () => {
+  return await apiCall('/api/subscription/pay-per-use', {
+    method: 'POST',
+  });
+};
 

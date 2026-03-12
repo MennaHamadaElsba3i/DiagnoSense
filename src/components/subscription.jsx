@@ -5,7 +5,7 @@ import Sidebar from "./Sidebar";
 import LogoutConfirmation from "./ConfirmationModal.jsx";
 import "../css/subscription.css";
 import Swal from "sweetalert2";
-import { chargeWalletAPI, getSubscriptionPlansAPI, subscribeToPlanAPI } from "./mockAPI.js"; 
+import { chargeWalletAPI, getSubscriptionPlansAPI, subscribeToPlanAPI, subscribeToPayPerUseAPI } from "./mockAPI.js"; 
 import NotificationsPanel from "./NotificationsPanel";
 
 function Subscription() {
@@ -85,7 +85,12 @@ function Subscription() {
   const [plans, setPlans] = useState([]);
   const [isPlansLoading, setIsPlansLoading] = useState(true);
   const [plansError, setPlansError] = useState(null);
-  const [selectedPlanId, setSelectedPlanId] = useState(null);
+  const [selectedPlanId, setSelectedPlanId] = useState(
+    () => {
+      const saved = localStorage.getItem("currentPlanId");
+      return saved ? (isNaN(saved) ? saved : Number(saved)) : null;
+    }
+  );
   const [subscribingPlanId, setSubscribingPlanId] = useState(null);
 
   useEffect(() => {
@@ -121,9 +126,40 @@ function Subscription() {
   };
 
   const startPlan = async (plan) => {
+    if (plan === "Enterprise") {
+      window.alert("You selected the Enterprise plan!\nPlease contact our enterprise sales team.");
+      return;
+    }
+    
+    if (plan === "Pay-per-use") {
+      setSubscribingPlanId("Pay-per-use");
+
+      const result = await subscribeToPayPerUseAPI();
+      
+      setSubscribingPlanId(null);
+
+      if (result.success) {
+        setSelectedPlanId("Pay-per-use");
+        localStorage.setItem("currentPlanId", "Pay-per-use");
+
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: result.message || "Successfully switched to Pay-Per-Use mode!",
+          confirmButtonColor: "#10b981",
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Switch Failed",
+          text: result.message || "Something went wrong. Please try again.",
+        });
+      }
+      return;
+    }
+
     const planId = plan?.id || plan;
     
-    setSelectedPlanId(planId);
     setSubscribingPlanId(planId);
 
     const result = await subscribeToPlanAPI(planId);
@@ -131,6 +167,9 @@ function Subscription() {
     setSubscribingPlanId(null);
 
     if (result.success) {
+      setSelectedPlanId(planId);
+      localStorage.setItem("currentPlanId", planId);
+
       Swal.fire({
         icon: "success",
         title: "Success",
@@ -440,8 +479,11 @@ const doCharge = async () => {
                     No plans available at the moment.
                   </div>
                 ) : (
-                  plans.map((plan) => (
-                    <div className="plan-card" key={plan.id}>
+                  plans.map((plan) => {
+                    const isCurrent = selectedPlanId === plan.id;
+                    return (
+                    <div className={`plan-card ${isCurrent ? "popular" : ""}`} key={plan.id}>
+                      {isCurrent && <div className="badge-current">Current Plan</div>}
                       <div className="plan-name">{plan.name}</div>
                       <span className="plan-price">E£ {plan.price.toLocaleString()}</span>
                       <div className="plan-period">per {plan.duration_days === 30 ? "month" : `${plan.duration_days} days`}*</div>
@@ -461,20 +503,22 @@ const doCharge = async () => {
                         ))}
                       </div>
                       <button
-                        className="btn-plan"
+                        className={`btn-plan ${isCurrent ? "cur" : ""}`}
                         onClick={() => startPlan(plan)}
-                        disabled={subscribingPlanId === plan.id}
-                        style={{ cursor: subscribingPlanId === plan.id ? 'not-allowed' : 'pointer' }}
+                        disabled={subscribingPlanId === plan.id || isCurrent}
+                        style={{ cursor: (subscribingPlanId === plan.id || isCurrent) ? 'not-allowed' : 'pointer' }}
                       >
-                        {subscribingPlanId === plan.id ? "Subscribing..." : "Get Started"}
+                        {subscribingPlanId === plan.id ? "Subscribing..." : isCurrent ? "Current Plan" : "Get Started"}
                       </button>
                     </div>
-                  ))
+                  )}
+                  )
                 )}
               </div>
 
               <div className="bottom-grid">
-                <div className="ppu-card">
+                <div className={`ppu-card ${selectedPlanId === "Pay-per-use" ? "popular" : ""}`}>
+                  {selectedPlanId === "Pay-per-use" && <div className="badge-current">Current Mode</div>}
                   <div>
                     <div className="ppu-lbl">Pay-per-use</div>
                     <div className="ppu-sub">Most popular plan</div>
@@ -488,10 +532,15 @@ const doCharge = async () => {
                       <span style={{ fontSize: "12px" }}>All features</span>
                     </div>
                     <button
-                      className="btn-solid"
+                      className={`btn-solid ${selectedPlanId === "Pay-per-use" ? "cur" : ""}`}
                       onClick={() => startPlan("Pay-per-use")}
+                      disabled={subscribingPlanId === "Pay-per-use" || selectedPlanId === "Pay-per-use"}
+                      style={{
+                        cursor: (subscribingPlanId === "Pay-per-use" || selectedPlanId === "Pay-per-use") ? 'not-allowed' : 'pointer',
+                        whiteSpace: "nowrap"
+                      }}
                     >
-                      Get Started
+                      {subscribingPlanId === "Pay-per-use" ? "Switching..." : selectedPlanId === "Pay-per-use" ? "Current Mode" : "Get Started"}
                     </button>
                   </div>
                 </div>
