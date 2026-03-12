@@ -692,3 +692,13 @@ export const chargeWalletAPI = async (balance) => {
     body: JSON.stringify({ balance, success_url, cancel_url }),
   });
 };
+
+/**
+ * GET /api/subscription/plans
+ * Returns available subscription plans.
+ */
+export const getSubscriptionPlansAPI = async () => {
+  return await apiCall('/api/subscription/plans', {
+    method: 'GET',
+  });
+};
