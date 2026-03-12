@@ -725,3 +725,8 @@ export const subscribeToPlanAPI = async (plan_id) => {
   });
 };
 
+export const subscribeToPayPerUseAPI = async () => {
+  return await apiCall('/api/subscription/pay-per-use', {
+    method: 'POST',
+  });
+};
