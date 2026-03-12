@@ -5,7 +5,7 @@ import Sidebar from "./Sidebar";
 import LogoutConfirmation from "./ConfirmationModal.jsx";
 import "../css/subscription.css";
 import Swal from "sweetalert2";
-import { chargeWalletAPI, getTransactionsAPI } from "./mockAPI.js";
+import { chargeWalletAPI,getTransactionsAPI, getSubscriptionPlansAPI, subscribeToPlanAPI } from "./mockAPI.js"; 
 import NotificationsPanel from "./NotificationsPanel";
 
 function Subscription() {
@@ -99,6 +99,34 @@ function Subscription() {
   const [chargeHint, setChargeHint] = useState("");
   const [historyFilter, setHistoryFilter] = useState("30days");
 
+  const [plans, setPlans] = useState([]);
+  const [isPlansLoading, setIsPlansLoading] = useState(true);
+  const [plansError, setPlansError] = useState(null);
+  const [selectedPlanId, setSelectedPlanId] = useState(null);
+  const [subscribingPlanId, setSubscribingPlanId] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchPlans = async () => {
+      setIsPlansLoading(true);
+      setPlansError(null);
+      const result = await getSubscriptionPlansAPI();
+      
+      if (!isMounted) return;
+      
+      setIsPlansLoading(false);
+      if (result.success && result.data) {
+        setPlans(result.data);
+      } else {
+        setPlansError(result.message || "Failed to load plans");
+      }
+    };
+    
+    fetchPlans();
+    
+    return () => { isMounted = false; };
+  }, []);
+
   const handleTabSwitch = (tabId) => setActiveTab(tabId);
 
   const cancelSub = () => {
@@ -109,10 +137,30 @@ function Subscription() {
     }
   };
 
-  const startPlan = (planName) => {
-    window.alert(
-      `You selected the ${planName} plan!\nRedirecting to checkout...`,
-    );
+  const startPlan = async (plan) => {
+    const planId = plan?.id || plan;
+    
+    setSelectedPlanId(planId);
+    setSubscribingPlanId(planId);
+
+    const result = await subscribeToPlanAPI(planId);
+    
+    setSubscribingPlanId(null);
+
+    if (result.success) {
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: result.message || "Successfully subscribed to the plan!",
+        confirmButtonColor: "#10b981",
+      });
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Subscription Failed",
+        text: result.message || "Something went wrong. Please try again.",
+      });
+    }
   };
 
   const pickAmt = (amt) => {
@@ -396,95 +444,50 @@ function Subscription() {
               className={`tab-panel ${activeTab === "plans" ? "active" : ""}`}
             >
               <div className="plans-grid">
-                <div className="plan-card">
-                  <div className="plan-name">Basic</div>
-                  <span className="plan-price">E£ 2,400</span>
-                  <div className="plan-period">per month*</div>
-                  <div className="plan-tagline">Best for solo doctors</div>
-                  <div className="plan-feats">
-                    <div className="feat">
-                      <span className="feat-ck">✓</span>
-                      <span className="feat-t">Up to 270 summaries</span>
-                    </div>
-                    <div className="feat">
-                      <span className="feat-ck">✓</span>
-                      <span className="feat-t">Key Important Information</span>
-                    </div>
-                    <div className="feat">
-                      <span className="feat-ck">✓</span>
-                      <span className="feat-t">Comparative Analysis</span>
-                    </div>
+                {isPlansLoading ? (
+                  <div style={{ padding: "3rem", textAlign: "center", gridColumn: "1 / -1", color: "var(--text-secondary)" }}>
+                    Loading available plans...
                   </div>
-                  <button
-                    className="btn-plan"
-                    onClick={() => startPlan("Basic")}
-                  >
-                    Get Started
-                  </button>
-                </div>
-
-                <div className="plan-card popular">
-                  <div className="badge-popular">⭐ Most Popular</div>
-                  <div className="badge-current">Current Plan</div>
-                  <div className="plan-name">Pro</div>
-                  <span className="plan-price">E£ 6,000</span>
-                  <div className="plan-period">per month*</div>
-                  <div className="plan-tagline">Most popular plan</div>
-                  <div className="plan-feats">
-                    <div className="feat">
-                      <span className="feat-ck">✓</span>
-                      <span className="feat-t">Up to 450 summaries</span>
-                    </div>
-                    <div className="feat">
-                      <span className="feat-ck">✓</span>
-                      <span className="feat-t">Key Important Information</span>
-                    </div>
-                    <div className="feat">
-                      <span className="feat-ck">✓</span>
-                      <span className="feat-t">Comparative Analysis</span>
-                    </div>
-                    <div className="feat">
-                      <span className="feat-ck">✓</span>
-                      <span className="feat-t">Decision Support</span>
-                    </div>
+                ) : plansError ? (
+                  <div style={{ padding: "3rem", textAlign: "center", gridColumn: "1 / -1", color: "var(--danger-color)" }}>
+                    {plansError}
                   </div>
-                  <button className="btn-plan cur">Current Plan</button>
-                </div>
-
-                <div className="plan-card">
-                  <div className="plan-name">Premium</div>
-                  <span className="plan-price">E£ 12,000</span>
-                  <div className="plan-period">per month*</div>
-                  <div className="plan-tagline">Exclusively for teams</div>
-                  <div className="plan-feats">
-                    <div className="feat">
-                      <span className="feat-ck">✓</span>
-                      <span className="feat-t">Up to 660 summaries</span>
-                    </div>
-                    <div className="feat">
-                      <span className="feat-ck">✓</span>
-                      <span className="feat-t">Key Important Information</span>
-                    </div>
-                    <div className="feat">
-                      <span className="feat-ck">✓</span>
-                      <span className="feat-t">Comparative Analysis</span>
-                    </div>
-                    <div className="feat">
-                      <span className="feat-ck">✓</span>
-                      <span className="feat-t">Decision Support</span>
-                    </div>
-                    <div className="feat">
-                      <span className="feat-ck">✓</span>
-                      <span className="feat-t">DiagnoBot</span>
-                    </div>
+                ) : plans.length === 0 ? (
+                  <div style={{ padding: "3rem", textAlign: "center", gridColumn: "1 / -1", color: "var(--text-secondary)" }}>
+                    No plans available at the moment.
                   </div>
-                  <button
-                    className="btn-plan"
-                    onClick={() => startPlan("Premium")}
-                  >
-                    Get Started
-                  </button>
-                </div>
+                ) : (
+                  plans.map((plan) => (
+                    <div className="plan-card" key={plan.id}>
+                      <div className="plan-name">{plan.name}</div>
+                      <span className="plan-price">E£ {plan.price.toLocaleString()}</span>
+                      <div className="plan-period">per {plan.duration_days === 30 ? "month" : `${plan.duration_days} days`}*</div>
+                      <div className="plan-tagline"></div>
+                      <div className="plan-feats">
+                        {plan.summaries_limit > 0 && (
+                          <div className="feat">
+                            <span className="feat-ck">✓</span>
+                            <span className="feat-t">Up to {plan.summaries_limit} summaries</span>
+                          </div>
+                        )}
+                        {plan.features?.map((feature, idx) => (
+                          <div className="feat" key={idx}>
+                            <span className="feat-ck">✓</span>
+                            <span className="feat-t">{feature}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        className="btn-plan"
+                        onClick={() => startPlan(plan)}
+                        disabled={subscribingPlanId === plan.id}
+                        style={{ cursor: subscribingPlanId === plan.id ? 'not-allowed' : 'pointer' }}
+                      >
+                        {subscribingPlanId === plan.id ? "Subscribing..." : "Get Started"}
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
 
               <div className="bottom-grid">
