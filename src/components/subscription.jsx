@@ -6,7 +6,7 @@ import Sidebar from "./Sidebar";
 import LogoutConfirmation from "./ConfirmationModal.jsx";
 import "../css/subscription.css";
 import Swal from "sweetalert2";
-import { chargeWalletAPI,getTransactionsAPI, getSubscriptionPlansAPI, subscribeToPlanAPI, subscribeToPayPerUseAPI } from "./mockAPI.js"; 
+import { chargeWalletAPI, getTransactionsAPI, getSubscriptionPlansAPI, subscribeToPlanAPI, subscribeToPayPerUseAPI, cancelSubscriptionAPI } from "./mockAPI.js";
 import NotificationsPanel from "./NotificationsPanel";
 
 function Subscription() {
@@ -19,18 +19,21 @@ function Subscription() {
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const avatarMenuRef = useRef(null);
   const { subscriptionData, isSubLoading, refreshSubscription } = useSubscription();
+  const { credits, isCreditsLoading, refreshCredits } = useSubscription();
   const walletBalance = subscriptionData?.wallet_balance != null ? subscriptionData.wallet_balance.toLocaleString() : "—";
   const isPayPerUse = subscriptionData?.billing_mode === "pay_per_use";
   const isSubscription = subscriptionData?.billing_mode === "subscription";
-  const [transactions, setTransactions] = useState([]); // State لتخزين المعاملات
+  const [transactions, setTransactions] = useState([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [isCancelledLocally, setIsCancelledLocally] = useState(false);
 
   const fetchTransactions = async () => {
     setIsLoadingHistory(true);
     const result = await getTransactionsAPI();
     console.log("--- Transactions API Full Response ---", result);
-    if (result.success && Array.isArray(result.data)) {
-      setTransactions(result.data);
+    if (result.success && result.data) {
+      setTransactions(result.data.transactions);
+      // credits are managed globally via context — no local state needed
     }
     setIsLoadingHistory(false);
   };
@@ -68,14 +71,15 @@ function Subscription() {
     const currentTab = searchParams.get("tab") || "billing";
 
     if (status === "success") {
+      fetchTransactions();
+      refreshSubscription();
+      refreshCredits();
       Swal.fire({
         icon: "success",
         title: "Payment Successful",
         text: "Your wallet has been topped up successfully.",
         confirmButtonColor: "#10b981",
       }).then(() => {
-        fetchTransactions();
-        refreshSubscription();
         navigate("/subscription", { replace: true, state: { tab: currentTab } });
       });
     }
@@ -122,9 +126,9 @@ function Subscription() {
       setIsPlansLoading(true);
       setPlansError(null);
       const result = await getSubscriptionPlansAPI();
-      
+
       if (!isMounted) return;
-      
+
       setIsPlansLoading(false);
       if (result.success && result.data) {
         setPlans(result.data);
@@ -132,19 +136,48 @@ function Subscription() {
         setPlansError(result.message || "Failed to load plans");
       }
     };
-    
+
     fetchPlans();
-    
+
     return () => { isMounted = false; };
   }, []);
 
   const handleTabSwitch = (tabId) => setActiveTab(tabId);
 
-  const cancelSub = () => {
-    if (window.confirm("Are you sure you want to cancel your subscription?")) {
-      window.alert(
-        "Subscription cancelled. You will retain access until Dec 12, 2025.",
-      );
+  const cancelSub = async () => {
+    const result = await Swal.fire({
+      icon: "warning",
+      title: "Cancel Subscription",
+      text: "Are you sure you want to cancel your plan?",
+      showCancelButton: true,
+      confirmButtonText: "Yes, cancel it",
+      cancelButtonText: "No, keep it",
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+    });
+
+    if (result.isConfirmed) {
+      const apiResult = await cancelSubscriptionAPI();
+
+      if (apiResult.success) {
+        Swal.fire({
+          icon: "success",
+          title: "Cancelled",
+          text: apiResult.message || "Subscription cancelled successfully.",
+        });
+        setIsCancelledLocally(true);
+        setSelectedPlanId(null);
+        localStorage.removeItem("currentPlanId");
+        refreshSubscription();
+        refreshCredits();
+        fetchTransactions();
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Cancellation Failed",
+          text: apiResult.message || "Something went wrong.",
+        });
+      }
     }
   };
 
@@ -153,18 +186,21 @@ function Subscription() {
       window.alert("You selected the Enterprise plan!\nPlease contact our enterprise sales team.");
       return;
     }
-    
+
     if (plan === "Pay-per-use") {
       setSubscribingPlanId("Pay-per-use");
 
       const result = await subscribeToPayPerUseAPI();
-      
+
       setSubscribingPlanId(null);
 
       if (result.success) {
+        setIsCancelledLocally(false);
         setSelectedPlanId("Pay-per-use");
         localStorage.setItem("currentPlanId", "Pay-per-use");
         refreshSubscription();
+        refreshCredits();
+        fetchTransactions();
 
         Swal.fire({
           icon: "success",
@@ -183,17 +219,20 @@ function Subscription() {
     }
 
     const planId = plan?.id || plan;
-    
+
     setSubscribingPlanId(planId);
 
     const result = await subscribeToPlanAPI(planId);
-    
+
     setSubscribingPlanId(null);
 
     if (result.success) {
+      setIsCancelledLocally(false);
       setSelectedPlanId(planId);
       localStorage.setItem("currentPlanId", planId);
       refreshSubscription();
+      refreshCredits();
+      fetchTransactions();
 
       Swal.fire({
         icon: "success",
@@ -302,7 +341,7 @@ function Subscription() {
                 <line x1="1" y1="10" x2="23" y2="10"></line>
               </svg>
             </span>
-            <span>Credits: {isSubLoading ? "..." : walletBalance}</span>
+            <span>Credits: {isCreditsLoading ? "..." : (credits?.toLocaleString() ?? "0")}</span>
           </div>
           <button
             className="icon-btn"
@@ -448,46 +487,69 @@ function Subscription() {
               {isSubLoading ? (
                 <div style={{ padding: "8px 0", color: "var(--text-secondary)" }}>Loading current plan...</div>
               ) : isSubscription ? (
-                <>
-                  <div>
-                    <div className="banner-plan-row">
-                      <span className="banner-plan-name">{subscriptionData.plan_name} Plan</span>
-                      <span className="active-badge">
-                        <span className="active-dot"></span> {subscriptionData.status === "active" ? "Active" : subscriptionData.status}
-                      </span>
-                    </div>
-                    <div className="banner-renewal">
-                      Next renewal: {subscriptionData.expires_at}{subscriptionData.features?.length ? " · " + subscriptionData.features.join(", ") : ""}
-                    </div>
-                  </div>
-                  <div className="banner-right">
-                    <div className="banner-price">
-                      {walletBalance} <span>credits</span>
-                    </div>
-                    <button className="btn-cancel-sub" onClick={cancelSub}>
-                      Cancel Subscription
-                    </button>
-                  </div>
-                </>
+                (() => {
+                  const isEffectivelyCancelled = isCancelledLocally || (subscriptionData?.status && subscriptionData.status.toLowerCase() !== "active");
+                  const displayStatus = isEffectivelyCancelled ? "Cancelled" : "Active";
+                  const badgeClass = isEffectivelyCancelled ? "cancelled-badge" : "active-badge";
+                  const dotClass = isEffectivelyCancelled ? "cancelled-dot" : "active-dot";
+                  return (
+                    <>
+                      <div>
+                        <div className="banner-plan-row">
+                          <span className="banner-plan-name">{subscriptionData.plan_name} Plan</span>
+                          <span className={badgeClass}>
+                            <span className={dotClass}></span> {displayStatus}
+                          </span>
+                        </div>
+                        <div className="banner-renewal">
+                          Next renewal: {subscriptionData.expires_at}{subscriptionData.features?.length ? " · " + subscriptionData.features.join(", ") : ""}
+                        </div>
+                      </div>
+                      <div className="banner-right">
+                        <div className="banner-price">
+                          {isCreditsLoading ? "..." : (credits?.toLocaleString() ?? "0")} <span>credits</span>
+                        </div>
+                        {!isEffectivelyCancelled && (
+                          <button className="btn-cancel-sub" onClick={cancelSub}>
+                            Cancel Subscription
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()
               ) : isPayPerUse ? (
-                <>
-                  <div>
-                    <div className="banner-plan-row">
-                      <span className="banner-plan-name">Pay-Per-Use</span>
-                      <span className="active-badge">
-                        <span className="active-dot"></span> Active
-                      </span>
-                    </div>
-                    <div className="banner-renewal">
-                      {subscriptionData.display_text || "You are currently using the Pay-Per-Use plan."}
-                    </div>
-                  </div>
-                  <div className="banner-right">
-                    <div className="banner-price">
-                      {walletBalance} <span>credits</span>
-                    </div>
-                  </div>
-                </>
+                (() => {
+                  const isEffectivelyCancelled = isCancelledLocally || (subscriptionData?.status && subscriptionData.status.toLowerCase() !== "active");
+                  const displayStatus = isEffectivelyCancelled ? "Cancelled" : "Active";
+                  const badgeClass = isEffectivelyCancelled ? "cancelled-badge" : "active-badge";
+                  const dotClass = isEffectivelyCancelled ? "cancelled-dot" : "active-dot";
+                  return (
+                    <>
+                      <div>
+                        <div className="banner-plan-row">
+                          <span className="banner-plan-name">Pay-Per-Use</span>
+                          <span className={badgeClass}>
+                            <span className={dotClass}></span> {displayStatus}
+                          </span>
+                        </div>
+                        <div className="banner-renewal">
+                          {subscriptionData.display_text || "You are currently using the Pay-Per-Use plan."}
+                        </div>
+                      </div>
+                      <div className="banner-right">
+                        <div className="banner-price">
+                          {isCreditsLoading ? "..." : (credits?.toLocaleString() ?? "0")} <span>credits</span>
+                        </div>
+                        {!isEffectivelyCancelled && (
+                          <button className="btn-cancel-sub" onClick={cancelSub}>
+                            Cancel Subscription
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()
               ) : (
                 <div style={{ padding: "8px 0", color: "var(--text-secondary)" }}>No active plan</div>
               )}
@@ -534,36 +596,37 @@ function Subscription() {
                   plans.map((plan) => {
                     const isCurrent = selectedPlanId === plan.id;
                     return (
-                    <div className={`plan-card ${isCurrent ? "popular" : ""}`} key={plan.id}>
-                      {isCurrent && <div className="badge-current">Current Plan</div>}
-                      <div className="plan-name">{plan.name}</div>
-                      <span className="plan-price">E£ {plan.price.toLocaleString()}</span>
-                      <div className="plan-period">per {plan.duration_days === 30 ? "month" : `${plan.duration_days} days`}*</div>
-                      <div className="plan-tagline"></div>
-                      <div className="plan-feats">
-                        {plan.summaries_limit > 0 && (
-                          <div className="feat">
-                            <span className="feat-ck">✓</span>
-                            <span className="feat-t">Up to {plan.summaries_limit} summaries</span>
-                          </div>
-                        )}
-                        {plan.features?.map((feature, idx) => (
-                          <div className="feat" key={idx}>
-                            <span className="feat-ck">✓</span>
-                            <span className="feat-t">{feature}</span>
-                          </div>
-                        ))}
+                      <div className={`plan-card ${isCurrent ? "popular" : ""}`} key={plan.id}>
+                        {isCurrent && <div className="badge-current">Current Plan</div>}
+                        <div className="plan-name">{plan.name}</div>
+                        <span className="plan-price">E£ {plan.price.toLocaleString()}</span>
+                        <div className="plan-period">per {plan.duration_days === 30 ? "month" : `${plan.duration_days} days`}*</div>
+                        <div className="plan-tagline"></div>
+                        <div className="plan-feats">
+                          {plan.summaries_limit > 0 && (
+                            <div className="feat">
+                              <span className="feat-ck">✓</span>
+                              <span className="feat-t">Up to {plan.summaries_limit} summaries</span>
+                            </div>
+                          )}
+                          {plan.features?.map((feature, idx) => (
+                            <div className="feat" key={idx}>
+                              <span className="feat-ck">✓</span>
+                              <span className="feat-t">{feature}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <button
+                          className={`btn-plan ${isCurrent ? "cur" : ""}`}
+                          onClick={() => startPlan(plan)}
+                          disabled={subscribingPlanId === plan.id || isCurrent}
+                          style={{ cursor: (subscribingPlanId === plan.id || isCurrent) ? 'not-allowed' : 'pointer' }}
+                        >
+                          {subscribingPlanId === plan.id ? "Subscribing..." : isCurrent ? "Current Plan" : "Get Started"}
+                        </button>
                       </div>
-                      <button
-                        className={`btn-plan ${isCurrent ? "cur" : ""}`}
-                        onClick={() => startPlan(plan)}
-                        disabled={subscribingPlanId === plan.id || isCurrent}
-                        style={{ cursor: (subscribingPlanId === plan.id || isCurrent) ? 'not-allowed' : 'pointer' }}
-                      >
-                        {subscribingPlanId === plan.id ? "Subscribing..." : isCurrent ? "Current Plan" : "Get Started"}
-                      </button>
-                    </div>
-                  )}
+                    )
+                  }
                   )
                 )}
               </div>
@@ -639,37 +702,45 @@ function Subscription() {
               {isSubLoading ? (
                 <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-secondary)" }}>Loading usage data...</div>
               ) : isSubscription ? (
-                <>
-                  <div className="usage-plan-bar">
-                    <div
-                      style={{ display: "flex", alignItems: "center", gap: "10px" }}
-                    >
-                      <span className="u-plan-name">{subscriptionData.plan_name} Plan</span>
-                      <span className="u-cycle">
-                        Current cycle: {subscriptionData.starts_at} – {subscriptionData.expires_at}
-                      </span>
-                    </div>
-                    <span className="green-badge">
-                      <span className="g-dot"></span> {subscriptionData.status === "active" ? "Active" : subscriptionData.status}
-                    </span>
-                  </div>
-                  <div className="usage-box">
-                    <div className="u-big">
-                      {subscriptionData.usage?.used ?? 0} <span>/ {subscriptionData.usage?.total ?? 0} files</span>
-                    </div>
-                    <div className="u-lbl">Total files used this cycle</div>
-                    <div className="u-track">
-                      <div className="u-fill" style={{ width: `${subscriptionData.usage?.percentage ?? 0}%` }}></div>
-                    </div>
-                    <div className="u-foot">
-                      <div className="u-left">
-                        <span>0</span>
-                        <span className="u-remain">{subscriptionData.usage?.remaining ?? 0} files remaining</span>
+                (() => {
+                  const isEffectivelyCancelled = isCancelledLocally || (subscriptionData?.status && subscriptionData.status.toLowerCase() !== "active");
+                  const displayStatus = isEffectivelyCancelled ? "Cancelled" : "Active";
+                  const badgeClass = isEffectivelyCancelled ? "cancelled-badge" : "green-badge";
+                  const dotClass = isEffectivelyCancelled ? "cancelled-dot" : "g-dot";
+                  return (
+                    <>
+                      <div className="usage-plan-bar">
+                        <div
+                          style={{ display: "flex", alignItems: "center", gap: "10px" }}
+                        >
+                          <span className="u-plan-name">{subscriptionData.plan_name} Plan</span>
+                          <span className="u-cycle">
+                            Current cycle: {subscriptionData.starts_at} – {subscriptionData.expires_at}
+                          </span>
+                        </div>
+                        <span className={badgeClass}>
+                          <span className={dotClass}></span> {displayStatus}
+                        </span>
                       </div>
-                      <span>{subscriptionData.usage?.total ?? 0}</span>
-                    </div>
-                  </div>
-                </>
+                      <div className="usage-box">
+                        <div className="u-big">
+                          {subscriptionData.usage?.used ?? 0} <span>/ {subscriptionData.usage?.total ?? 0} files</span>
+                        </div>
+                        <div className="u-lbl">Total files used this cycle</div>
+                        <div className="u-track">
+                          <div className="u-fill" style={{ width: `${subscriptionData.usage?.percentage ?? 0}%` }}></div>
+                        </div>
+                        <div className="u-foot">
+                          <div className="u-left">
+                            <span>0</span>
+                            <span className="u-remain">{subscriptionData.usage?.remaining ?? 0} files remaining</span>
+                          </div>
+                          <span>{subscriptionData.usage?.total ?? 0}</span>
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()
               ) : isPayPerUse ? (
                 <div className="usage-box" style={{ textAlign: "center", padding: "2rem" }}>
                   <div className="u-lbl" style={{ fontSize: "15px", marginBottom: "8px" }}>
@@ -686,7 +757,7 @@ function Subscription() {
                 <div>
                   <div className="cr-lbl">Available Credits</div>
                   <div className="cr-val">
-                    {isSubLoading ? "..." : walletBalance} <em>credits</em>
+                    {isCreditsLoading ? "..." : (credits?.toLocaleString() ?? "0")} <em>credits</em>
                   </div>
                 </div>
                 <button

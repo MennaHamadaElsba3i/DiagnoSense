@@ -1,5 +1,6 @@
 const API_BASE_URL = 'https://nontelepathically-pamphletary-cyndi.ngrok-free.dev';
 // const API_BASE_URL = 'https://toothlike-intermetatarsal-avah.ngrok-free.dev';
+// const API_BASE_URL = 'https://unpersecuted-vanitied-jayson.ngrok-free.dev';
 
 import { getCookie, setCookie, deleteCookie, setJsonCookie } from './cookieUtils';
 
@@ -722,6 +723,12 @@ export const subscribeToPlanAPI = async (plan_id) => {
   return await apiCall('/api/subscription/subscribe', {
     method: 'POST',
     body: JSON.stringify({ plan_id }),
+  });
+};
+
+export const cancelSubscriptionAPI = async () => {
+  return await apiCall('/api/subscription/cancel', {
+    method: 'POST',
   });
 };
 

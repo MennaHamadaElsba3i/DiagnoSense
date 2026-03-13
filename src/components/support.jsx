@@ -10,8 +10,7 @@ import "../css/support.css";
 function Support() {
   const navigate = useNavigate();
   const { isSidebarCollapsed } = useSidebar();
-  const { subscriptionData, isSubLoading } = useSubscription();
-  const walletBalance = subscriptionData?.wallet_balance != null ? subscriptionData.wallet_balance.toLocaleString() : "—";
+  const { credits, isCreditsLoading } = useSubscription();
 
   // Shared app shell state
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -136,7 +135,7 @@ function Support() {
                 <line x1="1" y1="10" x2="23" y2="10"></line>
               </svg>
             </span>
-            <span>Credits: {isSubLoading ? "..." : walletBalance}</span>
+            <span>Credits: {isCreditsLoading ? "..." : (credits?.toLocaleString() ?? "—")}</span>
           </div>
           <button className="icon-btn" onClick={() => setIsNotificationsOpen(true)}>
             <svg viewBox="0 0 24 24">

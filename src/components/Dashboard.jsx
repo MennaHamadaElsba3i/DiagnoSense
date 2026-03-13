@@ -16,8 +16,7 @@ export default function Dashboard() {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const { isSidebarCollapsed, toggleSidebar } = useSidebar();
-  const { subscriptionData, isSubLoading } = useSubscription();
-  const walletBalance = subscriptionData?.wallet_balance != null ? subscriptionData.wallet_balance.toLocaleString() : "—";
+  const { credits, isCreditsLoading } = useSubscription();
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const avatarMenuRef = useRef(null);
 
@@ -63,7 +62,7 @@ export default function Dashboard() {
                 <line x1="1" y1="10" x2="23" y2="10"></line>
               </svg>
             </span>
-            <span>Credits: {isSubLoading ? "..." : walletBalance}</span>
+            <span>Credits: {isCreditsLoading ? "..." : (credits?.toLocaleString() ?? "—")}</span>
           </div>
 
           <button className="icon-btn" onClick={() => setIsNotificationsOpen(true)}>
