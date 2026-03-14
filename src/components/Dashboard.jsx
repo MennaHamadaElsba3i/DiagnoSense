@@ -11,6 +11,216 @@ import Sidebar from "./Sidebar";
 import "../css/Dashboard.css";
 import { useNotifications } from "./NotificationsContext";
 
+
+const INITIAL_PATIENTS = [
+  {
+    id: 0, initials: "AM", color: "#FF4D6D",
+    name: "Ahmed Mohamed", age: "52", gender: "Male", apptTime: "09:00 AM",
+    aiInsight: "AI detected potential cardiac anomaly. Elevated troponin levels with ST-segment changes observed.",
+    status: "pending",
+  },
+  {
+    id: 1, initials: "SK", color: "#4C6EF5",
+    name: "Sarah Kamal", age: "38", gender: "Female", apptTime: "10:00 AM",
+    aiInsight: "Abnormal ECG patterns detected with irregular heart rhythm. Immediate consultation recommended.",
+    status: "pending",
+  },
+  {
+    id: 2, initials: "OH", color: "#E67700",
+    name: "Omar Hamed", age: "61", gender: "Male", apptTime: "11:00 AM",
+    aiInsight: "Blood pressure readings significantly elevated. Hypertensive crisis pattern detected.",
+    status: "pending",
+  },
+  {
+    id: 3, initials: "NR", color: "#2F9E44",
+    name: "Nadia Rashid", age: "45", gender: "Female", apptTime: "12:00 PM",
+    aiInsight: "Critical glucose levels detected. Diabetic ketoacidosis pattern identified.",
+    status: "pending",
+  },
+];
+
+
+function QueueSection() {
+  const [patients, setPatients] = useState(INITIAL_PATIENTS);
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [modalPatient, setModalPatient] = useState(null);
+
+  const getActiveIdx = (pts, startIdx) => {
+    let idx = startIdx;
+    while (idx < pts.length && pts[idx].status !== "pending") idx++;
+    return idx;
+  };
+
+  const markAttended = (id) => {
+    const next = patients.map((p) => (p.id === id ? { ...p, status: "attended" } : p));
+    setPatients(next);
+    setCurrentIdx((i) => getActiveIdx(next, i + 1));
+  };
+
+  const skipPatient = (id) => {
+    const next = patients.map((p) => (p.id === id ? { ...p, status: "skipped" } : p));
+    setPatients(next);
+    setCurrentIdx((i) => getActiveIdx(next, i + 1));
+  };
+
+  const activeIdx = getActiveIdx(patients, currentIdx);
+  const activePatient = activeIdx < patients.length ? patients[activeIdx] : null;
+  const pendingCount = patients.filter((p) => p.status === "pending").length;
+
+  const badgeClass = (p, i) => {
+    if (p.status === "attended") return "dsn-badge-success";
+    if (p.status === "skipped") return "dsn-badge-warning";
+    if (i === activeIdx) return "dsn-badge-danger";
+    return "dsn-badge-muted";
+  };
+  const badgeText = (p, i) => {
+    if (p.status === "attended") return "✓ Attended";
+    if (p.status === "skipped") return "→ Skipped";
+    if (i === activeIdx) return "● Now";
+    return `#${i + 1} Waiting`;
+  };
+
+  return (
+    <div className="dsn-queue-section">
+      <div className="dsn-section-header">
+        <div className="dsn-section-title">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/>
+          </svg>
+          Critical Patient Queue
+        </div>
+        <span className="dsn-queue-count">{pendingCount} remaining</span>
+      </div>
+
+      {/* Active card */}
+      {activePatient ? (
+        <div className="dsn-active-card" key={activePatient.id}>
+          <div className="dsn-active-avatar" style={{ background: activePatient.color }}>
+            {activePatient.initials}
+          </div>
+          <div className="dsn-active-info">
+            <div className="dsn-active-top">
+              <span className="dsn-active-name">{activePatient.name}</span>
+              <span className="dsn-now-badge">
+                <span className="dsn-now-dot" /> Now Attending
+              </span>
+            </div>
+            <div className="dsn-active-meta">
+              <span className="dsn-active-meta-age">
+                {activePatient.age} y/o · {activePatient.gender}
+              </span>
+              <span className="dsn-active-appt">
+                Appointment: {activePatient.apptTime}
+              </span>
+            </div>
+            <div className="dsn-insight-box">
+              <div className="dsn-insight-label">🤖 AI Insight</div>
+              <div className="dsn-insight-text">{activePatient.aiInsight}</div>
+            </div>
+          </div>
+          <div className="dsn-active-actions">
+            <button className="dsn-btn-attended" onClick={() => markAttended(activePatient.id)}>
+              <svg viewBox="0 0 24 24" fill="white" className="dsn-btn-icon">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+              </svg>
+              Mark Attended
+            </button>
+            <button className="dsn-btn-next" onClick={() => skipPatient(activePatient.id)}>
+              <svg viewBox="0 0 24 24" fill="currentColor" className="dsn-btn-icon">
+                <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
+              </svg>
+              Next Patient
+            </button>
+            <button className="dsn-btn-view" onClick={() => setModalPatient(activePatient)}>
+              <svg viewBox="0 0 24 24" fill="currentColor" className="dsn-btn-icon">
+                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+              </svg>
+              View Details
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="dsn-done-card">
+          <div className="dsn-done-emoji">🎉</div>
+          <div className="dsn-done-title">All patients attended!</div>
+          <div className="dsn-done-sub">Today's queue is complete. Great work, Dr. Layla.</div>
+        </div>
+      )}
+
+      {/* Queue list */}
+      <div className="dsn-queue-list">
+        <div className="dsn-queue-list-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+          </svg>
+          All Patients in Queue
+        </div>
+        {patients.map((p, i) => (
+          <div
+            key={p.id}
+            className={`dsn-mini-card${p.status === "attended" ? " dsn-attended" : p.status === "skipped" ? " dsn-skipped" : ""}`}
+          >
+            <div className={`dsn-queue-num${i === activeIdx && p.status === "pending" ? " dsn-active-num" : ""}`}>{i + 1}</div>
+            <div className="dsn-mini-avatar" style={{ background: p.color }}>{p.initials}</div>
+            <div className="dsn-mini-info">
+              <div className="dsn-mini-name">{p.name}</div>
+              <div className="dsn-mini-sub">{p.age} y/o · {p.gender} · {p.apptTime}</div>
+            </div>
+            <span className={`dsn-mini-badge ${badgeClass(p, i)}`}>{badgeText(p, i)}</span>
+            <button className="dsn-mini-view-btn" onClick={() => setModalPatient(p)}>View</button>
+          </div>
+        ))}
+      </div>
+
+      {/* Modal */}
+      {modalPatient && (
+        <div
+          id="dsn-modal-overlay"
+          className="dsn-open"
+          onClick={(e) => { if (e.target.id === "dsn-modal-overlay") setModalPatient(null); }}
+        >
+          <div id="dsn-modal-box">
+            <div className="dsn-modal-header">
+              <div className="dsn-modal-avatar" style={{ background: modalPatient.color }}>
+                {modalPatient.initials}
+              </div>
+              <div>
+                <div className="dsn-modal-title">{modalPatient.name}</div>
+                <div className="dsn-modal-sub">{modalPatient.age} y/o · {modalPatient.gender} · Appointment: {modalPatient.apptTime}</div>
+              </div>
+            </div>
+            <div className="dsn-modal-divider" />
+            <div className="dsn-modal-chips">
+              {[
+                { label: "Age", val: modalPatient.age, className: "dsn-chip-default" },
+                { label: "Gender", val: modalPatient.gender, className: "dsn-chip-default" },
+                { label: "Appointment", val: modalPatient.apptTime, className: "dsn-chip-primary" },
+                { label: "Status", val: modalPatient.status, className: "dsn-chip-status" },
+              ].map((c) => (
+                <div className={`dsn-modal-chip ${c.className}`} key={c.label}>
+                  <div className="dsn-modal-chip-label">{c.label}</div>
+                  <div className="dsn-modal-chip-val">{c.val}</div>
+                </div>
+              ))}
+            </div>
+            <div className="dsn-modal-notes">
+              <strong>🤖 AI Insight:</strong><br />{modalPatient.aiInsight}
+            </div>
+            <div className="dsn-modal-btns">
+              <button className="dsn-modal-cancel" onClick={() => setModalPatient(null)}>
+                Close
+              </button>
+              <button className="dsn-modal-confirm" onClick={() => setModalPatient(null)}>
+                Open Full Report
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -37,14 +247,6 @@ export default function Dashboard() {
     };
   }, []);
 
-  const openLogoutModal = () => {
-    setIsLogoutModalOpen(true);
-  };
-
-  const closeLogoutModal = () => {
-    setIsLogoutModalOpen(false);
-  };
-
   return (
     <>
       <Sidebar activePage="dashboard" />
@@ -53,8 +255,7 @@ export default function Dashboard() {
         <div className="navbar-right">
           <div
             className="credits-badge"
-            onClick={() => navigate('/subscription', { state: { tab: 'billing' } })}
-            style={{ cursor: "pointer" }}
+            onClick={() => navigate("/subscription", { state: { tab: "billing" } })}
           >
             <span className="credits-icon">
               <svg viewBox="0 0 24 24">
@@ -75,51 +276,21 @@ export default function Dashboard() {
 
           <div
             className="user-avatar-container"
-            style={{ position: "relative" }}
             ref={avatarMenuRef}
           >
             <div
               className="user-avatar"
               onClick={() => setIsAvatarMenuOpen(!isAvatarMenuOpen)}
-              style={{ cursor: "pointer", userSelect: "none" }}
             >
               LA
             </div>
             {isAvatarMenuOpen && (
-              <div
-                className="avatar-dropdown-menu"
-                style={{
-                  position: "absolute",
-                  top: "calc(100% + 10px)",
-                  right: 0,
-                  backgroundColor: "var(--surface-color, #ffffff)",
-                  border: "1px solid var(--border-color, #e5e7eb)",
-                  borderRadius: "12px",
-                  boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
-                  padding: "8px",
-                  minWidth: "180px",
-                  zIndex: 1000,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "4px"
-                }}
-              >
+              <div className="avatar-dropdown-menu">
                 <div
                   className="dropdown-item"
                   onClick={() => { setIsAvatarMenuOpen(false); navigate("/settings"); }}
-                  style={{
-                    padding: "10px 12px",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    color: "var(--text-primary, #111827)",
-                    fontSize: "14px",
-                    transition: "background-color 0.2s"
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--hover-bg, #f3f4f6)"}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--hover-bg, #f3f4f6)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -128,21 +299,10 @@ export default function Dashboard() {
                   Profile Settings
                 </div>
                 <div
-                  className="dropdown-item"
-                  onClick={() => { setIsAvatarMenuOpen(false); openLogoutModal(); }}
-                  style={{
-                    padding: "10px 12px",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    color: "var(--danger-color, #ef4444)",
-                    fontSize: "14px",
-                    transition: "background-color 0.2s"
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--danger-bg-subtle, #fee2e2)"}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                  className="dropdown-item dropdown-item--danger"
+                  onClick={() => { setIsAvatarMenuOpen(false); setIsLogoutModalOpen(true); }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--danger-bg-subtle, #fee2e2)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -157,311 +317,152 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      <LogoutConfirmation
-        isOpen={isLogoutModalOpen}
-        onClose={closeLogoutModal}
-      />
+      <LogoutConfirmation isOpen={isLogoutModalOpen} onClose={() => setIsLogoutModalOpen(false)} />
 
+      {/* ── MAIN CONTENT (scoped under #dsn-main) ── */}
       <main className={`main-content${isSidebarCollapsed ? " collapsed" : ""}`}>
-        <div className="dashboard-grid">
-          <div className="card welcome-panel">
-            <div>
-              <h1 className="welcome-title">Good Morning, Dr. Layla</h1>
-              <p className="welcome-subtitle">
-                Here's a summary of today's key AI insights and patient status.
-              </p>
+        <div id="dsn-main">
+
+          {/* ── TOP WHITE WRAPPER ── */}
+          <div className="dsn-top-wrapper">
+            <div className="dsn-greeting">
+              <h1>Welcome, Dr. Layla</h1>
+              <p>Here's a summary of today's key AI insights and patient status.</p>
             </div>
 
-            <div className="stats-grid">
-              <div className="stat-box">
-                <div className="stat-left">
-                  <div className="stat-header">
-                    <span className="stat-icon">🩺</span>
-                    <span className="stat-label">Active Patients</span>
-                  </div>
-                  <div className="stat-value">24</div>
+            {/* Stats grid */}
+            <div className="dsn-stats-grid">
+              {/* Card 1 */}
+              <div className="dsn-stat-card">
+                <div className="dsn-stat-label">
+                  <svg viewBox="0 0 24 24" fill="#3B5BDB">
+                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                  </svg>
+                  <strong>Total Registered Patients</strong>
                 </div>
-                <div className="stat-right">
-                  <div className="stat-trend up">
-                    <span>↑</span>
-                    <span>12%</span>
-                  </div>
-                  <div className="progress-ring">
-                    <svg className="progress-ring-circle" viewBox="0 0 36 36">
-                      <circle
-                        className="progress-ring-bg"
-                        cx="18"
-                        cy="18"
-                        r="16"
-                      ></circle>
-                      <circle
-                        className="progress-ring-fill"
-                        cx="18"
-                        cy="18"
-                        r="16"
-                      ></circle>
-                    </svg>
-                  </div>
-                </div>
+                <div><span className="dsn-stat-value">248</span></div>
               </div>
-              <div className="stat-box">
-                <div className="stat-left">
-                  <div className="stat-header">
-                    <span className="stat-icon">⚠️</span>
-                    <span className="stat-label">Critical Cases</span>
-                  </div>
-                  <div className="stat-value">2</div>
+
+              {/* Card 2 */}
+              <div className="dsn-stat-card">
+                <div className="dsn-stat-label">
+                  <svg viewBox="0 0 24 24" fill="#3B5BDB">
+                    <path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/>
+                  </svg>
+                  <strong>Today's Appointments</strong>
                 </div>
-                <div className="stat-right">
-                  <div className="stat-trend down">
-                    <span>↓</span>
-                    <span>25%</span>
-                  </div>
-                  <div className="progress-ring">
-                    <svg className="progress-ring-circle" viewBox="0 0 36 36">
-                      <circle
-                        className="progress-ring-bg"
-                        cx="18"
-                        cy="18"
-                        r="16"
-                      ></circle>
-                      <circle
-                        className="progress-ring-fill"
-                        cx="18"
-                        cy="18"
-                        r="16"
-                      ></circle>
-                    </svg>
-                  </div>
-                </div>
+                <div><span className="dsn-stat-value">8</span></div>
               </div>
-              <div className="stat-box">
-                <div className="stat-left">
-                  <div className="stat-header">
-                    <span className="stat-icon">🧠</span>
-                    <span className="stat-label">Reports Analyzed</span>
-                  </div>
-                  <div className="stat-value">46</div>
+
+              {/* Card 3 */}
+              <div className="dsn-stat-card">
+                <div className="dsn-stat-label">
+                  <svg viewBox="0 0 24 24" fill="#2F9E44">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>
+                  </svg>
+                  <strong>Reports Analyzed</strong>
                 </div>
-                <div className="stat-right">
-                  <div className="stat-trend up">
-                    <span>↑</span>
-                    <span>18%</span>
-                  </div>
-                  <div className="progress-ring">
-                    <svg className="progress-ring-circle" viewBox="0 0 36 36">
-                      <circle
-                        className="progress-ring-bg"
-                        cx="18"
-                        cy="18"
-                        r="16"
-                      ></circle>
-                      <circle
-                        className="progress-ring-fill"
-                        cx="18"
-                        cy="18"
-                        r="16"
-                      ></circle>
-                    </svg>
-                  </div>
-                </div>
+                <div><span className="dsn-stat-value">1,340</span></div>
               </div>
-              <div className="stat-box">
-                <div className="stat-left">
-                  <div className="stat-header">
-                    <span className="stat-icon">⏱</span>
-                    <span className="stat-label">Avg. Time Saved</span>
-                  </div>
-                  <div className="stat-value">37%</div>
+
+              {/* Card 4 — Monthly Growth */}
+              <div className="dsn-stat-card dsn-stat-card--growth">
+                <div className="dsn-stat-label dsn-stat-label--primary">
+                  <svg viewBox="0 0 24 24" fill="var(--dsn-primary)">
+                    <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+                  </svg>
+                  <strong>Monthly Patient Growth</strong>
                 </div>
-                <div className="stat-right">
-                  <div className="stat-trend up">
-                    <span>↑</span>
-                    <span>5%</span>
-                  </div>
-                  <div className="progress-ring">
-                    <svg className="progress-ring-circle" viewBox="0 0 36 36">
-                      <circle
-                        className="progress-ring-bg"
-                        cx="18"
-                        cy="18"
-                        r="16"
-                      ></circle>
-                      <circle
-                        className="progress-ring-fill"
-                        cx="18"
-                        cy="18"
-                        r="16"
-                      ></circle>
-                    </svg>
-                  </div>
+                <div className="dsn-growth-grid">
+                  {[
+                    { sub: "Last Mo.", val: "34", className: "" },
+                    { sub: "This Mo.", val: "45", className: "dsn-growth-val--primary" },
+                    { sub: "Diff.", val: "+11", className: "dsn-growth-val--success" },
+                    { sub: "Growth", val: "↑32%", className: "dsn-growth-val--success" },
+                  ].map((g) => (
+                    <div className="dsn-growth-col" key={g.sub}>
+                      <div className="dsn-growth-sub">{g.sub}</div>
+                      <div className={`dsn-growth-val ${g.className}`}>{g.val}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
 
-            <div className="system-status">
+            <div className="dsn-ai-status">
+              <div className="dsn-ai-dot" />
               AI system running v3.2 Neural Core — updated 2h ago
             </div>
           </div>
 
-          <div className="card critical-distribution">
-            <h2 className="card-title">Critical Case Distribution</h2>
+          {/* ── CHARTS ROW ── */}
+          <div className="dsn-charts-row">
 
-            <div className="pie-chart-container">
-              <div className="pie-chart"></div>
-              <div className="pie-legend">
-                <div className="legend-item">
-                  <span className="legend-color heart"></span>
-                  <span className="legend-text">Heart</span>
-                  <span className="legend-value">40%</span>
-                </div>
-                <div className="legend-item">
-                  <span className="legend-color kidney"></span>
-                  <span className="legend-text">Kidney</span>
-                  <span className="legend-value">25%</span>
-                </div>
-                <div className="legend-item">
-                  <span className="legend-color liver"></span>
-                  <span className="legend-text">Liver</span>
-                  <span className="legend-value">20%</span>
-                </div>
-                <div className="legend-item">
-                  <span className="legend-color lung"></span>
-                  <span className="legend-text">Lung</span>
-                  <span className="legend-value">15%</span>
+            {/* Donut — Patient Status */}
+            <div className="dsn-chart-card">
+              <div className="dsn-chart-title">Patient Status Distribution</div>
+              <div className="dsn-donut-wrap">
+                <svg width="140" height="140" viewBox="0 0 130 130" className="dsn-donut-svg">
+                  <circle cx="65" cy="65" r="50" fill="none" stroke="#2F9E44" strokeWidth="22"
+                    strokeDasharray="188.5 125.7" strokeDashoffset="0" transform="rotate(-90 65 65)"/>
+                  <circle cx="65" cy="65" r="50" fill="none" stroke="#F03E3E" strokeWidth="22"
+                    strokeDasharray="78.5 235.6" strokeDashoffset="-188.5" transform="rotate(-90 65 65)"/>
+                  <circle cx="65" cy="65" r="50" fill="none" stroke="#F59F00" strokeWidth="22"
+                    strokeDasharray="47.1 267" strokeDashoffset="-267" transform="rotate(-90 65 65)"/>
+                  <circle cx="65" cy="65" r="39" fill="white"/>
+                  <text x="65" y="61" textAnchor="middle" fontSize="13" fontWeight="800" fill="#1A1D2E" fontFamily="Plus Jakarta Sans">248</text>
+                  <text x="65" y="76" textAnchor="middle" fontSize="10" fill="#8C91A7" fontFamily="Plus Jakarta Sans">patients</text>
+                </svg>
+                <div className="dsn-legend-list">
+                  {[
+                    { color: "#2F9E44", bg: "var(--dsn-success-light)", label: "Stable", pct: "60%", pctColor: "#2F9E44" },
+                    { color: "#F03E3E", bg: "#FFF5F5", label: "Critical", pct: "25%", pctColor: "#F03E3E" },
+                    { color: "#F59F00", bg: "#FFF8E1", label: "Under Review", pct: "15%", pctColor: "#F59F00" },
+                  ].map((row) => (
+                    <div key={row.label} className="dsn-legend-row" style={{ background: row.bg }}>
+                      <div className="dsn-legend-dot" style={{ background: row.color }} />
+                      <span className="dsn-legend-label">{row.label}</span>
+                      <span className="dsn-legend-pct" style={{ color: row.pctColor }}>{row.pct}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
+
+            {/* Bar Chart — Top 5 Chronic Diseases */}
+            <div className="dsn-chart-card">
+              <div className="dsn-chart-title">Top 5 Chronic Diseases</div>
+              <div className="dsn-chart-subtitle">
+                Selected by doctor in medical forms
+              </div>
+              <div className="dsn-bar-chart-wrap">
+                <div className="dsn-bar-columns">
+                  {[
+                    { val: 156, color: "linear-gradient(180deg,#4361EE,#748FFC)", h: 160 },
+                    { val: 142, color: "linear-gradient(180deg,#06D6A0,#3DCFB4)", h: 146 },
+                    { val: 98,  color: "linear-gradient(180deg,#FF8C42,#FFA96B)", h: 100 },
+                    { val: 87,  color: "linear-gradient(180deg,#FF4D6D,#FF7A93)", h: 89 },
+                    { val: 73,  color: "linear-gradient(180deg,#9B5DE5,#BB8AEE)", h: 75 },
+                  ].map((b, i) => (
+                    <div className="dsn-bar-col" key={i}>
+                      <span className="dsn-bar-val">{b.val}</span>
+                      <div className="dsn-bar-fill" style={{ background: b.color, height: b.h }} />
+                    </div>
+                  ))}
+                </div>
+                <div className="dsn-bar-labels">
+                  {["Hyper-\ntension", "Diabetes", "Heart\nDisease", "Kidney\nDisease", "Liver\nDisease"].map((lbl) => (
+                    <div key={lbl} className="dsn-bar-lbl" style={{ whiteSpace: "pre-line" }}>{lbl}</div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
           </div>
 
-          <div className="card test-utilization">
-            <h2 className="card-title">Top 5 Test Utilization</h2>
+          {/* ── QUEUE MANAGEMENT ── */}
+          <QueueSection />
 
-            <div className="bar-chart-container">
-              <div className="bar-item">
-                <div className="bar-column">
-                  <div className="bar-fill color-1" style={{ height: "180px" }}>
-                    <span className="bar-value">156</span>
-                  </div>
-                </div>
-                <div className="bar-label">CBC</div>
-              </div>
-              <div className="bar-item">
-                <div className="bar-column">
-                  <div className="bar-fill color-2" style={{ height: "165px" }}>
-                    <span className="bar-value">142</span>
-                  </div>
-                </div>
-                <div className="bar-label">Glucose</div>
-              </div>
-              <div className="bar-item">
-                <div className="bar-column">
-                  <div className="bar-fill color-3" style={{ height: "125px" }}>
-                    <span className="bar-value">98</span>
-                  </div>
-                </div>
-                <div className="bar-label">Lipid Panel</div>
-              </div>
-              <div className="bar-item">
-                <div className="bar-column">
-                  <div className="bar-fill color-4" style={{ height: "110px" }}>
-                    <span className="bar-value">87</span>
-                  </div>
-                </div>
-                <div className="bar-label">Kidney Func.</div>
-              </div>
-              <div className="bar-item">
-                <div className="bar-column">
-                  <div className="bar-fill color-5" style={{ height: "95px" }}>
-                    <span className="bar-value">73</span>
-                  </div>
-                </div>
-                <div className="bar-label">Liver Func.</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="card critical-alert">
-            <div className="alert-header">
-              <div className="alert-icon">AM</div>
-              <div className="alert-patient-name">Ahmed Mohamed</div>
-            </div>
-            <h3 className="alert-title">⚠️ Critical Alert</h3>
-            <div className="alert-detail">
-              AI detected potential cardiac anomaly requiring immediate
-              attention. Elevated troponin levels detected.
-            </div>
-            <div className="alert-metrics">
-              <div className="alert-metric">
-                <div className="alert-metric-label">Risk Level</div>
-                <div className="alert-metric-value">High</div>
-              </div>
-              <div className="alert-metric">
-                <div className="alert-metric-label">Priority</div>
-                <div className="alert-metric-value">P1</div>
-              </div>
-            </div>
-            <button className="alert-btn">View Full Report</button>
-          </div>
-
-          <div className="card critical-alert">
-            <div className="alert-header">
-              <div className="alert-icon">SH</div>
-              <div className="alert-patient-name">Sarah Hany</div>
-            </div>
-            <h3 className="alert-title">⚠️ Critical Alert</h3>
-            <div className="alert-detail">
-              Abnormal ECG patterns detected with irregular heart rhythm.
-              Immediate consultation recommended.
-            </div>
-            <div className="alert-metrics">
-              <div className="alert-metric">
-                <div className="alert-metric-label">Risk Level</div>
-                <div className="alert-metric-value">High</div>
-              </div>
-              <div className="alert-metric">
-                <div className="alert-metric-label">Priority</div>
-                <div className="alert-metric-value">P1</div>
-              </div>
-            </div>
-            <button className="alert-btn">View Full Report</button>
-          </div>
-
-          <div className="card critical-alert">
-            <div className="alert-header">
-              <div className="alert-icon">OH</div>
-              <div className="alert-patient-name">Omar Hamed</div>
-            </div>
-            <h3 className="alert-title">⚠️ Critical Alert</h3>
-            <div className="alert-detail">
-              Blood pressure readings significantly elevated. Hypertensive
-              crisis suspected. Urgent evaluation needed.
-            </div>
-            <div className="alert-metrics">
-              <div className="alert-metric">
-                <div className="alert-metric-label">Risk Level</div>
-                <div className="alert-metric-value">High</div>
-              </div>
-              <div className="alert-metric">
-                <div className="alert-metric-label">Priority</div>
-                <div className="alert-metric-value">P2</div>
-              </div>
-            </div>
-            <button className="alert-btn">View Full Report</button>
-          </div>
-
-          <div className="card ai-insights-summary">
-            <div className="insights-summary-content">
-              <span className="insights-icon">🤖</span>
-              <span className="insights-text">
-                System detected 3 new anomaly patterns today.
-              </span>
-            </div>
-            <button className="review-btn">
-              Review Insights
-              <span>→</span>
-            </button>
-          </div>
         </div>
       </main>
     </>
