@@ -545,7 +545,7 @@ const AddPatient = () => {
                 <line x1="1" y1="10" x2="23" y2="10"></line>
               </svg>
             </span>
-            <span>Credits: {isCreditsLoading ? "..." : (credits?.toLocaleString() ?? "—")}</span>
+            <span>Credits: {isCreditsLoading ? "..." : (credits?.toLocaleString() ?? "0")}</span>
           </div>
           <button className="icon-btn" onClick={() => setIsNotificationsOpen(true)}>
             <svg viewBox="0 0 24 24">
