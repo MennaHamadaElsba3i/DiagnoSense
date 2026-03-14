@@ -410,8 +410,8 @@ export default function Dashboard() {
                   <circle cx="65" cy="65" r="50" fill="none" stroke="#F59F00" strokeWidth="22"
                     strokeDasharray="47.1 267" strokeDashoffset="-267" transform="rotate(-90 65 65)"/>
                   <circle cx="65" cy="65" r="39" fill="white"/>
-                  <text x="65" y="61" textAnchor="middle" fontSize="13" fontWeight="800" fill="#1A1D2E" fontFamily="Plus Jakarta Sans">248</text>
-                  <text x="65" y="76" textAnchor="middle" fontSize="10" fill="#8C91A7" fontFamily="Plus Jakarta Sans">patients</text>
+                  <text x="65" y="61" textAnchor="middle" fontSize="13" fontWeight="800" fill="#1A1D2E" fontFamily=" 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">248</text>
+                  <text x="65" y="76" textAnchor="middle" fontSize="10" fill="#8C91A7" fontFamily="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">patients</text>
                 </svg>
                 <div className="dsn-legend-list">
                   {[
