@@ -24,7 +24,7 @@ import Sidebar from "./Sidebar";
 import "../css/PatientProfile.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import MedicationsAndTasksTab from "../components/MedicationsAndTasksTab.jsx";
-import NotificationsPanel from "./NotificationsPanel";
+import { useNotifications } from "./NotificationsContext";
 import ConfirmModal from "./ConfirmModal.jsx";
 
 const TrashIcon = () => (
@@ -62,7 +62,7 @@ const PatientProfile = () => {
   const [activeTab, setActiveTab] = useState("overview");
 
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const { unreadCount, openNotifications } = useNotifications();
   const avatarMenuRef = useRef(null);
 
   useEffect(() => {
@@ -920,12 +920,12 @@ const PatientProfile = () => {
             <span>Credits: {isCreditsLoading ? "..." : (credits?.toLocaleString() ?? "—")}</span>
           </div>
 
-          <button className="icon-btn" onClick={() => setIsNotificationsOpen(true)}>
+          <button className="icon-btn" onClick={() => openNotifications()}>
             <svg viewBox="0 0 24 24">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
             </svg>
-            <span className="notification-badge"></span>
+            {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
           </button>
 
           <div
@@ -3202,7 +3202,6 @@ const PatientProfile = () => {
         isOpen={isPanelOpen}
         onClose={() => setIsPanelOpen(false)}
       />
-      <NotificationsPanel isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
     </div>
   );
 };

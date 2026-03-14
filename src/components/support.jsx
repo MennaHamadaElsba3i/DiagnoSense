@@ -4,7 +4,7 @@ import { useSidebar } from "./SidebarContext";
 import { useSubscription } from "./SubscriptionContext";
 import Sidebar from "./Sidebar";
 import LogoutConfirmation from "./ConfirmationModal.jsx";
-import NotificationsPanel from "./NotificationsPanel";
+import { useNotifications } from "./NotificationsContext";
 import "../css/support.css";
 
 function Support() {
@@ -14,7 +14,7 @@ function Support() {
 
   // Shared app shell state
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const { unreadCount, openNotifications } = useNotifications();
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const avatarMenuRef = useRef(null);
 
@@ -137,12 +137,12 @@ function Support() {
             </span>
             <span>Credits: {isCreditsLoading ? "..." : (credits?.toLocaleString() ?? "—")}</span>
           </div>
-          <button className="icon-btn" onClick={() => setIsNotificationsOpen(true)}>
+          <button className="icon-btn" onClick={() => openNotifications()}>
             <svg viewBox="0 0 24 24">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
             </svg>
-            <span className="notification-badge"></span>
+            {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
           </button>
           <div
             className="user-avatar-container"
@@ -229,7 +229,6 @@ function Support() {
       </nav>
 
       <LogoutConfirmation isOpen={isLogoutModalOpen} onClose={closeLogoutModal} />
-      <NotificationsPanel isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
 
       {/* Main Support Page specific content wrap */}
       <div className={`main-content${isSidebarCollapsed ? " collapsed" : ""} support-page`}>

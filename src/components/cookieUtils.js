@@ -22,21 +22,28 @@ export const setJsonCookie = (name, value, rememberMe) => {
 export const getCookie = (name) => {
      // Check localStorage first, fallback to sessionStorage
      let val = localStorage.getItem(name);
+     if (name === 'user') console.log(`[cookieUtils] getCookie("${name}") from localStorage:`, val);
      if (val !== null) return val;
 
      val = sessionStorage.getItem(name);
+     if (name === 'user') console.log(`[cookieUtils] getCookie("${name}") from sessionStorage:`, val);
      return val;
 };
 
 export const getJsonCookie = (name) => {
      const value = getCookie(name);
+     if (name === 'user') console.log(`[cookieUtils] getJsonCookie("${name}") value before parse:`, value);
      if (value) {
           try {
-               return JSON.parse(value);
+               const parsed = JSON.parse(value);
+               if (name === 'user') console.log(`[cookieUtils] getJsonCookie("${name}") parsed successfully:`, parsed);
+               return parsed;
           } catch (e) {
+               if (name === 'user') console.error(`[cookieUtils] getJsonCookie("${name}") parse error:`, e);
                return null;
           }
      }
+     if (name === 'user') console.log(`[cookieUtils] getJsonCookie("${name}") returned null because value was empty`);
      return null;
 };
 

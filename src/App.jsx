@@ -18,6 +18,8 @@ import Support from "./components/support.jsx";
 import "./App.css";
 import { SidebarProvider } from "./components/SidebarContext";
 import { SubscriptionProvider } from "./components/SubscriptionContext";
+import { NotificationsProvider } from "./components/NotificationsContext";
+import NotificationsPanel from "./components/NotificationsPanel";
 import { getCookie } from "./components/cookieUtils";
 
 const ProtectedRoute = ({ children }) => {
@@ -48,7 +50,10 @@ function App() {
             <ProtectedRoute>
               <SidebarProvider>
                 <SubscriptionProvider>
-                  <Dashboard />
+                  <NotificationsProvider>
+                    <Dashboard />
+                    <NotificationsPanel />
+                  </NotificationsProvider>
                 </SubscriptionProvider>
               </SidebarProvider>
             </ProtectedRoute>
@@ -61,7 +66,10 @@ function App() {
             <ProtectedRoute>
               <SidebarProvider>
                 <SubscriptionProvider>
-                  <PatientList />
+                  <NotificationsProvider>
+                    <PatientList />
+                    <NotificationsPanel />
+                  </NotificationsProvider>
                 </SubscriptionProvider>
               </SidebarProvider>
             </ProtectedRoute>
@@ -74,7 +82,10 @@ function App() {
             <ProtectedRoute>
               <SidebarProvider>
                 <SubscriptionProvider>
-                  <Settings />
+                  <NotificationsProvider>
+                    <Settings />
+                    <NotificationsPanel />
+                  </NotificationsProvider>
                 </SubscriptionProvider>
               </SidebarProvider>
             </ProtectedRoute>
@@ -87,7 +98,10 @@ function App() {
             <ProtectedRoute>
               <SidebarProvider>
                 <SubscriptionProvider>
-                  <Subscription />
+                  <NotificationsProvider>
+                    <Subscription />
+                    <NotificationsPanel />
+                  </NotificationsProvider>
                 </SubscriptionProvider>
               </SidebarProvider>
             </ProtectedRoute>
@@ -100,7 +114,10 @@ function App() {
             <ProtectedRoute>
               <SidebarProvider>
                 <SubscriptionProvider>
-                  <AddPatient />
+                  <NotificationsProvider>
+                    <AddPatient />
+                    <NotificationsPanel />
+                  </NotificationsProvider>
                 </SubscriptionProvider>
               </SidebarProvider>
             </ProtectedRoute>
@@ -113,7 +130,10 @@ function App() {
             <ProtectedRoute>
               <SidebarProvider>
                 <SubscriptionProvider>
-                  <PatientProfile />
+                  <NotificationsProvider>
+                    <PatientProfile />
+                    <NotificationsPanel />
+                  </NotificationsProvider>
                 </SubscriptionProvider>
               </SidebarProvider>
             </ProtectedRoute>
@@ -125,7 +145,10 @@ function App() {
             <ProtectedRoute>
               <SidebarProvider>
                 <SubscriptionProvider>
-                  <PatientProfile />
+                  <NotificationsProvider>
+                    <PatientProfile />
+                    <NotificationsPanel />
+                  </NotificationsProvider>
                 </SubscriptionProvider>
               </SidebarProvider>
             </ProtectedRoute>
@@ -137,7 +160,10 @@ function App() {
             <ProtectedRoute>
               <SidebarProvider>
                 <SubscriptionProvider>
-                  <AddPatient />
+                  <NotificationsProvider>
+                    <AddPatient />
+                    <NotificationsPanel />
+                  </NotificationsProvider>
                 </SubscriptionProvider>
               </SidebarProvider>
             </ProtectedRoute>
@@ -149,7 +175,10 @@ function App() {
             <ProtectedRoute>
               <SidebarProvider>
                 <SubscriptionProvider>
-                  <Support />
+                  <NotificationsProvider>
+                    <Support />
+                    <NotificationsPanel />
+                  </NotificationsProvider>
                 </SubscriptionProvider>
               </SidebarProvider>
             </ProtectedRoute>

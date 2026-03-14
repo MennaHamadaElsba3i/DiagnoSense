@@ -243,3 +243,12 @@
 @media (prefers-color-scheme: dark) {
   /* ... (Not explicitly required right now, project uses var(--surface-color)) ... */
 }
+
+/* Infinite-scroll load-more indicator */
+.notifications-load-more {
+  text-align: center;
+  padding: 12px 0;
+  font-size: 13px;
+  color: var(--text-secondary, #6b7280);
+  font-weight: 500;
+}

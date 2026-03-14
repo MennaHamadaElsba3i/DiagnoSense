@@ -9,12 +9,12 @@ import { useSidebar } from "../components/SidebarContext";
 import { useSubscription } from "../components/SubscriptionContext";
 import Sidebar from "./Sidebar";
 import "../css/Dashboard.css";
-import NotificationsPanel from "./NotificationsPanel";
+import { useNotifications } from "./NotificationsContext";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const { unreadCount, openNotifications } = useNotifications();
   const { isSidebarCollapsed, toggleSidebar } = useSidebar();
   const { credits, isCreditsLoading } = useSubscription();
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
@@ -65,12 +65,12 @@ export default function Dashboard() {
             <span>Credits: {isCreditsLoading ? "..." : (credits?.toLocaleString() ?? "—")}</span>
           </div>
 
-          <button className="icon-btn" onClick={() => setIsNotificationsOpen(true)}>
+          <button className="icon-btn" onClick={() => openNotifications()}>
             <svg viewBox="0 0 24 24">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
             </svg>
-            <span className="notification-badge"></span>
+            {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
           </button>
 
           <div
@@ -464,7 +464,6 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
-      <NotificationsPanel isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
     </>
   );
 }

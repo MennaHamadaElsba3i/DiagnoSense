@@ -747,3 +747,49 @@ export const getCurrentSubscriptionAPI = async () => {
     method: 'GET',
   });
 };
+
+// ── Notifications ────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/notifications
+ * Fetches paginated notifications (cursor-based).
+ * @param {string|null} cursor — the next-page cursor returned by the API
+ */
+export const getNotificationsAPI = async (cursor) => {
+  const url = cursor
+    ? `/api/notifications?cursor=${encodeURIComponent(cursor)}`
+    : '/api/notifications';
+  return await apiCall(url, { method: 'GET' });
+};
+
+/**
+ * GET /api/notifications/unread-count
+ * Returns the number of unread notifications.
+ */
+export const getUnreadNotificationsCountAPI = async () => {
+  return await apiCall('/api/notifications/unread-count', { method: 'GET' });
+};
+
+/**
+ * PATCH /api/notifications/{id}/read
+ * Marks a single notification as read.
+ */
+export const markNotificationAsReadAPI = async (id) => {
+  return await apiCall(`/api/notifications/${id}/read`, { method: 'PATCH' });
+};
+
+/**
+ * POST /api/notifications/mark-all-read
+ * Marks all notifications as read.
+ */
+export const markAllNotificationsAsReadAPI = async () => {
+  return await apiCall('/api/notifications/mark-all-read', { method: 'POST' });
+};
+
+/**
+ * DELETE /api/notifications/clear-all
+ * Clears all notifications.
+ */
+export const clearAllNotificationsAPI = async () => {
+  return await apiCall('/api/notifications/clear-all', { method: 'DELETE' });
+};
