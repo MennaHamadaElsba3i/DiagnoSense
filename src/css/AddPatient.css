@@ -1692,3 +1692,11 @@
                   margin-left: 0;
              }
         }
+
+        .provided-hint {
+             font-size: 15px;
+             color: #c92c10;
+             font-weight: 500;
+             margin-left: 3px;
+             font-style: italic;
+        }

@@ -101,10 +101,39 @@ export default function Sidebar({ activePage }) {
                 }}
               >
                 <span className="nav-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="1" x2="12" y2="23"></line>
-                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                  <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <style>{`
+                      .banknote-element { stroke: #4A6785; fill: none; }
+                      .banknote-fill { fill: #A3BDCC; stroke: #4A6785; }
+                      .banknote-text { fill: #4A6785; font-family: Arial, sans-serif; font-weight: bold; }
+                    `}</style>
+
+                    <g opacity="0.8">
+                      <rect x="18" y="10" width="42" height="24" rx="2" class="banknote-fill" stroke-width="1.5" />
+                      <rect x="21" y="13" width="36" height="18" rx="1" class="banknote-element" stroke-width="1" />
+                      <circle cx="39" cy="22" r="4" class="banknote-element" stroke-width="1" />
+                      <text x="23" y="20" class="banknote-text" font-size="6">$</text>
+                      <text x="53" y="30" class="banknote-text" font-size="6">$</text>
+                    </g>
+
+                    <g>
+                      <rect x="4" y="22" width="46" height="28" rx="3" class="banknote-fill" stroke-width="2" />
+
+                      <rect x="8" y="26" width="38" height="20" rx="2" class="banknote-element" stroke-width="1" stroke-dasharray="2 1" />
+
+                      <circle cx="27" cy="36" r="6" class="banknote-fill" stroke-width="1.5" />
+                      <path d="M25 34C25 33 26 32 27 32C28 32 29 33 29 34V38C29 39 28 40 27 40C26 40 25 39 25 38V34Z" fill="#4A6785" />
+
+                      <text x="10" y="33" class="banknote-text" font-size="7">$</text>
+                      <text x="40" y="47" class="banknote-text" font-size="7">$</text>
+
+                      <rect x="10" y="43" width="8" height="2" fill="#4A6785" opacity="0.7" />
+                      <rect x="34" y="29" width="8" height="2" fill="#4A6785" opacity="0.7" />
+                    </g>
                   </svg>
+
+
+
                 </span>
                 <span>Subscription</span>
               </a>

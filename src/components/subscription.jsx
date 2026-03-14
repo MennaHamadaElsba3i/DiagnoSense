@@ -112,12 +112,44 @@ function Subscription() {
   const [plans, setPlans] = useState([]);
   const [isPlansLoading, setIsPlansLoading] = useState(true);
   const [plansError, setPlansError] = useState(null);
-  const [selectedPlanId, setSelectedPlanId] = useState(
-    () => {
-      const saved = localStorage.getItem("currentPlanId");
-      return saved ? (isNaN(saved) ? saved : Number(saved)) : null;
+  const [selectedPlanId, setSelectedPlanId] = useState(null);
+
+
+  useEffect(() => {
+    const saved = localStorage.getItem("currentPlanId");
+    if (saved) {
+      setSelectedPlanId(isNaN(saved) ? saved : Number(saved));
     }
-  );
+  }, []);
+
+  useEffect(() => {
+    if (isSubLoading) return; 
+
+    const hasActivePlan = isSubscription || isPayPerUse;
+
+    if (!hasActivePlan) {
+      localStorage.removeItem("currentPlanId");
+      setSelectedPlanId(null);
+      return;
+    }
+    let backendPlanId = null;
+    if (isPayPerUse) {
+      backendPlanId = "Pay-per-use";
+    } else if (isSubscription && subscriptionData?.plan_id != null) {
+      backendPlanId = subscriptionData.plan_id;
+    }
+
+    if (backendPlanId == null) return;
+
+    const saved = localStorage.getItem("currentPlanId");
+    if (!saved) {
+      localStorage.setItem("currentPlanId", backendPlanId);
+      setSelectedPlanId(backendPlanId);
+    } else {
+      const parsed = isNaN(saved) ? saved : Number(saved);
+      setSelectedPlanId(parsed);
+    }
+  }, [isSubLoading, isSubscription, isPayPerUse, subscriptionData]);
   const [subscribingPlanId, setSubscribingPlanId] = useState(null);
 
   useEffect(() => {
@@ -596,7 +628,7 @@ function Subscription() {
                   plans.map((plan) => {
                     const isCurrent = selectedPlanId === plan.id;
                     return (
-                      <div className={`plan-card ${isCurrent ? "popular" : ""}`} key={plan.id}>
+                      <div className={`plan-card ${isCurrent ? "popular border-2 border-blue-500" : ""}`} key={plan.id}>
                         {isCurrent && <div className="badge-current">Current Plan</div>}
                         <div className="plan-name">{plan.name}</div>
                         <span className="plan-price">E£ {plan.price.toLocaleString()}</span>
@@ -632,7 +664,7 @@ function Subscription() {
               </div>
 
               <div className="bottom-grid">
-                <div className={`ppu-card ${selectedPlanId === "Pay-per-use" ? "popular" : ""}`}>
+                <div className={`ppu-card ${selectedPlanId === "Pay-per-use" ? "popular border-2 border-blue-500" : ""}`}>
                   {selectedPlanId === "Pay-per-use" && <div className="badge-current">Current Mode</div>}
                   <div>
                     <div className="ppu-lbl">Pay-per-use</div>
@@ -817,7 +849,7 @@ function Subscription() {
                       isCharged
                     }
                   >
-                    {isCharged ? "✓ Charged!" : "Charge"}
+                    {isCharged ? "Charging..." : "Charge"}
                   </button>
                 </div>
                 <div className="charge-hint">{chargeHint}</div>
@@ -854,7 +886,7 @@ function Subscription() {
                       <th>Description</th>
                       <th>Amount</th>
                       <th>Status</th>
-                      <th>Invoice</th>
+                      
                     </tr>
                   </thead>
                   <tbody>
@@ -869,11 +901,7 @@ function Subscription() {
                               {tx.status}
                             </span>
                           </td>
-                          <td>
-                            <button className="btn-dl" onClick={() => dlInv(tx.date)}>
-                              ↓ Download
-                            </button>
-                          </td>
+                          
                         </tr>
                       ))
                     ) : (
