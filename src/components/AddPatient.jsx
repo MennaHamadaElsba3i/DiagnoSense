@@ -8,6 +8,7 @@ import closeIcon from "../assets/close.png";
 import openIcon from "../assets/open.png";
 import { useSidebar } from "../components/SidebarContext";
 import { useSubscription } from "../components/SubscriptionContext";
+import Sidebar from "./Sidebar";
 import "../css/AddPatient.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import { getCookie } from "./cookieUtils";
@@ -439,125 +440,8 @@ const AddPatient = () => {
         <div className="wave"></div>
       </div>
 
-      <aside className={`sidebar${isSidebarCollapsed ? " collapsed" : ""}`}>
-        <div className="sidebar-logo">
-          <span className="logo-text">
-            <img className="logo-expanded" src={logo} alt="" />
-            <div className="sidebar-logo-slot">
-              <img className="logo-collapsed" src={stethoscope} alt="DiagnoSense" />
-              <button
-                className="logo-expand-btn"
-                onClick={toggleSidebar}
-                aria-label="Expand sidebar"
-                title="Expand sidebar"
-              >
-                <img src={openIcon} alt="Expand sidebar" />
-              </button>
-            </div>
-          </span>
-        </div>
-        <button
-          className="sidebar-toggle"
-          onClick={toggleSidebar}
-          aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          <img
-            src={isSidebarCollapsed ? openIcon : closeIcon}
-            alt={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="sidebar-toggle-icon"
-          />
-        </button>
-        <nav className="sidebar-nav">
-          <div className="nav-main">
-            <div className="nav-section">
-              <div className="nav-section-title">Main</div>
-              <a href="/dashboard" className="nav-item">
-                <span className="nav-icon">
-                  <svg viewBox="0 0 24 24">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                  </svg>
-                </span>
-                <span>Dashboard</span>
-              </a>
-              <a href="/patients" className="nav-item">
-                <span className="nav-icon">
-                  <svg viewBox="0 0 24 24">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                  </svg>
-                </span>
-                <span>Patients</span>
-              </a>
-              <a
-                href="#"
-                className="nav-item"
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate("/subscription");
-                }}
-              >
-                <span className="nav-icon">
-                  <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <style>{`
-                      .banknote-element { stroke: #4A6785; fill: none; }
-                      .banknote-fill { fill: #A3BDCC; stroke: #4A6785; }
-                      .banknote-text { fill: #4A6785; font-family: Arial, sans-serif; font-weight: bold; }
-                    `}</style>
+      <Sidebar activePage="addpatient" />
 
-                    <g opacity="0.8">
-                      <rect x="18" y="10" width="42" height="24" rx="2" class="banknote-fill" stroke-width="1.5" />
-                      <rect x="21" y="13" width="36" height="18" rx="1" class="banknote-element" stroke-width="1" />
-                      <circle cx="39" cy="22" r="4" class="banknote-element" stroke-width="1" />
-                      <text x="23" y="20" class="banknote-text" font-size="6">$</text>
-                      <text x="53" y="30" class="banknote-text" font-size="6">$</text>
-                    </g>
-
-                    <g>
-                      <rect x="4" y="22" width="46" height="28" rx="3" class="banknote-fill" stroke-width="2" />
-
-                      <rect x="8" y="26" width="38" height="20" rx="2" class="banknote-element" stroke-width="1" stroke-dasharray="2 1" />
-
-                      <circle cx="27" cy="36" r="6" class="banknote-fill" stroke-width="1.5" />
-                      <path d="M25 34C25 33 26 32 27 32C28 32 29 33 29 34V38C29 39 28 40 27 40C26 40 25 39 25 38V34Z" fill="#4A6785" />
-
-                      <text x="10" y="33" class="banknote-text" font-size="7">$</text>
-                      <text x="40" y="47" class="banknote-text" font-size="7">$</text>
-
-                      <rect x="10" y="43" width="8" height="2" fill="#4A6785" opacity="0.7" />
-                      <rect x="34" y="29" width="8" height="2" fill="#4A6785" opacity="0.7" />
-                    </g>
-                  </svg>
-
-                </span>
-                <span>Subscription</span>
-              </a>
-              <a href="/settings" className="nav-item">
-                <span className="nav-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="3"></circle>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                  </svg>
-                </span>
-                <span>Settings</span>
-              </a>
-              <a href="#" className="nav-item">
-                <span className="nav-icon">
-                  <svg viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                  </svg>
-                </span>
-                <span>Support</span>
-              </a>
-            </div>
-          </div>
-        </nav>
-      </aside>
 
       <nav className={`top-navbar${isSidebarCollapsed ? " collapsed" : ""}`}>
         <div className="navbar-right">
@@ -667,7 +551,7 @@ const AddPatient = () => {
 
       <LogoutConfirmation isOpen={isLogoutModalOpen} onClose={closeLogoutModal} />
 
-      <div className={`main-content${isSidebarCollapsed ? " collapsed" : ""}`}>
+      <main className={`main-content${isSidebarCollapsed ? " collapsed" : ""}`}>
         <div className="page-header"></div>
 
         <div className="wizard-card">
@@ -1075,7 +959,7 @@ const AddPatient = () => {
 
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
