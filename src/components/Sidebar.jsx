@@ -25,20 +25,23 @@ export default function Sidebar({ activePage }) {
       <aside className={`sidebar${isSidebarCollapsed ? " collapsed" : ""}`}>
         <div className="sidebar-header">
           <div className="sidebar-logo">
-            <span className="logo-text">
-              <img className="logo-expanded" src={logo} alt="" style={{ height: "45px" }} />
-              <div className="sidebar-logo-slot">
-                <img className="logo-collapsed" src={stethoscope} alt="DiagnoSense" />
-                <button
-                  className="logo-expand-btn"
-                  onClick={toggleSidebar}
-                  aria-label="Expand sidebar"
-                  title="Expand sidebar"
-                >
-                  <img src={openIcon} alt="Expand sidebar" />
-                </button>
-              </div>
-            </span>
+            {/* Expanded State: Full Logo */}
+            <div className="logo-expanded-container">
+              <img className="logo-expanded" src={logo} alt="DiagnoSense" />
+            </div>
+
+            {/* Collapsed State: Stethoscope Icon + Hover Expand Button */}
+            <div className="sidebar-logo-slot">
+              <img className="logo-collapsed" src={stethoscope} alt="DiagnoSense" />
+              <button
+                className="logo-expand-btn"
+                onClick={toggleSidebar}
+                aria-label="Expand sidebar"
+                title="Expand sidebar"
+              >
+                <img src={openIcon} alt="Expand sidebar" />
+              </button>
+            </div>
           </div>
           <button
             className="sidebar-toggle"

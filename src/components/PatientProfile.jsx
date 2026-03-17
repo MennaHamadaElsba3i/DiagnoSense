@@ -1164,18 +1164,12 @@ const PatientProfile = () => {
           >
             <div className="overview-layout">
               <div className="card smart-summary">
-                <div
-                  className="card-header"
-                  style={{ background: "none", display: "block" }}
-                >
+                <div className="card-header">
                   <h2 className="card-title">
                     <span className="ai-pulse"></span>
                     Smart Summary
                   </h2>
-                  <div
-                    className="ai-insight"
-                    style={{ marginTop: "-10px", marginBottom: "0" }}
-                  >
+                  <div className="ai-insight">
                     <strong>AI Summary:</strong>{" "}
                     {overviewLoading
                       ? "Loading…"

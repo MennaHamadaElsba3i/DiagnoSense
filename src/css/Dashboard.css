@@ -41,30 +41,29 @@ body {
      justify-content: center;
 }
 
-.sidebar-logo span img {
-     height: 40px;
-     width: auto;
-     object-fit: contain;
-}
-
 .sidebar-logo {
+     flex: 1;
      display: flex;
      align-items: center;
-     gap: 12px;
+     justify-content: center;
+     min-width: 0;
 }
 
-.logo-text {
+.logo-expanded-container {
      display: flex;
      justify-content: center;
-     font-size: 21px;
-     font-weight: 700;
-     color: #2A66FF;
-     letter-spacing: -0.3px;
+     align-items: center;
      width: 100%;
 }
 
-.logo-text img {
-     cursor: pointer;
+.logo-expanded {
+     height: 42px;
+     max-width: 100%;
+     object-fit: contain;
+}
+
+.sidebar.collapsed .logo-expanded-container {
+     display: none;
 }
 
 .sidebar-nav {
@@ -1447,15 +1446,15 @@ body {
      display: block;
 }
 
-/* Collapsed logo slot: hidden in expanded, shown in collapsed.
-       Fixed dimensions prevent any reflow when children swap. */
+/* Collapsed logo slot: hidden in expanded, shown in collapsed. */
 .sidebar-logo-slot {
      display: none;
      position: relative;
      width: 40px;
-     height: 40px;
+     height: 45px;
      align-items: center;
      justify-content: center;
+     flex-shrink: 0;
 }
 
 /* Both children overlap in the same absolute position */
@@ -1468,11 +1467,6 @@ body {
      transition: opacity 0.15s, visibility 0.15s;
 }
 
-.sidebar.collapsed .sidebar-logo .logo-expanded {
-     display: none;
-}
-
-/* Show the slot container in collapsed state */
 .sidebar.collapsed .sidebar-logo-slot {
      display: flex;
 }
@@ -1523,18 +1517,15 @@ body {
 
 /* Stethoscope image sizing */
 .sidebar-logo-slot .logo-collapsed {
-     width: 40px;
-     height: 40px;
+     width: 32px;
+     height: 32px;
      object-fit: contain;
-     border-radius: 8px;
 }
 
 .sidebar.collapsed .sidebar-logo {
+     width: 100%;
      justify-content: center;
-}
-
-.sidebar.collapsed .logo-text {
-     justify-content: center;
+     margin: 0;
 }
 
 /* ── Toggle button — absolute, inside sidebar header ── */

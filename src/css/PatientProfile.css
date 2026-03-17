@@ -1033,6 +1033,11 @@ body {
     display: flex;
     flex-direction: column;
     gap: 24px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 @keyframes fadeInSlide {
@@ -1101,6 +1106,22 @@ body {
 
 .smart-summary {
     background: linear-gradient(135deg, rgba(42, 102, 255, 0.02) 0%, rgba(255, 255, 255, 1) 100%);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+.smart-summary .card-header {
+    background: none;
+    display: block;
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 .ai-insight {
@@ -1108,9 +1129,35 @@ body {
     background: rgba(42, 102, 255, 0.05);
     border-left: 3px solid #2A66FF;
     border-radius: 8px;
+    margin-top: 0;
     margin-bottom: 20px;
     font-size: 14px;
     line-height: 1.6;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    height: auto;
+    min-height: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: normal;
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .ai-insight {
+        padding: 12px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .ai-insight {
+        padding: 10px;
+        font-size: 13px;
+    }
 }
 
 /* Key Info */
@@ -2500,7 +2547,8 @@ button.pp-note-delete-btn:hover {
 
     .overview-layout,
     .records-layout {
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: column;
     }
 
     .chart-grid {

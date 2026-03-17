@@ -68,14 +68,6 @@ body .decision-support-card .card-cta-btn {
     padding: 24px;
   }
 
-  body .sidebar-logo {
-    justify-content: center;
-  }
-
-  body .sidebar-logo span img {
-    height: 28px;
-    width: auto;
-  }
 
   body .nav-section-title {
     display: none;
