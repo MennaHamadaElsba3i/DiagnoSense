@@ -741,19 +741,7 @@ function Subscription() {
                   const dotClass = isEffectivelyCancelled ? "cancelled-dot" : "g-dot";
                   return (
                     <>
-                      <div className="usage-plan-bar">
-                        <div
-                          style={{ display: "flex", alignItems: "center", gap: "10px" }}
-                        >
-                          <span className="u-plan-name">{subscriptionData.plan_name} Plan</span>
-                          <span className="u-cycle">
-                            Current cycle: {subscriptionData.starts_at} – {subscriptionData.expires_at}
-                          </span>
-                        </div>
-                        <span className={badgeClass}>
-                          <span className={dotClass}></span> {displayStatus}
-                        </span>
-                      </div>
+
                       <div className="usage-box">
                         <div className="u-big">
                           {subscriptionData.usage?.used ?? 0} <span>/ {subscriptionData.usage?.total ?? 0} files</span>

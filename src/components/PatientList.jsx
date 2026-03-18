@@ -659,6 +659,12 @@ const PatientList = () => {
     }
   };
 
+  // ── Grouped Pagination Logic ──
+  const PAGINATION_GROUP_SIZE = 10;
+  const currentGroup = Math.floor((currentPage - 1) / PAGINATION_GROUP_SIZE);
+  const startPage = currentGroup * PAGINATION_GROUP_SIZE + 1;
+  const endPage = Math.min(startPage + PAGINATION_GROUP_SIZE - 1, lastPage);
+
   return (
     <>
       <div className="background-pattern"></div>
@@ -949,11 +955,18 @@ const PatientList = () => {
           <button
             disabled={currentPage <= 1 || patients.length === 0}
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            title="Previous Page"
           >
             ◂ Prev
           </button>
 
-          {Array.from({ length: lastPage }, (_, i) => i + 1).map((page) => (
+          {startPage > 1 && (
+            <button onClick={() => setCurrentPage(startPage - 1)} title="Previous 10 Pages">
+              «
+            </button>
+          )}
+
+          {Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i).map((page) => (
             <button
               key={page}
               className={currentPage === page ? "active" : ""}
@@ -963,13 +976,21 @@ const PatientList = () => {
             </button>
           ))}
 
+          {endPage < lastPage && (
+            <button onClick={() => setCurrentPage(endPage + 1)} title="Next 10 Pages">
+              »
+            </button>
+          )}
+
           <button
             disabled={currentPage >= lastPage || patients.length === 0}
             onClick={() => setCurrentPage(p => Math.min(lastPage, p + 1))}
+            title="Next Page"
           >
             Next ▸
           </button>
         </div>
+
       </div >
 
       <ConfirmModal

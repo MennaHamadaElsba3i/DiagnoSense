@@ -301,16 +301,7 @@ body {
     stroke-linejoin: round;
 }
 
-.notification-badge {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 8px;
-    height: 8px;
-    background: #FF5C5C;
-    border-radius: 50%;
-    border: 2px solid white;
-}
+
 
 .user-avatar {
     width: 40px;
