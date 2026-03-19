@@ -15,7 +15,7 @@
 }
 
 .sidebar.collapsed {
-    width: 72px;
+     width: 72px;
 }
 
 .sidebar-header {
@@ -24,10 +24,12 @@
      justify-content: space-between;
      padding: 16px 20px;
      border-bottom: 1px solid rgba(230, 234, 242, 0.5);
+     height: 78px; /* Standardized height from benchmark */
+     box-sizing: border-box;
 }
 
 .sidebar.collapsed .sidebar-header {
-     padding: 16px 0;
+     padding: 0;
      justify-content: center;
 }
 
@@ -35,8 +37,14 @@
      flex: 1;
      display: flex;
      align-items: center;
-     justify-content: center;
+     justify-content: flex-start;
      min-width: 0;
+     height: 100%;
+}
+
+.sidebar.collapsed .sidebar-logo {
+     justify-content: center;
+     width: 100%;
 }
 
 .logo-expanded-container {
@@ -53,6 +61,106 @@
 }
 
 .sidebar.collapsed .logo-expanded-container {
+     display: none;
+}
+
+/* Collapsed Logo area */
+.sidebar-logo-slot {
+     display: none;
+     position: relative;
+     width: 100%;
+     height: 78px; /* Match header height */
+     align-items: center;
+     justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-logo-slot {
+     display: flex;
+}
+
+/* Center both logo and expand button onto the same spot */
+.sidebar-logo-slot .logo-collapsed,
+.sidebar-logo-slot .logo-expand-btn {
+     position: absolute;
+     left: 50%;
+     top: 50%;
+     transform: translate(-50%, -50%);
+     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-logo-slot .logo-collapsed {
+     width: 32px;
+     height: 32px;
+     object-fit: contain;
+     opacity: 1;
+     visibility: visible;
+}
+
+/* Expand button: centered and usable - compact hover style */
+.logo-expand-btn {
+     background: transparent;
+     border: none;
+     border-radius: 10px;
+     width: 38px; /* Compact size */
+     height: 38px;
+     padding: 0;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     cursor: pointer;
+     opacity: 0;
+     visibility: hidden;
+     z-index: 2;
+     transition: all 0.25s ease;
+}
+
+.logo-expand-btn img {
+     width: 18px;
+     height: 18px;
+}
+
+/* Hover logic for swap and background matching */
+.sidebar.collapsed:hover .logo-collapsed {
+     opacity: 0;
+     visibility: hidden;
+     transform: translate(-50%, -50%) scale(0.8);
+}
+
+.sidebar.collapsed:hover .logo-expand-btn {
+     opacity: 1;
+     visibility: visible;
+     transform: translate(-50%, -50%) scale(1);
+}
+
+.logo-expand-btn:hover {
+     background: rgba(42, 102, 255, 0.08); /* Subtle, consistent hover */
+}
+
+/* Edge toggle (expanded only) */
+.sidebar-toggle {
+     background: transparent;
+     border: none;
+     width: 38px; /* Match expand button size */
+     height: 38px;
+     padding: 0;
+     cursor: pointer;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     border-radius: 10px;
+     transition: all 0.25s ease;
+}
+
+.sidebar-toggle:hover {
+     background: rgba(42, 102, 255, 0.08); /* Same subtle hover */
+}
+
+.sidebar-toggle-icon {
+     width: 20px;
+     height: 20px;
+}
+
+.sidebar.collapsed .sidebar-toggle {
      display: none;
 }
 
@@ -82,7 +190,12 @@
 }
 
 .sidebar.collapsed .nav-section-title {
-    display: none;
+     display: none;
+}
+
+.sidebar.collapsed .nav-item {
+     justify-content: center;
+     padding: 11px;
 }
 
 .nav-item {
@@ -151,13 +264,13 @@
 }
 
 .nav-item span:not(.nav-icon) {
-    transition: opacity 0.3s ease;
+     transition: opacity 0.3s ease;
 }
 
 .sidebar.collapsed .nav-item span:not(.nav-icon) {
-    opacity: 0;
-    pointer-events: none;
-    width: 0;
+     opacity: 0;
+     pointer-events: none;
+     width: 0;
 }
 
 .nav-bottom {
@@ -167,7 +280,7 @@
 }
 
 .sidebar.collapsed .nav-bottom {
-    display: none;
+     display: none;
 }
 
 /* Premium Decision Support Card */

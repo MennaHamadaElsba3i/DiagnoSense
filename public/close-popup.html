@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Payment Complete</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background: #f9fafb;
+            color: #374151;
+        }
+
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin-right: 12px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="loader"></div>
+    <p>Completing payment... this window will close automatically.</p>
+    <script>
+        // Notify the opener that payment is successful
+        if (window.opener) {
+            try {
+                window.opener.postMessage({ type: 'STRIPE_SUCCESS' }, window.location.origin);
+            } catch (e) {
+                console.error("Failed to notify opener", e);
+            }
+        }
+
+        // Use a small delay to ensure the backend notification has a head start if needed
+        setTimeout(() => {
+            if (window.opener) {
+                window.close();
+            } else {
+                // Fallback for standalone windows
+                document.body.innerHTML = "<h1>Payment Complete</h1><p>You can now close this window safely.</p>";
+            }
+        }, 1000);
+    </script>
+</body>
+
+</html>

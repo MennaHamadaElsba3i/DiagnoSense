@@ -22,6 +22,8 @@ export function NotificationsProvider({ children }) {
 
   // Prevent parallel loadMore calls
   const isLoadingMoreRef = useRef(false);
+  // Keep track of which notification IDs we've already shown as live toasts in this session
+  const displayedToastIds = useRef(new Set());
 
   // ── Initial fetch ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -62,8 +64,70 @@ export function NotificationsProvider({ children }) {
     return () => { cancelled = true; };
   }, []);
 
+  const refreshNotifications = useCallback(async () => {
+    try {
+      const [notifResult, countResult] = await Promise.all([
+        getNotificationsAPI(),
+        getUnreadNotificationsCountAPI(),
+      ]);
+
+      if (notifResult && notifResult.success !== false && (notifResult.data || Array.isArray(notifResult))) {
+        const list = Array.isArray(notifResult)
+          ? notifResult
+          : (Array.isArray(notifResult.data) ? notifResult.data : notifResult.data?.data ?? []);
+        
+        setNotifications((prev) => {
+          const prevIds = new Set(prev.map(n => n.id));
+          const onlyNew = list.filter(n => !prevIds.has(n.id));
+          return [...onlyNew, ...prev];
+        });
+        setNextCursor(notifResult.data?.next_cursor ?? notifResult.meta?.next_cursor ?? null);
+      }
+
+      if (countResult.success && countResult.data != null) {
+        const count =
+          typeof countResult.data === "number"
+            ? countResult.data
+            : countResult.data.count ?? countResult.data.unread_count ?? 0;
+        setUnreadCount(count);
+      }
+    } catch (err) {
+      console.error("[NotificationsProvider] refresh error", err);
+    }
+  }, []);
+
+  // ── Auto-toast recent unread notifications ──────────────────────────────────
+  useEffect(() => {
+    if (isLoading || notifications.length === 0) return;
+
+    // Filter for unread notifications created in the last 2 minutes
+    const now = new Date();
+    const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
+
+    const freshUnread = notifications.filter(n => {
+      if (n.is_read || displayedToastIds.current.has(n.id)) return false;
+      
+      // Try to parse created_at. Handled formats: ISO, "2024-03-..." etc.
+      const createdAt = new Date(n.created_at);
+      return !isNaN(createdAt.getTime()) && createdAt > twoMinutesAgo;
+    });
+
+    if (freshUnread.length > 0) {
+      // Pick the most recent one to toast
+      const target = freshUnread[0];
+      displayedToastIds.current.add(target.id);
+
+      setLiveToast({
+        id: target.id,
+        title: target.title || "New Notification",
+        message: target.message || target.body || ""
+      });
+      setTimeout(() => setLiveToast(null), 5000);
+    }
+  }, [notifications, isLoading]);
+
   // ── Real-time via Echo ─────────────────────────────────────────────────────
-  
+
   // Debug log on every render
   console.log("Notifications current user cookie inside render:", getJsonCookie("user"));
 
@@ -76,7 +140,7 @@ export function NotificationsProvider({ children }) {
     const checkUser = () => {
       const rawUser = getJsonCookie("user");
       const extId = rawUser?.id || rawUser?.user?.id || rawUser?.data?.id || null;
-      
+
       console.log("[NotificationsContext Debug] Checking for user in cookie...");
       console.log("[NotificationsContext Debug] Raw user object:", rawUser);
       console.log("[NotificationsContext Debug] Extracted user id:", extId);
@@ -89,7 +153,7 @@ export function NotificationsProvider({ children }) {
 
     checkUser(); // Check immediately
     const interval = setInterval(checkUser, 2000); // Retry every 2s if unavailable
-    
+
     return () => clearInterval(interval);
   }, [resolvedUserId]);
 
@@ -103,32 +167,35 @@ export function NotificationsProvider({ children }) {
     const channelName = `App.Models.User.${resolvedUserId}`;
     console.log(`[Echo Debug] EXACT CHANNEL NAME: ${channelName}`);
     console.log(`[Echo Debug] CONFIRMATION: Calling echo.private('${channelName}') right now...`);
-    
+
     // Check if Pusher/Echo correctly initializes
     const channel = echo.private(channelName);
 
     channel.notification((notification) => {
       console.log(`[Echo Debug] Realtime notification received on ${channelName}:`, notification);
-      
+
       setNotifications((prev) => {
         // Safe fallback logic - make payload robust if missing id/created_at
         const safeId = notification.id || `realtime-${Date.now()}-${Math.random()}`;
         const safeTitle = notification.title || "New Notification";
         const safeMessage = notification.message || notification.body || "";
-        
+
         // Deduplicate based on safe id
         if (prev.some((n) => n.id === safeId)) return prev;
-        
+
+        // Mark as displayed so auto-toast doesn't double-trigger
+        displayedToastIds.current.add(safeId);
+
         // Show lightweight toast for the new incoming notification
         setLiveToast({
           id: safeId,
           title: safeTitle,
           message: safeMessage
         });
-        
+
         // Auto-dismiss toast
         setTimeout(() => setLiveToast(null), 4000);
-        
+
         return [{
           ...notification,
           id: safeId,
@@ -231,10 +298,22 @@ export function NotificationsProvider({ children }) {
         markAsRead,
         markAllAsRead,
         clearAll,
+        refreshNotifications,
+        triggerToast: (notification) => {
+          if (!notification) return;
+          const safeId = notification.id || `manual-${Date.now()}`;
+          displayedToastIds.current.add(safeId);
+          setLiveToast({
+            id: safeId,
+            title: notification.title || "Message",
+            message: notification.message || notification.body || ""
+          });
+          setTimeout(() => setLiveToast(null), 5000);
+        }
       }}
     >
       {children}
-      
+
       {/* Lightweight Real-time Indicator Toast */}
       {liveToast && (
         <div style={{
@@ -255,10 +334,10 @@ export function NotificationsProvider({ children }) {
           animation: "slideInRight 0.3s ease-out forwards",
           cursor: "pointer"
         }}
-        onClick={() => {
-          setLiveToast(null);
-          openNotifications();
-        }}>
+          onClick={() => {
+            setLiveToast(null);
+            openNotifications();
+          }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <h4 style={{ margin: 0, fontSize: "14px", fontWeight: "600", color: "var(--text-primary, #111827)" }}>
               {liveToast.title}
@@ -270,7 +349,8 @@ export function NotificationsProvider({ children }) {
           </p>
         </div>
       )}
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes slideInRight {
           from { transform: translateX(100%); opacity: 0; }
           to { transform: translateX(0); opacity: 1; }
@@ -289,12 +369,12 @@ export function useNotifications() {
       isLoading: false,
       isLoadingMore: false,
       isOpen: false,
-      openNotifications: () => {},
-      closeNotifications: () => {},
-      loadMore: () => {},
-      markAsRead: () => {},
-      markAllAsRead: () => {},
-      clearAll: () => {},
+      openNotifications: () => { },
+      closeNotifications: () => { },
+      loadMore: () => { },
+      markAsRead: () => { },
+      markAllAsRead: () => { },
+      clearAll: () => { },
     };
   }
   return ctx;

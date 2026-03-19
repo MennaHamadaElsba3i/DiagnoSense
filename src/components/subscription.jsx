@@ -4,6 +4,7 @@ import { useSidebar } from "./SidebarContext";
 import { useSubscription } from "./SubscriptionContext";
 import Sidebar from "./Sidebar";
 import LogoutConfirmation from "./ConfirmationModal.jsx";
+import ConfirmModal from "./ConfirmModal";
 import "../css/subscription.css";
 import Swal from "sweetalert2";
 import { chargeWalletAPI, getTransactionsAPI, getSubscriptionPlansAPI, subscribeToPlanAPI, subscribeToPayPerUseAPI, cancelSubscriptionAPI } from "./mockAPI.js";
@@ -15,11 +16,11 @@ function Subscription() {
   const searchParams = new URLSearchParams(location.search);
   const { isSidebarCollapsed, toggleSidebar } = useSidebar();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const { unreadCount, openNotifications } = useNotifications();
+  const { unreadCount, openNotifications, refreshNotifications } = useNotifications();
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const avatarMenuRef = useRef(null);
-  const { subscriptionData, isSubLoading, refreshSubscription } = useSubscription();
-  const { credits, isCreditsLoading, refreshCredits } = useSubscription();
+  const { subscriptionData, isSubLoading, refreshSubscription, credits, isCreditsLoading, refreshCredits } = useSubscription();
+  const prevUnreadCount = useRef(unreadCount);
   const walletBalance = subscriptionData?.wallet_balance != null ? subscriptionData.wallet_balance.toLocaleString() : "—";
   const isPayPerUse = subscriptionData?.billing_mode === "pay_per_use";
   const isSubscription = subscriptionData?.billing_mode === "subscription";
@@ -64,36 +65,42 @@ function Subscription() {
 
   const openLogoutModal = () => setIsLogoutModalOpen(true);
   const closeLogoutModal = () => setIsLogoutModalOpen(false);
-
+  
+  // ── Robust Closure Fallback ────────────────────────────────────────────────
+  // If the app is loading inside a stripe_checkout popup (e.g. redirect failed), close it.
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const status = searchParams.get("status");
-    const currentTab = searchParams.get("tab") || "billing";
+    if (window.name === "stripe_checkout" && window.opener) {
+      console.log("[Subscription] Stripe checkout popup detected, closing...");
+      window.close();
+    }
+  }, []);
 
-    if (status === "success") {
-      fetchTransactions();
+  // ── Message Listener from Popup ────────────────────────────────────────────
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type === 'STRIPE_SUCCESS') {
+        console.log("[Subscription] Stripe success message received from popup.");
+        refreshSubscription();
+        refreshCredits();
+        fetchTransactions();
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [refreshSubscription, refreshCredits]);
+
+  // ── Real-time Refresh when notification arrives ────────────────────────────
+  useEffect(() => {
+    if (unreadCount > prevUnreadCount.current) {
+      console.log("[Subscription] New notification detected, refreshing data...");
       refreshSubscription();
       refreshCredits();
-      Swal.fire({
-        icon: "success",
-        title: "Payment Successful",
-        text: "Your wallet has been topped up successfully.",
-        confirmButtonColor: "#10b981",
-      }).then(() => {
-        navigate("/subscription", { replace: true, state: { tab: currentTab } });
-      });
+      fetchTransactions();
     }
-    else if (status === "canceled" || status === "cancel" || status === "failed") {
-      Swal.fire({
-        icon: "warning",
-        title: "Payment Cancelled",
-        text: "The payment process was not completed. No credits were added.",
-        confirmButtonColor: "#f59e0b"
-      }).then(() => {
-        navigate("/subscription", { replace: true, state: { tab: currentTab } });
-      });
-    }
-  }, [location.search, navigate]);
+    prevUnreadCount.current = unreadCount;
+  }, [unreadCount, refreshSubscription, refreshCredits]);
+
   const [activeTab, setActiveTab] = useState(
     searchParams.get("tab") || location.state?.tab || "plans"
   );
@@ -123,7 +130,7 @@ function Subscription() {
   }, []);
 
   useEffect(() => {
-    if (isSubLoading) return; 
+    if (isSubLoading) return;
 
     const hasActivePlan = isSubscription || isPayPerUse;
 
@@ -150,6 +157,9 @@ function Subscription() {
       setSelectedPlanId(parsed);
     }
   }, [isSubLoading, isSubscription, isPayPerUse, subscriptionData]);
+
+  const [isPlanConfirmModalOpen, setIsPlanConfirmModalOpen] = useState(false);
+  const [pendingPlan, setPendingPlan] = useState(null);
   const [subscribingPlanId, setSubscribingPlanId] = useState(null);
 
   useEffect(() => {
@@ -192,17 +202,13 @@ function Subscription() {
       const apiResult = await cancelSubscriptionAPI();
 
       if (apiResult.success) {
-        Swal.fire({
-          icon: "success",
-          title: "Cancelled",
-          text: apiResult.message || "Subscription cancelled successfully.",
-        });
         setIsCancelledLocally(true);
         setSelectedPlanId(null);
         localStorage.removeItem("currentPlanId");
         refreshSubscription();
         refreshCredits();
         fetchTransactions();
+        refreshNotifications();
       } else {
         Swal.fire({
           icon: "error",
@@ -213,11 +219,20 @@ function Subscription() {
     }
   };
 
-  const startPlan = async (plan) => {
+  const startPlan = (plan) => {
     if (plan === "Enterprise") {
       window.alert("You selected the Enterprise plan!\nPlease contact our enterprise sales team.");
       return;
     }
+    setPendingPlan(plan);
+    setIsPlanConfirmModalOpen(true);
+  };
+
+  const handleConfirmPlan = async () => {
+    const plan = pendingPlan;
+    if (!plan) return;
+
+    setIsPlanConfirmModalOpen(false);
 
     if (plan === "Pay-per-use") {
       setSubscribingPlanId("Pay-per-use");
@@ -225,6 +240,7 @@ function Subscription() {
       const result = await subscribeToPayPerUseAPI();
 
       setSubscribingPlanId(null);
+      setPendingPlan(null);
 
       if (result.success) {
         setIsCancelledLocally(false);
@@ -233,13 +249,7 @@ function Subscription() {
         refreshSubscription();
         refreshCredits();
         fetchTransactions();
-
-        Swal.fire({
-          icon: "success",
-          title: "Success",
-          text: result.message || "Successfully switched to Pay-Per-Use mode!",
-          confirmButtonColor: "#10b981",
-        });
+        refreshNotifications();
       } else {
         Swal.fire({
           icon: "error",
@@ -257,6 +267,7 @@ function Subscription() {
     const result = await subscribeToPlanAPI(planId);
 
     setSubscribingPlanId(null);
+    setPendingPlan(null);
 
     if (result.success) {
       setIsCancelledLocally(false);
@@ -265,13 +276,7 @@ function Subscription() {
       refreshSubscription();
       refreshCredits();
       fetchTransactions();
-
-      Swal.fire({
-        icon: "success",
-        title: "Success",
-        text: result.message || "Successfully subscribed to the plan!",
-        confirmButtonColor: "#10b981",
-      });
+      refreshNotifications();
     } else {
       Swal.fire({
         icon: "error",
@@ -334,7 +339,7 @@ function Subscription() {
           result.data.url));
 
     if (paymentUrl) {
-      window.location.href = paymentUrl;
+      window.open(paymentUrl, "stripe_checkout", "width=600,height=700");
     }
 
     setChargeAmt("");
@@ -509,6 +514,23 @@ function Subscription() {
         onClose={closeLogoutModal}
       />
 
+      <ConfirmModal
+        isOpen={isPlanConfirmModalOpen}
+        onClose={() => setIsPlanConfirmModalOpen(false)}
+        onConfirm={handleConfirmPlan}
+        title="Confirm Subscription"
+        description={`Are you sure you want to subscribe to the ${pendingPlan?.name || (pendingPlan === "Pay-per-use" ? "Pay-Per-Use" : "selected")} plan?`}
+        confirmText="Confirm Subscription"
+        cancelText="Maybe Later"
+        variant="primary"
+        icon={
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 11l3 3L22 4"></path>
+            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+          </svg>
+        }
+      />
+
       <main className={`main-content${isSidebarCollapsed ? " collapsed" : ""}`}>
         <div className="subscription-page-header">
           <h2 className="subscription-title">Manage Subscription</h2>
@@ -670,7 +692,7 @@ function Subscription() {
                     <div className="ppu-lbl">Pay-per-use</div>
                     <div className="ppu-sub">Most popular plan</div>
                     <div className="ppu-price">
-                      E£ 25 <em>/ file</em>
+                      E£ 20 <em>/ file</em>
                     </div>
                   </div>
                   <div className="ppu-right">
@@ -767,7 +789,7 @@ function Subscription() {
                     {subscriptionData.display_text || "You are currently using the Pay-Per-Use plan."}
                   </div>
                   <div className="u-lbl">
-                    Each file costs E£ {subscriptionData.price_per_file ?? 25}. Usage tracking is per-file.
+                    Each file costs E£ {subscriptionData.price_per_file ?? 20}. Usage tracking is per-file.
                   </div>
                 </div>
               ) : (
@@ -874,7 +896,7 @@ function Subscription() {
                       <th>Description</th>
                       <th>Amount</th>
                       <th>Status</th>
-                      
+
                     </tr>
                   </thead>
                   <tbody>
@@ -889,7 +911,7 @@ function Subscription() {
                               {tx.status}
                             </span>
                           </td>
-                          
+
                         </tr>
                       ))
                     ) : (

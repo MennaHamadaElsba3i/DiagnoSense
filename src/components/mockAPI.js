@@ -1,5 +1,5 @@
-// const API_BASE_URL = 'https://nontelepathically-pamphletary-cyndi.ngrok-free.dev';
-const API_BASE_URL = 'https://toothlike-intermetatarsal-avah.ngrok-free.dev';
+const API_BASE_URL = 'https://nontelepathically-pamphletary-cyndi.ngrok-free.dev';
+// const API_BASE_URL = 'https://toothlike-intermetatarsal-avah.ngrok-free.dev';
 // const API_BASE_URL = 'https://unpersecuted-vanitied-jayson.ngrok-free.dev';
 
 import { getCookie, setCookie, deleteCookie, setJsonCookie } from './cookieUtils';
@@ -685,8 +685,8 @@ export const deletePatientAPI = async (patientId) => {
  * @param {number} balance - The balance to charge
  */
 export const chargeWalletAPI = async (balance) => {
-  const success_url = `${window.location.origin}/subscription?tab=billing`;
-  const cancel_url = `${window.location.origin}/subscription?tab=billing`;
+  const success_url = `${window.location.origin}/close-popup.html`;
+  const cancel_url = `${window.location.origin}/close-popup.html`;
 
   return await apiCall('/api/wallet/charge', {
     method: 'POST',
