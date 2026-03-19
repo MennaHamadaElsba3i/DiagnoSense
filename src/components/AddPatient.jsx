@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { addPatientAPI } from "./mockAPI";
+import UploadFileItem from "./UploadFileItem";
 import ProcessingReports from "../components/ProcessingReports";
 import logo from "../assets/Logo_Diagnoo.png";
 import stethoscope from "../assets/Stethoscope.png";
@@ -44,6 +45,7 @@ const AddPatient = () => {
   const [hasSurgeries, setHasSurgeries] = useState(null);
   const [selectedChronicDiseases, setSelectedChronicDiseases] = useState([]);
   const [isGenderOpen, setIsGenderOpen] = useState(false);
+  // fileManager stores { file: File, blobUrl: string } objects
   const [fileManager, setFileManager] = useState({
     lab: [],
     history: [],
@@ -278,19 +280,24 @@ const AddPatient = () => {
     );
   };
 
+  const ALLOWED_EXTS = [".pdf", ".jpg", ".jpeg"];
+  const ALLOWED_MIME = ["application/pdf", "image/jpeg"];
+
   const handleFiles = (category, files) => {
-    const validFiles = Array.from(files).filter((file) => {
-      const fileExt = "." + file.name.split(".").pop().toLowerCase();
-      return fileExt === ".pdf" && file.size <= 10 * 1024 * 1024;
-    });
-    // Clear file errors for this category when new valid files added
+    const validEntries = Array.from(files)
+      .filter((file) => {
+        const ext = "." + file.name.split(".").pop().toLowerCase();
+        return ALLOWED_EXTS.includes(ext) && file.size <= 10 * 1024 * 1024;
+      })
+      .map((file) => ({ file, blobUrl: URL.createObjectURL(file) }));
+
     const categoryErrorKey = category === "history" ? "medical_history" : category;
-    if (validFiles.length > 0) {
+    if (validEntries.length > 0) {
       setFieldErrors((prev) => { const n = { ...prev }; delete n[categoryErrorKey]; return n; });
     }
     setFileManager((prev) => ({
       ...prev,
-      [category]: [...prev[category], ...validFiles],
+      [category]: [...prev[category], ...validEntries],
     }));
   };
 
@@ -300,8 +307,11 @@ const AddPatient = () => {
   };
 
   const removeFile = (category, index) => {
-    const fileName = fileManager[category][index]?.name ?? "unknown";
+    const entry = fileManager[category][index];
+    const fileName = entry?.file?.name ?? entry?.name ?? "unknown";
     console.log("[file-remove] clicked", { section: category, fileName });
+    // Revoke blob URL to free memory
+    if (entry?.blobUrl) URL.revokeObjectURL(entry.blobUrl);
     setFileManager((prev) => ({
       ...prev,
       [category]: prev[category].filter((_, i) => i !== index),
@@ -352,9 +362,9 @@ const AddPatient = () => {
       apiFormData.append("family_history", formData.familyHistory || "");
       apiFormData.append("current_complaint", formData.ChiefComplaint || "");
 
-      fileManager.lab.forEach((file) => apiFormData.append("lab[]", file));
-      fileManager.history.forEach((file) => apiFormData.append("medical_history[]", file));
-      fileManager.radiology.forEach((file) => apiFormData.append("radiology[]", file));
+      fileManager.lab.forEach((entry) => apiFormData.append("lab[]", entry.file));
+      fileManager.history.forEach((entry) => apiFormData.append("medical_history[]", entry.file));
+      fileManager.radiology.forEach((entry) => apiFormData.append("radiology[]", entry.file));
 
       const result = await addPatientAPI(apiFormData);
       console.log("Add Patient Result:", result);
@@ -866,9 +876,7 @@ const AddPatient = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                       </svg>
                       <div className="dropzone-text">Click to upload or drag files</div>
-                      <div className="dropzone-formats">
-                        PDF (Max 10MB)
-                      </div>
+                      <div className="dropzone-formats">PDF, JPG (Max 10MB)</div>
                     </div>
 
                     <input
@@ -876,29 +884,19 @@ const AddPatient = () => {
                       className="file-input-hidden"
                       id={`${category}Input`}
                       multiple
-                      accept="application/pdf,.pdf"
+                      accept="application/pdf,.pdf,image/jpeg,.jpg,.jpeg"
                       onChange={(e) => handleFileInputChange(category, e)}
                     />
 
                     <div className="uploaded-files-list">
-                      {fileManager[category].map((file, index) => (
-                        <div key={index} className="uploaded-file-item">
-                          <div className="file-type-icon">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                            </svg>
-                          </div>
-                          <span className="file-name">{file.name}</span>
-                          <svg className="file-status-check" viewBox="0 0 24 24" fill="none" stroke="#00C187" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                            <polyline points="22 4 12 14.01 9 11.01" />
-                          </svg>
-                          <button className="file-remove-btn" onClick={(e) => { e.stopPropagation(); removeFile(category, index); }}>
-                            <svg width="18" height="18" fill="none" stroke="#FF5C5C" viewBox="0 0 24 24" style={{ display: "block", flexShrink: 0 }}>
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </div>
+                      {fileManager[category].map((entry, index) => (
+                        <UploadFileItem
+                          key={index}
+                          fileName={entry.file.name}
+                          viewUrl={entry.blobUrl}
+                          onRemove={() => removeFile(category, index)}
+                          style={{ borderColor: "#BBF7D0", background: "#F0FDF4" }}
+                        />
                       ))}
                     </div>
 

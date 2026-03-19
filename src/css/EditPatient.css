@@ -1,0 +1,162 @@
+/* ── EditPatient.css ──────────────────────────────────────────────────────── */
+/* Specific overrides for edit mode. All base wizard styles come from AddPatient.css */
+
+/* ─ Edit mode badge in wizard header ─ */
+.wizard-mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+  color: #4F46E5;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid #C7D2FE;
+  margin-bottom: 16px;
+  letter-spacing: 0.3px;
+}
+
+/* ─ Section label above existing files list ─ */
+.existing-files-section {
+  margin-bottom: 8px;
+}
+
+.existing-files-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+  padding: 0 2px;
+}
+
+/* ─ Existing-file card (backend files) ─ */
+.existing-file-item {
+  border: 1px solid #BFDBFE; /* blue tint to distinguish from new uploads */
+  background: #EFF6FF;
+  border-radius: 8px;
+  position: relative;
+}
+
+.existing-file-item.removed {
+  opacity: 0.5;
+  border-style: dashed;
+  border-color: #E5E7EB;
+  background: #F9FAFB;
+}
+
+/* ─ Strikethrough filename when removed ─ */
+.file-name-removed {
+  text-decoration: line-through;
+  color: #9CA3AF !important;
+}
+
+/* ─ "Removed" badge ─ */
+.removed-badge {
+  display: inline-flex;
+  align-items: center;
+  background: #FEE2E2;
+  color: #B91C1C;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  border: 1px solid #FCA5A5;
+  white-space: nowrap;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ─ "New" badge next to newly uploaded files ─ */
+.new-file-badge {
+  display: inline-flex;
+  align-items: center;
+  background: #DCFCE7;
+  color: #166534;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  border: 1px solid #86EFAC;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ─ New file item (green tint) ─ */
+.new-file-item {
+  border: 1px solid #BBF7D0;
+  background: #F0FDF4;
+}
+
+/* ─ Action buttons row on existing file cards ─ */
+.existing-file-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+/* ─ View button (eye icon) ─ */
+.btn-view-file {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid #BFDBFE;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.btn-view-file:hover {
+  background: #DBEAFE;
+  border-color: #2A66FF;
+}
+
+/* ─ Undo remove button variant ─ */
+.undo-btn {
+  background: transparent !important;
+  border: 1px solid #BFDBFE !important;
+  border-radius: 6px !important;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.undo-btn:hover {
+  background: #DBEAFE !important;
+}
+
+/* ─ Success toast ─ */
+.edit-success-toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ECFDF5;
+  color: #065F46;
+  border: 1px solid #6EE7B7;
+  border-radius: 12px;
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  animation: toast-slide-in 0.3s ease;
+}
+
+@keyframes toast-slide-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

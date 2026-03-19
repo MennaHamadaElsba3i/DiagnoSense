@@ -680,6 +680,85 @@ export const deletePatientAPI = async (patientId) => {
 };
 
 /**
+ * GET /api/patients/{patientId}
+ * Fetches full patient data for the edit form (personal info, medical history, existing files).
+ */
+export const getPatientForEditAPI = async (patientId) => {
+  const token = getCookie('user_token');
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/patients/${patientId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        deleteCookie('user_token');
+        deleteCookie('user');
+        deleteCookie('isAuthenticated');
+      }
+      return {
+        success: false,
+        message: data.message || 'Something went wrong',
+        errors: data.errors || null,
+      };
+    }
+
+    return { success: true, data: data.data ?? data };
+  } catch (error) {
+    console.error('[getPatientForEdit] API Error:', error);
+    return { success: false, message: 'Network error. Please check your connection.' };
+  }
+};
+
+/**
+ * PUT /api/patients/{patientId}
+ * Updates patient data. Sent as multipart/form-data so files can be included.
+ * @param {number|string} patientId
+ * @param {FormData} formData  — built by EditPatient before submitting
+ */
+export const updatePatientAPI = async (patientId, formData) => {
+  const token = getCookie('user_token');
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/patients/${patientId}`, {
+      method: 'POST', // Laravel tunnels PUT via _method spoofing; keep POST here
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        deleteCookie('user_token');
+        deleteCookie('user');
+        deleteCookie('isAuthenticated');
+      }
+      return {
+        success: false,
+        message: data.message || 'Something went wrong',
+        errors: data.errors || null,
+      };
+    }
+
+    return { success: true, message: data.message, data };
+  } catch (error) {
+    console.error('[updatePatient] API Error:', error);
+    return { success: false, message: 'Network error. Please check your connection.' };
+  }
+};
+
+/**
  * POST /wallet/charge
  * Charges the doctor's wallet with the specified balance.
  * @param {number} balance - The balance to charge

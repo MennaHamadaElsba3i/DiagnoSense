@@ -1085,8 +1085,8 @@ const PatientProfile = () => {
                   border: "1px solid #2A66FF",
                   fontWeight: "bold",
                 }}
-                onClick={(e) => {
-                  navigate("/add-patient");
+                onClick={() => {
+                  navigate(`/edit-patient/${patientId}`);
                 }}
               >
                 Edit File

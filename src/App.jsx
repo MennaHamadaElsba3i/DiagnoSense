@@ -6,6 +6,7 @@ import AuthPage from "./pages/AuthPage.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import PatientList from "./components/PatientList.jsx";
 import AddPatient from "./components/AddPatient.jsx";
+import EditPatient from "./components/EditPatient.jsx";
 import PatientProfile from "./components/PatientProfile.jsx";
 import ProcessingReports from "./components/ProcessingReports.jsx";
 import DiagnoSense from "./components/DiagnoSense.jsx";
@@ -162,6 +163,21 @@ function App() {
                 <SubscriptionProvider>
                   <NotificationsProvider>
                     <AddPatient />
+                    <NotificationsPanel />
+                  </NotificationsProvider>
+                </SubscriptionProvider>
+              </SidebarProvider>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/edit-patient/:patientId"
+          element={
+            <ProtectedRoute>
+              <SidebarProvider>
+                <SubscriptionProvider>
+                  <NotificationsProvider>
+                    <EditPatient />
                     <NotificationsPanel />
                   </NotificationsProvider>
                 </SubscriptionProvider>
