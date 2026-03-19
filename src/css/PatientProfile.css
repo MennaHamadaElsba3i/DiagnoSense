@@ -538,21 +538,7 @@ body {
     z-index: 10;
 }
 
-/* Pseudo-element strictly scoped to avoid affecting Patient List cards */
-.patient-profile-page .pp-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: -10vw;
-    right: -50vw;
-    /* Safely extends white background fully to the far-right */
-    background: inherit;
-    backdrop-filter: inherit;
-    border-bottom: inherit;
-    z-index: -1;
-    pointer-events: none;
-}
+
 
 
 .patient-identity {

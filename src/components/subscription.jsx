@@ -123,22 +123,16 @@ function Subscription() {
 
 
   useEffect(() => {
-    const saved = localStorage.getItem("currentPlanId");
-    if (saved) {
-      setSelectedPlanId(isNaN(saved) ? saved : Number(saved));
-    }
-  }, []);
-
-  useEffect(() => {
     if (isSubLoading) return;
 
-    const hasActivePlan = isSubscription || isPayPerUse;
+    const isEffectivelyCancelled = isCancelledLocally || (subscriptionData?.status && subscriptionData.status.toLowerCase() !== "active");
+    const hasActivePlan = (isSubscription || isPayPerUse) && !isEffectivelyCancelled;
 
     if (!hasActivePlan) {
-      localStorage.removeItem("currentPlanId");
       setSelectedPlanId(null);
       return;
     }
+
     let backendPlanId = null;
     if (isPayPerUse) {
       backendPlanId = "Pay-per-use";
@@ -146,19 +140,13 @@ function Subscription() {
       backendPlanId = subscriptionData.plan_id;
     }
 
-    if (backendPlanId == null) return;
-
-    const saved = localStorage.getItem("currentPlanId");
-    if (!saved) {
-      localStorage.setItem("currentPlanId", backendPlanId);
+    if (backendPlanId != null) {
       setSelectedPlanId(backendPlanId);
-    } else {
-      const parsed = isNaN(saved) ? saved : Number(saved);
-      setSelectedPlanId(parsed);
     }
-  }, [isSubLoading, isSubscription, isPayPerUse, subscriptionData]);
+  }, [isSubLoading, isSubscription, isPayPerUse, subscriptionData, isCancelledLocally]);
 
   const [isPlanConfirmModalOpen, setIsPlanConfirmModalOpen] = useState(false);
+  const [isCancelConfirmModalOpen, setIsCancelConfirmModalOpen] = useState(false);
   const [pendingPlan, setPendingPlan] = useState(null);
   const [subscribingPlanId, setSubscribingPlanId] = useState(null);
 
@@ -186,36 +174,28 @@ function Subscription() {
 
   const handleTabSwitch = (tabId) => setActiveTab(tabId);
 
-  const cancelSub = async () => {
-    const result = await Swal.fire({
-      icon: "warning",
-      title: "Cancel Subscription",
-      text: "Are you sure you want to cancel your plan?",
-      showCancelButton: true,
-      confirmButtonText: "Yes, cancel it",
-      cancelButtonText: "No, keep it",
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-    });
+  const cancelSub = () => {
+    setIsCancelConfirmModalOpen(true);
+  };
 
-    if (result.isConfirmed) {
-      const apiResult = await cancelSubscriptionAPI();
+  const handleConfirmCancelSub = async () => {
+    setIsCancelConfirmModalOpen(false);
+    
+    const apiResult = await cancelSubscriptionAPI();
 
-      if (apiResult.success) {
-        setIsCancelledLocally(true);
-        setSelectedPlanId(null);
-        localStorage.removeItem("currentPlanId");
-        refreshSubscription();
-        refreshCredits();
-        fetchTransactions();
-        refreshNotifications();
-      } else {
-        Swal.fire({
-          icon: "error",
-          title: "Cancellation Failed",
-          text: apiResult.message || "Something went wrong.",
-        });
-      }
+    if (apiResult.success) {
+      setIsCancelledLocally(true);
+      setSelectedPlanId(null);
+      refreshSubscription();
+      refreshCredits();
+      fetchTransactions();
+      refreshNotifications();
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Cancellation Failed",
+        text: apiResult.message || "Something went wrong.",
+      });
     }
   };
 
@@ -245,7 +225,6 @@ function Subscription() {
       if (result.success) {
         setIsCancelledLocally(false);
         setSelectedPlanId("Pay-per-use");
-        localStorage.setItem("currentPlanId", "Pay-per-use");
         refreshSubscription();
         refreshCredits();
         fetchTransactions();
@@ -272,7 +251,6 @@ function Subscription() {
     if (result.success) {
       setIsCancelledLocally(false);
       setSelectedPlanId(planId);
-      localStorage.setItem("currentPlanId", planId);
       refreshSubscription();
       refreshCredits();
       fetchTransactions();
@@ -527,6 +505,24 @@ function Subscription() {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 11l3 3L22 4"></path>
             <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+          </svg>
+        }
+      />
+
+      <ConfirmModal
+        isOpen={isCancelConfirmModalOpen}
+        onClose={() => setIsCancelConfirmModalOpen(false)}
+        onConfirm={handleConfirmCancelSub}
+        title="Cancel Subscription"
+        description="Are you sure you want to cancel your plan? This action cannot be undone."
+        confirmText="Yes, cancel it"
+        cancelText="No, keep it"
+        variant="danger"
+        icon={
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
           </svg>
         }
       />

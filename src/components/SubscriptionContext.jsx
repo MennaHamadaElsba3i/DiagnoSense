@@ -38,9 +38,11 @@ export function SubscriptionProvider({ children }) {
       if (result.success && result.data) {
         setSubscriptionData(result.data);
       } else {
+        setSubscriptionData(null);
         setSubError(result.message || "Failed to load subscription data");
       }
     } catch (err) {
+      setSubscriptionData(null);
       setSubError("Network error loading subscription data");
     }
     setIsSubLoading(false);
