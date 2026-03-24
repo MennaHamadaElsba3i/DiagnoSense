@@ -226,6 +226,10 @@ const EditPatient = () => {
           medications: mh.medications || "",
           allergies: mh.allergies || "",
           family_history: mh.family_history || "",
+          ai_summary: mh.ai_summary || d.ai_summary || "",
+          smart_summary: mh.smart_summary || d.smart_summary || "",
+          key_points: mh.key_points || d.key_points || null,
+          key_important_information: mh.key_important_information || d.key_important_information || null,
         },
         existingFileIds: ef.map((f) => f.id),
       });
@@ -485,6 +489,20 @@ const EditPatient = () => {
       apiFormData.append("allergies", formData.allergies || "");
       apiFormData.append("family_history", formData.familyHistory || "");
       apiFormData.append("current_complaint", formData.ChiefComplaint || "");
+
+      // Preserve existing AI outputs so backend doesn't wipe them
+      if (originalSnapshot?.medicalHistory?.ai_summary) {
+        apiFormData.append("ai_summary", originalSnapshot.medicalHistory.ai_summary);
+      }
+      if (originalSnapshot?.medicalHistory?.smart_summary) {
+        apiFormData.append("smart_summary", originalSnapshot.medicalHistory.smart_summary);
+      }
+      if (originalSnapshot?.medicalHistory?.key_points) {
+        apiFormData.append("key_points", typeof originalSnapshot.medicalHistory.key_points === 'string' ? originalSnapshot.medicalHistory.key_points : JSON.stringify(originalSnapshot.medicalHistory.key_points));
+      }
+      if (originalSnapshot?.medicalHistory?.key_important_information) {
+        apiFormData.append("key_important_information", typeof originalSnapshot.medicalHistory.key_important_information === 'string' ? originalSnapshot.medicalHistory.key_important_information : JSON.stringify(originalSnapshot.medicalHistory.key_important_information));
+      }
 
       // Removed existing file IDs
       removedExistingIds.forEach((id) => {

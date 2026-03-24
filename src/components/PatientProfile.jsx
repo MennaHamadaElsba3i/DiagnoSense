@@ -12,6 +12,8 @@ import {
   getDecisionSupportAPI,
   getPatientActivitiesAPI,
   sendChatbotMessageAPI,
+  updatePatientAPI,
+  getPatientForEditAPI,
 } from "./mockAPI";
 import echo from "./echo";
 import { getJsonCookie } from "./cookieUtils";
@@ -29,6 +31,7 @@ import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import MedicationsAndTasksTab from "../components/MedicationsAndTasksTab.jsx";
 import { useNotifications } from "./NotificationsContext";
 import ConfirmModal from "./ConfirmModal.jsx";
+import LockedFeatureOverlay from "./LockedFeatureOverlay.jsx";
 
 const TrashIcon = () => (
   <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -598,32 +601,143 @@ const PatientProfile = () => {
     setActivitiesLoadedFor(null);
   }, [patientId]);
 
-  // ── Fetch Decision Support from backend ──
+  // ── Fetch Decision Support from backend (Includes Legacy Auto-Generation Flow) ──
+  const [isGeneratingDecisionSupport, setIsGeneratingDecisionSupport] = useState(false);
+  const hasTriggeredDecisionSupportGeneration = useRef(false);
+
   const fetchDecisionSupport = async () => {
     if (!patientId) return;
+
+    // Guard to prevent duplicate clicks while already loading/generating
+    if (isGeneratingDecisionSupport || decisionSupportLoading) return;
+
     setDecisionSupportLoading(true);
     setDecisionSupportError(null);
+
     try {
-      const res = await getDecisionSupportAPI(patientId);
-      console.log("[decision-support] response:", res);
-      if (res && res.success) {
-        setDecisionSupport(Array.isArray(res.data) ? res.data : []);
-        setDecisionSupportLoadedFor(patientId);
-      } else {
-        const is401 =
-          res?.message?.toLowerCase().includes("unauthenticated") ||
-          res?.message?.includes("401");
-        if (is401) {
-          setDecisionSupportError("401");
-          navigate("/login");
-        } else {
-          setDecisionSupportError(res?.message || "Failed to load decision support.");
-        }
+      // 1) First call the normal Decision Support endpoint directly
+      let dsRes = await getDecisionSupportAPI(patientId);
+
+      const is401 = dsRes?.message?.toLowerCase().includes("unauthenticated") || dsRes?.message?.includes("401");
+      if (is401) {
+        setDecisionSupportError("401");
+        setDecisionSupportLoading(false);
+        navigate("/login");
+        return;
       }
+
+      let dataArr = Array.isArray(dsRes?.data) ? dsRes.data : [];
+
+      // If it returns real Decision Support data: show it normally, stop there.
+      if (dataArr.length > 0) {
+        setDecisionSupport(dataArr);
+        setDecisionSupportLoadedFor(patientId);
+        setDecisionSupportLoading(false);
+        return;
+      }
+
+      // If this endpoint does NOT return data / no usable data:
+      // Assess eligibility for auto-generation using current plan
+      if (!canGenerateDecisionSupportNow) {
+        // Doctor is still on a plan that DOES NOT allow Decision Support => show locker promo UI
+        setDecisionSupport([]);
+        setDecisionSupportLoadedFor(patientId);
+        setDecisionSupportLoading(false);
+        return;
+      }
+
+      // Current plan DOES allow it, but we have NO data! (Legacy Edge Case)
+      // Guard against double triggers
+      if (hasTriggeredDecisionSupportGeneration.current) {
+        setDecisionSupport([]);
+        setDecisionSupportLoadedFor(patientId);
+        setDecisionSupportLoading(false);
+        return;
+      }
+
+      // We are officially starting the regeneration flow
+      hasTriggeredDecisionSupportGeneration.current = true;
+      setIsGeneratingDecisionSupport(true);
+
+      // 2) Call: GET /api/patients/{patientId} ("Get Pre-Filled Patient Data for Editing")
+      const fetchRes = await getPatientForEditAPI(patientId);
+      if (!fetchRes?.success) throw new Error(fetchRes?.message || "Failed to fetch patient data for generation");
+
+      const d = fetchRes.data;
+      const pi = d?.personal_info || {};
+      const mh = d?.medical_history || {};
+
+      // 3) Build the SAME payload used by Edit File / Save Changes
+      const apiFormData = new FormData();
+      apiFormData.append("_method", "PUT");
+      
+      apiFormData.append("name", pi.name || "");
+      if (pi.email) apiFormData.append("email", pi.email);
+      if (pi.phone) apiFormData.append("phone", pi.phone);
+      if (pi.age != null) apiFormData.append("age", pi.age);
+      if (pi.gender) apiFormData.append("gender", pi.gender);
+      if (pi.national_id) apiFormData.append("national_id", pi.national_id);
+
+      apiFormData.append("is_smoker", mh.is_smoker ? "1" : "0");
+      apiFormData.append("previous_surgeries", mh.previous_surgeries ? "1" : "0");
+      if (mh.previous_surgeries) {
+        apiFormData.append("previous_surgeries_name", mh.previous_surgeries_name || "");
+      }
+
+      if (Array.isArray(mh.chronic_diseases) && mh.chronic_diseases.length > 0) {
+        mh.chronic_diseases.forEach((disease) => {
+          apiFormData.append("chronic_diseases[]", disease);
+        });
+      }
+
+      apiFormData.append("medications", mh.medications || "");
+      apiFormData.append("allergies", mh.allergies || "");
+      apiFormData.append("family_history", mh.family_history || "");
+      apiFormData.append("current_complaint", mh.current_complaint || "");
+
+      // Preserve existing AI outputs so backend doesn't wipe them
+      if (mh.ai_summary || d.ai_summary) {
+        apiFormData.append("ai_summary", mh.ai_summary || d.ai_summary);
+      }
+      if (mh.smart_summary || d.smart_summary) {
+        apiFormData.append("smart_summary", mh.smart_summary || d.smart_summary);
+      }
+      if (mh.key_points || d.key_points) {
+        const kp = mh.key_points || d.key_points;
+        apiFormData.append("key_points", typeof kp === 'string' ? kp : JSON.stringify(kp));
+      }
+      if (mh.key_important_information || d.key_important_information) {
+        const ki = mh.key_important_information || d.key_important_information;
+        apiFormData.append("key_important_information", typeof ki === 'string' ? ki : JSON.stringify(ki));
+      }
+
+      // 4) Call: PUT /api/patients/{patientId} ("Update Patient Data")
+      await updatePatientAPI(patientId, apiFormData);
+
+      // 5) Poll /api/patients/{patientId}/decision-support until data appears (max ~40 seconds)
+      let finalDataArr = [];
+      let attempts = 0;
+      const maxAttempts = 10;
+      
+      while (attempts < maxAttempts) {
+        attempts++;
+        const retryRes = await getDecisionSupportAPI(patientId);
+        if (retryRes && retryRes.success && Array.isArray(retryRes.data) && retryRes.data.length > 0) {
+          finalDataArr = retryRes.data;
+          break; // Data has successfully hydrated!
+        }
+        // Wait 4 seconds before polling again
+        await new Promise((resolve) => setTimeout(resolve, 4000));
+      }
+      
+      setDecisionSupport(finalDataArr);
+      setDecisionSupportLoadedFor(patientId);
+      
     } catch (err) {
-      console.error("[decision-support] exception:", err);
-      setDecisionSupportError("Network error. Please check your connection.");
+      console.error("[decision-support-flow] exception:", err);
+      setDecisionSupportError("Network error or generation failed.");
     } finally {
+      setIsGeneratingDecisionSupport(false);
       setDecisionSupportLoading(false);
     }
   };
@@ -800,7 +914,28 @@ const PatientProfile = () => {
 
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const { isSidebarCollapsed, toggleSidebar } = useSidebar();
-  const { credits, isCreditsLoading } = useSubscription();
+  const { credits, isCreditsLoading, subscriptionData, isSubLoading } = useSubscription();
+
+  // ── Plan-access & historical data helpers ──
+  const isPayPerUse = subscriptionData?.billing_mode === "pay_per_use";
+  const planNameLower = (subscriptionData?.plan_name || "").toLowerCase();
+
+  const canGenerateDecisionSupportNow =
+    Boolean(isPayPerUse || ["pro", "premium"].includes(planNameLower));
+  const hasExistingDecisionSupportData = Boolean(
+    Array.isArray(decisionSupport) && decisionSupport.length > 0
+  );
+  
+  const canAccessDecisionSupportNow = canGenerateDecisionSupportNow;
+  
+  // We determine final locked behavior dynamically within JSX:
+  const shouldShowLockedDecisionSupport = !hasExistingDecisionSupportData && !canAccessDecisionSupportNow;
+
+  const canUseChatbotNow = Boolean(isPayPerUse || planNameLower === "premium");
+  const hasExistingChatbotAccessOrData = Boolean(
+    Array.isArray(chatMessages) && chatMessages.length > 1
+  ); 
+  const shouldShowLockedChatbot = !hasExistingChatbotAccessOrData && !canUseChatbotNow;
 
   const openLogoutModal = () => setIsLogoutModalOpen(true);
   const closeLogoutModal = () => setIsLogoutModalOpen(false);
@@ -2989,8 +3124,8 @@ const PatientProfile = () => {
                 AI-Powered Decision Support
               </h2>
 
-              {/* ── Loading state ── */}
-              {decisionSupportLoading && (
+              {/* Priority: sub-loading/generating → locked → ds-loading → error → empty → data */}
+              {isSubLoading || decisionSupportLoading || isGeneratingDecisionSupport ? (
                 <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "200px" }}>
                   <svg
                     width="40"
@@ -3005,10 +3140,56 @@ const PatientProfile = () => {
                     <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
                   </svg>
                 </div>
-              )}
-
-              {/* ── Error state ── */}
-              {!decisionSupportLoading && decisionSupportError && (
+              ) : shouldShowLockedDecisionSupport ? (
+                <div className="lf-wrapper">
+                  {/* Blurred dummy background */}
+                  <div className="lf-dummy" aria-hidden="true">
+                    <div className="likelihood-stack">
+                      <div className="likelihood-card high">
+                        <div className="likelihood-header">
+                          <div>
+                            <div style={{ fontSize: "11px", color: "#FF5C5C", marginBottom: "3px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>HIGH LIKELIHOOD</div>
+                            <div className="likelihood-title">Differential Consideration A</div>
+                          </div>
+                          <div className="confidence" style={{ color: "#FF5C5C", flexShrink: 0, marginLeft: "16px" }}>87%</div>
+                        </div>
+                        <div className="reasoning"><strong>Clinical Reasoning:</strong> Based on lab results, imaging, and patient history patterns.</div>
+                      </div>
+                      <div className="likelihood-card medium">
+                        <div className="likelihood-header">
+                          <div>
+                            <div style={{ fontSize: "11px", color: "#FFA500", marginBottom: "3px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>MODERATE LIKELIHOOD</div>
+                            <div className="likelihood-title">Differential Consideration B</div>
+                          </div>
+                          <div className="confidence" style={{ color: "#FFA500", flexShrink: 0, marginLeft: "16px" }}>54%</div>
+                        </div>
+                        <div className="reasoning"><strong>Clinical Reasoning:</strong> Secondary indicators suggest an alternative presentation pathway.</div>
+                      </div>
+                      <div className="likelihood-card low">
+                        <div className="likelihood-header">
+                          <div>
+                            <div style={{ fontSize: "11px", color: "#8A94A6", marginBottom: "3px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>LOW LIKELIHOOD</div>
+                            <div className="likelihood-title">Differential Consideration C</div>
+                          </div>
+                          <div className="confidence" style={{ color: "#8A94A6", flexShrink: 0, marginLeft: "16px" }}>21%</div>
+                        </div>
+                        <div className="reasoning"><strong>Clinical Reasoning:</strong> Low correlation with current clinical presentation and workup.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <LockedFeatureOverlay
+                    title="Unlock Smarter Clinical Decisions"
+                    description="Get AI-powered differential insights to support faster and more accurate diagnoses."
+                    primaryLabel={planNameLower === "pro" ? "Upgrade to Premium" : "Upgrade to Pro"}
+                    onPrimary={() => navigate("/subscription")}
+                    secondaryLabel="Or use Pay-Per-Use"
+                    onSecondary={() => navigate("/subscription")}
+                  />
+                </div>
+              ) : (
+                <>
+              {/* ── Error state ── (only reached when data exists but fetch failed) */}
+              {!shouldShowLockedDecisionSupport && !decisionSupportLoading && decisionSupportError && (
                 <div
                   style={{
                     textAlign: "center",
@@ -3059,8 +3240,8 @@ const PatientProfile = () => {
                 </div>
               )}
 
-              {/* ── Empty state ── */}
-              {!decisionSupportLoading && !decisionSupportError && decisionSupport.length === 0 && decisionSupportLoadedFor === patientId && (
+              {/* ── Empty state ── (only reached if data is STILL empty despite retry, but we shifted to locked UI above, so this acts as final fallback) */}
+              {!shouldShowLockedDecisionSupport && !(canAccessDecisionSupportNow && hasTriggeredDecisionSupportGeneration.current) && !decisionSupportLoading && !decisionSupportError && Array.isArray(decisionSupport) && decisionSupport.length === 0 && decisionSupportLoadedFor === patientId && (
                 <div
                   style={{
                     textAlign: "center",
@@ -3092,7 +3273,7 @@ const PatientProfile = () => {
               )}
 
               {/* ── Data state ── */}
-              {!decisionSupportLoading && !decisionSupportError && decisionSupport.length > 0 && (
+              {!decisionSupportLoading && !decisionSupportError && Array.isArray(decisionSupport) && decisionSupport.length > 0 && (
                 <div className="likelihood-stack">
                   {decisionSupport.map((item) => {
                     const statusUpper = (item.status || "").toUpperCase();
@@ -3143,6 +3324,8 @@ const PatientProfile = () => {
                     );
                   })}
                 </div>
+              )}
+                </>
               )}
             </div>
           </div>
@@ -3236,8 +3419,15 @@ const PatientProfile = () => {
             </div>
           </div>
           <button
-            onClick={toggleChat}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggleChat();
+            }}
             style={{
+              position: "relative",
+              zIndex: 50,
+              pointerEvents: "auto",
               background: "none",
               border: "none",
               color: "white",
@@ -3249,6 +3439,32 @@ const PatientProfile = () => {
           </button>
         </div>
         <div className="chat-messages" id="chatMessages">
+          {isSubLoading ? (
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flex: 1, minHeight: "120px" }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2A66FF" strokeWidth="3" strokeLinecap="round" style={{ animation: "spin 1s linear infinite" }}>
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+              </svg>
+            </div>
+          ) : shouldShowLockedChatbot ? (
+            <>
+              {/* Blurred dummy chat background */}
+              <div className="lf-chat-dummy" aria-hidden="true">
+                <div className="message ai">Hello! How can I assist you today?</div>
+                <div className="message user">What are the latest lab findings?</div>
+                <div className="message ai">Based on the patient file, the key findings include...</div>
+              </div>
+              <LockedFeatureOverlay
+                compact
+                title="Meet Your AI Assistant"
+                description="Ask anything about your patient and get instant, source-based answers."
+                primaryLabel="Upgrade to Premium"
+                onPrimary={() => { toggleChat(); navigate("/subscription"); }}
+                secondaryLabel="Or use Pay-Per-Use"
+                onSecondary={() => { toggleChat(); navigate("/subscription"); }}
+              />
+            </>
+          ) : (
+            <>
           {chatMessages.map((msg, index) => (
             <div
               key={index}
@@ -3263,6 +3479,8 @@ const PatientProfile = () => {
             </div>
           )}
           <div ref={messagesEndRef} />
+            </>
+          )}
         </div>
         <div className="chat-input">
           <input
@@ -3271,12 +3489,12 @@ const PatientProfile = () => {
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             onKeyPress={handleChatEnter}
-            disabled={isChatSending || isChatPreparing}
+            disabled={shouldShowLockedChatbot || isChatSending || isChatPreparing}
           />
           <button
             className="btn btn-primary"
             onClick={sendMessage}
-            disabled={isChatSending || isChatPreparing}
+            disabled={shouldShowLockedChatbot || isChatSending || isChatPreparing}
           >
             {isChatPreparing ? "Preparing..." : isChatSending ? "Sending..." : "Send"}
           </button>
