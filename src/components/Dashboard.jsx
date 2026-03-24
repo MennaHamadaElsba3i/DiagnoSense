@@ -10,35 +10,62 @@ import { useSubscription } from "../components/SubscriptionContext";
 import Sidebar from "./Sidebar";
 import "../css/Dashboard.css";
 import { useNotifications } from "./NotificationsContext";
-
+import {
+  getDashboardWidgets,
+  getDashboardStatusDistribution,
+  getTopfiveDiseases,
+} from "./mockAPI.js";
 
 const INITIAL_PATIENTS = [
   {
-    id: 0, initials: "AM", color: "#FF4D6D",
-    name: "Ahmed Mohamed", age: "52", gender: "Male", apptTime: "09:00 AM",
-    aiInsight: "AI detected potential cardiac anomaly. Elevated troponin levels with ST-segment changes observed.",
+    id: 0,
+    initials: "AM",
+    color: "#FF4D6D",
+    name: "Ahmed Mohamed",
+    age: "52",
+    gender: "Male",
+    apptTime: "09:00 AM",
+    aiInsight:
+      "AI detected potential cardiac anomaly. Elevated troponin levels with ST-segment changes observed.",
     status: "pending",
   },
   {
-    id: 1, initials: "SK", color: "#4C6EF5",
-    name: "Sarah Kamal", age: "38", gender: "Female", apptTime: "10:00 AM",
-    aiInsight: "Abnormal ECG patterns detected with irregular heart rhythm. Immediate consultation recommended.",
+    id: 1,
+    initials: "SK",
+    color: "#4C6EF5",
+    name: "Sarah Kamal",
+    age: "38",
+    gender: "Female",
+    apptTime: "10:00 AM",
+    aiInsight:
+      "Abnormal ECG patterns detected with irregular heart rhythm. Immediate consultation recommended.",
     status: "pending",
   },
   {
-    id: 2, initials: "OH", color: "#E67700",
-    name: "Omar Hamed", age: "61", gender: "Male", apptTime: "11:00 AM",
-    aiInsight: "Blood pressure readings significantly elevated. Hypertensive crisis pattern detected.",
+    id: 2,
+    initials: "OH",
+    color: "#E67700",
+    name: "Omar Hamed",
+    age: "61",
+    gender: "Male",
+    apptTime: "11:00 AM",
+    aiInsight:
+      "Blood pressure readings significantly elevated. Hypertensive crisis pattern detected.",
     status: "pending",
   },
   {
-    id: 3, initials: "NR", color: "#2F9E44",
-    name: "Nadia Rashid", age: "45", gender: "Female", apptTime: "12:00 PM",
-    aiInsight: "Critical glucose levels detected. Diabetic ketoacidosis pattern identified.",
+    id: 3,
+    initials: "NR",
+    color: "#2F9E44",
+    name: "Nadia Rashid",
+    age: "45",
+    gender: "Female",
+    apptTime: "12:00 PM",
+    aiInsight:
+      "Critical glucose levels detected. Diabetic ketoacidosis pattern identified.",
     status: "pending",
   },
 ];
-
 
 function QueueSection() {
   const [patients, setPatients] = useState(INITIAL_PATIENTS);
@@ -52,19 +79,24 @@ function QueueSection() {
   };
 
   const markAttended = (id) => {
-    const next = patients.map((p) => (p.id === id ? { ...p, status: "attended" } : p));
+    const next = patients.map((p) =>
+      p.id === id ? { ...p, status: "attended" } : p,
+    );
     setPatients(next);
     setCurrentIdx((i) => getActiveIdx(next, i + 1));
   };
 
   const skipPatient = (id) => {
-    const next = patients.map((p) => (p.id === id ? { ...p, status: "skipped" } : p));
+    const next = patients.map((p) =>
+      p.id === id ? { ...p, status: "skipped" } : p,
+    );
     setPatients(next);
     setCurrentIdx((i) => getActiveIdx(next, i + 1));
   };
 
   const activeIdx = getActiveIdx(patients, currentIdx);
-  const activePatient = activeIdx < patients.length ? patients[activeIdx] : null;
+  const activePatient =
+    activeIdx < patients.length ? patients[activeIdx] : null;
   const pendingCount = patients.filter((p) => p.status === "pending").length;
 
   const badgeClass = (p, i) => {
@@ -85,7 +117,7 @@ function QueueSection() {
       <div className="dsn-section-header">
         <div className="dsn-section-title">
           <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/>
+            <path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z" />
           </svg>
           Critical Patient Queue
         </div>
@@ -95,7 +127,10 @@ function QueueSection() {
       {/* Active card */}
       {activePatient ? (
         <div className="dsn-active-card" key={activePatient.id}>
-          <div className="dsn-active-avatar" style={{ background: activePatient.color }}>
+          <div
+            className="dsn-active-avatar"
+            style={{ background: activePatient.color }}
+          >
             {activePatient.initials}
           </div>
           <div className="dsn-active-info">
@@ -119,21 +154,38 @@ function QueueSection() {
             </div>
           </div>
           <div className="dsn-active-actions">
-            <button className="dsn-btn-attended" onClick={() => markAttended(activePatient.id)}>
+            <button
+              className="dsn-btn-attended"
+              onClick={() => markAttended(activePatient.id)}
+            >
               <svg viewBox="0 0 24 24" fill="white" className="dsn-btn-icon">
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
               </svg>
               Mark Attended
             </button>
-            <button className="dsn-btn-next" onClick={() => skipPatient(activePatient.id)}>
-              <svg viewBox="0 0 24 24" fill="currentColor" className="dsn-btn-icon">
-                <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
+            <button
+              className="dsn-btn-next"
+              onClick={() => skipPatient(activePatient.id)}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="dsn-btn-icon"
+              >
+                <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
               </svg>
               Next Patient
             </button>
-            <button className="dsn-btn-view" onClick={() => setModalPatient(activePatient)}>
-              <svg viewBox="0 0 24 24" fill="currentColor" className="dsn-btn-icon">
-                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+            <button
+              className="dsn-btn-view"
+              onClick={() => setModalPatient(activePatient)}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="dsn-btn-icon"
+              >
+                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
               </svg>
               View Details
             </button>
@@ -143,7 +195,9 @@ function QueueSection() {
         <div className="dsn-done-card">
           <div className="dsn-done-emoji">🎉</div>
           <div className="dsn-done-title">All patients attended!</div>
-          <div className="dsn-done-sub">Today's queue is complete. Great work, Dr. Layla.</div>
+          <div className="dsn-done-sub">
+            Today's queue is complete. Great work, Dr. Layla.
+          </div>
         </div>
       )}
 
@@ -151,7 +205,7 @@ function QueueSection() {
       <div className="dsn-queue-list">
         <div className="dsn-queue-list-title">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+            <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z" />
           </svg>
           All Patients in Queue
         </div>
@@ -160,14 +214,29 @@ function QueueSection() {
             key={p.id}
             className={`dsn-mini-card${p.status === "attended" ? " dsn-attended" : p.status === "skipped" ? " dsn-skipped" : ""}`}
           >
-            <div className={`dsn-queue-num${i === activeIdx && p.status === "pending" ? " dsn-active-num" : ""}`}>{i + 1}</div>
-            <div className="dsn-mini-avatar" style={{ background: p.color }}>{p.initials}</div>
+            <div
+              className={`dsn-queue-num${i === activeIdx && p.status === "pending" ? " dsn-active-num" : ""}`}
+            >
+              {i + 1}
+            </div>
+            <div className="dsn-mini-avatar" style={{ background: p.color }}>
+              {p.initials}
+            </div>
             <div className="dsn-mini-info">
               <div className="dsn-mini-name">{p.name}</div>
-              <div className="dsn-mini-sub">{p.age} y/o · {p.gender} · {p.apptTime}</div>
+              <div className="dsn-mini-sub">
+                {p.age} y/o · {p.gender} · {p.apptTime}
+              </div>
             </div>
-            <span className={`dsn-mini-badge ${badgeClass(p, i)}`}>{badgeText(p, i)}</span>
-            <button className="dsn-mini-view-btn" onClick={() => setModalPatient(p)}>View</button>
+            <span className={`dsn-mini-badge ${badgeClass(p, i)}`}>
+              {badgeText(p, i)}
+            </span>
+            <button
+              className="dsn-mini-view-btn"
+              onClick={() => setModalPatient(p)}
+            >
+              View
+            </button>
           </div>
         ))}
       </div>
@@ -177,25 +246,49 @@ function QueueSection() {
         <div
           id="dsn-modal-overlay"
           className="dsn-open"
-          onClick={(e) => { if (e.target.id === "dsn-modal-overlay") setModalPatient(null); }}
+          onClick={(e) => {
+            if (e.target.id === "dsn-modal-overlay") setModalPatient(null);
+          }}
         >
           <div id="dsn-modal-box">
             <div className="dsn-modal-header">
-              <div className="dsn-modal-avatar" style={{ background: modalPatient.color }}>
+              <div
+                className="dsn-modal-avatar"
+                style={{ background: modalPatient.color }}
+              >
                 {modalPatient.initials}
               </div>
               <div>
                 <div className="dsn-modal-title">{modalPatient.name}</div>
-                <div className="dsn-modal-sub">{modalPatient.age} y/o · {modalPatient.gender} · Appointment: {modalPatient.apptTime}</div>
+                <div className="dsn-modal-sub">
+                  {modalPatient.age} y/o · {modalPatient.gender} · Appointment:{" "}
+                  {modalPatient.apptTime}
+                </div>
               </div>
             </div>
             <div className="dsn-modal-divider" />
             <div className="dsn-modal-chips">
               {[
-                { label: "Age", val: modalPatient.age, className: "dsn-chip-default" },
-                { label: "Gender", val: modalPatient.gender, className: "dsn-chip-default" },
-                { label: "Appointment", val: modalPatient.apptTime, className: "dsn-chip-primary" },
-                { label: "Status", val: modalPatient.status, className: "dsn-chip-status" },
+                {
+                  label: "Age",
+                  val: modalPatient.age,
+                  className: "dsn-chip-default",
+                },
+                {
+                  label: "Gender",
+                  val: modalPatient.gender,
+                  className: "dsn-chip-default",
+                },
+                {
+                  label: "Appointment",
+                  val: modalPatient.apptTime,
+                  className: "dsn-chip-primary",
+                },
+                {
+                  label: "Status",
+                  val: modalPatient.status,
+                  className: "dsn-chip-status",
+                },
               ].map((c) => (
                 <div className={`dsn-modal-chip ${c.className}`} key={c.label}>
                   <div className="dsn-modal-chip-label">{c.label}</div>
@@ -204,13 +297,21 @@ function QueueSection() {
               ))}
             </div>
             <div className="dsn-modal-notes">
-              <strong>🤖 AI Insight:</strong><br />{modalPatient.aiInsight}
+              <strong>🤖 AI Insight:</strong>
+              <br />
+              {modalPatient.aiInsight}
             </div>
             <div className="dsn-modal-btns">
-              <button className="dsn-modal-cancel" onClick={() => setModalPatient(null)}>
+              <button
+                className="dsn-modal-cancel"
+                onClick={() => setModalPatient(null)}
+              >
                 Close
               </button>
-              <button className="dsn-modal-confirm" onClick={() => setModalPatient(null)}>
+              <button
+                className="dsn-modal-confirm"
+                onClick={() => setModalPatient(null)}
+              >
                 Open Full Report
               </button>
             </div>
@@ -229,10 +330,19 @@ export default function Dashboard() {
   const { credits, isCreditsLoading } = useSubscription();
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const avatarMenuRef = useRef(null);
+  const [data, setData] = useState(null);
+  const [statusDistribution, setStatusDistribution] = useState(null);
+  const [TopDiseases, setTopDiseases] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [hoveredStatus, setHoveredStatus] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (avatarMenuRef.current && !avatarMenuRef.current.contains(event.target)) {
+      if (
+        avatarMenuRef.current &&
+        !avatarMenuRef.current.contains(event.target)
+      ) {
         setIsAvatarMenuOpen(false);
       }
     };
@@ -247,6 +357,40 @@ export default function Dashboard() {
     };
   }, []);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const result = await getDashboardWidgets();
+      const resultStatus = await getDashboardStatusDistribution();
+      const resultTopDiseases = await getTopfiveDiseases();
+
+      console.log(result);
+      if (result.success) {
+        setData(result.data);
+        console.log("Dashboard Widgets:", result.data);
+      }
+      setLoading(false);
+
+      if (resultStatus.success) {
+        setStatusDistribution(resultStatus.data);
+        console.log("Dashboard Status Distribution:", resultStatus.data);
+      }
+      setLoading(false);
+
+      if (resultTopDiseases.success) {
+        setTopDiseases(resultTopDiseases.data);
+        console.log("Top 5 Diseases:", resultTopDiseases.data);
+      }
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
+
+  const handleLogout = () => {
+    setIsLogoutModalOpen(true);
+  };
+
+  const growthDetails = data?.widgets.monthly_growth.details;
   return (
     <>
       <Sidebar activePage="dashboard" />
@@ -255,7 +399,9 @@ export default function Dashboard() {
         <div className="navbar-right">
           <div
             className="credits-badge"
-            onClick={() => navigate("/subscription", { state: { tab: "billing" } })}
+            onClick={() =>
+              navigate("/subscription", { state: { tab: "billing" } })
+            }
           >
             <span className="credits-icon">
               <svg viewBox="0 0 24 24">
@@ -263,7 +409,10 @@ export default function Dashboard() {
                 <line x1="1" y1="10" x2="23" y2="10"></line>
               </svg>
             </span>
-            <span>Credits: {isCreditsLoading ? "..." : (credits?.toLocaleString() ?? "0")}</span>
+            <span>
+              Credits:{" "}
+              {isCreditsLoading ? "..." : (credits?.toLocaleString() ?? "0")}
+            </span>
           </div>
 
           <button className="icon-btn" onClick={() => openNotifications()}>
@@ -271,13 +420,12 @@ export default function Dashboard() {
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
             </svg>
-            {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
+            {unreadCount > 0 && (
+              <span className="notification-badge">{unreadCount}</span>
+            )}
           </button>
 
-          <div
-            className="user-avatar-container"
-            ref={avatarMenuRef}
-          >
+          <div className="user-avatar-container" ref={avatarMenuRef}>
             <div
               className="user-avatar"
               onClick={() => setIsAvatarMenuOpen(!isAvatarMenuOpen)}
@@ -288,11 +436,28 @@ export default function Dashboard() {
               <div className="avatar-dropdown-menu">
                 <div
                   className="dropdown-item"
-                  onClick={() => { setIsAvatarMenuOpen(false); navigate("/settings"); }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--hover-bg, #f3f4f6)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                  onClick={() => {
+                    setIsAvatarMenuOpen(false);
+                    navigate("/settings");
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor =
+                      "var(--hover-bg, #f3f4f6)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "transparent")
+                  }
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                     <circle cx="12" cy="7" r="4"></circle>
                   </svg>
@@ -300,11 +465,28 @@ export default function Dashboard() {
                 </div>
                 <div
                   className="dropdown-item dropdown-item--danger"
-                  onClick={() => { setIsAvatarMenuOpen(false); setIsLogoutModalOpen(true); }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--danger-bg-subtle, #fee2e2)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                  onClick={() => {
+                    setIsAvatarMenuOpen(false);
+                    setIsLogoutModalOpen(true);
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor =
+                      "var(--danger-bg-subtle, #fee2e2)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "transparent")
+                  }
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                     <polyline points="16 17 21 12 16 7"></polyline>
                     <line x1="21" y1="12" x2="9" y2="12"></line>
@@ -317,72 +499,140 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      <LogoutConfirmation isOpen={isLogoutModalOpen} onClose={() => setIsLogoutModalOpen(false)} />
+      <LogoutConfirmation
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+      />
 
       {/* ── MAIN CONTENT (scoped under #dsn-main) ── */}
       <main className={`main-content${isSidebarCollapsed ? " collapsed" : ""}`}>
         <div id="dsn-main">
-
           {/* ── TOP WHITE WRAPPER ── */}
           <div className="dsn-top-wrapper">
             <div className="dsn-greeting">
-              <h1>Welcome, Dr. Layla</h1>
-              <p>Here's a summary of today's key AI insights and patient status.</p>
+              {loading ? (
+                <>
+                  <h1 className="dsn-loading-blur">Welcome, Dr. Loading...</h1>
+                  <p className="dsn-loading-blur">
+                    Here's a summary of today's key AI insights and patient
+                    status.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h1>Welcome, Dr. {data?.doctor_name || "User"}</h1>
+                  <p>
+                    Here's a summary of today's key AI insights and patient
+                    status.
+                  </p>
+                </>
+              )}
             </div>
 
-            {/* Stats grid */}
             <div className="dsn-stats-grid">
-              {/* Card 1 */}
-              <div className="dsn-stat-card">
-                <div className="dsn-stat-label">
-                  <svg viewBox="0 0 24 24" fill="#3B5BDB">
-                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
-                  </svg>
-                  <strong>Total Registered Patients</strong>
+              {[
+                {
+                  label: "Total Registered Patients",
+                  val: data?.widgets.total_patients,
+                  color: "#3B5BDB",
+                  icon: "M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z",
+                },
+                {
+                  label: "Today's Appointments",
+                  val: data?.widgets.today_appointments,
+                  color: "#3B5BDB",
+                  icon: "M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z",
+                },
+                {
+                  label: "Reports Analyzed",
+                  val: data?.widgets.reports_analyzed,
+                  color: "#2F9E44",
+                  icon: "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z",
+                },
+              ].map((item, idx) => (
+                <div className="dsn-stat-card" key={idx}>
+                  <div className="dsn-stat-label">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill={item.color}
+                      style={{ width: "20px" }}
+                    >
+                      <path d={item.icon} />
+                    </svg>
+                    <strong>{item.label}</strong>
+                  </div>
+                  <div>
+                    {loading ? (
+                      <span className="dsn-stat-value dsn-loading-blur">
+                        12
+                      </span>
+                    ) : (
+                      <span className="dsn-stat-value">{item.val ?? 0}</span>
+                    )}
+                  </div>
                 </div>
-                <div><span className="dsn-stat-value">248</span></div>
-              </div>
-
-              {/* Card 2 */}
-              <div className="dsn-stat-card">
-                <div className="dsn-stat-label">
-                  <svg viewBox="0 0 24 24" fill="#3B5BDB">
-                    <path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/>
-                  </svg>
-                  <strong>Today's Appointments</strong>
-                </div>
-                <div><span className="dsn-stat-value">8</span></div>
-              </div>
-
-              {/* Card 3 */}
-              <div className="dsn-stat-card">
-                <div className="dsn-stat-label">
-                  <svg viewBox="0 0 24 24" fill="#2F9E44">
-                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>
-                  </svg>
-                  <strong>Reports Analyzed</strong>
-                </div>
-                <div><span className="dsn-stat-value">1,340</span></div>
-              </div>
+              ))}
 
               {/* Card 4 — Monthly Growth */}
               <div className="dsn-stat-card dsn-stat-card--growth">
                 <div className="dsn-stat-label dsn-stat-label--primary">
-                  <svg viewBox="0 0 24 24" fill="var(--dsn-primary)">
-                    <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="var(--dsn-primary)"
+                    style={{ width: "20px" }}
+                  >
+                    <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z" />
                   </svg>
                   <strong>Monthly Patient Growth</strong>
                 </div>
                 <div className="dsn-growth-grid">
                   {[
-                    { sub: "Last Mo.", val: "34", className: "" },
-                    { sub: "This Mo.", val: "45", className: "dsn-growth-val--primary" },
-                    { sub: "Diff.", val: "+11", className: "dsn-growth-val--success" },
-                    { sub: "Growth", val: "↑32%", className: "dsn-growth-val--success" },
-                  ].map((g) => (
-                    <div className="dsn-growth-col" key={g.sub}>
+                    {
+                      sub: "Last Mo.",
+                      valPath: data?.widgets.monthly_growth.details.last_month,
+                    },
+                    {
+                      sub: "This Mo.",
+                      valPath: data?.widgets.monthly_growth.details.this_month,
+                      className: "dsn-growth-val--primary",
+                    },
+                    {
+                      sub: "Diff.",
+                      valPath: data?.widgets.monthly_growth.details.difference,
+                    },
+                    {
+                      sub: "Growth",
+                      valPath: data?.widgets.monthly_growth.details.growth_rate,
+                    },
+                  ].map((g, i) => (
+                    <div className="dsn-growth-col" key={i}>
                       <div className="dsn-growth-sub">{g.sub}</div>
-                      <div className={`dsn-growth-val ${g.className}`}>{g.val}</div>
+                      {loading ? (
+                        <div className="dsn-growth-val dsn-loading-blur">
+                          124
+                        </div>
+                      ) : (
+                        <div
+                          className={`dsn-growth-val ${g.className || ""} ${
+                            g.sub === "Diff."
+                              ? g.valPath?.toString().startsWith("-")
+                                ? "dsn-growth-val--danger"
+                                : "dsn-growth-val--success"
+                              : ""
+                          } ${
+                            g.sub === "Growth"
+                              ? data?.widgets.monthly_growth.details.trend ===
+                                "up"
+                                ? "dsn-growth-val--success"
+                                : "dsn-growth-val--danger"
+                              : ""
+                          }`}
+                        >
+                          {g.sub === "Growth"
+                            ? `${data?.widgets.monthly_growth.details.trend === "up" ? "↑" : "↓"}${g.valPath}`
+                            : (g.valPath ?? 0)}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -390,79 +640,285 @@ export default function Dashboard() {
             </div>
 
             <div className="dsn-ai-status">
-              <div className="dsn-ai-dot" />
-              AI system running v3.2 Neural Core — updated 2h ago
+              {loading ? (
+                <div className="dsn-loading-blur" style={{ fontSize: "12px" }}>
+                  AI system running v0.0 Core — updated ...
+                </div>
+              ) : (
+                <>
+                  <div className="dsn-ai-dot" />
+                  AI system running v3.2 Neural Core — updated 2h ago
+                </>
+              )}
             </div>
           </div>
 
           {/* ── CHARTS ROW ── */}
           <div className="dsn-charts-row">
-
             {/* Donut — Patient Status */}
             <div className="dsn-chart-card">
-              <div className="dsn-chart-title">Patient Status Distribution</div>
-              <div className="dsn-donut-wrap">
-                <svg width="140" height="140" viewBox="0 0 130 130" className="dsn-donut-svg">
-                  <circle cx="65" cy="65" r="50" fill="none" stroke="#2F9E44" strokeWidth="22"
-                    strokeDasharray="188.5 125.7" strokeDashoffset="0" transform="rotate(-90 65 65)"/>
-                  <circle cx="65" cy="65" r="50" fill="none" stroke="#F03E3E" strokeWidth="22"
-                    strokeDasharray="78.5 235.6" strokeDashoffset="-188.5" transform="rotate(-90 65 65)"/>
-                  <circle cx="65" cy="65" r="50" fill="none" stroke="#F59F00" strokeWidth="22"
-                    strokeDasharray="47.1 267" strokeDashoffset="-267" transform="rotate(-90 65 65)"/>
-                  <circle cx="65" cy="65" r="39" fill="white"/>
-                  <text x="65" y="61" textAnchor="middle" fontSize="13" fontWeight="800" fill="#1A1D2E" fontFamily=" 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">248</text>
-                  <text x="65" y="76" textAnchor="middle" fontSize="10" fill="#8C91A7" fontFamily="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">patients</text>
+              <div
+                className={`dsn-chart-title ${loading ? "dsn-loading-blur" : ""}`}
+              >
+                Patient Status Distribution
+              </div>
+              <div className="dsn-donut-wrap" style={{ position: "relative" }}>
+                <svg
+                  width="140"
+                  height="140"
+                  viewBox="0 0 130 130"
+                  className={`dsn-donut-svg ${loading ? "dsn-loading-blur" : ""}`}
+                >
+                  {(() => {
+                    const radius = 50;
+                    const circumference = 2 * Math.PI * radius;
+                    let cumulativePercentage = 0;
+
+                    const statusColors = {
+                      critical: "#FF4D6D",
+                      stable: "#06D6A0",
+                      "under review": "#FF8C42",
+                    };
+
+                    const displayData = loading
+                      ? [
+                          { status: "loading1", percentage: 33, value: 0 },
+                          { status: "loading2", percentage: 33, value: 0 },
+                          { status: "loading3", percentage: 34, value: 0 },
+                        ]
+                      : statusDistribution?.pie_chart_data || [];
+
+                    return displayData.map((item, index) => {
+                      const strokeLength =
+                        (item.percentage / 100) * circumference;
+                      const offset =
+                        (cumulativePercentage / 100) * circumference;
+                      cumulativePercentage += item.percentage;
+
+                      return (
+                        <circle
+                          key={index}
+                          cx="65"
+                          cy="65"
+                          r={radius}
+                          fill="none"
+                          stroke={
+                            loading
+                              ? "#eee"
+                              : statusColors[item.status] || "#ccc"
+                          }
+                          strokeWidth="22"
+                          strokeDasharray={`${strokeLength} ${circumference}`}
+                          strokeDashoffset={-offset}
+                          transform="rotate(-90 65 65)"
+                          className="dsn-donut-segment"
+                          onMouseEnter={() =>
+                            !loading && setHoveredStatus(item)
+                          }
+                          onMouseMove={(e) => {
+                            if (!loading) {
+                              setTooltipPos({
+                                x: e.nativeEvent.offsetX,
+                                y: e.nativeEvent.offsetY,
+                              });
+                            }
+                          }}
+                          onMouseLeave={() => setHoveredStatus(null)}
+                          style={{
+                            transition: "all 0.3s ease",
+                            cursor: loading ? "default" : "pointer",
+                            opacity:
+                              hoveredStatus &&
+                              hoveredStatus.status !== item.status
+                                ? 0.6
+                                : 1,
+                          }}
+                        />
+                      );
+                    });
+                  })()}
+
+                  <circle cx="65" cy="65" r="39" fill="white" />
+                  <text
+                    x="65"
+                    y="61"
+                    textAnchor="middle"
+                    fontSize="13"
+                    fontWeight="800"
+                    fill="#1A1D2E"
+                    fontFamily="'Inter', sans-serif"
+                    className={loading ? "dsn-loading-blur" : ""}
+                  >
+                    {loading
+                      ? "00"
+                      : statusDistribution?.total_registered_patients || 0}
+                  </text>
+                  <text
+                    x="65"
+                    y="76"
+                    textAnchor="middle"
+                    fontSize="10"
+                    fill="#8C91A7"
+                    fontFamily="'Inter', sans-serif"
+                    className={loading ? "dsn-loading-blur" : ""}
+                  >
+                    patients
+                  </text>
                 </svg>
-                <div className="dsn-legend-list">
-                  {[
-                    { color: "#2F9E44", bg: "var(--dsn-success-light)", label: "Stable", pct: "60%", pctColor: "#2F9E44" },
-                    { color: "#F03E3E", bg: "#FFF5F5", label: "Critical", pct: "25%", pctColor: "#F03E3E" },
-                    { color: "#F59F00", bg: "#FFF8E1", label: "Under Review", pct: "15%", pctColor: "#F59F00" },
-                  ].map((row) => (
-                    <div key={row.label} className="dsn-legend-row" style={{ background: row.bg }}>
-                      <div className="dsn-legend-dot" style={{ background: row.color }} />
-                      <span className="dsn-legend-label">{row.label}</span>
-                      <span className="dsn-legend-pct" style={{ color: row.pctColor }}>{row.pct}</span>
+
+                {hoveredStatus && (
+                  <div
+                    className="dsn-custom-tooltip"
+                    style={{
+                      position: "absolute",
+                      left: tooltipPos.x + 15,
+                      top: tooltipPos.y - 10,
+                      pointerEvents: "none",
+                      zIndex: 100,
+                    }}
+                  >
+                    <div
+                      className="tooltip-status"
+                      style={{ textTransform: "capitalize" }}
+                    >
+                      <strong>{hoveredStatus.status}</strong>
                     </div>
-                  ))}
+                    <div className="tooltip-value">
+                      {hoveredStatus.value} Patients ({hoveredStatus.percentage}
+                      %)
+                    </div>
+                  </div>
+                )}
+
+                <div className="dsn-legend-list">
+                  {(loading
+                    ? [
+                        { status: "critical", percentage: 0 },
+                        { status: "stable", percentage: 0 },
+                        { status: "under review", percentage: 0 },
+                      ]
+                    : statusDistribution?.pie_chart_data || []
+                  ).map((item, index) => {
+                    const config = {
+                      critical: { color: "#FF4D6D", bg: "#FFF0F3" },
+                      stable: {
+                        color: "#06D6A0",
+                        bg: "#E6FAF5",
+                      },
+                      "under review": { color: "#FF8C42", bg: "#FFF5ED" },
+                    };
+                    const style = config[item.status] || {
+                      color: "#ccc",
+                      bg: "#f5f5f5",
+                    };
+
+                    return (
+                      <div
+                        key={index}
+                        className={`dsn-legend-row ${loading ? "dsn-loading-blur" : ""}`}
+                        style={{ background: style.bg }}
+                      >
+                        <div
+                          className="dsn-legend-dot"
+                          style={{ background: style.color }}
+                        />
+                        <span className="dsn-legend-label">{item.status}</span>
+                        <span
+                          className="dsn-legend-pct"
+                          style={{ color: style.color }}
+                        >
+                          {loading ? "00%" : `${item.percentage}%`}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
 
             {/* Bar Chart — Top 5 Chronic Diseases */}
             <div className="dsn-chart-card">
-              <div className="dsn-chart-title">Top 5 Chronic Diseases</div>
-              <div className="dsn-chart-subtitle">
+              <div
+                className={`dsn-chart-title ${loading ? "dsn-loading-blur" : ""}`}
+              >
+                Top 5 Chronic Diseases
+              </div>
+              <div
+                className={`dsn-chart-subtitle ${loading ? "dsn-loading-blur" : ""}`}
+              >
                 Selected by doctor in medical forms
               </div>
               <div className="dsn-bar-chart-wrap">
                 <div className="dsn-bar-columns">
-                  {[
-                    { val: 156, color: "linear-gradient(180deg,#4361EE,#748FFC)", h: 160 },
-                    { val: 142, color: "linear-gradient(180deg,#06D6A0,#3DCFB4)", h: 146 },
-                    { val: 98,  color: "linear-gradient(180deg,#FF8C42,#FFA96B)", h: 100 },
-                    { val: 87,  color: "linear-gradient(180deg,#FF4D6D,#FF7A93)", h: 89 },
-                    { val: 73,  color: "linear-gradient(180deg,#9B5DE5,#BB8AEE)", h: 75 },
-                  ].map((b, i) => (
-                    <div className="dsn-bar-col" key={i}>
-                      <span className="dsn-bar-val">{b.val}</span>
-                      <div className="dsn-bar-fill" style={{ background: b.color, height: b.h }} />
-                    </div>
-                  ))}
+                  {(() => {
+                    const barColors = [
+                      "linear-gradient(180deg,#4361EE,#748FFC)",
+                      "linear-gradient(180deg,#06D6A0,#3DCFB4)",
+                      "linear-gradient(180deg,#FF8C42,#FFA96B)",
+                      "linear-gradient(180deg,#FF4D6D,#FF7A93)",
+                      "linear-gradient(180deg,#9B5DE5,#BB8AEE)",
+                    ];
+
+                    const displayData = loading
+                      ? [
+                          { label: "Loading", value: 10 },
+                          { label: "Loading", value: 8 },
+                          { label: "Loading", value: 6 },
+                          { label: "Loading", value: 9 },
+                          { label: "Loading", value: 7 },
+                        ]
+                      : TopDiseases || [];
+
+                    const maxVal = Math.max(
+                      ...(displayData.map((d) => d.value) || [1]),
+                    );
+                    const maxHeight = 160;
+
+                    return displayData.map((item, i) => (
+                      <div className="dsn-bar-col" key={i}>
+                        <span
+                          className={`dsn-bar-val ${loading ? "dsn-loading-blur" : ""}`}
+                        >
+                          {loading ? "00" : item.value}
+                        </span>
+                        <div
+                          className={`dsn-bar-fill ${loading ? "dsn-loading-blur" : ""}`}
+                          style={{
+                            background: loading
+                              ? "#eee"
+                              : barColors[i % barColors.length],
+                            height: `${(item.value / maxVal) * maxHeight}px`,
+                            transition: "height 0.5s ease",
+                          }}
+                        />
+                      </div>
+                    ));
+                  })()}
                 </div>
+
                 <div className="dsn-bar-labels">
-                  {["Hyper-\ntension", "Diabetes", "Heart\nDisease", "Kidney\nDisease", "Liver\nDisease"].map((lbl) => (
-                    <div key={lbl} className="dsn-bar-lbl" style={{ whiteSpace: "pre-line" }}>{lbl}</div>
+                  {(loading
+                    ? [1, 2, 3, 4, 5].map(() => ({ label: "Disease" }))
+                    : TopDiseases || []
+                  ).map((item, i) => (
+                    <div
+                      key={i}
+                      className={`dsn-bar-lbl ${loading ? "dsn-loading-blur" : ""}`}
+                      style={{
+                        whiteSpace: "pre-line",
+                        textTransform: "capitalize",
+                      }}
+                    >
+                      {loading ? "Loading" : item.label}
+                    </div>
                   ))}
                 </div>
               </div>
             </div>
-
           </div>
 
           {/* ── QUEUE MANAGEMENT ── */}
           <QueueSection />
-
         </div>
       </main>
     </>

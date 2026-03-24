@@ -1539,7 +1539,7 @@ body {
 }
 
 #dsn-main .dsn-growth-sub {
-     font-size: 9.5px;
+     font-size: 11px;
      color: var(--dsn-muted);
      font-weight: 600;
      text-transform: uppercase;
@@ -1548,7 +1548,7 @@ body {
 }
 
 #dsn-main .dsn-growth-val {
-     font-size: 18px;
+     font-size: 13px;
      font-weight: 800;
      color: var(--dsn-text);
 }
@@ -1559,6 +1559,10 @@ body {
 
 #dsn-main .dsn-growth-val--success {
      color: var(--dsn-success);
+}
+
+#dsn-main .dsn-growth-val--danger {
+     color: var(--dsn-danger);
 }
 
 /* ── AI STATUS ── */
@@ -2377,4 +2381,60 @@ body {
      #dsn-modal-box {
           width: 95vw;
      }
+}
+.dsn-loading-blur {
+  filter: blur(6px);
+  opacity: 0.5;
+  user-select: none;
+  pointer-events: none;
+  animation: dsn-blur-pulse 1.8s ease-in-out infinite;
+  display: inline-block;
+}
+
+@keyframes dsn-blur-pulse {
+  0%, 100% { 
+    filter: blur(6px); 
+    opacity: 0.4; 
+  }
+  50% { 
+    filter: blur(4px); 
+    opacity: 0.6; 
+  }
+}
+
+.dsn-donut-segment:hover {
+  stroke-width: 26; 
+  opacity: 0.8;
+}
+
+
+.dsn-custom-tooltip {
+    background: rgba(26, 29, 46, 0.95); /* لون غامق شيك */
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(4px);
+    transition: opacity 0.2s ease;
+}
+
+.tooltip-status {
+    margin-bottom: 2px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 2px;
+}
+
+.tooltip-value {
+    color: #cbd5e0;
+}
+
+/* تأثير بسيط لما نلمس الدائرة */
+.dsn-donut-segment {
+    transition: stroke-width 0.3s ease, opacity 0.3s ease;
+}
+
+.dsn-donut-segment:hover {
+    stroke-width: 25; /* بنعرض السطر شوية وقت الـ hover */
 }

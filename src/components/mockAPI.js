@@ -872,3 +872,23 @@ export const markAllNotificationsAsReadAPI = async () => {
 export const clearAllNotificationsAPI = async () => {
   return await apiCall('/api/notifications/clear-all', { method: 'DELETE' });
 };
+
+
+
+export const getDashboardWidgets = async () => {
+  return await apiCall('/api/dashboard/summary', {
+    method: 'GET',
+  });
+};
+
+export const getDashboardStatusDistribution = async () => {
+  return await apiCall('/api/dashboard/status-distribution', {
+    method: 'GET',
+  });
+}
+
+export const getTopfiveDiseases = async () => {
+  return await apiCall('/api/dashboard/top-diseases', {
+    method: 'GET',
+  });
+}

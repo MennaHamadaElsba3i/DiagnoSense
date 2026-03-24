@@ -802,7 +802,7 @@ const AddPatient = () => {
 
               {hasSurgeries && (
                 <div className="form-group" id="surgeryDetails">
-                  <label className="form-label required">Please specify surgeries <span className="provided-hint">(Provided)</span></label> 
+                  <label className="form-label required">Please specify surgeries <span className="provided-hint">Provided</span></label> 
                   <textarea className={`form-textarea${fieldErrors.surgeryText ? " target-error" : ""}`} id="surgeryText" placeholder="List previous surgeries and approximate dates..." value={formData.surgeryText} onChange={handleInputChange}></textarea>
                   {fieldErrors.surgeryText && (
                     <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>{fieldErrors.surgeryText}</div>
