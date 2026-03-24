@@ -1111,3 +1111,80 @@ button.patient-card-delete-btn:hover {
     color: #e11d48;
     transform: scale(1.08);
 }
+
+/* Hover for Edit button: clean blue tone */
+button.patient-card-delete-btn.edit-action-btn:hover {
+    background: rgba(42, 102, 255, 0.10);
+    border-color: rgba(42, 102, 255, 0.45);
+    color: #2A66FF;
+    transform: scale(1.08);
+}
+
+/* ── Status Quick Switch Menu ───────────────────────────────────── */
+.status-badge-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.status-quick-switch {
+    position: absolute;
+    left: 100%; /* attaches directly to the right side of the status badge wrapper */
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex; /* side by side */
+    align-items: center;
+    gap: 6px;
+    padding-left: 6px; /* invisible hover bridge between the badge and dots */
+    height: 30px; /* generous vertical hover catch area */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease; /* Fast simple fade */
+    z-index: 10;
+}
+
+.status-quick-switch.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.status-circle {
+    position: relative;
+    width: 10px; /* Safe, compact matching volume */
+    height: 10px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.08); /* Minimalist outline */
+    cursor: pointer;
+    transition: filter 0.15s ease; /* Simple dimming */
+    padding: 0;
+    outline: none;
+}
+
+.status-circle:hover {
+    filter: brightness(0.9);
+    z-index: 11;
+}
+
+/* Ultra-minimal, simple tooltip */
+.status-circle::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%; /* Sits natively above the dot to prevent overlapping neighbors horizontally */
+    left: 50%;
+    transform: translate(-50%, -6px);
+    background: rgba(14, 26, 52, 0.85); /* Unobtrusive dark tag */
+    color: #fff;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+}
+
+.status-circle:hover::after {
+    opacity: 1;
+}

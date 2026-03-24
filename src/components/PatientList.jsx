@@ -11,7 +11,7 @@ import ConfirmModal from "./ConfirmModal";
 import "../css/PatientList.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import { useNotifications } from "./NotificationsContext";
-import { getPatientsAPI, searchPatientsAPI, getPatientsByStatusAPI, deletePatientAPI } from "./mockAPI"; const AIInsightBlock = ({ patient, onOpenModal }) => {
+import { getPatientsAPI, searchPatientsAPI, getPatientsByStatusAPI, deletePatientAPI, updatePatientStatusAPI } from "./mockAPI"; const AIInsightBlock = ({ patient, onOpenModal }) => {
   const containerRef = useRef(null);
   const textRef = useRef(null);
   const moreRef = useRef(null);
@@ -114,6 +114,49 @@ const PatientCard = ({ patient, index, cardRef, navigate, setPatientToDelete, se
 
   const nameRef = useRef(null);
   const [isTwoLines, setIsTwoLines] = useState(false);
+  const [isStatusHovered, setIsStatusHovered] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const hoverTimeoutRef = useRef(null);
+
+  const handleMouseEnter = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    setIsStatusHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsStatusHovered(false);
+    }, 350);
+  };
+
+  // Status mapping to power the quick-switch menus
+  const STATUS_OPTIONS = [
+    { id: "stable", color: "#00C187", label: "Stable" },
+    { id: "under review", color: "#FFA500", label: "Under Review" },
+    { id: "critical", color: "#FF5C5C", label: "Critical" },
+  ];
+
+  const handleQuickStatusChange = async (e, newStatus) => {
+    e.stopPropagation();
+    if (isUpdatingStatus) return;
+    setIsUpdatingStatus(true);
+    
+    // Optimistic UI dispatch directly triggers PatientList to re-render locally instantly
+    window.dispatchEvent(
+      new CustomEvent("patientStatusUpdated", {
+        detail: { patientId: patient.id, status: newStatus },
+      })
+    );
+    
+    try {
+      await updatePatientStatusAPI(patient.id, newStatus);
+    } catch (err) {
+      console.error("Failed to update status", err);
+    } finally {
+      setIsUpdatingStatus(false);
+      setIsStatusHovered(false);
+    }
+  };
 
   useEffect(() => {
     if (nameRef.current) {
@@ -143,10 +186,74 @@ const PatientCard = ({ patient, index, cardRef, navigate, setPatientToDelete, se
         <div className="patient-info" style={{ flexGrow: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <h3 ref={nameRef} title={patient.name}>{patient.name}</h3>
+            
+            <button
+              className="patient-card-delete-btn edit-action-btn"
+              aria-label="Edit patient"
+              title="Edit patient"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/edit-patient/${patient.id}`);
+              }}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+            
+          </div>
+          
+          <div className="patient-meta-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: isTwoLines ? '2px' : '4px' }}>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <p className="patient-meta" style={{ margin: 0 }}>
+                Age: {patient.age}
+              </p>
+              <div 
+                className="status-badge-wrapper" 
+                style={{ position: 'relative' }}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+              >
+                <span
+                  className={`status-badge ${patient.statusType || patient.status}`}
+                  style={{ transition: "all 0.3s ease", cursor: "pointer" }}
+                >
+                  {patient.statusLabel}
+                </span>
+
+                <div className={`status-quick-switch ${isStatusHovered ? 'visible' : ''}`}>
+                   {STATUS_OPTIONS.filter(s => s.id !== (normalizedStatus === "under-review" ? "under review" : normalizedStatus)).map((opt, idx) => {
+                      return (
+                        <button
+                          key={opt.id}
+                          className={`status-circle status-${opt.id.replace(/\s+/g, '-')}`}
+                          data-tooltip={opt.label}
+                          onClick={(e) => handleQuickStatusChange(e, opt.id)}
+                          style={{
+                             background: opt.color
+                          }}
+                        />
+                      );
+                   })}
+                </div>
+              </div>
+            </div>
+            
             <button
               className="patient-card-delete-btn"
               aria-label="Delete patient"
               title="Delete patient"
+              style={{ margin: 0 }}
               onClick={(e) => {
                 e.stopPropagation();
                 setPatientToDelete(patient);
@@ -172,16 +279,7 @@ const PatientCard = ({ patient, index, cardRef, navigate, setPatientToDelete, se
                 <path d="M14 11v6" />
               </svg>
             </button>
-          </div>
-          <div className="patient-meta-row">
-            <p className="patient-meta">
-              Age: {patient.age}
-            </p>
-            <span
-              className={`status-badge ${patient.statusType || patient.status}`}
-            >
-              {patient.statusLabel}
-            </span>
+            
           </div>
         </div>
       </div>

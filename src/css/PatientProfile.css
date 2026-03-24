@@ -2392,3 +2392,245 @@ button.pp-note-delete-btn:hover {
         transform: rotate(360deg);
     }
 }
+
+/* ── Chatbot: preparing message state ── */
+.message.ai.preparing {
+    font-style: italic;
+    opacity: 0.8;
+    animation: chatPreparing 1.8s ease-in-out infinite;
+}
+
+@keyframes chatPreparing {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 0.5; }
+}
+
+/* ── Chatbot: disabled input while sending/preparing ── */
+.chat-input input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.chat-input .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* ── Chatbot: animated typing dots indicator ── */
+.chat-typing {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 14px;
+    min-height: 36px;
+}
+
+.chat-typing span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #8A94A6;
+    display: inline-block;
+    animation: chatDots 1.2s ease-in-out infinite;
+}
+
+.chat-typing span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.chat-typing span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes chatDots {
+    0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Locked Feature Overlay
+   ═══════════════════════════════════════════════════════════ */
+
+.lf-wrapper {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    min-height: 280px;
+}
+
+.lf-dummy {
+    filter: blur(4px);
+    opacity: 0.45;
+    pointer-events: none;
+    user-select: none;
+    padding: 4px 0;
+}
+
+.lf-chat-dummy {
+    filter: blur(3px);
+    opacity: 0.38;
+    pointer-events: none;
+    user-select: none;
+    padding: 8px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.lf-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    padding: 16px;
+}
+
+.lf-overlay-card {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(42, 102, 255, 0.15);
+    border-radius: 18px;
+    box-shadow: 0 12px 40px rgba(42, 102, 255, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+    padding: 32px 28px;
+    text-align: center;
+    max-width: 380px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.lf-compact {
+    padding: 8px;
+}
+
+.lf-compact .lf-overlay-card {
+    padding: 20px 18px;
+    max-width: 100%;
+    border-radius: 14px;
+    gap: 8px;
+}
+
+.lf-icon-wrap {
+    width: 48px;
+    height: 48px;
+    background: rgba(42, 102, 255, 0.08);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.lf-compact .lf-icon-wrap {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+}
+
+.lf-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #0E1A34;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.lf-compact .lf-title {
+    font-size: 15px;
+}
+
+.lf-desc {
+    font-size: 13px;
+    color: #5A6478;
+    margin: 0;
+    line-height: 1.55;
+}
+
+.lf-compact .lf-desc {
+    font-size: 12px;
+}
+
+.lf-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    margin-top: 4px;
+}
+
+.lf-btn-primary {
+    background: #2A66FF;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 11px 20px;
+    cursor: pointer;
+    transition: background 0.18s ease, transform 0.15s ease, box-shadow 0.18s ease;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    line-height: 1;
+}
+
+.lf-btn-primary:hover {
+    background: #1E4EDB;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(42, 102, 255, 0.3);
+}
+
+.lf-compact .lf-btn-primary {
+    font-size: 13px;
+    padding: 9px 16px;
+}
+
+.lf-btn-secondary {
+    background: transparent;
+    color: #2A66FF;
+    border: 1.5px solid rgba(42, 102, 255, 0.3);
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px 20px;
+    cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    line-height: 1;
+}
+
+.lf-btn-secondary:hover {
+    background: rgba(42, 102, 255, 0.06);
+    border-color: rgba(42, 102, 255, 0.55);
+}
+
+.lf-compact .lf-btn-secondary {
+    font-size: 12px;
+    padding: 7px 16px;
+}
+
+.lf-micro {
+    font-size: 11px;
+    color: #8A94A6;
+    margin: 0;
+    margin-top: -4px;
+}
+
+@media (max-width: 480px) {
+    .lf-overlay-card {
+        padding: 22px 16px;
+    }
+
+    .lf-title {
+        font-size: 15px;
+    }
+
+    .lf-btn-primary,
+    .lf-btn-secondary {
+        width: 100%;
+    }
+}

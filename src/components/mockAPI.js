@@ -892,3 +892,15 @@ export const getTopfiveDiseases = async () => {
     method: 'GET',
   });
 }
+/**
+ * POST /api/chatbot/{patientId}
+ * Sends a doctor's question to the AI chatbot.
+ * Returns either a direct answer or "Preparing patient data..." (async path).
+ * @param {number|string} patientId
+ * @param {string} question - The doctor's typed question
+ */
+export const sendChatbotMessageAPI = async (patientId, question) =>
+  apiCall(`/api/chatbot/${patientId}`, {
+    method: 'POST',
+    body: JSON.stringify({ question }),
+  });
