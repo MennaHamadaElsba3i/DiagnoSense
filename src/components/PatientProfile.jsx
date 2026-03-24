@@ -11,7 +11,10 @@ import {
   updatePatientStatusAPI,
   getDecisionSupportAPI,
   getPatientActivitiesAPI,
+  sendChatbotMessageAPI,
 } from "./mockAPI";
+import echo from "./echo";
+import { getJsonCookie } from "./cookieUtils";
 import EvidencePanel from "../components/EvidencePanel.jsx";
 
 import logo from "../assets/Logo_Diagnoo.png";
@@ -86,6 +89,9 @@ const PatientProfile = () => {
   const [nextVisitDate, setNextVisitDate] = useState(null); // "YYYY-MM-DD" raw string
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
+  const [isChatSending, setIsChatSending] = useState(false);
+  const [isChatPreparing, setIsChatPreparing] = useState(false);
+  const chatChannelRef = useRef(null); // guard against duplicate realtime listeners
 
   const [selectedStatus, setSelectedStatus] = useState(() => {
     const raw = (JSON.parse(localStorage.getItem("currentPatient"))?.status || "").toLowerCase().trim().replaceAll("_", " ");
@@ -122,12 +128,7 @@ const PatientProfile = () => {
   const mediumAlerts = effectiveKeyInfo.medium;
   const lowAlerts = effectiveKeyInfo.low;
 
-  const [chatMessages, setChatMessages] = useState([
-    {
-      type: "ai",
-      text: "Hello Dr. Layla! How can I assist you with Nour Hassan's case today?",
-    },
-  ]);
+  const [chatMessages, setChatMessages] = useState([]);
   const [analysisData, setAnalysisData] = useState(keyInfoData);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(true);
 
@@ -573,6 +574,16 @@ const PatientProfile = () => {
     }
   }, [chatMessages, isChatOpen]);
 
+  // ── Chatbot realtime cleanup on unmount ──
+  useEffect(() => {
+    return () => {
+      if (chatChannelRef.current) {
+        echo.leave(chatChannelRef.current);
+        chatChannelRef.current = null;
+      }
+    };
+  }, []);
+
   // ── Reset Decision Support when patient changes ──
   useEffect(() => {
     setDecisionSupport([]);
@@ -676,49 +687,115 @@ const PatientProfile = () => {
     setSelectedReport(index);
   };
 
-  const toggleChat = () => setIsChatOpen(!isChatOpen);
+  const toggleChat = () => {
+    setIsChatOpen((prev) => {
+      if (!prev) {
+        const user = getJsonCookie("user");
+        const doctorName = user?.name || user?.user?.name || "Doctor";
+        const patientName =
+          overviewData?.name ||
+          overviewData?.patient_name ||
+          overviewData?.full_name ||
+          "this patient";
+        setChatMessages([
+          {
+            type: "ai",
+            text: `Hello Dr. ${doctorName}, how can I assist you with ${patientName}'s case today?`,
+          },
+        ]);
+      }
+      return !prev;
+    });
+  };
 
   const handleChatEnter = (e) => {
     if (e.key === "Enter") sendMessage();
   };
 
-  const sendMessage = () => {
-    if (!chatInput.trim()) return;
+  const subscribeToChatbotChannel = () => {
+    if (chatChannelRef.current) return;
+    const user = getJsonCookie("user");
+    const doctorId = user?.id || user?.user?.id;
+    if (!doctorId) return;
 
-    const newMessages = [...chatMessages, { type: "user", text: chatInput }];
-    setChatMessages(newMessages);
-    const currentInput = chatInput.toLowerCase();
+    const channelName = `chatbot-answer.${doctorId}`;
+    chatChannelRef.current = channelName;
+
+    echo.private(channelName).listen(".ChatbotAnswerReady", (payload) => {
+      const answer =
+        payload?.answer || payload?.data || payload?.message || "";
+      const isFailed =
+        !answer ||
+        answer.toLowerCase().includes("fail") ||
+        answer.toLowerCase().includes("error");
+
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          type: "ai",
+          text: isFailed
+            ? "Sorry, I couldn't prepare the chatbot answer right now. Please try again."
+            : answer,
+        },
+      ]);
+      setIsChatPreparing(false);
+      setIsChatSending(false);
+      echo.leave(channelName);
+      chatChannelRef.current = null;
+    });
+  };
+
+  const sendMessage = async () => {
+    const text = chatInput.trim();
+    if (!text || isChatSending || isChatPreparing) return;
+
+    setChatMessages((prev) => [...prev, { type: "user", text }]);
     setChatInput("");
+    setIsChatSending(true);
 
-    setTimeout(() => {
-      let aiText =
-        "I can help you with lab results, medication history, trends analysis, and patient summaries. What would you like to know?";
+    try {
+      const res = await sendChatbotMessageAPI(patientId, text);
 
-      if (currentInput.includes("hba1c")) {
-        aiText =
-          "6.1% (Oct 25, 2025). Within normal range for diabetic patients. Shows 0.7% improvement from baseline.";
-      } else if (
-        currentInput.includes("liver") ||
-        currentInput.includes("alt")
-      ) {
-        aiText =
-          "ALT slightly elevated at 48 U/L; however, showing consistent improvement overall. Last three readings: 62 → 55 → 48 U/L. Recommend follow-up test in 7 days.";
-      } else if (
-        currentInput.includes("medication") ||
-        currentInput.includes("drug")
-      ) {
-        aiText =
-          "Current medications: Atorvastatin 20mg daily, Metformin 500mg twice daily. No interactions detected. Patient reported good adherence.";
-      } else if (
-        currentInput.includes("blood pressure") ||
-        currentInput.includes("bp")
-      ) {
-        aiText =
-          "Blood pressure shows excellent improvement: 145/92 → 128/82 mmHg. Normalized over last 3 visits. Treatment effective.";
+      if (!res || res.success === false) {
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            type: "ai",
+            text: "Sorry, something went wrong. Please try again.",
+          },
+        ]);
+        return;
       }
 
-      setChatMessages((prev) => [...prev, { type: "ai", text: aiText }]);
-    }, 800);
+      if (res.data === "Preparing patient data...") {
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            type: "ai",
+            text: "I'm preparing this patient's data. Please wait a moment...",
+            preparing: true,
+          },
+        ]);
+        setIsChatPreparing(true);
+        subscribeToChatbotChannel();
+        return;
+      }
+
+      setChatMessages((prev) => [
+        ...prev,
+        { type: "ai", text: res.data || res.message || "Done." },
+      ]);
+    } catch {
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          type: "ai",
+          text: "Sorry, something went wrong. Please try again.",
+        },
+      ]);
+    } finally {
+      if (!isChatPreparing) setIsChatSending(false);
+    }
   };
 
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -3173,10 +3250,18 @@ const PatientProfile = () => {
         </div>
         <div className="chat-messages" id="chatMessages">
           {chatMessages.map((msg, index) => (
-            <div key={index} className={`message ${msg.type}`}>
+            <div
+              key={index}
+              className={`message ${msg.type}${msg.preparing ? " preparing" : ""}`}
+            >
               {msg.text}
             </div>
           ))}
+          {isChatSending && !isChatPreparing && (
+            <div className="message ai chat-typing">
+              <span /><span /><span />
+            </div>
+          )}
           <div ref={messagesEndRef} />
         </div>
         <div className="chat-input">
@@ -3186,9 +3271,14 @@ const PatientProfile = () => {
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             onKeyPress={handleChatEnter}
+            disabled={isChatSending || isChatPreparing}
           />
-          <button className="btn btn-primary" onClick={sendMessage}>
-            Send
+          <button
+            className="btn btn-primary"
+            onClick={sendMessage}
+            disabled={isChatSending || isChatPreparing}
+          >
+            {isChatPreparing ? "Preparing..." : isChatSending ? "Sending..." : "Send"}
           </button>
         </div>
       </div>

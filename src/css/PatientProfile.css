@@ -2392,3 +2392,58 @@ button.pp-note-delete-btn:hover {
         transform: rotate(360deg);
     }
 }
+
+/* ── Chatbot: preparing message state ── */
+.message.ai.preparing {
+    font-style: italic;
+    opacity: 0.8;
+    animation: chatPreparing 1.8s ease-in-out infinite;
+}
+
+@keyframes chatPreparing {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 0.5; }
+}
+
+/* ── Chatbot: disabled input while sending/preparing ── */
+.chat-input input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.chat-input .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* ── Chatbot: animated typing dots indicator ── */
+.chat-typing {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 14px;
+    min-height: 36px;
+}
+
+.chat-typing span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #8A94A6;
+    display: inline-block;
+    animation: chatDots 1.2s ease-in-out infinite;
+}
+
+.chat-typing span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.chat-typing span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes chatDots {
+    0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+}
