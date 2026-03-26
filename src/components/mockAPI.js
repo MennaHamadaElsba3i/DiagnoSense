@@ -892,6 +892,23 @@ export const getTopfiveDiseases = async () => {
     method: 'GET',
   });
 }
+
+export const getTodayVisitsAPI = async () => {
+  return await apiCall('/api/dashboard/today-visits', {
+    method: 'GET',
+  });
+};
+
+/**
+ * PATCH /api/dashboard/{patientId}/attend
+ * Marks the current patient as attended and signals the backend to update the queue.
+ * @param {number|string} patientId — ID of the patient currently in the top card
+ */
+export const markPatientAttendedAPI = async (patientId) => {
+  return await apiCall(`/api/dashboard/${patientId}/attend`, {
+    method: 'PATCH',
+  });
+};
 /**
  * POST /api/chatbot/{patientId}
  * Sends a doctor's question to the AI chatbot.
@@ -904,3 +921,5 @@ export const sendChatbotMessageAPI = async (patientId, question) =>
     method: 'POST',
     body: JSON.stringify({ question }),
   });
+
+

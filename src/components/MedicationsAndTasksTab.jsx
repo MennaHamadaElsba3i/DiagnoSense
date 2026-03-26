@@ -1,23 +1,41 @@
 import React, { useState, useEffect, useCallback } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { createVisitAPI, createVisitItem, getPatientVisitItems, deletePatientMedication, deletePatientTask } from "./mockAPI";
+import {
+  createVisitAPI,
+  createVisitItem,
+  getPatientVisitItems,
+  deletePatientMedication,
+  deletePatientTask,
+} from "./mockAPI";
 import ConfirmModal from "./ConfirmModal";
+import moment from "moment";
 
 const TrashIcon = () => (
-  <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    fill="none"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <polyline points="3 6 5 6 21 6"></polyline>
     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
     <line x1="10" y1="11" x2="10" y2="17"></line>
     <line x1="14" y1="11" x2="14" y2="17"></line>
   </svg>
-);/* ─────────────────────────────────────────────
+); /* ─────────────────────────────────────────────
    MedicationsAndTasksTab
    Tasks & medications are fetched from:
    GET /api/patients/{patientId}/items
 ───────────────────────────────────────────── */
 
-export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate, onNextVisitSaved }) {
+export default function MedicationsAndTasksTab({
+  patientId,
+  initialNextVisitDate,
+  onNextVisitSaved,
+}) {
   // ── View state: "dashboard" | "form" ──
   const [view, setView] = useState("dashboard");
 
@@ -84,7 +102,7 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
   const confirmDelete = async () => {
     if (!deleteTargetId || !deleteTargetType) return;
 
-    // Call the appropriate delete function 
+    // Call the appropriate delete function
     if (deleteTargetType === "medication") {
       await removeMedication(deleteTargetId);
     } else if (deleteTargetType === "task") {
@@ -95,7 +113,7 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
   };
 
   // ── Visit API state ──
-  const [visitId, setVisitId] = useState(null);       // populated after action="next"
+  const [visitId, setVisitId] = useState(null); // populated after action="next"
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
@@ -106,30 +124,22 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
     setTimeout(() => setToast({ show: false, msg: "" }), 3000);
   };
 
-  const parseValidDate = (value) => {
-    if (!value || value === "No next visit") return null;
-    const parsed = new Date(value);
-    return isNaN(parsed.getTime()) ? null : parsed;
-  };
+const parseValidDate = (value) => {
+  if (!value || value === "No next visit") return null;
+  const m = moment(value, "YYYY-MM-DD HH:mm:ss"); 
+  return m.isValid() ? m.toDate() : null;
+};
 
-  const formatDate = (dateStr) => {
-    const d = parseValidDate(dateStr);
-    if (!d) return "";
-    return d.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  };
+const formatDate = (dateStr) => {
+  if (!dateStr) return "";
+  // بنجبره يقرأ التنسيق اللي إحنا مخزنينه
+  return moment(dateStr, "YYYY-MM-DD HH:mm:ss").format("ddd, MMMM D, YYYY, h:mm A");
+};
 
-  const formatDateShort = (dateStr) => {
-    const d = parseValidDate(dateStr);
-    if (!d) return "";
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
-  };
+const formatDateShort = (dateStr) => {
+  if (!dateStr) return "";
+  return moment(dateStr, "YYYY-MM-DD HH:mm:ss").format("MMM D, h:mm A");
+};
 
   // ── Normalize a raw backend task object into the frontend shape ──
   const normalizeTask = (t) => ({
@@ -139,8 +149,13 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
     notes: t.notes ?? "",
     // Due_date comes from the backend with capital D.
     // Fallback: visit.next_visit_date formatted short.
-    due: t.Due_date ?? t.due_date ?? t.dueDate
-      ?? (t.visit?.next_visit_date ? formatDateShort(t.visit.next_visit_date) : null),
+    due:
+      t.Due_date ??
+      t.due_date ??
+      t.dueDate ??
+      (t.visit?.next_visit_date
+        ? formatDateShort(t.visit.next_visit_date)
+        : null),
     dueStyle: "normal",
   });
 
@@ -173,8 +188,14 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
   const openForm = () => {
     setView("form");
     setTaskType(null);
-    setMedName(""); setMedDosage(""); setMedFreq(""); setMedDuration("");
-    setTaskTitle(""); setTaskDesc(""); setTaskNextVisitDate(""); setTaskNotes("");
+    setMedName("");
+    setMedDosage("");
+    setMedFreq("");
+    setMedDuration("");
+    setTaskTitle("");
+    setTaskDesc("");
+    setTaskNextVisitDate("");
+    setTaskNotes("");
     setSavedMedsInForm([]);
     setSavedTasksInForm([]);
     setErrors({});
@@ -246,7 +267,10 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
     if (!medName.trim()) newErrors.medName = "Medication name is required";
     if (!medDosage.trim()) newErrors.medDosage = "Dosage is required";
     if (!medFreq.trim()) newErrors.medFreq = "Frequency is required";
-    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
 
     setIsSubmitting(true);
     setSubmitError(null);
@@ -291,7 +315,10 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
 
     // Case: save_and_create_another → keep form open, reset inputs
     if (res.data?.action === "save_and_create_another" || createAnother) {
-      setMedName(""); setMedDosage(""); setMedFreq(""); setMedDuration("");
+      setMedName("");
+      setMedDosage("");
+      setMedFreq("");
+      setMedDuration("");
       setErrors({});
       showToast("💊 Medication saved! Add another.");
     } else {
@@ -307,8 +334,12 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
     const newErrors = {};
     if (!taskTitle.trim()) newErrors.taskTitle = "Task title is required";
     // Due Date shown only on NO path
-    if (hasNextVisit === false && !taskNextVisitDate) newErrors.taskNextVisitDate = "Due date is required";
-    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
+    if (hasNextVisit === false && !taskNextVisitDate)
+      newErrors.taskNextVisitDate = "Due date is required";
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
 
     setIsSubmitting(true);
     setSubmitError(null);
@@ -328,7 +359,8 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
       ...(taskDesc.trim() && { description: taskDesc.trim() }),
       ...(taskNotes.trim() && { notes: taskNotes.trim() }),
       // Only include next_visit_date when the user did NOT schedule one in step 1
-      ...(!hasNextVisit && taskNextVisitDate && { next_visit_date: taskNextVisitDate }),
+      ...(!hasNextVisit &&
+        taskNextVisitDate && { next_visit_date: taskNextVisitDate }),
     };
 
     const res = await createVisitItem(vid, payload);
@@ -346,9 +378,11 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
       title: returnedTask?.title ?? taskTitle.trim(),
       due: returnedTask?.next_visit_date
         ? formatDateShort(returnedTask.next_visit_date)
-        : (returnedTask?.Due_date
+        : returnedTask?.Due_date
           ? formatDateShort(returnedTask.Due_date)
-          : taskNextVisitDate ? formatDateShort(taskNextVisitDate) : null),
+          : taskNextVisitDate
+            ? formatDateShort(taskNextVisitDate)
+            : null,
     };
     setSavedTasksInForm((prev) => [...prev, savedTaskSummary]);
 
@@ -357,7 +391,10 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
 
     // Case: save_and_create_another → keep form open, reset inputs
     if (res.data?.action === "save_and_create_another" || createAnother) {
-      setTaskTitle(""); setTaskDesc(""); setTaskNextVisitDate(""); setTaskNotes("");
+      setTaskTitle("");
+      setTaskDesc("");
+      setTaskNextVisitDate("");
+      setTaskNotes("");
       setErrors({});
       showToast("✅ Task saved! Add another.");
     } else {
@@ -372,7 +409,11 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
     if (deletingIds.has(medicationId)) return; // already in-flight
     setDeletingIds((prev) => new Set(prev).add(medicationId));
     const res = await deletePatientMedication(patientId, medicationId);
-    setDeletingIds((prev) => { const next = new Set(prev); next.delete(medicationId); return next; });
+    setDeletingIds((prev) => {
+      const next = new Set(prev);
+      next.delete(medicationId);
+      return next;
+    });
     if (res?.success) {
       setMeds((prev) => prev.filter((m) => m.id !== medicationId));
       fetchVisitItems(); // re-sync with backend
@@ -386,7 +427,11 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
     if (deletingIds.has(taskId)) return; // already in-flight
     setDeletingIds((prev) => new Set(prev).add(taskId));
     const res = await deletePatientTask(patientId, taskId);
-    setDeletingIds((prev) => { const next = new Set(prev); next.delete(taskId); return next; });
+    setDeletingIds((prev) => {
+      const next = new Set(prev);
+      next.delete(taskId);
+      return next;
+    });
     if (res?.success) {
       setTaskItems((prev) => prev.filter((t) => t.id !== taskId));
       fetchVisitItems(); // re-sync with backend
@@ -411,44 +456,75 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
   // ─── Render ───────────────────────────────
   return (
     <div className="medications-tasks-tab">
-
       {/* ══ DASHBOARD VIEW ══ */}
       {view === "dashboard" && (
         <div id="tasks-dashboard">
-
           {/* Inline fetch error */}
           {fetchError && !isLoadingItems && (
-            <div style={{
-              padding: "10px 14px", background: "#FFF0F0", borderRadius: "8px",
-              border: "1px solid #FFD0D0", color: "#CC3333", fontSize: "13px", marginBottom: "16px",
-            }}>
+            <div
+              style={{
+                padding: "10px 14px",
+                background: "#FFF0F0",
+                borderRadius: "8px",
+                border: "1px solid #FFD0D0",
+                color: "#CC3333",
+                fontSize: "13px",
+                marginBottom: "16px",
+              }}
+            >
               ⚠️ {fetchError}
             </div>
           )}
 
           {/* Top bar: Next Visit (left, flex-grow) + Add button (right) */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", marginBottom: "24px" }}>
-
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "16px",
+              marginBottom: "24px",
+            }}
+          >
             {/* Next Visit – always visible, fills the left */}
-            <div style={{
-              flex: 1,
-              display: "flex", alignItems: "center", gap: "12px",
-              padding: "14px 20px",
-              background: nextVisitDisplay
-                ? "linear-gradient(135deg,#E9F0FF,#F0F7FF)"
-                : "#F8FAFF",
-              borderRadius: "12px",
-              border: `1px solid ${nextVisitDisplay ? "#C0D4FF" : "#E6EAF2"}`,
-            }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                stroke={nextVisitDisplay ? "#2A66FF" : "#8A94A6"} strokeWidth="2" style={{ flexShrink: 0 }}>
+            <div
+              style={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "14px 20px",
+                background: nextVisitDisplay
+                  ? "linear-gradient(135deg,#E9F0FF,#F0F7FF)"
+                  : "#F8FAFF",
+                borderRadius: "12px",
+                border: `1px solid ${nextVisitDisplay ? "#C0D4FF" : "#E6EAF2"}`,
+              }}
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke={nextVisitDisplay ? "#2A66FF" : "#8A94A6"}
+                strokeWidth="2"
+                style={{ flexShrink: 0 }}
+              >
                 <rect x="3" y="4" width="18" height="18" rx="2" />
                 <line x1="16" y1="2" x2="16" y2="6" />
                 <line x1="8" y1="2" x2="8" y2="6" />
                 <line x1="3" y1="10" x2="21" y2="10" />
               </svg>
-              <span style={{ fontSize: "13px", fontWeight: 600, color: nextVisitDisplay ? "#2A66FF" : "#8A94A6" }}>
-                {nextVisitDisplay ? `Next Visit: ${nextVisitDisplay}` : "No next visit scheduled"}
+              <span
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  color: nextVisitDisplay ? "#2A66FF" : "#8A94A6",
+                }}
+              >
+                {nextVisitDisplay
+                  ? `Next Visit: ${nextVisitDisplay}`
+                  : "No next visit scheduled"}
               </span>
             </div>
 
@@ -457,57 +533,130 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
               onClick={openForm}
               style={{
                 flexShrink: 0,
-                display: "flex", alignItems: "center", gap: "8px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
                 padding: "12px 22px",
                 background: "linear-gradient(135deg,#2A66FF,#467DFF)",
-                color: "white", border: "none", borderRadius: "12px",
-                fontSize: "14px", fontWeight: 600, cursor: "pointer",
+                color: "white",
+                border: "none",
+                borderRadius: "12px",
+                fontSize: "14px",
+                fontWeight: 600,
+                cursor: "pointer",
                 boxShadow: "0 4px 14px rgba(42,102,255,0.3)",
                 transition: "all 0.2s",
               }}
-              onMouseOver={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; }}
-              onMouseOut={(e) => { e.currentTarget.style.transform = "none"; }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = "none";
+              }}
             >
               + Add Tasks or Medications
             </button>
           </div>
 
           {/* Two columns: Medications | Tasks */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "20px",
-            opacity: isLoadingItems && (meds.length > 0 || taskItems.length > 0) ? 0.6 : 1,
-            transition: "opacity 0.2s"
-          }}>
-
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "20px",
+              opacity:
+                isLoadingItems && (meds.length > 0 || taskItems.length > 0)
+                  ? 0.6
+                  : 1,
+              transition: "opacity 0.2s",
+            }}
+          >
             {/* Medications Column */}
             <div className="card" style={{ padding: "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "18px" }}>
-                <div style={{ width: "36px", height: "36px", background: "#F0FDF8", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  marginBottom: "18px",
+                }}
+              >
+                <div
+                  style={{
+                    width: "36px",
+                    height: "36px",
+                    background: "#F0FDF8",
+                    borderRadius: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
                   {/* Pill / medication icon */}
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00C187" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#00C187"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d="M10.5 20.5L3.5 13.5a5 5 0 0 1 7.07-7.07l7 7a5 5 0 0 1-7.07 7.07z" />
                     <line x1="8.5" y1="11.5" x2="15.5" y2="11.5" />
                   </svg>
                 </div>
-                <div style={{ fontSize: "15px", fontWeight: 700, color: "#0E1A34" }}>Medications</div>
+                <div
+                  style={{
+                    fontSize: "15px",
+                    fontWeight: 700,
+                    color: "#0E1A34",
+                  }}
+                >
+                  Medications
+                </div>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                }}
+              >
                 {meds.map((m) => (
-                  <div key={m.id} style={{
-                    padding: "12px 14px",
-                    background: "#F8FAFF",
-                    borderRadius: "10px",
-                    border: "1px solid #E6EAF2",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: "10px",
-                  }}>
+                  <div
+                    key={m.id}
+                    style={{
+                      padding: "12px 14px",
+                      background: "#F8FAFF",
+                      borderRadius: "10px",
+                      border: "1px solid #E6EAF2",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "10px",
+                    }}
+                  >
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: "14px", fontWeight: 600, color: "#0E1A34" }}>{m.name}</div>
-                      <div style={{ fontSize: "12px", color: "#8A94A6", marginTop: "3px" }}>{m.dosage} — {m.frequency}</div>
+                      <div
+                        style={{
+                          fontSize: "14px",
+                          fontWeight: 600,
+                          color: "#0E1A34",
+                        }}
+                      >
+                        {m.name}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "12px",
+                          color: "#8A94A6",
+                          marginTop: "3px",
+                        }}
+                      >
+                        {m.dosage} — {m.frequency}
+                      </div>
                     </div>
                     <button
                       onClick={() => openDeleteConfirmModal(m.id, "medication")}
@@ -524,28 +673,36 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
                         border: "1px solid rgba(156,163,175,0.35)",
                         background: "rgba(156,163,175,0.08)",
                         borderRadius: "7px",
-                        cursor: deletingIds.has(m.id) ? "not-allowed" : "pointer",
+                        cursor: deletingIds.has(m.id)
+                          ? "not-allowed"
+                          : "pointer",
                         color: "#9ca3af",
                         padding: 0,
                         opacity: deletingIds.has(m.id) ? 0.45 : 1,
-                        transition: "background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease",
+                        transition:
+                          "background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease",
                       }}
                       onMouseOver={(e) => {
                         if (deletingIds.has(m.id)) return;
-                        e.currentTarget.style.background = "rgba(225,29,72,0.10)";
-                        e.currentTarget.style.borderColor = "rgba(225,29,72,0.45)";
+                        e.currentTarget.style.background =
+                          "rgba(225,29,72,0.10)";
+                        e.currentTarget.style.borderColor =
+                          "rgba(225,29,72,0.45)";
                         e.currentTarget.style.color = "#e11d48";
                         e.currentTarget.style.transform = "scale(1.08)";
                       }}
                       onMouseOut={(e) => {
-                        e.currentTarget.style.background = "rgba(156,163,175,0.08)";
-                        e.currentTarget.style.borderColor = "rgba(156,163,175,0.35)";
+                        e.currentTarget.style.background =
+                          "rgba(156,163,175,0.08)";
+                        e.currentTarget.style.borderColor =
+                          "rgba(156,163,175,0.35)";
                         e.currentTarget.style.color = "#9ca3af";
                         e.currentTarget.style.transform = "scale(1)";
                       }}
                     >
                       <svg
-                        width="14" height="14"
+                        width="14"
+                        height="14"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -567,62 +724,128 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
 
             {/* Tasks Column */}
             <div className="card" style={{ padding: "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "18px" }}>
-                <div style={{ width: "36px", height: "36px", background: "#E9F0FF", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  marginBottom: "18px",
+                }}
+              >
+                <div
+                  style={{
+                    width: "36px",
+                    height: "36px",
+                    background: "#E9F0FF",
+                    borderRadius: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
                   {/* Clipboard-list / tasks icon */}
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2A66FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#2A66FF"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
                     <rect x="9" y="3" width="6" height="4" rx="1" />
                     <line x1="9" y1="12" x2="15" y2="12" />
                     <line x1="9" y1="16" x2="13" y2="16" />
                   </svg>
                 </div>
-                <div style={{ fontSize: "15px", fontWeight: 700, color: "#0E1A34" }}>Tasks</div>
+                <div
+                  style={{
+                    fontSize: "15px",
+                    fontWeight: 700,
+                    color: "#0E1A34",
+                  }}
+                >
+                  Tasks
+                </div>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                }}
+              >
                 {taskItems.map((t) => {
                   const isUrgent = t.dueStyle === "urgent";
                   return (
-                    <div key={t.id} style={{
-                      padding: "12px 14px",
-                      background: "#F8FAFF",
-                      borderRadius: "10px",
-                      border: "1px solid #E6EAF2",
-                    }}>
+                    <div
+                      key={t.id}
+                      style={{
+                        padding: "12px 14px",
+                        background: "#F8FAFF",
+                        borderRadius: "10px",
+                        border: "1px solid #E6EAF2",
+                      }}
+                    >
                       {/* Two-column layout: left = title+desc, right = due pill + delete */}
-                      <div style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                        gap: "12px",
-                      }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                          gap: "12px",
+                        }}
+                      >
                         {/* Left: title + description */}
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: "14px", fontWeight: 600, color: "#0E1A34" }}>
+                          <div
+                            style={{
+                              fontSize: "14px",
+                              fontWeight: 600,
+                              color: "#0E1A34",
+                            }}
+                          >
                             {t.title}
                           </div>
                           {t.desc && (
-                            <div style={{ fontSize: "12px", color: "#8A94A6", marginTop: "2px" }}>
+                            <div
+                              style={{
+                                fontSize: "12px",
+                                color: "#8A94A6",
+                                marginTop: "2px",
+                              }}
+                            >
                               {t.desc}
                             </div>
                           )}
                         </div>
 
                         {/* Right: due pill + delete button on same row */}
-                        <div style={{
-                          display: "flex",
-                          flexDirection: "row",
-                          alignItems: "center",
-                          gap: "8px",
-                          flexShrink: 0,
-                        }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: "8px",
+                            flexShrink: 0,
+                          }}
+                        >
                           {/* Due pill */}
                           {t.due ? (
-                            <span style={{
-                              fontSize: "11px", fontWeight: 600, padding: "3px 8px", borderRadius: "6px",
-                              color: isUrgent ? "#FF5C5C" : "#2A66FF",
-                              background: isUrgent ? "#FFECEC" : "#E9F0FF",
-                            }}>Due {t.due}</span>
+                            <span
+                              style={{
+                                fontSize: "11px",
+                                fontWeight: 600,
+                                padding: "3px 8px",
+                                borderRadius: "6px",
+                                color: isUrgent ? "#FF5C5C" : "#2A66FF",
+                                background: isUrgent ? "#FFECEC" : "#E9F0FF",
+                              }}
+                            >
+                              Due {t.due}
+                            </span>
                           ) : null}
 
                           {/* Delete task button */}
@@ -640,28 +863,36 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
                               border: "1px solid rgba(156,163,175,0.35)",
                               background: "rgba(156,163,175,0.08)",
                               borderRadius: "7px",
-                              cursor: deletingIds.has(t.id) ? "not-allowed" : "pointer",
+                              cursor: deletingIds.has(t.id)
+                                ? "not-allowed"
+                                : "pointer",
                               color: "#9ca3af",
                               padding: 0,
                               opacity: deletingIds.has(t.id) ? 0.45 : 1,
-                              transition: "background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease",
+                              transition:
+                                "background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease",
                             }}
                             onMouseOver={(e) => {
                               if (deletingIds.has(t.id)) return;
-                              e.currentTarget.style.background = "rgba(225,29,72,0.10)";
-                              e.currentTarget.style.borderColor = "rgba(225,29,72,0.45)";
+                              e.currentTarget.style.background =
+                                "rgba(225,29,72,0.10)";
+                              e.currentTarget.style.borderColor =
+                                "rgba(225,29,72,0.45)";
                               e.currentTarget.style.color = "#e11d48";
                               e.currentTarget.style.transform = "scale(1.08)";
                             }}
                             onMouseOut={(e) => {
-                              e.currentTarget.style.background = "rgba(156,163,175,0.08)";
-                              e.currentTarget.style.borderColor = "rgba(156,163,175,0.35)";
+                              e.currentTarget.style.background =
+                                "rgba(156,163,175,0.08)";
+                              e.currentTarget.style.borderColor =
+                                "rgba(156,163,175,0.35)";
                               e.currentTarget.style.color = "#9ca3af";
                               e.currentTarget.style.transform = "scale(1)";
                             }}
                           >
                             <svg
-                              width="14" height="14"
+                              width="14"
+                              height="14"
                               viewBox="0 0 24 24"
                               fill="none"
                               stroke="currentColor"
@@ -683,13 +914,22 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
                 })}
               </div>
             </div>
-
           </div>
 
           {/* Inline loading indicator moved to bottom */}
           {isLoadingItems && (
-            <div style={{ textAlign: "center", padding: "24px 0", color: "#8A94A6", fontSize: "14px", fontStyle: "italic" }}>
-              {(meds.length > 0 || taskItems.length > 0) ? "Refreshing…" : "Loading…"}
+            <div
+              style={{
+                textAlign: "center",
+                padding: "24px 0",
+                color: "#8A94A6",
+                fontSize: "14px",
+                fontStyle: "italic",
+              }}
+            >
+              {meds.length > 0 || taskItems.length > 0
+                ? "Refreshing…"
+                : "Loading…"}
             </div>
           )}
         </div>
@@ -698,9 +938,10 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
       {/* ══ FORM VIEW ══ */}
       {view === "form" && (
         <div id="tasks-form-view">
-
-          <div className="card" style={{ position: "relative", padding: "16px 48px 40px" }}>
-
+          <div
+            className="card"
+            style={{ position: "relative", padding: "16px 48px 40px" }}
+          >
             {/* ── Back icon — absolutely positioned top-left, no layout impact ── */}
             <button
               type="button"
@@ -708,55 +949,172 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
               aria-label="Back"
               onClick={closeForm}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
                 <polyline points="15 18 9 12 15 6" />
               </svg>
             </button>
 
             {/* ── 2-step Stepper ── */}
-            <div style={{ display: "flex", alignItems: "flex-start", marginBottom: "40px" }}>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
-                <div style={{
-                  width: "38px", height: "38px", borderRadius: "50%",
-                  background: stepperBg1, color: stepperColor1,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontWeight: 700, fontSize: "15px", transition: "all 0.3s",
-                }}>{stepper1Content}</div>
-                <span style={{ fontSize: "12px", fontWeight: 600, color: stepperLabel1, whiteSpace: "nowrap" }}>Next Visit</span>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                marginBottom: "40px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <div
+                  style={{
+                    width: "38px",
+                    height: "38px",
+                    borderRadius: "50%",
+                    background: stepperBg1,
+                    color: stepperColor1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: 700,
+                    fontSize: "15px",
+                    transition: "all 0.3s",
+                  }}
+                >
+                  {stepper1Content}
+                </div>
+                <span
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    color: stepperLabel1,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Next Visit
+                </span>
               </div>
-              <div style={{
-                height: "2px", flex: 1, background: lineBg,
-                marginTop: "19px", marginLeft: "8px", marginRight: "8px", transition: "background 0.4s",
-              }} />
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
-                <div style={{
-                  width: "38px", height: "38px", borderRadius: "50%",
-                  background: stepperBg2, color: stepperColor2,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontWeight: 700, fontSize: "15px", transition: "all 0.3s",
-                }}>{stepper2Content}</div>
-                <span style={{ fontSize: "12px", fontWeight: 600, color: stepperLabel2, whiteSpace: "nowrap" }}>Medications &amp; Tasks</span>
+              <div
+                style={{
+                  height: "2px",
+                  flex: 1,
+                  background: lineBg,
+                  marginTop: "19px",
+                  marginLeft: "8px",
+                  marginRight: "8px",
+                  transition: "background 0.4s",
+                }}
+              />
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <div
+                  style={{
+                    width: "38px",
+                    height: "38px",
+                    borderRadius: "50%",
+                    background: stepperBg2,
+                    color: stepperColor2,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: 700,
+                    fontSize: "15px",
+                    transition: "all 0.3s",
+                  }}
+                >
+                  {stepper2Content}
+                </div>
+                <span
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    color: stepperLabel2,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Medications &amp; Tasks
+                </span>
               </div>
             </div>
 
             {/* ── STEP 1 ── */}
             {step === 1 && (
               <div>
-                <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#0E1A34", textAlign: "center", marginBottom: "6px" }}>
+                <h2
+                  style={{
+                    fontSize: "20px",
+                    fontWeight: 700,
+                    color: "#0E1A34",
+                    textAlign: "center",
+                    marginBottom: "6px",
+                  }}
+                >
                   Schedule Next Visit
                 </h2>
-                <p style={{ fontSize: "14px", color: "#8A94A6", textAlign: "center", marginBottom: "32px" }}>
+                <p
+                  style={{
+                    fontSize: "14px",
+                    color: "#8A94A6",
+                    textAlign: "center",
+                    marginBottom: "32px",
+                  }}
+                >
                   Pick the date and time for the patient's next appointment
                 </p>
 
                 {!showDatePicker && (
-                  <div style={{ display: "flex", gap: "16px", justifyContent: "center" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "16px",
+                      justifyContent: "center",
+                    }}
+                  >
                     <button
-                      onClick={() => { setShowDatePicker(true); setHasNextVisit(true); }}
-                      style={{ padding: "12px 48px", borderRadius: "12px", border: "1.5px solid #E6EAF2", background: "white", fontSize: "15px", fontWeight: 600, color: "#0E1A34", cursor: "pointer", transition: "all 0.2s", minWidth: "130px" }}
-                      onMouseOver={(e) => { e.currentTarget.style.borderColor = "#2A66FF"; e.currentTarget.style.color = "#2A66FF"; }}
-                      onMouseOut={(e) => { e.currentTarget.style.borderColor = "#E6EAF2"; e.currentTarget.style.color = "#0E1A34"; }}
-                    >Yes</button>
+                      onClick={() => {
+                        setShowDatePicker(true);
+                        setHasNextVisit(true);
+                      }}
+                      style={{
+                        padding: "12px 48px",
+                        borderRadius: "12px",
+                        border: "1.5px solid #E6EAF2",
+                        background: "white",
+                        fontSize: "15px",
+                        fontWeight: 600,
+                        color: "#0E1A34",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        minWidth: "130px",
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.borderColor = "#2A66FF";
+                        e.currentTarget.style.color = "#2A66FF";
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.borderColor = "#E6EAF2";
+                        e.currentTarget.style.color = "#0E1A34";
+                      }}
+                    >
+                      Yes
+                    </button>
                     <button
                       disabled={isSubmitting}
                       onClick={async () => {
@@ -776,24 +1134,71 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
                         // Even if draft creation failed we still navigate (ensureVisitId will retry)
                         goToStep(2);
                       }}
-                      style={{ padding: "12px 48px", borderRadius: "12px", border: "1.5px solid #E6EAF2", background: "white", fontSize: "15px", fontWeight: 600, color: isSubmitting ? "#aaa" : "#0E1A34", cursor: isSubmitting ? "not-allowed" : "pointer", transition: "all 0.2s", minWidth: "130px", opacity: isSubmitting ? 0.6 : 1 }}
-                      onMouseOver={(e) => { if (!isSubmitting) { e.currentTarget.style.borderColor = "#2A66FF"; e.currentTarget.style.color = "#2A66FF"; } }}
-                      onMouseOut={(e) => { e.currentTarget.style.borderColor = "#E6EAF2"; e.currentTarget.style.color = isSubmitting ? "#aaa" : "#0E1A34"; }}
-                    >{isSubmitting ? "Please wait…" : "No"}</button>
+                      style={{
+                        padding: "12px 48px",
+                        borderRadius: "12px",
+                        border: "1.5px solid #E6EAF2",
+                        background: "white",
+                        fontSize: "15px",
+                        fontWeight: 600,
+                        color: isSubmitting ? "#aaa" : "#0E1A34",
+                        cursor: isSubmitting ? "not-allowed" : "pointer",
+                        transition: "all 0.2s",
+                        minWidth: "130px",
+                        opacity: isSubmitting ? 0.6 : 1,
+                      }}
+                      onMouseOver={(e) => {
+                        if (!isSubmitting) {
+                          e.currentTarget.style.borderColor = "#2A66FF";
+                          e.currentTarget.style.color = "#2A66FF";
+                        }
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.borderColor = "#E6EAF2";
+                        e.currentTarget.style.color = isSubmitting
+                          ? "#aaa"
+                          : "#0E1A34";
+                      }}
+                    >
+                      {isSubmitting ? "Please wait…" : "No"}
+                    </button>
                   </div>
                 )}
 
                 {showDatePicker && (
                   <div style={{ marginTop: "28px" }}>
-                    <div style={{
-                      display: "flex", alignItems: "center", gap: "14px",
-                      padding: "14px 18px", background: visitSaved ? "#F0FDF8" : "#F8FAFF",
-                      borderRadius: "12px",
-                      border: `1.5px solid ${visitSaved ? "#00C187" : "#E6EAF2"}`,
-                      transition: "all 0.2s",
-                    }}>
-                      <div style={{ width: "34px", height: "34px", background: "#E9F0FF", borderRadius: "9px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2A66FF" strokeWidth="2">
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "14px",
+                        padding: "14px 18px",
+                        background: visitSaved ? "#F0FDF8" : "#F8FAFF",
+                        borderRadius: "12px",
+                        border: `1.5px solid ${visitSaved ? "#00C187" : "#E6EAF2"}`,
+                        transition: "all 0.2s",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: "34px",
+                          height: "34px",
+                          background: "#E9F0FF",
+                          borderRadius: "9px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#2A66FF"
+                          strokeWidth="2"
+                        >
                           <rect x="3" y="4" width="18" height="18" rx="2" />
                           <line x1="16" y1="2" x2="16" y2="6" />
                           <line x1="8" y1="2" x2="8" y2="6" />
@@ -801,12 +1206,25 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
                         </svg>
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: "11px", fontWeight: 600, color: "#8A94A6", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "3px" }}>Next Visit Date &amp; Time</div>
+                        <div
+                          style={{
+                            fontSize: "11px",
+                            fontWeight: 600,
+                            color: "#8A94A6",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.5px",
+                            marginBottom: "3px",
+                          }}
+                        >
+                          Next Visit Date &amp; Time
+                        </div>
                         <DatePicker
                           selected={parseValidDate(visitDateValue)}
                           onChange={(date) => {
                             if (date) {
-                              onVisitDateChange(date.toISOString());
+                              // هيحول التاريخ لـ String بتوقيت القاهرة وصيغة مقبولة للـ Validation
+                              const formattedDate = moment(date).format("YYYY-MM-DD HH:mm:ss");
+                              onVisitDateChange(formattedDate);
                             } else {
                               onVisitDateChange("");
                             }
@@ -820,30 +1238,72 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
                         />
                       </div>
                       {visitSaved && (
-                        <div style={{ color: "#00C187", fontSize: "18px", fontWeight: 700 }}>✓</div>
+                        <div
+                          style={{
+                            color: "#00C187",
+                            fontSize: "18px",
+                            fontWeight: 700,
+                          }}
+                        >
+                          ✓
+                        </div>
                       )}
                     </div>
 
                     {visitSaved && (
                       <div style={{ marginTop: "8px" }}>
-                        <div style={{ padding: "8px 14px", background: "#F0FDF8", borderRadius: "8px", border: "1px solid #C7F0E2", fontSize: "13px", color: "#0E1A34", display: "flex", alignItems: "center", gap: "8px" }}>
+                        <div
+                          style={{
+                            padding: "8px 14px",
+                            background: "#F0FDF8",
+                            borderRadius: "8px",
+                            border: "1px solid #C7F0E2",
+                            fontSize: "13px",
+                            color: "#0E1A34",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                          }}
+                        >
                           <span style={{ color: "#00C187" }}>📅</span>
-                          <span style={{ fontWeight: 600 }}>{nextVisitDisplay}</span>
+                          <span style={{ fontWeight: 600 }}>
+                            {nextVisitDisplay}
+                          </span>
                         </div>
                       </div>
                     )}
 
                     {submitError && (
-                      <div style={{ marginTop: "10px", padding: "8px 14px", background: "#FFF0F0", borderRadius: "8px", border: "1px solid #FFD0D0", fontSize: "13px", color: "#CC3333" }}>
+                      <div
+                        style={{
+                          marginTop: "10px",
+                          padding: "8px 14px",
+                          background: "#FFF0F0",
+                          borderRadius: "8px",
+                          border: "1px solid #FFD0D0",
+                          fontSize: "13px",
+                          color: "#CC3333",
+                        }}
+                      >
                         ⚠️ {submitError}
                       </div>
                     )}
 
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "28px" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginTop: "28px",
+                      }}
+                    >
                       <button
                         disabled={isSubmitting}
                         onClick={async () => {
-                          if (!visitDateValue) { showToast("⚠️ Please pick a date first"); return; }
+                          if (!visitDateValue) {
+                            showToast("⚠️ Please pick a date first");
+                            return;
+                          }
                           setIsSubmitting(true);
                           setSubmitError(null);
                           const res = await createVisitAPI({
@@ -854,23 +1314,47 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
                           });
                           setIsSubmitting(false);
                           if (res && res.success) {
-                            const savedDate = res.data?.next_visit_date || visitDateValue;
+                            const savedDate =
+                              res.data?.next_visit_date || visitDateValue;
                             if (onNextVisitSaved) onNextVisitSaved(savedDate);
-                            window.dispatchEvent(new CustomEvent('patientNextVisitUpdated', {
-                              detail: { patientId, next_visit_date: savedDate },
-                            }));
+                            window.dispatchEvent(
+                              new CustomEvent("patientNextVisitUpdated", {
+                                detail: {
+                                  patientId,
+                                  next_visit_date: savedDate,
+                                },
+                              }),
+                            );
                             showToast("✅ Visit saved successfully!");
                             closeForm();
                           } else {
-                            setSubmitError(res?.message || "Failed to save visit. Please try again.");
+                            setSubmitError(
+                              res?.message ||
+                                "Failed to save visit. Please try again.",
+                            );
                           }
                         }}
-                        style={{ padding: "11px 24px", borderRadius: "10px", border: "1.5px solid #E6EAF2", background: "white", fontSize: "14px", fontWeight: 600, color: isSubmitting ? "#aaa" : "#3A4560", cursor: isSubmitting ? "not-allowed" : "pointer", opacity: isSubmitting ? 0.6 : 1 }}
-                      >{isSubmitting ? "Saving…" : "+ Save & Back"}</button>
+                        style={{
+                          padding: "11px 24px",
+                          borderRadius: "10px",
+                          border: "1.5px solid #E6EAF2",
+                          background: "white",
+                          fontSize: "14px",
+                          fontWeight: 600,
+                          color: isSubmitting ? "#aaa" : "#3A4560",
+                          cursor: isSubmitting ? "not-allowed" : "pointer",
+                          opacity: isSubmitting ? 0.6 : 1,
+                        }}
+                      >
+                        {isSubmitting ? "Saving…" : "+ Save & Back"}
+                      </button>
                       <button
                         disabled={isSubmitting}
                         onClick={async () => {
-                          if (!visitDateValue) { showToast("⚠️ Please pick a date first"); return; }
+                          if (!visitDateValue) {
+                            showToast("⚠️ Please pick a date first");
+                            return;
+                          }
                           setIsSubmitting(true);
                           setSubmitError(null);
                           const res = await createVisitAPI({
@@ -882,18 +1366,43 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
                           setIsSubmitting(false);
                           if (res && res.success) {
                             if (res.data?.id) setVisitId(res.data.id);
-                            const savedDate = res.data?.next_visit_date || visitDateValue;
+                            const savedDate =
+                              res.data?.next_visit_date || visitDateValue;
                             if (onNextVisitSaved) onNextVisitSaved(savedDate);
-                            window.dispatchEvent(new CustomEvent('patientNextVisitUpdated', {
-                              detail: { patientId, next_visit_date: savedDate },
-                            }));
+                            window.dispatchEvent(
+                              new CustomEvent("patientNextVisitUpdated", {
+                                detail: {
+                                  patientId,
+                                  next_visit_date: savedDate,
+                                },
+                              }),
+                            );
                             goToStep(2);
                           } else {
-                            setSubmitError(res?.message || "Failed to create visit. Please try again.");
+                            setSubmitError(
+                              res?.message ||
+                                "Failed to create visit. Please try again.",
+                            );
                           }
                         }}
-                        style={{ padding: "11px 32px", background: isSubmitting ? "#aaa" : "linear-gradient(135deg,#2A66FF,#467DFF)", color: "white", border: "none", borderRadius: "10px", fontSize: "14px", fontWeight: 600, cursor: isSubmitting ? "not-allowed" : "pointer", boxShadow: isSubmitting ? "none" : "0 4px 14px rgba(42,102,255,0.3)" }}
-                      >{isSubmitting ? "Please wait…" : "Next →"}</button>
+                        style={{
+                          padding: "11px 32px",
+                          background: isSubmitting
+                            ? "#aaa"
+                            : "linear-gradient(135deg,#2A66FF,#467DFF)",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "10px",
+                          fontSize: "14px",
+                          fontWeight: 600,
+                          cursor: isSubmitting ? "not-allowed" : "pointer",
+                          boxShadow: isSubmitting
+                            ? "none"
+                            : "0 4px 14px rgba(42,102,255,0.3)",
+                        }}
+                      >
+                        {isSubmitting ? "Please wait…" : "Next →"}
+                      </button>
                     </div>
                   </div>
                 )}
@@ -904,85 +1413,243 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
             {step === 2 && (
               <div>
                 {/* Type toggle */}
-                <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginBottom: "36px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "12px",
+                    justifyContent: "center",
+                    marginBottom: "36px",
+                  }}
+                >
                   <button
                     onClick={() => setTaskType("medications")}
                     style={{
-                      padding: "10px 36px", borderRadius: "10px",
+                      padding: "10px 36px",
+                      borderRadius: "10px",
                       border: "1.5px solid #2A66FF",
-                      background: taskType === "medications" ? "#2A66FF" : "white",
+                      background:
+                        taskType === "medications" ? "#2A66FF" : "white",
                       color: taskType === "medications" ? "white" : "#2A66FF",
-                      fontSize: "14px", fontWeight: 600, cursor: "pointer", transition: "all 0.2s",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      transition: "all 0.2s",
                     }}
-                  >Medications</button>
+                  >
+                    Medications
+                  </button>
                   <button
                     onClick={() => setTaskType("tasks")}
                     style={{
-                      padding: "10px 36px", borderRadius: "10px",
+                      padding: "10px 36px",
+                      borderRadius: "10px",
                       border: "1.5px solid #2A66FF",
                       background: taskType === "tasks" ? "#2A66FF" : "white",
                       color: taskType === "tasks" ? "white" : "#2A66FF",
-                      fontSize: "14px", fontWeight: 600, cursor: "pointer", transition: "all 0.2s",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      transition: "all 0.2s",
                     }}
-                  >Tasks</button>
+                  >
+                    Tasks
+                  </button>
                 </div>
 
                 {/* Medication form */}
                 {taskType === "medications" && (
                   <div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px", marginBottom: "18px" }}>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: "18px",
+                        marginBottom: "18px",
+                      }}
+                    >
                       <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label">Name <span className="required">*</span></label>
+                        <label className="form-label">
+                          Name <span className="required">*</span>
+                        </label>
                         <input
-                          type="text" className={`form-input${errors.medName ? " input-error" : ""}`}
-                          placeholder="e.g. Atorvastatin" value={medName}
-                          onChange={(e) => { setMedName(e.target.value); if (errors.medName) setErrors((p) => ({ ...p, medName: "" })); }}
+                          type="text"
+                          className={`form-input${errors.medName ? " input-error" : ""}`}
+                          placeholder="e.g. Atorvastatin"
+                          value={medName}
+                          onChange={(e) => {
+                            setMedName(e.target.value);
+                            if (errors.medName)
+                              setErrors((p) => ({ ...p, medName: "" }));
+                          }}
                         />
-                        {errors.medName && <p className="field-error">{errors.medName}</p>}
+                        {errors.medName && (
+                          <p className="field-error">{errors.medName}</p>
+                        )}
                       </div>
                       <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label">Dosage <span className="required">*</span></label>
+                        <label className="form-label">
+                          Dosage <span className="required">*</span>
+                        </label>
                         <input
-                          type="text" className={`form-input${errors.medDosage ? " input-error" : ""}`}
-                          placeholder="e.g. 20mg" value={medDosage}
-                          onChange={(e) => { setMedDosage(e.target.value); if (errors.medDosage) setErrors((p) => ({ ...p, medDosage: "" })); }}
+                          type="text"
+                          className={`form-input${errors.medDosage ? " input-error" : ""}`}
+                          placeholder="e.g. 20mg"
+                          value={medDosage}
+                          onChange={(e) => {
+                            setMedDosage(e.target.value);
+                            if (errors.medDosage)
+                              setErrors((p) => ({ ...p, medDosage: "" }));
+                          }}
                         />
-                        {errors.medDosage && <p className="field-error">{errors.medDosage}</p>}
+                        {errors.medDosage && (
+                          <p className="field-error">{errors.medDosage}</p>
+                        )}
                       </div>
                       <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label">Frequency <span className="required">*</span></label>
+                        <label className="form-label">
+                          Frequency <span className="required">*</span>
+                        </label>
                         <input
-                          type="text" className={`form-input${errors.medFreq ? " input-error" : ""}`}
-                          placeholder="e.g. Once daily" value={medFreq}
-                          onChange={(e) => { setMedFreq(e.target.value); if (errors.medFreq) setErrors((p) => ({ ...p, medFreq: "" })); }}
+                          type="text"
+                          className={`form-input${errors.medFreq ? " input-error" : ""}`}
+                          placeholder="e.g. Once daily"
+                          value={medFreq}
+                          onChange={(e) => {
+                            setMedFreq(e.target.value);
+                            if (errors.medFreq)
+                              setErrors((p) => ({ ...p, medFreq: "" }));
+                          }}
                         />
-                        {errors.medFreq && <p className="field-error">{errors.medFreq}</p>}
+                        {errors.medFreq && (
+                          <p className="field-error">{errors.medFreq}</p>
+                        )}
                       </div>
                       <div className="form-group" style={{ marginBottom: 0 }}>
                         <label className="form-label">Duration</label>
-                        <input type="text" className="form-input" placeholder="e.g. 1 month" value={medDuration} onChange={(e) => setMedDuration(e.target.value)} />
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="e.g. 1 month"
+                          value={medDuration}
+                          onChange={(e) => setMedDuration(e.target.value)}
+                        />
                       </div>
                     </div>
 
                     {savedMedsInForm.length > 0 && (
                       <div style={{ marginBottom: "16px" }}>
-                        <div style={{ fontSize: "12px", fontWeight: 600, color: "#3A4560", marginBottom: "8px" }}>💊 Added</div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <div
+                          style={{
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            color: "#3A4560",
+                            marginBottom: "8px",
+                          }}
+                        >
+                          💊 Added
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "6px",
+                          }}
+                        >
                           {savedMedsInForm.map((m) => (
-                            <div key={m.id} style={{ padding: "10px 14px", background: "#F0FDF8", borderRadius: "8px", border: "1px solid #C7F0E2", fontSize: "13px", color: "#0E1A34", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                              <span>💊 <strong>{m.name}</strong> — {m.dosage} — {m.frequency}</span>
-                              <span style={{ color: "#00C187", fontWeight: 600 }}>✓</span>
+                            <div
+                              key={m.id}
+                              style={{
+                                padding: "10px 14px",
+                                background: "#F0FDF8",
+                                borderRadius: "8px",
+                                border: "1px solid #C7F0E2",
+                                fontSize: "13px",
+                                color: "#0E1A34",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                              }}
+                            >
+                              <span>
+                                💊 <strong>{m.name}</strong> — {m.dosage} —{" "}
+                                {m.frequency}
+                              </span>
+                              <span
+                                style={{ color: "#00C187", fontWeight: 600 }}
+                              >
+                                ✓
+                              </span>
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
 
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "24px" }}>
-                      <button onClick={() => goToStep(1)} disabled={isSubmitting} style={{ padding: "11px 24px", background: "white", border: "1.5px solid #E6EAF2", borderRadius: "10px", fontSize: "14px", fontWeight: 600, color: "#3A4560", cursor: isSubmitting ? "not-allowed" : "pointer", opacity: isSubmitting ? 0.6 : 1 }}>← Back</button>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginTop: "24px",
+                      }}
+                    >
+                      <button
+                        onClick={() => goToStep(1)}
+                        disabled={isSubmitting}
+                        style={{
+                          padding: "11px 24px",
+                          background: "white",
+                          border: "1.5px solid #E6EAF2",
+                          borderRadius: "10px",
+                          fontSize: "14px",
+                          fontWeight: 600,
+                          color: "#3A4560",
+                          cursor: isSubmitting ? "not-allowed" : "pointer",
+                          opacity: isSubmitting ? 0.6 : 1,
+                        }}
+                      >
+                        ← Back
+                      </button>
                       <div style={{ display: "flex", gap: "10px" }}>
-                        <button onClick={() => saveMedication(false)} disabled={isSubmitting} style={{ padding: "11px 24px", background: "white", border: "1.5px solid #2A66FF", borderRadius: "10px", fontSize: "14px", fontWeight: 600, color: isSubmitting ? "#aaa" : "#2A66FF", cursor: isSubmitting ? "not-allowed" : "pointer", opacity: isSubmitting ? 0.6 : 1 }}>{isSubmitting ? "Saving…" : "Save"}</button>
-                        <button onClick={() => saveMedication(true)} disabled={isSubmitting} style={{ padding: "11px 24px", background: isSubmitting ? "#aaa" : "linear-gradient(135deg,#2A66FF,#467DFF)", color: "white", border: "none", borderRadius: "10px", fontSize: "14px", fontWeight: 600, cursor: isSubmitting ? "not-allowed" : "pointer", boxShadow: isSubmitting ? "none" : "0 4px 14px rgba(42,102,255,0.3)", opacity: isSubmitting ? 0.6 : 1 }}>{isSubmitting ? "Saving…" : "Save & create another"}</button>
+                        <button
+                          onClick={() => saveMedication(false)}
+                          disabled={isSubmitting}
+                          style={{
+                            padding: "11px 24px",
+                            background: "white",
+                            border: "1.5px solid #2A66FF",
+                            borderRadius: "10px",
+                            fontSize: "14px",
+                            fontWeight: 600,
+                            color: isSubmitting ? "#aaa" : "#2A66FF",
+                            cursor: isSubmitting ? "not-allowed" : "pointer",
+                            opacity: isSubmitting ? 0.6 : 1,
+                          }}
+                        >
+                          {isSubmitting ? "Saving…" : "Save"}
+                        </button>
+                        <button
+                          onClick={() => saveMedication(true)}
+                          disabled={isSubmitting}
+                          style={{
+                            padding: "11px 24px",
+                            background: isSubmitting
+                              ? "#aaa"
+                              : "linear-gradient(135deg,#2A66FF,#467DFF)",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "10px",
+                            fontSize: "14px",
+                            fontWeight: 600,
+                            cursor: isSubmitting ? "not-allowed" : "pointer",
+                            boxShadow: isSubmitting
+                              ? "none"
+                              : "0 4px 14px rgba(42,102,255,0.3)",
+                            opacity: isSubmitting ? 0.6 : 1,
+                          }}
+                        >
+                          {isSubmitting ? "Saving…" : "Save & create another"}
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -992,29 +1659,59 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
                 {taskType === "tasks" && (
                   <div>
                     <div className="form-group">
-                      <label className="form-label">Title <span className="required">*</span></label>
+                      <label className="form-label">
+                        Title <span className="required">*</span>
+                      </label>
                       <input
-                        type="text" className={`form-input${errors.taskTitle ? " input-error" : ""}`}
-                        placeholder="e.g. Schedule MRI" value={taskTitle}
-                        onChange={(e) => { setTaskTitle(e.target.value); if (errors.taskTitle) setErrors((p) => ({ ...p, taskTitle: "" })); }}
+                        type="text"
+                        className={`form-input${errors.taskTitle ? " input-error" : ""}`}
+                        placeholder="e.g. Schedule MRI"
+                        value={taskTitle}
+                        onChange={(e) => {
+                          setTaskTitle(e.target.value);
+                          if (errors.taskTitle)
+                            setErrors((p) => ({ ...p, taskTitle: "" }));
+                        }}
                       />
-                      {errors.taskTitle && <p className="field-error">{errors.taskTitle}</p>}
+                      {errors.taskTitle && (
+                        <p className="field-error">{errors.taskTitle}</p>
+                      )}
                     </div>
                     <div className="form-group">
                       <label className="form-label">Description</label>
-                      <input type="text" className="form-input" placeholder="e.g. Liver assessment follow-up" value={taskDesc} onChange={(e) => setTaskDesc(e.target.value)} />
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="e.g. Liver assessment follow-up"
+                        value={taskDesc}
+                        onChange={(e) => setTaskDesc(e.target.value)}
+                      />
                     </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px", marginBottom: "18px" }}>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: "18px",
+                        marginBottom: "18px",
+                      }}
+                    >
                       {/* Next Visit date: only shown when user chose NO in step 1 (hasNextVisit===false) */}
                       {hasNextVisit === false && (
                         <div className="form-group" style={{ marginBottom: 0 }}>
-                          <label className="form-label">Next Visit <span className="required">*</span></label>
+                          <label className="form-label">
+                            Next Visit <span className="required">*</span>
+                          </label>
                           <DatePicker
                             selected={parseValidDate(taskNextVisitDate)}
                             onChange={(date) => {
                               if (date) {
-                                setTaskNextVisitDate(date.toISOString());
-                                if (errors.taskNextVisitDate) setErrors((p) => ({ ...p, taskNextVisitDate: "" }));
+                                const formattedDate = moment(date).format("YYYY-MM-DD HH:mm:ss");
+                                setTaskNextVisitDate(formattedDate);
+                                if (errors.taskNextVisitDate)
+                                  setErrors((p) => ({
+                                    ...p,
+                                    taskNextVisitDate: "",
+                                  }));
                               } else {
                                 setTaskNextVisitDate("");
                               }
@@ -1026,35 +1723,143 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
                             className={`form-input styled-datepicker${errors.taskNextVisitDate ? " input-error" : ""}`}
                             portalId="root"
                           />
-                          {errors.taskNextVisitDate && <p className="field-error">{errors.taskNextVisitDate}</p>}
+                          {errors.taskNextVisitDate && (
+                            <p className="field-error">
+                              {errors.taskNextVisitDate}
+                            </p>
+                          )}
                         </div>
                       )}
                       {/* Notes: full-width when Due Date is hidden (YES path), half-width otherwise */}
-                      <div className={`form-group${hasNextVisit === true ? " notes-full" : ""}`} style={{ marginBottom: 0 }}>
+                      <div
+                        className={`form-group${hasNextVisit === true ? " notes-full" : ""}`}
+                        style={{ marginBottom: 0 }}
+                      >
                         <label className="form-label">Notes</label>
-                        <input type="text" className="form-input" placeholder="e.g. complete before next appointment" value={taskNotes} onChange={(e) => setTaskNotes(e.target.value)} />
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="e.g. complete before next appointment"
+                          value={taskNotes}
+                          onChange={(e) => setTaskNotes(e.target.value)}
+                        />
                       </div>
                     </div>
 
                     {savedTasksInForm.length > 0 && (
                       <div style={{ marginBottom: "16px" }}>
-                        <div style={{ fontSize: "12px", fontWeight: 600, color: "#3A4560", marginBottom: "8px" }}>✅ Added</div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <div
+                          style={{
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            color: "#3A4560",
+                            marginBottom: "8px",
+                          }}
+                        >
+                          ✅ Added
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "6px",
+                          }}
+                        >
                           {savedTasksInForm.map((t) => (
-                            <div key={t.id} style={{ padding: "10px 14px", background: "#E9F0FF", borderRadius: "8px", border: "1px solid #C0D0FF", fontSize: "13px", color: "#0E1A34", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                              <span>✅ <strong>{t.title}</strong>{t.due ? ` — Due: ${t.due}` : ""}</span>
-                              <span style={{ color: "#2A66FF", fontWeight: 600 }}>✓</span>
+                            <div
+                              key={t.id}
+                              style={{
+                                padding: "10px 14px",
+                                background: "#E9F0FF",
+                                borderRadius: "8px",
+                                border: "1px solid #C0D0FF",
+                                fontSize: "13px",
+                                color: "#0E1A34",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                              }}
+                            >
+                              <span>
+                                ✅ <strong>{t.title}</strong>
+                                {t.due ? ` — Due: ${t.due}` : ""}
+                              </span>
+                              <span
+                                style={{ color: "#2A66FF", fontWeight: 600 }}
+                              >
+                                ✓
+                              </span>
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
 
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "24px" }}>
-                      <button onClick={() => goToStep(1)} disabled={isSubmitting} style={{ padding: "11px 24px", background: "white", border: "1.5px solid #E6EAF2", borderRadius: "10px", fontSize: "14px", fontWeight: 600, color: "#3A4560", cursor: isSubmitting ? "not-allowed" : "pointer", opacity: isSubmitting ? 0.6 : 1 }}>← Back</button>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginTop: "24px",
+                      }}
+                    >
+                      <button
+                        onClick={() => goToStep(1)}
+                        disabled={isSubmitting}
+                        style={{
+                          padding: "11px 24px",
+                          background: "white",
+                          border: "1.5px solid #E6EAF2",
+                          borderRadius: "10px",
+                          fontSize: "14px",
+                          fontWeight: 600,
+                          color: "#3A4560",
+                          cursor: isSubmitting ? "not-allowed" : "pointer",
+                          opacity: isSubmitting ? 0.6 : 1,
+                        }}
+                      >
+                        ← Back
+                      </button>
                       <div style={{ display: "flex", gap: "10px" }}>
-                        <button onClick={() => saveTask(false)} disabled={isSubmitting} style={{ padding: "11px 24px", background: "white", border: "1.5px solid #2A66FF", borderRadius: "10px", fontSize: "14px", fontWeight: 600, color: isSubmitting ? "#aaa" : "#2A66FF", cursor: isSubmitting ? "not-allowed" : "pointer", opacity: isSubmitting ? 0.6 : 1 }}>{isSubmitting ? "Saving…" : "Save"}</button>
-                        <button onClick={() => saveTask(true)} disabled={isSubmitting} style={{ padding: "11px 24px", background: isSubmitting ? "#aaa" : "linear-gradient(135deg,#2A66FF,#467DFF)", color: "white", border: "none", borderRadius: "10px", fontSize: "14px", fontWeight: 600, cursor: isSubmitting ? "not-allowed" : "pointer", boxShadow: isSubmitting ? "none" : "0 4px 14px rgba(42,102,255,0.3)", opacity: isSubmitting ? 0.6 : 1 }}>{isSubmitting ? "Saving…" : "Save & create another"}</button>
+                        <button
+                          onClick={() => saveTask(false)}
+                          disabled={isSubmitting}
+                          style={{
+                            padding: "11px 24px",
+                            background: "white",
+                            border: "1.5px solid #2A66FF",
+                            borderRadius: "10px",
+                            fontSize: "14px",
+                            fontWeight: 600,
+                            color: isSubmitting ? "#aaa" : "#2A66FF",
+                            cursor: isSubmitting ? "not-allowed" : "pointer",
+                            opacity: isSubmitting ? 0.6 : 1,
+                          }}
+                        >
+                          {isSubmitting ? "Saving…" : "Save"}
+                        </button>
+                        <button
+                          onClick={() => saveTask(true)}
+                          disabled={isSubmitting}
+                          style={{
+                            padding: "11px 24px",
+                            background: isSubmitting
+                              ? "#aaa"
+                              : "linear-gradient(135deg,#2A66FF,#467DFF)",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "10px",
+                            fontSize: "14px",
+                            fontWeight: 600,
+                            cursor: isSubmitting ? "not-allowed" : "pointer",
+                            boxShadow: isSubmitting
+                              ? "none"
+                              : "0 4px 14px rgba(42,102,255,0.3)",
+                            opacity: isSubmitting ? 0.6 : 1,
+                          }}
+                        >
+                          {isSubmitting ? "Saving…" : "Save & create another"}
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -1062,18 +1867,35 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
 
                 {/* No type selected yet */}
                 {!taskType && (
-                  <div style={{ display: "flex", justifyContent: "flex-start", marginTop: "200px" }}>
-                    <button onClick={() => goToStep(1)} style={{ padding: "11px 24px", background: "white", border: "1.5px solid #E6EAF2", borderRadius: "10px", fontSize: "14px", fontWeight: 600, color: "#3A4560", cursor: "pointer" }}>← Back</button>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "flex-start",
+                      marginTop: "200px",
+                    }}
+                  >
+                    <button
+                      onClick={() => goToStep(1)}
+                      style={{
+                        padding: "11px 24px",
+                        background: "white",
+                        border: "1.5px solid #E6EAF2",
+                        borderRadius: "10px",
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        color: "#3A4560",
+                        cursor: "pointer",
+                      }}
+                    >
+                      ← Back
+                    </button>
                   </div>
                 )}
               </div>
             )}
-
           </div>
         </div>
       )}
-
-
 
       {/* ══ DELETE CONFIRMATION MODAL ══ */}
       <ConfirmModal
@@ -1086,7 +1908,6 @@ export default function MedicationsAndTasksTab({ patientId, initialNextVisitDate
         variant="danger"
         icon={<TrashIcon />}
       />
-
     </div>
   );
 }

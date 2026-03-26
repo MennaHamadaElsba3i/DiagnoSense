@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import logo from "../assets/Logo_Diagnoo.png";
@@ -14,103 +14,258 @@ import {
   getDashboardWidgets,
   getDashboardStatusDistribution,
   getTopfiveDiseases,
+  getTodayVisitsAPI,
+  getPatientOverviewAPI,
+  markPatientAttendedAPI
 } from "./mockAPI.js";
 
-const INITIAL_PATIENTS = [
-  {
-    id: 0,
-    initials: "AM",
-    color: "#FF4D6D",
-    name: "Ahmed Mohamed",
-    age: "52",
-    gender: "Male",
-    apptTime: "09:00 AM",
-    aiInsight:
-      "AI detected potential cardiac anomaly. Elevated troponin levels with ST-segment changes observed.",
-    status: "pending",
-  },
-  {
-    id: 1,
-    initials: "SK",
-    color: "#4C6EF5",
-    name: "Sarah Kamal",
-    age: "38",
-    gender: "Female",
-    apptTime: "10:00 AM",
-    aiInsight:
-      "Abnormal ECG patterns detected with irregular heart rhythm. Immediate consultation recommended.",
-    status: "pending",
-  },
-  {
-    id: 2,
-    initials: "OH",
-    color: "#E67700",
-    name: "Omar Hamed",
-    age: "61",
-    gender: "Male",
-    apptTime: "11:00 AM",
-    aiInsight:
-      "Blood pressure readings significantly elevated. Hypertensive crisis pattern detected.",
-    status: "pending",
-  },
-  {
-    id: 3,
-    initials: "NR",
-    color: "#2F9E44",
-    name: "Nadia Rashid",
-    age: "45",
-    gender: "Female",
-    apptTime: "12:00 PM",
-    aiInsight:
-      "Critical glucose levels detected. Diabetic ketoacidosis pattern identified.",
-    status: "pending",
-  },
+const AVATAR_COLORS = [
+  "#FF4D6D",
+  "#4C6EF5",
+  "#E67700",
+  "#2F9E44",
+  "#9B5DE5",
+  "#06D6A0",
+  "#F77F00",
+  "#3A86FF",
 ];
-
 function QueueSection() {
-  const [patients, setPatients] = useState(INITIAL_PATIENTS);
-  const [currentIdx, setCurrentIdx] = useState(0);
+  const [queueData, setQueueData] = useState(null); 
+  const [queueList, setQueueList] = useState([]); 
+  const [currentIdx, setCurrentIdx] = useState(0); 
+  const [remainingLabel, setRemainingLabel] = useState("");
+  const [loadingQueue, setLoadingQueue] = useState(true);
   const [modalPatient, setModalPatient] = useState(null);
+  const navigate = useNavigate(); 
 
-  const getActiveIdx = (pts, startIdx) => {
-    let idx = startIdx;
-    while (idx < pts.length && pts[idx].status !== "pending") idx++;
-    return idx;
-  };
+const fetchQueue = useCallback(async () => {
+  setLoadingQueue(true);
 
+  const result = await getTodayVisitsAPI();
+
+  if (result?.success && result?.data) {
+    const data = result.data;
+
+    const mapped = (data.full_queue_list || []).map((p) => ({
+      id:         p.id,
+      name:       p.name,
+      age:        p.age,
+      gender:     p.gender,
+      apptTime:   p.appointment_time,
+      status_tag: p.status_tag,
+      aiInsight:
+        data.current_attending?.id === p.id
+          ? (data.current_attending?.ai_insight?.summary || null)
+          : null,
+      initials: p.name
+        .split(" ")
+        .slice(0, 2)
+        .map((w) => w[0]?.toUpperCase() ?? "")
+        .join(""),
+      color: AVATAR_COLORS[p.id % AVATAR_COLORS.length],
+    }));
+
+    const nowIdx = mapped.findIndex((p) => p.status_tag === "Now");
+    setQueueList(mapped);
+    setCurrentIdx(nowIdx >= 0 ? nowIdx : 0);
+    setRemainingLabel(data.remaining_count_label || "");
+  } else {
+    setQueueList([]);
+  }
+
+  setLoadingQueue(false);
+}, []); 
+
+useEffect(() => {
+  fetchQueue();
+}, [fetchQueue]);
+
+
+const goToNextPatient = () => {
+  setCurrentIdx((prev) => {
+    const total = queueList.length;
+    if (total === 0) return prev;
+
+    for (let offset = 1; offset <= total; offset++) {
+      const candidateIdx = (prev + offset) % total;
+      const candidate = queueList[candidateIdx];
+      if (candidate.status_tag === "Waiting" || candidate.status_tag === "Now") {
+        return candidateIdx;
+      }
+    }
+
+    return prev;
+  });
+};
+
+
+const handleViewDetails = async (patientId) => {
+  if (!patientId) return;
+
+  try {
+    const result = await getPatientOverviewAPI(patientId);
+
+    if (result?.success) {
+      navigate(`/patient-profile/${patientId}`, { state: { patientId } });
+    } else {
+      console.warn("[ViewDetails] overview fetch failed, navigating anyway:", result?.message);
+      navigate(`/patient-profile/${patientId}`, { state: { patientId } });
+    }
+  } catch (err) {
+    console.error("[ViewDetails] unexpected error:", err);
+    navigate(`/patient-profile/${patientId}`, { state: { patientId } });
+  }
+};
+
+const handleMarkAttended = async () => {
+  if (!activePatient?.id) return;
+
+  const patientId = activePatient.id;
+
+  const prevQueueList      = queueList;
+  const prevCurrentIdx     = currentIdx;
+  const prevRemainingLabel = remainingLabel;
+
+
+  const queueWithoutAttended = queueList.filter((p) => p.id !== patientId);
+
+  const queueAfterShift = queueWithoutAttended.map((p, i) => ({
+    ...p,
+    status_tag: i === 0 ? "Now" : "Waiting",
+  }));
+
+  setQueueList(queueAfterShift);
+  setCurrentIdx(0);
+  setRemainingLabel(
+    `${queueAfterShift.filter((p) => p.status_tag === "Waiting").length} remaining`
+  );
+
+  try {
+    const result = await markPatientAttendedAPI(patientId);
+
+    if (result?.success) {
+      const refreshed = await getTodayVisitsAPI();
+
+      if (refreshed?.success && refreshed?.data?.full_queue_list?.length > 0) {
+        const data = refreshed.data;
+
+        const remapped = (data.full_queue_list || []).map((p) => ({
+          id:         p.id,
+          name:       p.name,
+          age:        p.age,
+          gender:     p.gender,
+          apptTime:   p.appointment_time,
+          status_tag: p.status_tag,
+          aiInsight:
+            data.current_attending?.id === p.id
+              ? (data.current_attending?.ai_insight?.summary || null)
+              : null,
+          initials: p.name
+            .split(" ")
+            .slice(0, 2)
+            .map((w) => w[0]?.toUpperCase() ?? "")
+            .join(""),
+          color: AVATAR_COLORS[p.id % AVATAR_COLORS.length],
+        }));
+
+        const nowIdx = remapped.findIndex((p) => p.status_tag === "Now");
+
+        if (remapped.length >= queueAfterShift.length) {
+          setQueueList(remapped);
+          setCurrentIdx(nowIdx >= 0 ? nowIdx : 0);
+          setRemainingLabel(
+            data.remaining_count_label ||
+            `${remapped.filter((p) => p.status_tag === "Waiting").length} remaining`
+          );
+        }
+      }
+    } else {
+      console.error("[MarkAttended] backend rejected:", result?.message);
+      setQueueList(prevQueueList);
+      setCurrentIdx(prevCurrentIdx);
+      setRemainingLabel(prevRemainingLabel);
+    }
+  } catch (err) {
+    console.error("[MarkAttended] network error:", err);
+    setQueueList(prevQueueList);
+    setCurrentIdx(prevCurrentIdx);
+    setRemainingLabel(prevRemainingLabel);
+  }
+};
   const markAttended = (id) => {
-    const next = patients.map((p) =>
-      p.id === id ? { ...p, status: "attended" } : p,
+    setQueueList((list) =>
+      list.map((p) => (p.id === id ? { ...p, status_tag: "Attended" } : p)),
     );
-    setPatients(next);
-    setCurrentIdx((i) => getActiveIdx(next, i + 1));
+    goToNextPatient();
   };
 
   const skipPatient = (id) => {
-    const next = patients.map((p) =>
-      p.id === id ? { ...p, status: "skipped" } : p,
+    setQueueList((list) =>
+      list.map((p) => (p.id === id ? { ...p, status_tag: "Skipped" } : p)),
     );
-    setPatients(next);
-    setCurrentIdx((i) => getActiveIdx(next, i + 1));
+    goToNextPatient();
   };
 
-  const activeIdx = getActiveIdx(patients, currentIdx);
-  const activePatient =
-    activeIdx < patients.length ? patients[activeIdx] : null;
-  const pendingCount = patients.filter((p) => p.status === "pending").length;
+  const activePatient = queueList[currentIdx] ?? null;
+  const pendingCount = queueList.filter(
+    (p) => p.status_tag === "Now" || p.status_tag === "Waiting",
+  ).length;
 
   const badgeClass = (p, i) => {
-    if (p.status === "attended") return "dsn-badge-success";
-    if (p.status === "skipped") return "dsn-badge-warning";
-    if (i === activeIdx) return "dsn-badge-danger";
+    if (p.status_tag === "Attended") return "dsn-badge-success";
+    if (p.status_tag === "Skipped") return "dsn-badge-warning";
+    if (i === currentIdx) return "dsn-badge-danger";
     return "dsn-badge-muted";
   };
   const badgeText = (p, i) => {
-    if (p.status === "attended") return "✓ Attended";
-    if (p.status === "skipped") return "→ Skipped";
-    if (i === activeIdx) return "● Now";
+    if (p.status_tag === "Attended") return "✓ Attended";
+    if (p.status_tag === "Skipped") return "→ Skipped";
+    if (i === currentIdx) return "● Now";
     return `#${i + 1} Waiting`;
   };
+
+  if (loadingQueue) {
+    return (
+      <div className="dsn-queue-section">
+        <div className="dsn-section-header">
+          <div className="dsn-section-title">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z" />
+            </svg>
+            Critical Patient Queue
+          </div>
+          <span className="dsn-queue-count dsn-loading-blur">— remaining</span>
+        </div>
+        <div
+          className="dsn-active-card dsn-loading-blur"
+          style={{ minHeight: 120 }}
+        />
+      </div>
+    );
+  }
+
+  if (queueList.length === 0) {
+    return (
+      <div className="dsn-queue-section">
+        <div className="dsn-section-header">
+          <div className="dsn-section-title">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z" />
+            </svg>
+            Critical Patient Queue
+          </div>
+          <span className="dsn-queue-count">0 remaining</span>
+        </div>
+        <div className="dsn-done-card">
+          <div className="dsn-done-emoji">📋</div>
+          <div className="dsn-done-title">No patients scheduled for today</div>
+          <div className="dsn-done-sub">
+            Today's queue is empty. Check back later.
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dsn-queue-section">
@@ -121,11 +276,14 @@ function QueueSection() {
           </svg>
           Critical Patient Queue
         </div>
-        <span className="dsn-queue-count">{pendingCount} remaining</span>
+        <span className="dsn-queue-count">
+          {remainingLabel || `${pendingCount} remaining`}
+        </span>
       </div>
 
-      {/* Active card */}
-      {activePatient ? (
+      {activePatient &&
+      activePatient.status_tag !== "Attended" &&
+      activePatient.status_tag !== "Skipped" ? (
         <div className="dsn-active-card" key={activePatient.id}>
           <div
             className="dsn-active-avatar"
@@ -142,7 +300,7 @@ function QueueSection() {
             </div>
             <div className="dsn-active-meta">
               <span className="dsn-active-meta-age">
-                {activePatient.age} y/o · {activePatient.gender}
+                {activePatient.age} · {activePatient.gender}
               </span>
               <span className="dsn-active-appt">
                 Appointment: {activePatient.apptTime}
@@ -150,13 +308,16 @@ function QueueSection() {
             </div>
             <div className="dsn-insight-box">
               <div className="dsn-insight-label">🤖 AI Insight</div>
-              <div className="dsn-insight-text">{activePatient.aiInsight}</div>
+              <div className="dsn-insight-text">
+                {activePatient.aiInsight ||
+                  "No AI insights available for this patient"}
+              </div>
             </div>
           </div>
           <div className="dsn-active-actions">
             <button
               className="dsn-btn-attended"
-              onClick={() => markAttended(activePatient.id)}
+              onClick={handleMarkAttended} 
             >
               <svg viewBox="0 0 24 24" fill="white" className="dsn-btn-icon">
                 <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
@@ -165,7 +326,7 @@ function QueueSection() {
             </button>
             <button
               className="dsn-btn-next"
-              onClick={() => skipPatient(activePatient.id)}
+              onClick={goToNextPatient}
             >
               <svg
                 viewBox="0 0 24 24"
@@ -178,7 +339,7 @@ function QueueSection() {
             </button>
             <button
               className="dsn-btn-view"
-              onClick={() => setModalPatient(activePatient)}
+              onClick={() => handleViewDetails(activePatient.id)}
             >
               <svg
                 viewBox="0 0 24 24"
@@ -196,12 +357,11 @@ function QueueSection() {
           <div className="dsn-done-emoji">🎉</div>
           <div className="dsn-done-title">All patients attended!</div>
           <div className="dsn-done-sub">
-            Today's queue is complete. Great work, Dr. Layla.
+            Today's queue is complete. Great work!
           </div>
         </div>
       )}
 
-      {/* Queue list */}
       <div className="dsn-queue-list">
         <div className="dsn-queue-list-title">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
@@ -209,13 +369,24 @@ function QueueSection() {
           </svg>
           All Patients in Queue
         </div>
-        {patients.map((p, i) => (
+        {queueList.map((p, i) => (
           <div
             key={p.id}
-            className={`dsn-mini-card${p.status === "attended" ? " dsn-attended" : p.status === "skipped" ? " dsn-skipped" : ""}`}
+            className={`dsn-mini-card${
+              p.status_tag === "Attended"
+                ? " dsn-attended"
+                : p.status_tag === "Skipped"
+                  ? " dsn-skipped"
+                  : ""
+            }`}
           >
             <div
-              className={`dsn-queue-num${i === activeIdx && p.status === "pending" ? " dsn-active-num" : ""}`}
+              className={`dsn-queue-num${
+                i === currentIdx &&
+                (p.status_tag === "Now" || p.status_tag === "Waiting")
+                  ? " dsn-active-num"
+                  : ""
+              }`}
             >
               {i + 1}
             </div>
@@ -225,7 +396,7 @@ function QueueSection() {
             <div className="dsn-mini-info">
               <div className="dsn-mini-name">{p.name}</div>
               <div className="dsn-mini-sub">
-                {p.age} y/o · {p.gender} · {p.apptTime}
+                {p.age} · {p.gender} · {p.apptTime}
               </div>
             </div>
             <span className={`dsn-mini-badge ${badgeClass(p, i)}`}>
@@ -241,7 +412,6 @@ function QueueSection() {
         ))}
       </div>
 
-      {/* Modal */}
       {modalPatient && (
         <div
           id="dsn-modal-overlay"
@@ -261,7 +431,7 @@ function QueueSection() {
               <div>
                 <div className="dsn-modal-title">{modalPatient.name}</div>
                 <div className="dsn-modal-sub">
-                  {modalPatient.age} y/o · {modalPatient.gender} · Appointment:{" "}
+                  {modalPatient.age} · {modalPatient.gender} · Appointment:{" "}
                   {modalPatient.apptTime}
                 </div>
               </div>
@@ -286,7 +456,7 @@ function QueueSection() {
                 },
                 {
                   label: "Status",
-                  val: modalPatient.status,
+                  val: modalPatient.status_tag,
                   className: "dsn-chip-status",
                 },
               ].map((c) => (
@@ -299,7 +469,8 @@ function QueueSection() {
             <div className="dsn-modal-notes">
               <strong>🤖 AI Insight:</strong>
               <br />
-              {modalPatient.aiInsight}
+              {modalPatient.aiInsight ||
+                "No AI insights available for this patient"}
             </div>
             <div className="dsn-modal-btns">
               <button
@@ -310,7 +481,10 @@ function QueueSection() {
               </button>
               <button
                 className="dsn-modal-confirm"
-                onClick={() => setModalPatient(null)}
+                onClick={() => {
+                  setModalPatient(null);
+                  handleViewDetails(modalPatient.id);
+                }}
               >
                 Open Full Report
               </button>
