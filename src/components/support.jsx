@@ -8,6 +8,8 @@ import { useNotifications } from "./NotificationsContext";
 import { sendSupportAPI } from "./mockAPI";
 import { getJsonCookie } from "./cookieUtils";
 import "../css/support.css";
+import { getDoctorInitials } from './Dashboard';
+
 
 const getUser = () => {
   try {
@@ -35,14 +37,7 @@ function Support() {
 
   const user = getUser();
   const userIdentity = user?.email || user?.phone || "";
-  const userInitials = user?.name
-    ? user.name
-        .split(" ")
-        .map((p) => p[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
-    : "DR";
+  const userInitials = getDoctorInitials();
 
   const savedDraft = (() => {
     try {
@@ -52,9 +47,8 @@ function Support() {
     }
   })();
 
-  const [formName, setFormName] = useState(
-    savedDraft?.formName ?? user?.name ?? "",
-  );
+  const [formName, setFormName] = useState(user?.name ?? "");
+
   const [category, setCategory] = useState(savedDraft?.category ?? "");
   const [urgency, setUrgency] = useState(savedDraft?.urgency ?? "Medium");
   const [message, setMessage] = useState(savedDraft?.message ?? "");
@@ -87,9 +81,11 @@ function Support() {
   }, []);
 
   useEffect(() => {
-    const draft = { formName, category, urgency, message };
-    localStorage.setItem(SUPPORT_DRAFT_KEY, JSON.stringify(draft));
-  }, [formName, category, urgency, message]);
+  const draft = { category, urgency, message };
+  localStorage.setItem(SUPPORT_DRAFT_KEY, JSON.stringify(draft));
+}, [category, urgency, message]);
+
+
   const toggleFAQ = (index) => setActiveFAQ(activeFAQ === index ? null : index);
 
   const handleFileChange = (e) => {
@@ -150,7 +146,7 @@ function Support() {
         result.message ||
           "Support message submitted successfully. We'll get back to you shortly.",
       );
-      setTimeout(() => setFormSuccess(""), 60000);
+      setTimeout(() => setFormSuccess(""), 30000);
       localStorage.removeItem(SUPPORT_DRAFT_KEY);
 
       const newTicket = {
@@ -753,7 +749,7 @@ function Support() {
                     className="btn btn-secondary"
                     disabled={isSubmitting}
                     onClick={() => {
-                      localStorage.removeItem(SUPPORT_DRAFT_KEY); // ← add this line
+                      localStorage.removeItem(SUPPORT_DRAFT_KEY); 
                       setFormName(user?.name ?? "");
                       setCategory("");
                       setUrgency("Medium");

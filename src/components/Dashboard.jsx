@@ -16,7 +16,7 @@ import {
   getTopfiveDiseases,
   getTodayVisitsAPI,
   getPatientOverviewAPI,
-  markPatientAttendedAPI
+  markPatientAttendedAPI,
 } from "./mockAPI.js";
 
 const AVATAR_COLORS = [
@@ -29,169 +29,185 @@ const AVATAR_COLORS = [
   "#F77F00",
   "#3A86FF",
 ];
+
+export function getDoctorInitials() {
+  const name = localStorage.getItem('doctor_name') || '';
+  // Strip "Dr." / "Dr " prefix, then take first letter of each remaining word
+  const cleaned = name.replace(/^Dr\.?\s*/i, '').trim();
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return 'DR';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
 function QueueSection() {
-  const [queueData, setQueueData] = useState(null); 
-  const [queueList, setQueueList] = useState([]); 
-  const [currentIdx, setCurrentIdx] = useState(0); 
+  const [queueData, setQueueData] = useState(null);
+  const [queueList, setQueueList] = useState([]);
+  const [currentIdx, setCurrentIdx] = useState(0);
   const [remainingLabel, setRemainingLabel] = useState("");
   const [loadingQueue, setLoadingQueue] = useState(true);
   const [modalPatient, setModalPatient] = useState(null);
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
-const fetchQueue = useCallback(async () => {
-  setLoadingQueue(true);
+  const fetchQueue = useCallback(async () => {
+    setLoadingQueue(true);
 
-  const result = await getTodayVisitsAPI();
+    const result = await getTodayVisitsAPI();
 
-  if (result?.success && result?.data) {
-    const data = result.data;
+    if (result?.success && result?.data) {
+      const data = result.data;
 
-    const mapped = (data.full_queue_list || []).map((p) => ({
-      id:         p.id,
-      name:       p.name,
-      age:        p.age,
-      gender:     p.gender,
-      apptTime:   p.appointment_time,
-      status_tag: p.status_tag,
-      aiInsight:
-        data.current_attending?.id === p.id
-          ? (data.current_attending?.ai_insight?.summary || null)
-          : null,
-      initials: p.name
-        .split(" ")
-        .slice(0, 2)
-        .map((w) => w[0]?.toUpperCase() ?? "")
-        .join(""),
-      color: AVATAR_COLORS[p.id % AVATAR_COLORS.length],
-    }));
+      const mapped = (data.full_queue_list || []).map((p) => ({
+        id: p.id,
+        name: p.name,
+        age: p.age,
+        gender: p.gender,
+        apptTime: p.appointment_time,
+        status_tag: p.status_tag,
+        aiInsight:
+          data.current_attending?.id === p.id
+            ? data.current_attending?.ai_insight?.summary || null
+            : null,
+        initials: p.name
+          .split(" ")
+          .slice(0, 2)
+          .map((w) => w[0]?.toUpperCase() ?? "")
+          .join(""),
+        color: AVATAR_COLORS[p.id % AVATAR_COLORS.length],
+      }));
 
-    const nowIdx = mapped.findIndex((p) => p.status_tag === "Now");
-    setQueueList(mapped);
-    setCurrentIdx(nowIdx >= 0 ? nowIdx : 0);
-    setRemainingLabel(data.remaining_count_label || "");
-  } else {
-    setQueueList([]);
-  }
-
-  setLoadingQueue(false);
-}, []); 
-
-useEffect(() => {
-  fetchQueue();
-}, [fetchQueue]);
-
-
-const goToNextPatient = () => {
-  setCurrentIdx((prev) => {
-    const total = queueList.length;
-    if (total === 0) return prev;
-
-    for (let offset = 1; offset <= total; offset++) {
-      const candidateIdx = (prev + offset) % total;
-      const candidate = queueList[candidateIdx];
-      if (candidate.status_tag === "Waiting" || candidate.status_tag === "Now") {
-        return candidateIdx;
-      }
-    }
-
-    return prev;
-  });
-};
-
-
-const handleViewDetails = async (patientId) => {
-  if (!patientId) return;
-
-  try {
-    const result = await getPatientOverviewAPI(patientId);
-
-    if (result?.success) {
-      navigate(`/patient-profile/${patientId}`, { state: { patientId } });
+      const nowIdx = mapped.findIndex((p) => p.status_tag === "Now");
+      setQueueList(mapped);
+      setCurrentIdx(nowIdx >= 0 ? nowIdx : 0);
+      setRemainingLabel(data.remaining_count_label || "");
     } else {
-      console.warn("[ViewDetails] overview fetch failed, navigating anyway:", result?.message);
-      navigate(`/patient-profile/${patientId}`, { state: { patientId } });
+      setQueueList([]);
     }
-  } catch (err) {
-    console.error("[ViewDetails] unexpected error:", err);
-    navigate(`/patient-profile/${patientId}`, { state: { patientId } });
-  }
-};
 
-const handleMarkAttended = async () => {
-  if (!activePatient?.id) return;
+    setLoadingQueue(false);
+  }, []);
 
-  const patientId = activePatient.id;
+  useEffect(() => {
+    fetchQueue();
+  }, [fetchQueue]);
 
-  const prevQueueList      = queueList;
-  const prevCurrentIdx     = currentIdx;
-  const prevRemainingLabel = remainingLabel;
+  const goToNextPatient = () => {
+    setCurrentIdx((prev) => {
+      const total = queueList.length;
+      if (total === 0) return prev;
 
-
-  const queueWithoutAttended = queueList.filter((p) => p.id !== patientId);
-
-  const queueAfterShift = queueWithoutAttended.map((p, i) => ({
-    ...p,
-    status_tag: i === 0 ? "Now" : "Waiting",
-  }));
-
-  setQueueList(queueAfterShift);
-  setCurrentIdx(0);
-  setRemainingLabel(
-    `${queueAfterShift.filter((p) => p.status_tag === "Waiting").length} remaining`
-  );
-
-  try {
-    const result = await markPatientAttendedAPI(patientId);
-
-    if (result?.success) {
-      const refreshed = await getTodayVisitsAPI();
-
-      if (refreshed?.success && refreshed?.data?.full_queue_list?.length > 0) {
-        const data = refreshed.data;
-
-        const remapped = (data.full_queue_list || []).map((p) => ({
-          id:         p.id,
-          name:       p.name,
-          age:        p.age,
-          gender:     p.gender,
-          apptTime:   p.appointment_time,
-          status_tag: p.status_tag,
-          aiInsight:
-            data.current_attending?.id === p.id
-              ? (data.current_attending?.ai_insight?.summary || null)
-              : null,
-          initials: p.name
-            .split(" ")
-            .slice(0, 2)
-            .map((w) => w[0]?.toUpperCase() ?? "")
-            .join(""),
-          color: AVATAR_COLORS[p.id % AVATAR_COLORS.length],
-        }));
-
-        const nowIdx = remapped.findIndex((p) => p.status_tag === "Now");
-
-        if (remapped.length >= queueAfterShift.length) {
-          setQueueList(remapped);
-          setCurrentIdx(nowIdx >= 0 ? nowIdx : 0);
-          setRemainingLabel(
-            data.remaining_count_label ||
-            `${remapped.filter((p) => p.status_tag === "Waiting").length} remaining`
-          );
+      for (let offset = 1; offset <= total; offset++) {
+        const candidateIdx = (prev + offset) % total;
+        const candidate = queueList[candidateIdx];
+        if (
+          candidate.status_tag === "Waiting" ||
+          candidate.status_tag === "Now"
+        ) {
+          return candidateIdx;
         }
       }
-    } else {
-      console.error("[MarkAttended] backend rejected:", result?.message);
+
+      return prev;
+    });
+  };
+
+  const handleViewDetails = async (patientId) => {
+    if (!patientId) return;
+
+    try {
+      const result = await getPatientOverviewAPI(patientId);
+
+      if (result?.success) {
+        navigate(`/patient-profile/${patientId}`, { state: { patientId } });
+      } else {
+        console.warn(
+          "[ViewDetails] overview fetch failed, navigating anyway:",
+          result?.message,
+        );
+        navigate(`/patient-profile/${patientId}`, { state: { patientId } });
+      }
+    } catch (err) {
+      console.error("[ViewDetails] unexpected error:", err);
+      navigate(`/patient-profile/${patientId}`, { state: { patientId } });
+    }
+  };
+
+  const handleMarkAttended = async () => {
+    if (!activePatient?.id) return;
+
+    const patientId = activePatient.id;
+
+    const prevQueueList = queueList;
+    const prevCurrentIdx = currentIdx;
+    const prevRemainingLabel = remainingLabel;
+
+    const queueWithoutAttended = queueList.filter((p) => p.id !== patientId);
+
+    const queueAfterShift = queueWithoutAttended.map((p, i) => ({
+      ...p,
+      status_tag: i === 0 ? "Now" : "Waiting",
+    }));
+
+    setQueueList(queueAfterShift);
+    setCurrentIdx(0);
+    setRemainingLabel(
+      `${queueAfterShift.filter((p) => p.status_tag === "Waiting").length} remaining`,
+    );
+
+    try {
+      const result = await markPatientAttendedAPI(patientId);
+
+      if (result?.success) {
+        const refreshed = await getTodayVisitsAPI();
+
+        if (
+          refreshed?.success &&
+          refreshed?.data?.full_queue_list?.length > 0
+        ) {
+          const data = refreshed.data;
+
+          const remapped = (data.full_queue_list || []).map((p) => ({
+            id: p.id,
+            name: p.name,
+            age: p.age,
+            gender: p.gender,
+            apptTime: p.appointment_time,
+            status_tag: p.status_tag,
+            aiInsight:
+              data.current_attending?.id === p.id
+                ? data.current_attending?.ai_insight?.summary || null
+                : null,
+            initials: p.name
+              .split(" ")
+              .slice(0, 2)
+              .map((w) => w[0]?.toUpperCase() ?? "")
+              .join(""),
+            color: AVATAR_COLORS[p.id % AVATAR_COLORS.length],
+          }));
+
+          const nowIdx = remapped.findIndex((p) => p.status_tag === "Now");
+
+          if (remapped.length >= queueAfterShift.length) {
+            setQueueList(remapped);
+            setCurrentIdx(nowIdx >= 0 ? nowIdx : 0);
+            setRemainingLabel(
+              data.remaining_count_label ||
+                `${remapped.filter((p) => p.status_tag === "Waiting").length} remaining`,
+            );
+          }
+        }
+      } else {
+        console.error("[MarkAttended] backend rejected:", result?.message);
+        setQueueList(prevQueueList);
+        setCurrentIdx(prevCurrentIdx);
+        setRemainingLabel(prevRemainingLabel);
+      }
+    } catch (err) {
+      console.error("[MarkAttended] network error:", err);
       setQueueList(prevQueueList);
       setCurrentIdx(prevCurrentIdx);
       setRemainingLabel(prevRemainingLabel);
     }
-  } catch (err) {
-    console.error("[MarkAttended] network error:", err);
-    setQueueList(prevQueueList);
-    setCurrentIdx(prevCurrentIdx);
-    setRemainingLabel(prevRemainingLabel);
-  }
-};
+  };
   const markAttended = (id) => {
     setQueueList((list) =>
       list.map((p) => (p.id === id ? { ...p, status_tag: "Attended" } : p)),
@@ -315,19 +331,13 @@ const handleMarkAttended = async () => {
             </div>
           </div>
           <div className="dsn-active-actions">
-            <button
-              className="dsn-btn-attended"
-              onClick={handleMarkAttended} 
-            >
+            <button className="dsn-btn-attended" onClick={handleMarkAttended}>
               <svg viewBox="0 0 24 24" fill="white" className="dsn-btn-icon">
                 <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
               </svg>
               Mark Attended
             </button>
-            <button
-              className="dsn-btn-next"
-              onClick={goToNextPatient}
-            >
+            <button className="dsn-btn-next" onClick={goToNextPatient}>
               <svg
                 viewBox="0 0 24 24"
                 fill="currentColor"
@@ -542,6 +552,9 @@ export default function Dashboard() {
       if (result.success) {
         setData(result.data);
         console.log("Dashboard Widgets:", result.data);
+        if (result.data?.doctor_name) {
+          localStorage.setItem("doctor_name", result.data.doctor_name);
+        }
       }
       setLoading(false);
 
@@ -604,7 +617,7 @@ export default function Dashboard() {
               className="user-avatar"
               onClick={() => setIsAvatarMenuOpen(!isAvatarMenuOpen)}
             >
-              LA
+              {getDoctorInitials()}
             </div>
             {isAvatarMenuOpen && (
               <div className="avatar-dropdown-menu">

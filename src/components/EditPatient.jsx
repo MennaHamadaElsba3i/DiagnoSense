@@ -11,6 +11,7 @@ import "../css/EditPatient.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import { getCookie } from "./cookieUtils";
 import { useNotifications } from "./NotificationsContext";
+import { getDoctorInitials } from './Dashboard';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -644,7 +645,7 @@ const EditPatient = () => {
               onClick={() => setIsAvatarMenuOpen(!isAvatarMenuOpen)}
               style={{ cursor: "pointer", userSelect: "none" }}
             >
-              LA
+              {getDoctorInitials()}
             </div>
             {isAvatarMenuOpen && (
               <div

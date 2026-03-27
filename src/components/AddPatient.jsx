@@ -14,6 +14,7 @@ import "../css/AddPatient.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import { getCookie } from "./cookieUtils";
 import { useNotifications } from "./NotificationsContext";
+import { getDoctorInitials } from './Dashboard';
 
 
 const AddPatient = () => {
@@ -485,7 +486,7 @@ const AddPatient = () => {
               onClick={() => setIsAvatarMenuOpen(!isAvatarMenuOpen)}
               style={{ cursor: "pointer", userSelect: "none" }}
             >
-              LA
+              {getDoctorInitials()}
             </div>
             {isAvatarMenuOpen && (
               <div
@@ -636,7 +637,7 @@ const AddPatient = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label required">Email</label>
+                  <label className={`form-label ${!formData.phone.trim() ? "required" : ""}`}>Email</label>
                   <input
                     type="email"
                     className={`form-input${fieldErrors.email ? " target-error" : ""}`}
@@ -700,7 +701,7 @@ const AddPatient = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label required">Phone Number</label>
+                  <label className={`form-label ${!formData.email.trim() ? "required" : ""}`}>Phone Number</label>
                   <input
                     type="tel"
                     className={`form-input${fieldErrors.phone ? " target-error" : ""}`}

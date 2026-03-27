@@ -26,6 +26,8 @@ const Login = ({ onForgotPassword }) => {
       setJsonCookie("user", result.data.user, rememberMe);
       setCookie("isAuthenticated", "true", rememberMe);
 
+      localStorage.removeItem('doctor_name');
+      localStorage.removeItem('support_form_draft');
       navigate("/dashboard");
     } else {
       setError(result.message || "Login failed. Please try again.");

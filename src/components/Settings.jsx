@@ -9,6 +9,7 @@ import { useSubscription } from "../components/SubscriptionContext";
 import Sidebar from "./Sidebar";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import { useNotifications } from "./NotificationsContext";
+import { getDoctorInitials } from './Dashboard';
 
 
 const Settings = () => {
@@ -89,7 +90,7 @@ const Settings = () => {
               onClick={() => setIsAvatarMenuOpen(!isAvatarMenuOpen)}
               style={{ cursor: "pointer", userSelect: "none" }}
             >
-              LA
+              {getDoctorInitials()}
             </div>
             {isAvatarMenuOpen && (
               <div
