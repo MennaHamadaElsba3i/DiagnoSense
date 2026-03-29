@@ -168,10 +168,21 @@
   transition: background 0.3s;
 }
 
-.settings-page-strength-weak    { background: #ef4444; }
-.settings-page-strength-fair    { background: #f97316; }
-.settings-page-strength-good    { background: #eab308; }
-.settings-page-strength-strong  { background: #22c55e; }
+.settings-page-strength-weak {
+  background: #ef4444;
+}
+
+.settings-page-strength-fair {
+  background: #f97316;
+}
+
+.settings-page-strength-good {
+  background: #eab308;
+}
+
+.settings-page-strength-strong {
+  background: #22c55e;
+}
 
 .settings-page-strength-hint {
   font-size: 12px;
@@ -184,6 +195,7 @@
   color: #ef4444;
   margin: -8px 0 12px 0;
 }
+
 
 .settings-page-success-msg {
   font-size: 13px;
@@ -283,8 +295,13 @@
 }
 
 @keyframes settings-page-fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .settings-page-modal {
@@ -298,8 +315,15 @@
 }
 
 @keyframes settings-page-slideUp {
-  from { transform: translateY(16px); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .settings-page-modal-icon {
@@ -347,4 +371,41 @@
 
 .settings-page-modal-cancel {
   min-width: 90px;
+}
+
+.settings-page-password-feedback {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+}
+
+.settings-page-feedback--success {
+  background-color: #f0fdf4;
+  border: 1px solid #86efac;
+  color: #166534;
+}
+
+.settings-page-feedback--error {
+  background-color: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+}
+
+.settings-page-feedback-list {
+  margin: 0;
+  padding: 0 0 0 4px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settings-page-feedback-list li {
+  font-size: 14px;
+  line-height: 1.5;
 }

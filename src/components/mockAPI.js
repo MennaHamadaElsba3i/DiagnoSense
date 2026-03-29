@@ -1,6 +1,6 @@
-// const API_BASE_URL = 'https://nontelepathically-pamphletary-cyndi.ngrok-free.dev';
+const API_BASE_URL = 'https://nontelepathically-pamphletary-cyndi.ngrok-free.dev';
 // const API_BASE_URL = 'https://toothlike-intermetatarsal-avah.ngrok-free.dev';
-const API_BASE_URL = 'https://unpersecuted-vanitied-jayson.ngrok-free.dev';
+// const API_BASE_URL = 'https://unpersecuted-vanitied-jayson.ngrok-free.dev';
 
 import { getCookie, setCookie, deleteCookie, setJsonCookie } from './cookieUtils';
 
@@ -899,11 +899,7 @@ export const getTodayVisitsAPI = async () => {
   });
 };
 
-/**
- * PATCH /api/dashboard/{patientId}/attend
- * Marks the current patient as attended and signals the backend to update the queue.
- * @param {number|string} patientId — ID of the patient currently in the top card
- */
+
 export const markPatientAttendedAPI = async (patientId) => {
   return await apiCall(`/api/dashboard/${patientId}/attend`, {
     method: 'PATCH',
@@ -968,4 +964,26 @@ export const sendSupportAPI = async ({ category, urgency, message, name, attachm
       message: 'Network error. Please check your connection.',
     };
   }
+};
+
+
+export const getDoctorProfileAPI = async (doctorId) => {
+  return await apiCall(`/api/doctors/${doctorId}`, {
+    method: 'GET',
+  });
+};
+
+
+export const updateDoctorProfileAPI = async (doctorId, { name, specialization }) => {
+  return await apiCall(`/api/doctors/${doctorId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ name, specialization }),
+  });
+};
+
+export const changePasswordAPI = async (current_password, new_password, new_password_confirmation) => {
+  return await apiCall('/api/change-password', {
+    method: 'PATCH',
+    body: JSON.stringify({ current_password, new_password, new_password_confirmation }),
+  });
 };
