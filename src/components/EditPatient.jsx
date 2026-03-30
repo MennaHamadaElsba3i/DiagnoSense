@@ -910,7 +910,7 @@ const EditPatient = () => {
               {hasSurgeries && (
                 <div className="form-group" id="surgeryDetails">
                   <label className="form-label required">
-                    Please specify surgeries <span className="provided-hint">(Provided)</span>
+                    Please specify surgeries <span className="provided-hint">Provided</span>
                   </label>
                   <textarea
                     className={`form-textarea${fieldErrors.surgeryText ? " target-error" : ""}`}

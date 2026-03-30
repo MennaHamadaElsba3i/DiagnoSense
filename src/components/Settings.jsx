@@ -56,6 +56,10 @@ const Settings = () => {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const avatarMenuRef = useRef(null);
+  const [profileFeedback, setProfileFeedback] = useState({
+    type: "",
+    message: "",
+  });
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -109,15 +113,17 @@ const Settings = () => {
         const actualData = res?.data?.data || res?.data || res;
 
         if (isSuccess && actualData && typeof actualData === "object") {
+          const rawSpecialty =
+            actualData.speciality ||
+            actualData.specialization ||
+            actualData.specialty ||
+            "";
+
           setProfileForm({
             fullName: actualData.name || actualData.fullName || "",
             identity:
               actualData.identity || actualData.email || actualData.phone || "",
-            specialty:
-              actualData.speciality ||
-              actualData.specialization ||
-              actualData.specialty ||
-              "",
+            specialty: rawSpecialty === "N/A" ? "" : rawSpecialty,
           });
         }
       } catch (err) {
@@ -130,6 +136,7 @@ const Settings = () => {
   const handleProfileChange = (e) => {
     setProfileForm({ ...profileForm, [e.target.name]: e.target.value });
     setProfileSaved(false);
+    setProfileFeedback({ type: "", message: "" });
   };
 
   const handleProfileSave = async () => {
@@ -140,22 +147,31 @@ const Settings = () => {
         name: profileForm.fullName,
         specialization: profileForm.specialty,
       });
-      console.log("Profile update response:", res);
       if (res.success) {
-        setProfileSuccessMsg(res.message || "Profile updated successfully.");
-        setProfileSaved(true);
-        setTimeout(() => setProfileSaved(false), 30000);
+        setProfileFeedback({
+          type: "success",
+          message: res.message || "Profile updated successfully.",
+        });
       } else {
-        console.error("Failed to update profile", res.message);
+        setProfileFeedback({
+          type: "error",
+          message: res.message || "Failed to update profile.",
+        });
       }
+      setTimeout(() => setProfileFeedback({ type: "", message: "" }), 20000);
     } catch (err) {
-      console.error(err);
+      setProfileFeedback({
+        type: "error",
+        message: "Network error. Please check your connection.",
+      });
+      setTimeout(() => setProfileFeedback({ type: "", message: "" }), 20000);
     } finally {
       setIsSavingProfile(false);
     }
   };
 
   const handleProfileCancel = async () => {
+    setProfileFeedback({ type: "", message: "" });
     setProfileSaved(false);
     if (doctorId) {
       const res = await getDoctorProfileAPI(doctorId);
@@ -619,10 +635,17 @@ const Settings = () => {
                 />
               </div>
 
-              {profileSaved && (
-                <p className="settings-page-success-msg">
-                  ✓ {profileSuccessMsg}
-                </p>
+              {profileFeedback.message && (
+                <div
+                  className={`settings-page-profile-feedback ${
+                    profileFeedback.type === "success"
+                      ? "settings-page-profile-feedback--success"
+                      : "settings-page-profile-feedback--error"
+                  }`}
+                >
+                  {profileFeedback.type === "success" ? "✓" : "✕"}{" "}
+                  {profileFeedback.message}
+                </div>
               )}
 
               <div
