@@ -892,6 +892,19 @@ export const getTopfiveDiseases = async () => {
     method: 'GET',
   });
 }
+
+export const getTodayVisitsAPI = async () => {
+  return await apiCall('/api/dashboard/today-visits', {
+    method: 'GET',
+  });
+};
+
+
+export const markPatientAttendedAPI = async (patientId) => {
+  return await apiCall(`/api/dashboard/${patientId}/attend`, {
+    method: 'PATCH',
+  });
+};
 /**
  * POST /api/chatbot/{patientId}
  * Sends a doctor's question to the AI chatbot.
@@ -904,3 +917,81 @@ export const sendChatbotMessageAPI = async (patientId, question) =>
     method: 'POST',
     body: JSON.stringify({ question }),
   });
+
+
+
+export const sendSupportAPI = async ({ category, urgency, message, name, attachment }) => {
+  const token = getCookie('user_token');
+
+  const formData = new FormData();
+  formData.append('category', category);
+  formData.append('urgency', urgency);
+  formData.append('message', message);
+  if (name && name.trim()) formData.append('name', name.trim());
+  if (attachment) formData.append('attachment', attachment);
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/support`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        deleteCookie('user_token');
+        deleteCookie('user');
+        deleteCookie('isAuthenticated');
+      }
+      return {
+        success: false,
+        message: data.message || 'Something went wrong',
+        errors: data.errors || null,
+      };
+    }
+
+    return data; 
+  } catch (error) {
+    console.error('[sendSupport] API Error:', error);
+    return {
+      success: false,
+      message: 'Network error. Please check your connection.',
+    };
+  }
+};
+
+
+export const getDoctorProfileAPI = async (doctorId) => {
+  return await apiCall(`/api/doctors/${doctorId}`, {
+    method: 'GET',
+  });
+};
+
+
+export const updateDoctorProfileAPI = async (doctorId, { name, specialization }) => {
+  return await apiCall(`/api/doctors/${doctorId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ name, specialization }),
+  });
+};
+
+export const changePasswordAPI = async (current_password, new_password, new_password_confirmation) => {
+  return await apiCall('/api/change-password', {
+    method: 'PATCH',
+    body: JSON.stringify({ current_password, new_password, new_password_confirmation }),
+  });
+};
+
+
+export const deleteDoctorAccountAPI = async (doctorId, password, password_confirmation) => {
+  return await apiCall(`/api/doctors/${doctorId}`, {
+    method: 'DELETE',
+    body: JSON.stringify({ password, password_confirmation }),
+  });
+};

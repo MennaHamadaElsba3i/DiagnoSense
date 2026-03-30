@@ -47,6 +47,8 @@ const [phoneValue, setPhoneValue] = useState("");
       setJsonCookie("user", result.data.user, 7);
       setCookie("isAuthenticated", "true", 7);
 
+      localStorage.removeItem('doctor_name');
+      localStorage.removeItem('support_form_draft');
       if (onRegisterSuccess) {
         onRegisterSuccess(identityUsed); 
       }

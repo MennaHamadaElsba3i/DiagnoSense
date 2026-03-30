@@ -11,6 +11,7 @@ import "../css/EditPatient.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import { getCookie } from "./cookieUtils";
 import { useNotifications } from "./NotificationsContext";
+import { getDoctorInitials } from './Dashboard';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -644,7 +645,7 @@ const EditPatient = () => {
               onClick={() => setIsAvatarMenuOpen(!isAvatarMenuOpen)}
               style={{ cursor: "pointer", userSelect: "none" }}
             >
-              LA
+              {getDoctorInitials()}
             </div>
             {isAvatarMenuOpen && (
               <div
@@ -909,7 +910,7 @@ const EditPatient = () => {
               {hasSurgeries && (
                 <div className="form-group" id="surgeryDetails">
                   <label className="form-label required">
-                    Please specify surgeries <span className="provided-hint">(Provided)</span>
+                    Please specify surgeries <span className="provided-hint">Provided</span>
                   </label>
                   <textarea
                     className={`form-textarea${fieldErrors.surgeryText ? " target-error" : ""}`}

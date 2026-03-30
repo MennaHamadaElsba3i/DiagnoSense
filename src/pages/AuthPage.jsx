@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import OTPVerification from "../components/OTPVerification.jsx";
 import Login from "../components/Login.jsx";
 import Register from "../components/Register.jsx";
@@ -10,6 +10,7 @@ import "../css/auth.css";
 
 const AuthPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState("login");
   const [currentView, setCurrentView] = useState("auth");
   const [userIdentity, setUserIdentity] = useState("");
@@ -24,6 +25,13 @@ const AuthPage = () => {
       setCurrentView("reset-password");
     }
   }, [resetToken]);
+
+  useEffect(() => {
+  if (location.state?.openForget) {
+    setCurrentView("forget");
+    window.history.replaceState({}, document.title);
+  }
+}, [location.state]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -206,7 +214,7 @@ const AuthPage = () => {
               <span className="logo-text">
                 <img
                   src={logo}
-                  style={{marginBottom:'10px', width:'165px'}}
+                  style={{ marginBottom: "10px", width: "165px" }}
                   alt="DiagnoSense Logo"
                   onError={(e) => (e.target.style.display = "none")}
                 />

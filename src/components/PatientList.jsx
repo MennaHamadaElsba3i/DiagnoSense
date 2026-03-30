@@ -11,6 +11,7 @@ import ConfirmModal from "./ConfirmModal";
 import "../css/PatientList.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import { useNotifications } from "./NotificationsContext";
+import { getDoctorInitials } from './Dashboard';
 import { getPatientsAPI, searchPatientsAPI, getPatientsByStatusAPI, deletePatientAPI, updatePatientStatusAPI } from "./mockAPI"; const AIInsightBlock = ({ patient, onOpenModal }) => {
   const containerRef = useRef(null);
   const textRef = useRef(null);
@@ -812,7 +813,7 @@ const PatientList = () => {
               onClick={() => setIsAvatarMenuOpen(!isAvatarMenuOpen)}
               style={{ cursor: "pointer", userSelect: "none" }}
             >
-              LA
+              {getDoctorInitials()}
             </div>
             {isAvatarMenuOpen && (
               <div

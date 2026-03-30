@@ -9,6 +9,7 @@ import "../css/subscription.css";
 import Swal from "sweetalert2";
 import { chargeWalletAPI, getTransactionsAPI, getSubscriptionPlansAPI, subscribeToPlanAPI, subscribeToPayPerUseAPI, cancelSubscriptionAPI } from "./mockAPI.js";
 import { useNotifications } from "./NotificationsContext";
+import { getDoctorInitials } from './Dashboard';
 
 function Subscription() {
   const navigate = useNavigate();
@@ -378,7 +379,7 @@ function Subscription() {
               onClick={() => setIsAvatarMenuOpen(!isAvatarMenuOpen)}
               style={{ cursor: "pointer", userSelect: "none" }}
             >
-              LA
+              {getDoctorInitials()}
             </div>
             {isAvatarMenuOpen && (
               <div
