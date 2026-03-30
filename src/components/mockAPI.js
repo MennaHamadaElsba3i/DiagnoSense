@@ -987,3 +987,11 @@ export const changePasswordAPI = async (current_password, new_password, new_pass
     body: JSON.stringify({ current_password, new_password, new_password_confirmation }),
   });
 };
+
+
+export const deleteDoctorAccountAPI = async (doctorId, password, password_confirmation) => {
+  return await apiCall(`/api/doctors/${doctorId}`, {
+    method: 'DELETE',
+    body: JSON.stringify({ password, password_confirmation }),
+  });
+};

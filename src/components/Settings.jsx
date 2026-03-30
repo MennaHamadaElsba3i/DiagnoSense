@@ -10,6 +10,7 @@ import {
   getDoctorProfileAPI,
   updateDoctorProfileAPI,
   changePasswordAPI,
+  deleteDoctorAccountAPI,
 } from "./mockAPI";
 import { getJsonCookie } from "./cookieUtils";
 import "../css/Settingsmaincontent.css";
@@ -91,32 +92,23 @@ const Settings = () => {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      let user = getJsonCookie("user");
-      let id = user?.id || user?.doctor_id || user?.user_id;
+      const user = getJsonCookie("user");
+
+      const id = user?.id || user?.doctor_id || user?.user_id;
 
       if (!id) {
-        const token = getCookie("user_token");
-        if (token && token.includes(".")) {
-          try {
-            const payload = JSON.parse(atob(token.split(".")[1]));
-            id =
-              payload.sub || payload.id || payload.user_id || payload.doctor_id;
-          } catch (e) {
-            console.error("JWT decode error", e);
-          }
-        }
+        console.error("No Doctor ID found in session. Please login again.");
+        return;
       }
 
-      if (!id) return; 
+      setDoctorId(id);
 
       try {
         const res = await getDoctorProfileAPI(id);
-
-        const isSuccess = res?.success !== false; 
-        const actualData = res?.data?.data || res?.data || res; 
+        const isSuccess = res?.success !== false;
+        const actualData = res?.data?.data || res?.data || res;
 
         if (isSuccess && actualData && typeof actualData === "object") {
-          setDoctorId(actualData.id || id);
           setProfileForm({
             fullName: actualData.name || actualData.fullName || "",
             identity:
@@ -165,22 +157,8 @@ const Settings = () => {
 
   const handleProfileCancel = async () => {
     setProfileSaved(false);
-    let user = getJsonCookie("user");
-    let id = user?.id || user?.doctor_id || user?.user_id;
-
-    if (!id) {
-      const token = getCookie("user_token");
-      if (token && token.includes(".")) {
-        try {
-          const payload = JSON.parse(atob(token.split(".")[1]));
-          id =
-            payload.sub || payload.id || payload.user_id || payload.doctor_id;
-        } catch (e) {}
-      }
-    }
-
-    if (id) {
-      const res = await getDoctorProfileAPI(id);
+    if (doctorId) {
+      const res = await getDoctorProfileAPI(doctorId);
       const isSuccess = res?.success !== false;
       const actualData = res?.data?.data || res?.data || res;
 
@@ -233,7 +211,7 @@ const Settings = () => {
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
     setPasswordForm((prev) => ({ ...prev, [name]: value }));
-    setPasswordFeedback({ type: "", message: "" }); 
+    setPasswordFeedback({ type: "", message: "" });
     if (name === "newPassword") setPasswordStrength(getPasswordStrength(value));
   };
 
@@ -307,15 +285,65 @@ const Settings = () => {
     password: false,
     passwordConfirm: false,
   });
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteFeedback, setDeleteFeedback] = useState({
+    type: "",
+    message: "",
+    messages: null,
+  });
+  const [deleteCountdown, setDeleteCountdown] = useState(null);
 
-  const handleDeleteAccount = () => {
-    if (
-      !deleteForm.password ||
-      deleteForm.password !== deleteForm.passwordConfirm
-    )
-      return;
-    setIsDeleteModalOpen(false);
+  const handleDeleteAccount = async () => {
+    if (!doctorId) return;
+
+    setIsDeletingAccount(true);
+    setDeleteFeedback({ type: "", message: "", messages: null });
+
+    try {
+      const res = await deleteDoctorAccountAPI(
+        doctorId,
+        deleteForm.password,
+        deleteForm.passwordConfirm,
+      );
+
+      if (res.success) {
+        setDeleteFeedback({
+          type: "success",
+          message: res.message || "Account deleted successfully.",
+          messages: null,
+        });
+        setDeleteCountdown(25);
+      } else {
+        const fieldErrors = res.errors ? Object.values(res.errors).flat() : [];
+        setDeleteFeedback({
+          type: "error",
+          messages: fieldErrors.length > 0 ? fieldErrors : null,
+          message:
+            fieldErrors.length === 0
+              ? res.message || "Failed to delete account."
+              : null,
+        });
+      }
+    } catch {
+      setDeleteFeedback({
+        type: "error",
+        message: "Network error. Please check your connection.",
+        messages: null,
+      });
+    } finally {
+      setIsDeletingAccount(false);
+    }
   };
+
+  useEffect(() => {
+    if (deleteCountdown === null) return;
+    if (deleteCountdown === 0) {
+      navigate("/auth", { replace: true });
+      return;
+    }
+    const timer = setTimeout(() => setDeleteCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [deleteCountdown, navigate]);
 
   return (
     <>
@@ -673,6 +701,30 @@ const Settings = () => {
                     {showPasswords.current ? <EyeOffIcon /> : <EyeIcon />}
                   </button>
                 </div>
+                <div style={{ textAlign: "left", marginTop: "8px" }}>
+                  <a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate("/login", { state: { openForget: true } });
+                    }}
+                    style={{
+                      fontSize: "13px",
+                      color: "var(--primary-color, #3b82f6)",
+                      textDecoration: "none",
+                      fontWeight: "500",
+                      cursor: "pointer",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.target.style.textDecoration = "underline")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.target.style.textDecoration = "none")
+                    }
+                  >
+                    Forget Password?
+                  </a>
+                </div>
               </div>
 
               <div className="settings-page-form-group">
@@ -791,7 +843,13 @@ const Settings = () => {
       {isDeleteModalOpen && (
         <div
           className="settings-page-modal-overlay"
-          onClick={() => setIsDeleteModalOpen(false)}
+          onClick={() => {
+            if (!isDeletingAccount && deleteCountdown === null) {
+              setIsDeleteModalOpen(false);
+              setDeleteFeedback({ type: "", message: "", messages: null });
+              setDeleteForm({ password: "", passwordConfirm: "" });
+            }
+          }}
         >
           <div
             className="settings-page-modal"
@@ -815,114 +873,191 @@ const Settings = () => {
             </div>
 
             <h3 className="settings-page-modal-title">Delete Account</h3>
-            <p className="settings-page-modal-body">
-              This action is{" "}
-              <span className="settings-page-modal-danger-text">
-                permanent and irreversible
-              </span>
-              . All your data, patients, and records will be deleted. Please
-              confirm your password to proceed.
-            </p>
-            <hr className="settings-page-divider" />
 
-            <div className="settings-page-form-group">
-              <label className="settings-page-label">Password</label>
-              <div className="settings-page-input-wrapper">
-                <input
-                  className={`settings-page-input ${deleteForm.password ? "settings-page-input--focused" : ""}`}
-                  type={showDeletePasswords.password ? "text" : "password"}
-                  value={deleteForm.password}
-                  onChange={(e) =>
-                    setDeleteForm({ ...deleteForm, password: e.target.value })
-                  }
-                  placeholder="Enter your password"
-                />
-                <button
-                  className="settings-page-eye-btn"
-                  onClick={() =>
-                    setShowDeletePasswords((p) => ({
-                      ...p,
-                      password: !p.password,
-                    }))
-                  }
-                  tabIndex={-1}
-                  type="button"
-                >
-                  {showDeletePasswords.password ? <EyeOffIcon /> : <EyeIcon />}
-                </button>
+            {deleteFeedback.type === "success" ? (
+              <div className="settings-page-delete-success">
+                <div className="settings-page-delete-success-icon">✓</div>
+                <p className="settings-page-delete-success-msg">
+                  {deleteFeedback.message}
+                </p>
+                <p className="settings-page-delete-countdown">
+                  Redirecting in <strong>{deleteCountdown}</strong> second
+                  {deleteCountdown !== 1 ? "s" : ""}…
+                </p>
               </div>
-            </div>
+            ) : (
+              <>
+                <p className="settings-page-modal-body">
+                  This action is{" "}
+                  <span className="settings-page-modal-danger-text">
+                    permanent and irreversible
+                  </span>
+                  . All your data, patients, and records will be deleted. Please
+                  confirm your password to proceed.
+                </p>
+                <hr className="settings-page-divider" />
 
-            <div className="settings-page-form-group">
-              <label className="settings-page-label">
-                Password Confirmation
-              </label>
-              <div className="settings-page-input-wrapper">
-                <input
-                  className="settings-page-input"
-                  type={
-                    showDeletePasswords.passwordConfirm ? "text" : "password"
-                  }
-                  value={deleteForm.passwordConfirm}
-                  onChange={(e) =>
-                    setDeleteForm({
-                      ...deleteForm,
-                      passwordConfirm: e.target.value,
-                    })
-                  }
-                  placeholder="Re-enter your password"
-                />
-                <button
-                  className="settings-page-eye-btn"
-                  onClick={() =>
-                    setShowDeletePasswords((p) => ({
-                      ...p,
-                      passwordConfirm: !p.passwordConfirm,
-                    }))
-                  }
-                  tabIndex={-1}
-                  type="button"
-                >
-                  {showDeletePasswords.passwordConfirm ? (
-                    <EyeOffIcon />
-                  ) : (
-                    <EyeIcon />
+                <div className="settings-page-form-group">
+                  <label className="settings-page-label">Password</label>
+                  <div className="settings-page-input-wrapper">
+                    <input
+                      className="settings-page-input"
+                      type={showDeletePasswords.password ? "text" : "password"}
+                      value={deleteForm.password}
+                      onChange={(e) => {
+                        setDeleteForm({
+                          ...deleteForm,
+                          password: e.target.value,
+                        });
+                        setDeleteFeedback({
+                          type: "",
+                          message: "",
+                          messages: null,
+                        });
+                      }}
+                      placeholder="Enter your password"
+                      disabled={isDeletingAccount}
+                    />
+                    <button
+                      className="settings-page-eye-btn"
+                      onClick={() =>
+                        setShowDeletePasswords((p) => ({
+                          ...p,
+                          password: !p.password,
+                        }))
+                      }
+                      tabIndex={-1}
+                      type="button"
+                    >
+                      {showDeletePasswords.password ? (
+                        <EyeOffIcon />
+                      ) : (
+                        <EyeIcon />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="settings-page-form-group">
+                  <label className="settings-page-label">
+                    Password Confirmation
+                  </label>
+                  <div className="settings-page-input-wrapper">
+                    <input
+                      className="settings-page-input"
+                      type={
+                        showDeletePasswords.passwordConfirm
+                          ? "text"
+                          : "password"
+                      }
+                      value={deleteForm.passwordConfirm}
+                      onChange={(e) => {
+                        setDeleteForm({
+                          ...deleteForm,
+                          passwordConfirm: e.target.value,
+                        });
+                        setDeleteFeedback({
+                          type: "",
+                          message: "",
+                          messages: null,
+                        });
+                      }}
+                      placeholder="Re-enter your password"
+                      disabled={isDeletingAccount}
+                    />
+                    <button
+                      className="settings-page-eye-btn"
+                      onClick={() =>
+                        setShowDeletePasswords((p) => ({
+                          ...p,
+                          passwordConfirm: !p.passwordConfirm,
+                        }))
+                      }
+                      tabIndex={-1}
+                      type="button"
+                    >
+                      {showDeletePasswords.passwordConfirm ? (
+                        <EyeOffIcon />
+                      ) : (
+                        <EyeIcon />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* ── Error feedback box — below inputs, above buttons ── */}
+                {(deleteFeedback.message || deleteFeedback.messages) &&
+                  deleteFeedback.type === "error" && (
+                    <div className="settings-page-password-feedback settings-page-feedback--error">
+                      {deleteFeedback.messages &&
+                      deleteFeedback.messages.length > 1 ? (
+                        <ul className="settings-page-feedback-list">
+                          {deleteFeedback.messages.map((msg, i) => (
+                            <li key={i}>✕ {msg}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <span>
+                          ✕{" "}
+                          {deleteFeedback.messages?.[0] ??
+                            deleteFeedback.message}
+                        </span>
+                      )}
+                    </div>
                   )}
-                </button>
-              </div>
-            </div>
 
-            <div className="settings-page-modal-actions">
-              <button
-                className="settings-page-btn-outline settings-page-modal-cancel"
-                onClick={() => setIsDeleteModalOpen(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="settings-page-btn-danger"
-                onClick={handleDeleteAccount}
-                disabled={
-                  !deleteForm.password ||
-                  deleteForm.password !== deleteForm.passwordConfirm
-                }
-              >
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="3 6 5 6 21 6"></polyline>
-                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-                </svg>
-                Delete
-              </button>
-            </div>
+                <div className="settings-page-modal-actions">
+                  <button
+                    className="settings-page-btn-outline settings-page-modal-cancel"
+                    onClick={() => {
+                      setIsDeleteModalOpen(false);
+                      setDeleteFeedback({
+                        type: "",
+                        message: "",
+                        messages: null,
+                      });
+                      setDeleteForm({ password: "", passwordConfirm: "" });
+                    }}
+                    disabled={isDeletingAccount}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="settings-page-btn-danger"
+                    onClick={handleDeleteAccount}
+                    disabled={
+                      isDeletingAccount ||
+                      !deleteForm.password ||
+                      !deleteForm.passwordConfirm
+                    }
+                  >
+                    {isDeletingAccount ? (
+                      <span className="settings-page-btn-loading">
+                        <span className="settings-page-spinner" />
+                        Deleting…
+                      </span>
+                    ) : (
+                      <>
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                        </svg>
+                        Delete
+                      </>
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
