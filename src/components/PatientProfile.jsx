@@ -23,6 +23,7 @@ import logo from "../assets/Logo_Diagnoo.png";
 import stethoscope from "../assets/Stethoscope.png";
 import closeIcon from "../assets/close.png";
 import openIcon from "../assets/open.png";
+import diagnobotImg from "../assets/DiagnoBot.png";
 import { useSidebar } from "../components/SidebarContext";
 import { useSubscription } from "../components/SubscriptionContext";
 import Sidebar from "./Sidebar";
@@ -2985,126 +2986,238 @@ const PatientProfile = () => {
               </div>
 
               <div className="chart-grid">
-                <div className="chart-card">
+                {/* Chart 1: HbA1c (Green - Improving) */}
+                <div className="chart-card" style={{ transition: "all 0.5s ease-in-out" }}>
                   <div className="chart-header">
-                    <h3 className="chart-title">Blood Pressure</h3>
-                    <span className="chart-trend trend-down">↓ 8.2%</span>
+                    <h3 className="chart-title">HbA1c (Glycated Hemoglobin)</h3>
+                    <span className="chart-trend trend-down" style={{ background: "#E6FFF5", color: "#00C187", transition: "all 0.5s ease-in-out" }}>↓ 15.3%</span>
                   </div>
                   <div className="mini-chart">
                     <svg className="chart-canvas" viewBox="0 0 300 180">
                       <defs>
-                        <linearGradient
-                          id="grad1"
-                          x1="0%"
-                          y1="0%"
-                          x2="0%"
-                          y2="100%"
-                        >
-                          <stop
-                            offset="0%"
-                            style={{ stopColor: "#2A66FF", stopOpacity: 0.3 }}
-                          />
-                          <stop
-                            offset="100%"
-                            style={{ stopColor: "#2A66FF", stopOpacity: 0 }}
-                          />
+                        <linearGradient id="grad1" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" style={{ stopColor: "#00C187", stopOpacity: 0.3, transition: "all 0.5s ease-in-out" }} />
+                          <stop offset="100%" style={{ stopColor: "#00C187", stopOpacity: 0, transition: "all 0.5s ease-in-out" }} />
                         </linearGradient>
                       </defs>
-                      <path
-                        d="M 0 120 L 75 100 L 150 80 L 225 70 L 300 65 L 300 180 L 0 180 Z"
-                        fill="url(#grad1)"
-                      />
-                      <path
-                        d="M 0 120 L 75 100 L 150 80 L 225 70 L 300 65"
-                        stroke="#2A66FF"
-                        strokeWidth="3"
-                        fill="none"
-                      />
-                      <circle cx="0" cy="120" r="4" fill="#2A66FF" />
-                      <circle cx="75" cy="100" r="4" fill="#2A66FF" />
-                      <circle cx="150" cy="80" r="4" fill="#2A66FF" />
-                      <circle cx="225" cy="70" r="4" fill="#2A66FF" />
-                      <circle cx="300" cy="65" r="4" fill="#00C187" />
+                      <path d="M 0 70 L 75 90 L 150 80 L 225 110 L 300 130 L 300 180 L 0 180 Z" fill="url(#grad1)" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <path d="M 0 70 L 75 90 L 150 80 L 225 110 L 300 130" stroke="#00C187" strokeWidth="3" fill="none" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="0" cy="70" r="4" fill="#00C187" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="75" cy="90" r="4" fill="#00C187" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="150" cy="80" r="4" fill="#00C187" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="225" cy="110" r="4" fill="#00C187" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="300" cy="130" r="4" fill="#00C187" style={{ transition: "all 0.5s ease-in-out" }} />
                     </svg>
                   </div>
                   <div className="chart-stats">
                     <div className="stat-col">
                       <div className="stat-label">Initial</div>
-                      <div className="stat-value">145/92</div>
+                      <div className="stat-value">8.5%</div>
                     </div>
                     <div className="stat-col">
                       <div className="stat-label">Current</div>
-                      <div className="stat-value" style={{ color: "#00C187" }}>
-                        128/82
-                      </div>
+                      <div className="stat-value" style={{ color: "#00C187", transition: "all 0.5s ease-in-out" }}>7.2%</div>
                     </div>
                     <div className="stat-col">
                       <div className="stat-label">Change</div>
-                      <div className="stat-value" style={{ color: "#00C187" }}>
-                        -17/-10
-                      </div>
+                      <div className="stat-value" style={{ color: "#00C187", transition: "all 0.5s ease-in-out" }}>-1.3%</div>
                     </div>
                   </div>
                 </div>
 
-                <div className="chart-card">
+                {/* Chart 2: Total Cholesterol (Green - Improving) */}
+                <div className="chart-card" style={{ transition: "all 0.5s ease-in-out" }}>
                   <div className="chart-header">
                     <h3 className="chart-title">Total Cholesterol</h3>
-                    <span className="chart-trend trend-down">↓ 12.4%</span>
+                    <span className="chart-trend trend-down" style={{ background: "#E6FFF5", color: "#00C187", transition: "all 0.5s ease-in-out" }}>↓ 12.4%</span>
                   </div>
                   <div className="mini-chart">
                     <svg className="chart-canvas" viewBox="0 0 300 180">
                       <defs>
-                        <linearGradient
-                          id="grad2"
-                          x1="0%"
-                          y1="0%"
-                          x2="0%"
-                          y2="100%"
-                        >
-                          <stop
-                            offset="0%"
-                            style={{ stopColor: "#467DFF", stopOpacity: 0.3 }}
-                          />
-                          <stop
-                            offset="100%"
-                            style={{ stopColor: "#467DFF", stopOpacity: 0 }}
-                          />
+                        <linearGradient id="grad2" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" style={{ stopColor: "#00C187", stopOpacity: 0.3, transition: "all 0.5s ease-in-out" }} />
+                          <stop offset="100%" style={{ stopColor: "#00C187", stopOpacity: 0, transition: "all 0.5s ease-in-out" }} />
                         </linearGradient>
                       </defs>
-                      <path
-                        d="M 0 110 L 75 95 L 150 85 L 225 75 L 300 60 L 300 180 L 0 180 Z"
-                        fill="url(#grad2)"
-                      />
-                      <path
-                        d="M 0 110 L 75 95 L 150 85 L 225 75 L 300 60"
-                        stroke="#467DFF"
-                        strokeWidth="3"
-                        fill="none"
-                      />
-                      <circle cx="0" cy="110" r="4" fill="#467DFF" />
-                      <circle cx="75" cy="95" r="4" fill="#467DFF" />
-                      <circle cx="150" cy="85" r="4" fill="#467DFF" />
-                      <circle cx="225" cy="75" r="4" fill="#467DFF" />
-                      <circle cx="300" cy="60" r="4" fill="#00C187" />
+                      <path d="M 0 110 L 75 95 L 150 85 L 225 75 L 300 60 L 300 180 L 0 180 Z" fill="url(#grad2)" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <path d="M 0 110 L 75 95 L 150 85 L 225 75 L 300 60" stroke="#00C187" strokeWidth="3" fill="none" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="0" cy="110" r="4" fill="#00C187" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="75" cy="95" r="4" fill="#00C187" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="150" cy="85" r="4" fill="#00C187" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="225" cy="75" r="4" fill="#00C187" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="300" cy="60" r="4" fill="#00C187" style={{ transition: "all 0.5s ease-in-out" }} />
                     </svg>
                   </div>
                   <div className="chart-stats">
                     <div className="stat-col">
                       <div className="stat-label">Initial</div>
-                      <div className="stat-value">223</div>
+                      <div className="stat-value">223 mg/dL</div>
                     </div>
                     <div className="stat-col">
                       <div className="stat-label">Current</div>
-                      <div className="stat-value" style={{ color: "#00C187" }}>
-                        195
-                      </div>
+                      <div className="stat-value" style={{ color: "#00C187", transition: "all 0.5s ease-in-out" }}>195 mg/dL</div>
                     </div>
                     <div className="stat-col">
                       <div className="stat-label">Change</div>
-                      <div className="stat-value" style={{ color: "#00C187" }}>
-                        -28
-                      </div>
+                      <div className="stat-value" style={{ color: "#00C187", transition: "all 0.5s ease-in-out" }}>-28</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Chart 3: Heart Rate (Red - Critical/Worsening) */}
+                <div className="chart-card" style={{ boxShadow: "0 0 12px rgba(255, 92, 92, 0.15)", borderColor: "rgba(255, 92, 92, 0.3)", transition: "all 0.5s ease-in-out" }}>
+                  <div className="chart-header">
+                    <h3 className="chart-title">Heart Rate</h3>
+                    <span className="chart-trend trend-up" style={{ background: "#FFECEC", color: "#FF5C5C", transition: "all 0.5s ease-in-out" }}>↑ 40.0%</span>
+                  </div>
+                  <div className="mini-chart">
+                    <svg className="chart-canvas" viewBox="0 0 300 180">
+                      <defs>
+                        <linearGradient id="grad-hr" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" style={{ stopColor: "#FF5C5C", stopOpacity: 0.3, transition: "all 0.5s ease-in-out" }} />
+                          <stop offset="100%" style={{ stopColor: "#FF5C5C", stopOpacity: 0, transition: "all 0.5s ease-in-out" }} />
+                        </linearGradient>
+                      </defs>
+                      <path d="M 0 130 L 75 110 L 150 140 L 225 90 L 300 60 L 300 180 L 0 180 Z" fill="url(#grad-hr)" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <path d="M 0 130 L 75 110 L 150 140 L 225 90 L 300 60" stroke="#FF5C5C" strokeWidth="3" fill="none" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="0" cy="130" r="4" fill="#FF5C5C" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="75" cy="110" r="4" fill="#FF5C5C" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="150" cy="140" r="4" fill="#FF5C5C" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="225" cy="90" r="4" fill="#FF5C5C" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="300" cy="60" r="4" fill="#FF5C5C" style={{ transition: "all 0.5s ease-in-out" }} />
+                    </svg>
+                  </div>
+                  <div className="chart-stats">
+                    <div className="stat-col">
+                      <div className="stat-label">Initial</div>
+                      <div className="stat-value">75 bpm</div>
+                    </div>
+                    <div className="stat-col">
+                      <div className="stat-label">Current</div>
+                      <div className="stat-value" style={{ color: "#FF5C5C", transition: "all 0.5s ease-in-out" }}>105 bpm</div>
+                    </div>
+                    <div className="stat-col">
+                      <div className="stat-label">Change</div>
+                      <div className="stat-value" style={{ color: "#FF5C5C", transition: "all 0.5s ease-in-out" }}>+30</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="chart-grid" style={{ marginTop: "20px" }}>
+                {/* Chart 4: LDL Cholesterol (Orange - Under Review/Fluctuating) */}
+                <div className="chart-card" style={{ transition: "all 0.5s ease-in-out" }}>
+                  <div className="chart-header">
+                    <h3 className="chart-title">LDL Cholesterol</h3>
+                    <span className="chart-trend trend-stable" style={{ background: "#FFF4E6", color: "#FFA500", transition: "all 0.5s ease-in-out" }}>↔ 1.4%</span>
+                  </div>
+                  <div className="mini-chart">
+                    <svg className="chart-canvas" viewBox="0 0 300 180">
+                      <defs>
+                        <linearGradient id="grad-ldl" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" style={{ stopColor: "#FFA500", stopOpacity: 0.3, transition: "all 0.5s ease-in-out" }} />
+                          <stop offset="100%" style={{ stopColor: "#FFA500", stopOpacity: 0, transition: "all 0.5s ease-in-out" }} />
+                        </linearGradient>
+                      </defs>
+                      <path d="M 0 60 L 75 80 L 150 70 L 225 100 L 300 90 L 300 180 L 0 180 Z" fill="url(#grad-ldl)" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <path d="M 0 60 L 75 80 L 150 70 L 225 100 L 300 90" stroke="#FFA500" strokeWidth="3" fill="none" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="0" cy="60" r="4" fill="#FFA500" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="75" cy="80" r="4" fill="#FFA500" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="150" cy="70" r="4" fill="#FFA500" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="225" cy="100" r="4" fill="#FFA500" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="300" cy="90" r="4" fill="#FFA500" style={{ transition: "all 0.5s ease-in-out" }} />
+                    </svg>
+                  </div>
+                  <div className="chart-stats">
+                    <div className="stat-col">
+                      <div className="stat-label">Initial</div>
+                      <div className="stat-value">140 mg/dL</div>
+                    </div>
+                    <div className="stat-col">
+                      <div className="stat-label">Current</div>
+                      <div className="stat-value" style={{ color: "#FFA500", transition: "all 0.5s ease-in-out" }}>138 mg/dL</div>
+                    </div>
+                    <div className="stat-col">
+                      <div className="stat-label">Change</div>
+                      <div className="stat-value" style={{ color: "#FFA500", transition: "all 0.5s ease-in-out" }}>-2</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Chart 5: Blood Glucose (Red - Critical/Worsening) */}
+                <div className="chart-card" style={{ boxShadow: "0 0 12px rgba(255, 92, 92, 0.15)", borderColor: "rgba(255, 92, 92, 0.3)", transition: "all 0.5s ease-in-out" }}>
+                  <div className="chart-header">
+                    <h3 className="chart-title">Blood Glucose (Random)</h3>
+                    <span className="chart-trend trend-up" style={{ background: "#FFECEC", color: "#FF5C5C", transition: "all 0.5s ease-in-out" }}>↑ 71.4%</span>
+                  </div>
+                  <div className="mini-chart">
+                    <svg className="chart-canvas" viewBox="0 0 300 180">
+                      <defs>
+                        <linearGradient id="grad-bg" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" style={{ stopColor: "#FF5C5C", stopOpacity: 0.3, transition: "all 0.5s ease-in-out" }} />
+                          <stop offset="100%" style={{ stopColor: "#FF5C5C", stopOpacity: 0, transition: "all 0.5s ease-in-out" }} />
+                        </linearGradient>
+                      </defs>
+                      <path d="M 0 110 L 75 125 L 150 90 L 225 70 L 300 40 L 300 180 L 0 180 Z" fill="url(#grad-bg)" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <path d="M 0 110 L 75 125 L 150 90 L 225 70 L 300 40" stroke="#FF5C5C" strokeWidth="3" fill="none" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="0" cy="110" r="4" fill="#FF5C5C" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="75" cy="125" r="4" fill="#FF5C5C" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="150" cy="90" r="4" fill="#FF5C5C" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="225" cy="70" r="4" fill="#FF5C5C" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="300" cy="40" r="4" fill="#FF5C5C" style={{ transition: "all 0.5s ease-in-out" }} />
+                    </svg>
+                  </div>
+                  <div className="chart-stats">
+                    <div className="stat-col">
+                      <div className="stat-label">Initial</div>
+                      <div className="stat-value">105 mg/dL</div>
+                    </div>
+                    <div className="stat-col">
+                      <div className="stat-label">Current</div>
+                      <div className="stat-value" style={{ color: "#FF5C5C", transition: "all 0.5s ease-in-out" }}>180 mg/dL</div>
+                    </div>
+                    <div className="stat-col">
+                      <div className="stat-label">Change</div>
+                      <div className="stat-value" style={{ color: "#FF5C5C", transition: "all 0.5s ease-in-out" }}>+75</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Chart 6: Oxygen Saturation (SpO2) (Orange - Under Review/Fluctuating) */}
+                <div className="chart-card" style={{ transition: "all 0.5s ease-in-out" }}>
+                  <div className="chart-header">
+                    <h3 className="chart-title">Oxygen Saturation (SpO2)</h3>
+                    <span className="chart-trend trend-stable" style={{ background: "#FFF4E6", color: "#FFA500", transition: "all 0.5s ease-in-out" }}>↔ 2.1%</span>
+                  </div>
+                  <div className="mini-chart">
+                    <svg className="chart-canvas" viewBox="0 0 300 180">
+                      <defs>
+                        <linearGradient id="grad-spo2" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" style={{ stopColor: "#FFA500", stopOpacity: 0.3, transition: "all 0.5s ease-in-out" }} />
+                          <stop offset="100%" style={{ stopColor: "#FFA500", stopOpacity: 0, transition: "all 0.5s ease-in-out" }} />
+                        </linearGradient>
+                      </defs>
+                      <path d="M 0 50 L 75 40 L 150 60 L 225 30 L 300 70 L 300 180 L 0 180 Z" fill="url(#grad-spo2)" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <path d="M 0 50 L 75 40 L 150 60 L 225 30 L 300 70" stroke="#FFA500" strokeWidth="3" fill="none" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="0" cy="50" r="4" fill="#FFA500" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="75" cy="40" r="4" fill="#FFA500" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="150" cy="60" r="4" fill="#FFA500" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="225" cy="30" r="4" fill="#FFA500" style={{ transition: "all 0.5s ease-in-out" }} />
+                      <circle cx="300" cy="70" r="4" fill="#FFA500" style={{ transition: "all 0.5s ease-in-out" }} />
+                    </svg>
+                  </div>
+                  <div className="chart-stats">
+                    <div className="stat-col">
+                      <div className="stat-label">Initial</div>
+                      <div className="stat-value">97%</div>
+                    </div>
+                    <div className="stat-col">
+                      <div className="stat-label">Current</div>
+                      <div className="stat-value" style={{ color: "#FFA500", transition: "all 0.5s ease-in-out" }}>95%</div>
+                    </div>
+                    <div className="stat-col">
+                      <div className="stat-label">Change</div>
+                      <div className="stat-value" style={{ color: "#FFA500", transition: "all 0.5s ease-in-out" }}>-2%</div>
                     </div>
                   </div>
                 </div>
@@ -3394,16 +3507,8 @@ const PatientProfile = () => {
 
       {/* Chatbot Trigger */}
       <div className="chatbot-trigger" onClick={toggleChat}>
-        <svg
-          width="28"
-          height="28"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="white"
-          strokeWidth="2"
-        >
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-        </svg>
+        <div className="chatbot-tooltip">DiagnoBot</div>
+        <img src={diagnobotImg} alt="DiagnoBot" className="chatbot-icon" />
       </div>
 
       {/* Chatbot Panel */}

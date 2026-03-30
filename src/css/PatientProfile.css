@@ -2002,7 +2002,37 @@ button.pp-note-delete-btn:hover {
 }
 
 .chatbot-trigger:hover {
-    transform: scale(1.08);
+    scale: 1.05;
+    box-shadow: 0 10px 25px rgba(42, 102, 255, 0.5);
+}
+
+.chatbot-icon {
+    width: 70%;
+    height: 70%;
+    object-fit: contain;
+}
+
+.chatbot-tooltip {
+    position: absolute;
+    right: 70px;
+    top: 50%;
+    transform: translateY(-50%) translateX(15px);
+    background: #0E1A34;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
+}
+
+.chatbot-trigger:hover .chatbot-tooltip {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
 }
 
 @keyframes float {
