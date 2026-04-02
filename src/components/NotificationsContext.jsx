@@ -75,7 +75,7 @@ export function NotificationsProvider({ children }) {
         const list = Array.isArray(notifResult)
           ? notifResult
           : (Array.isArray(notifResult.data) ? notifResult.data : notifResult.data?.data ?? []);
-        
+
         setNotifications((prev) => {
           const prevIds = new Set(prev.map(n => n.id));
           const onlyNew = list.filter(n => !prevIds.has(n.id));
@@ -106,7 +106,7 @@ export function NotificationsProvider({ children }) {
 
     const freshUnread = notifications.filter(n => {
       if (n.is_read || displayedToastIds.current.has(n.id)) return false;
-      
+
       // Try to parse created_at. Handled formats: ISO, "2024-03-..." etc.
       const createdAt = new Date(n.created_at);
       return !isNaN(createdAt.getTime()) && createdAt > twoMinutesAgo;
@@ -164,7 +164,7 @@ export function NotificationsProvider({ children }) {
       return;
     }
 
-    const channelName = `App.Models.User.${resolvedUserId}`;
+    const channelName = `App.Models.Doctor.${resolvedUserId}`;
     console.log(`[Echo Debug] EXACT CHANNEL NAME: ${channelName}`);
     console.log(`[Echo Debug] CONFIRMATION: Calling echo.private('${channelName}') right now...`);
 

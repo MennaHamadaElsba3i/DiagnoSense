@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import Swal from "sweetalert2";
 import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import { getDoctorInitials } from './Dashboard';
@@ -12,6 +12,7 @@ import {
   updatePatientStatusAPI,
   getDecisionSupportAPI,
   getPatientActivitiesAPI,
+  getComparativeAnalysisAPI,
   sendChatbotMessageAPI,
   updatePatientAPI,
   getPatientForEditAPI,
@@ -66,6 +67,14 @@ const PatientProfile = () => {
   const [activitiesLoading, setActivitiesLoading] = useState(false);
   const [activitiesError, setActivitiesError] = useState(null);
   const [activitiesLoadedFor, setActivitiesLoadedFor] = useState(null);
+
+  // ── Comparative Analysis API state ──
+  const [comparativeData, setComparativeData] = useState([]);
+  const [comparativeLoading, setComparativeLoading] = useState(false);
+  const [comparativeError, setComparativeError] = useState(null);
+  const [comparativeLoadedFor, setComparativeLoadedFor] = useState(null);
+  // Tooltip state for SVG chart hover
+  const [chartTooltip, setChartTooltip] = useState({ visible: false, x: 0, y: 0, date: "", status: "", value: "", testIdx: -1, pointIdx: -1 });
 
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -603,6 +612,13 @@ const PatientProfile = () => {
     setActivitiesLoadedFor(null);
   }, [patientId]);
 
+  // ── Reset Comparative Analysis when patient changes ──
+  useEffect(() => {
+    setComparativeData([]);
+    setComparativeError(null);
+    setComparativeLoadedFor(null);
+  }, [patientId]);
+
   // ── Fetch Decision Support from backend (Includes Legacy Auto-Generation Flow) ──
   const [isGeneratingDecisionSupport, setIsGeneratingDecisionSupport] = useState(false);
   const hasTriggeredDecisionSupportGeneration = useRef(false);
@@ -766,6 +782,28 @@ const PatientProfile = () => {
     }
   };
 
+  // ── Fetch Comparative Analysis from backend ──
+  const fetchComparativeAnalysis = async () => {
+    if (!patientId) return;
+    setComparativeLoading(true);
+    setComparativeError(null);
+    try {
+      const res = await getComparativeAnalysisAPI(patientId);
+      console.log("[comparative-analysis] response:", res);
+      if (res && res.success) {
+        setComparativeData(Array.isArray(res.data) ? res.data : []);
+        setComparativeLoadedFor(patientId);
+      } else {
+        setComparativeError(res?.message || "Failed to load comparative analysis.");
+      }
+    } catch (err) {
+      console.error("[comparative-analysis] exception:", err);
+      setComparativeError("Network error. Please check your connection.");
+    } finally {
+      setComparativeLoading(false);
+    }
+  };
+
   const handleTabClick = (tabId) => {
     setActiveTab(tabId);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -774,6 +812,9 @@ const PatientProfile = () => {
     }
     if (tabId === "activity" && patientId) {
       fetchActivities();
+    }
+    if (tabId === "comparative" && patientId && comparativeLoadedFor !== patientId) {
+      fetchComparativeAnalysis();
     }
   };
 
@@ -2978,253 +3019,350 @@ const PatientProfile = () => {
             id="comparative"
           >
             <div className="card">
-              <div className="timeline">
-                <div className="timeline-node">Visit #1</div>
-                <div className="timeline-node">Visit #2</div>
-                <div className="timeline-node">Visit #3</div>
-                <div className="timeline-node">Visit #4</div>
-                <div className="timeline-node">Visit #5</div>
-              </div>
 
-              <div className="chart-grid">
-                {/* Chart 1: HbA1c (Green - Improving) */}
-                <div className="chart-card" style={{ transition: "all 0.5s ease-in-out" }}>
-                  <div className="chart-header">
-                    <h3 className="chart-title">HbA1c (Glycated Hemoglobin)</h3>
-                    <span className="chart-trend trend-down" style={{ background: "#E6FFF5", color: "#00C187", transition: "all 0.5s ease-in-out" }}>↓ 15.3%</span>
-                  </div>
-                  <div className="mini-chart">
-                    <svg className="chart-canvas" viewBox="0 0 300 180">
-                      <defs>
-                        <linearGradient id="grad1" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" style={{ stopColor: "#00C187", stopOpacity: 0.3, transition: "all 0.5s ease-in-out" }} />
-                          <stop offset="100%" style={{ stopColor: "#00C187", stopOpacity: 0, transition: "all 0.5s ease-in-out" }} />
-                        </linearGradient>
-                      </defs>
-                      <path d="M 0 70 L 75 90 L 150 80 L 225 110 L 300 130 L 300 180 L 0 180 Z" fill="url(#grad1)" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <path d="M 0 70 L 75 90 L 150 80 L 225 110 L 300 130" stroke="#00C187" strokeWidth="3" fill="none" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="0" cy="70" r="4" fill="#00C187" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="75" cy="90" r="4" fill="#00C187" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="150" cy="80" r="4" fill="#00C187" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="225" cy="110" r="4" fill="#00C187" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="300" cy="130" r="4" fill="#00C187" style={{ transition: "all 0.5s ease-in-out" }} />
-                    </svg>
-                  </div>
-                  <div className="chart-stats">
-                    <div className="stat-col">
-                      <div className="stat-label">Initial</div>
-                      <div className="stat-value">8.5%</div>
-                    </div>
-                    <div className="stat-col">
-                      <div className="stat-label">Current</div>
-                      <div className="stat-value" style={{ color: "#00C187", transition: "all 0.5s ease-in-out" }}>7.2%</div>
-                    </div>
-                    <div className="stat-col">
-                      <div className="stat-label">Change</div>
-                      <div className="stat-value" style={{ color: "#00C187", transition: "all 0.5s ease-in-out" }}>-1.3%</div>
-                    </div>
-                  </div>
+              {/* ── Loading state ── */}
+              {comparativeLoading && (
+                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "260px" }}>
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#2A66FF" strokeWidth="3" strokeLinecap="round" style={{ animation: "spin 1s linear infinite" }}>
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                  </svg>
                 </div>
+              )}
 
-                {/* Chart 2: Total Cholesterol (Green - Improving) */}
-                <div className="chart-card" style={{ transition: "all 0.5s ease-in-out" }}>
-                  <div className="chart-header">
-                    <h3 className="chart-title">Total Cholesterol</h3>
-                    <span className="chart-trend trend-down" style={{ background: "#E6FFF5", color: "#00C187", transition: "all 0.5s ease-in-out" }}>↓ 12.4%</span>
-                  </div>
-                  <div className="mini-chart">
-                    <svg className="chart-canvas" viewBox="0 0 300 180">
-                      <defs>
-                        <linearGradient id="grad2" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" style={{ stopColor: "#00C187", stopOpacity: 0.3, transition: "all 0.5s ease-in-out" }} />
-                          <stop offset="100%" style={{ stopColor: "#00C187", stopOpacity: 0, transition: "all 0.5s ease-in-out" }} />
-                        </linearGradient>
-                      </defs>
-                      <path d="M 0 110 L 75 95 L 150 85 L 225 75 L 300 60 L 300 180 L 0 180 Z" fill="url(#grad2)" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <path d="M 0 110 L 75 95 L 150 85 L 225 75 L 300 60" stroke="#00C187" strokeWidth="3" fill="none" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="0" cy="110" r="4" fill="#00C187" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="75" cy="95" r="4" fill="#00C187" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="150" cy="85" r="4" fill="#00C187" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="225" cy="75" r="4" fill="#00C187" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="300" cy="60" r="4" fill="#00C187" style={{ transition: "all 0.5s ease-in-out" }} />
-                    </svg>
-                  </div>
-                  <div className="chart-stats">
-                    <div className="stat-col">
-                      <div className="stat-label">Initial</div>
-                      <div className="stat-value">223 mg/dL</div>
-                    </div>
-                    <div className="stat-col">
-                      <div className="stat-label">Current</div>
-                      <div className="stat-value" style={{ color: "#00C187", transition: "all 0.5s ease-in-out" }}>195 mg/dL</div>
-                    </div>
-                    <div className="stat-col">
-                      <div className="stat-label">Change</div>
-                      <div className="stat-value" style={{ color: "#00C187", transition: "all 0.5s ease-in-out" }}>-28</div>
-                    </div>
-                  </div>
+              {/* ── Error state ── */}
+              {!comparativeLoading && comparativeError && (
+                <div style={{ textAlign: "center", padding: "48px 24px", color: "#FF5C5C" }}>
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginBottom: "12px" }}>
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  <p style={{ fontWeight: 600, marginBottom: "6px" }}>Failed to load analysis</p>
+                  <p style={{ fontSize: "13px", color: "#8A94A6", marginBottom: "16px" }}>{comparativeError}</p>
+                  <button
+                    onClick={fetchComparativeAnalysis}
+                    style={{ padding: "8px 20px", background: "#2A66FF", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: 600, fontSize: "13px" }}
+                  >
+                    Retry
+                  </button>
                 </div>
+              )}
 
-                {/* Chart 3: Heart Rate (Red - Critical/Worsening) */}
-                <div className="chart-card" style={{ boxShadow: "0 0 12px rgba(255, 92, 92, 0.15)", borderColor: "rgba(255, 92, 92, 0.3)", transition: "all 0.5s ease-in-out" }}>
-                  <div className="chart-header">
-                    <h3 className="chart-title">Heart Rate</h3>
-                    <span className="chart-trend trend-up" style={{ background: "#FFECEC", color: "#FF5C5C", transition: "all 0.5s ease-in-out" }}>↑ 40.0%</span>
-                  </div>
-                  <div className="mini-chart">
-                    <svg className="chart-canvas" viewBox="0 0 300 180">
-                      <defs>
-                        <linearGradient id="grad-hr" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" style={{ stopColor: "#FF5C5C", stopOpacity: 0.3, transition: "all 0.5s ease-in-out" }} />
-                          <stop offset="100%" style={{ stopColor: "#FF5C5C", stopOpacity: 0, transition: "all 0.5s ease-in-out" }} />
-                        </linearGradient>
-                      </defs>
-                      <path d="M 0 130 L 75 110 L 150 140 L 225 90 L 300 60 L 300 180 L 0 180 Z" fill="url(#grad-hr)" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <path d="M 0 130 L 75 110 L 150 140 L 225 90 L 300 60" stroke="#FF5C5C" strokeWidth="3" fill="none" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="0" cy="130" r="4" fill="#FF5C5C" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="75" cy="110" r="4" fill="#FF5C5C" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="150" cy="140" r="4" fill="#FF5C5C" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="225" cy="90" r="4" fill="#FF5C5C" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="300" cy="60" r="4" fill="#FF5C5C" style={{ transition: "all 0.5s ease-in-out" }} />
-                    </svg>
-                  </div>
-                  <div className="chart-stats">
-                    <div className="stat-col">
-                      <div className="stat-label">Initial</div>
-                      <div className="stat-value">75 bpm</div>
-                    </div>
-                    <div className="stat-col">
-                      <div className="stat-label">Current</div>
-                      <div className="stat-value" style={{ color: "#FF5C5C", transition: "all 0.5s ease-in-out" }}>105 bpm</div>
-                    </div>
-                    <div className="stat-col">
-                      <div className="stat-label">Change</div>
-                      <div className="stat-value" style={{ color: "#FF5C5C", transition: "all 0.5s ease-in-out" }}>+30</div>
-                    </div>
-                  </div>
+              {/* ── Empty state ── */}
+              {!comparativeLoading && !comparativeError && comparativeLoadedFor !== null && comparativeData.length === 0 && (
+                <div style={{ textAlign: "center", padding: "64px 24px" }}>
+                  <div style={{ fontSize: "48px", marginBottom: "16px" }}>📊</div>
+                  <h3 style={{ fontSize: "17px", fontWeight: 700, color: "#0E1A34", marginBottom: "8px" }}>No Analysis Data Available</h3>
+                  <p style={{ fontSize: "14px", color: "#8A94A6", maxWidth: "380px", margin: "0 auto" }}>
+                    No comparative analysis data has been generated for this patient yet. Add lab reports across multiple visits to see trend charts here.
+                  </p>
                 </div>
-              </div>
+              )}
 
-              <div className="chart-grid" style={{ marginTop: "20px" }}>
-                {/* Chart 4: LDL Cholesterol (Orange - Under Review/Fluctuating) */}
-                <div className="chart-card" style={{ transition: "all 0.5s ease-in-out" }}>
-                  <div className="chart-header">
-                    <h3 className="chart-title">LDL Cholesterol</h3>
-                    <span className="chart-trend trend-stable" style={{ background: "#FFF4E6", color: "#FFA500", transition: "all 0.5s ease-in-out" }}>↔ 1.4%</span>
-                  </div>
-                  <div className="mini-chart">
-                    <svg className="chart-canvas" viewBox="0 0 300 180">
-                      <defs>
-                        <linearGradient id="grad-ldl" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" style={{ stopColor: "#FFA500", stopOpacity: 0.3, transition: "all 0.5s ease-in-out" }} />
-                          <stop offset="100%" style={{ stopColor: "#FFA500", stopOpacity: 0, transition: "all 0.5s ease-in-out" }} />
-                        </linearGradient>
-                      </defs>
-                      <path d="M 0 60 L 75 80 L 150 70 L 225 100 L 300 90 L 300 180 L 0 180 Z" fill="url(#grad-ldl)" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <path d="M 0 60 L 75 80 L 150 70 L 225 100 L 300 90" stroke="#FFA500" strokeWidth="3" fill="none" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="0" cy="60" r="4" fill="#FFA500" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="75" cy="80" r="4" fill="#FFA500" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="150" cy="70" r="4" fill="#FFA500" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="225" cy="100" r="4" fill="#FFA500" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="300" cy="90" r="4" fill="#FFA500" style={{ transition: "all 0.5s ease-in-out" }} />
-                    </svg>
-                  </div>
-                  <div className="chart-stats">
-                    <div className="stat-col">
-                      <div className="stat-label">Initial</div>
-                      <div className="stat-value">140 mg/dL</div>
-                    </div>
-                    <div className="stat-col">
-                      <div className="stat-label">Current</div>
-                      <div className="stat-value" style={{ color: "#FFA500", transition: "all 0.5s ease-in-out" }}>138 mg/dL</div>
-                    </div>
-                    <div className="stat-col">
-                      <div className="stat-label">Change</div>
-                      <div className="stat-value" style={{ color: "#FFA500", transition: "all 0.5s ease-in-out" }}>-2</div>
-                    </div>
-                  </div>
-                </div>
+              {/* ── Data state ── */}
+              {!comparativeLoading && !comparativeError && comparativeData.length > 0 && (() => {
+                // Derive the max number of visits across all tests
+                const maxVisits = comparativeData.reduce((max, test) => {
+                  const pts = Array.isArray(test.all_points) ? test.all_points.length : 0;
+                  return pts > max ? pts : max;
+                }, 0);
 
-                {/* Chart 5: Blood Glucose (Red - Critical/Worsening) */}
-                <div className="chart-card" style={{ boxShadow: "0 0 12px rgba(255, 92, 92, 0.15)", borderColor: "rgba(255, 92, 92, 0.3)", transition: "all 0.5s ease-in-out" }}>
-                  <div className="chart-header">
-                    <h3 className="chart-title">Blood Glucose (Random)</h3>
-                    <span className="chart-trend trend-up" style={{ background: "#FFECEC", color: "#FF5C5C", transition: "all 0.5s ease-in-out" }}>↑ 71.4%</span>
-                  </div>
-                  <div className="mini-chart">
-                    <svg className="chart-canvas" viewBox="0 0 300 180">
-                      <defs>
-                        <linearGradient id="grad-bg" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" style={{ stopColor: "#FF5C5C", stopOpacity: 0.3, transition: "all 0.5s ease-in-out" }} />
-                          <stop offset="100%" style={{ stopColor: "#FF5C5C", stopOpacity: 0, transition: "all 0.5s ease-in-out" }} />
-                        </linearGradient>
-                      </defs>
-                      <path d="M 0 110 L 75 125 L 150 90 L 225 70 L 300 40 L 300 180 L 0 180 Z" fill="url(#grad-bg)" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <path d="M 0 110 L 75 125 L 150 90 L 225 70 L 300 40" stroke="#FF5C5C" strokeWidth="3" fill="none" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="0" cy="110" r="4" fill="#FF5C5C" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="75" cy="125" r="4" fill="#FF5C5C" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="150" cy="90" r="4" fill="#FF5C5C" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="225" cy="70" r="4" fill="#FF5C5C" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="300" cy="40" r="4" fill="#FF5C5C" style={{ transition: "all 0.5s ease-in-out" }} />
-                    </svg>
-                  </div>
-                  <div className="chart-stats">
-                    <div className="stat-col">
-                      <div className="stat-label">Initial</div>
-                      <div className="stat-value">105 mg/dL</div>
-                    </div>
-                    <div className="stat-col">
-                      <div className="stat-label">Current</div>
-                      <div className="stat-value" style={{ color: "#FF5C5C", transition: "all 0.5s ease-in-out" }}>180 mg/dL</div>
-                    </div>
-                    <div className="stat-col">
-                      <div className="stat-label">Change</div>
-                      <div className="stat-value" style={{ color: "#FF5C5C", transition: "all 0.5s ease-in-out" }}>+75</div>
-                    </div>
-                  </div>
-                </div>
+                // Build deduplicated visit labels in order
+                const visitLabels = [];
+                comparativeData.forEach(test => {
+                  (test.all_points || []).forEach(pt => {
+                    if (!visitLabels.includes(pt.visit_label)) visitLabels.push(pt.visit_label);
+                  });
+                });
 
-                {/* Chart 6: Oxygen Saturation (SpO2) (Orange - Under Review/Fluctuating) */}
-                <div className="chart-card" style={{ transition: "all 0.5s ease-in-out" }}>
-                  <div className="chart-header">
-                    <h3 className="chart-title">Oxygen Saturation (SpO2)</h3>
-                    <span className="chart-trend trend-stable" style={{ background: "#FFF4E6", color: "#FFA500", transition: "all 0.5s ease-in-out" }}>↔ 2.1%</span>
-                  </div>
-                  <div className="mini-chart">
-                    <svg className="chart-canvas" viewBox="0 0 300 180">
-                      <defs>
-                        <linearGradient id="grad-spo2" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" style={{ stopColor: "#FFA500", stopOpacity: 0.3, transition: "all 0.5s ease-in-out" }} />
-                          <stop offset="100%" style={{ stopColor: "#FFA500", stopOpacity: 0, transition: "all 0.5s ease-in-out" }} />
-                        </linearGradient>
-                      </defs>
-                      <path d="M 0 50 L 75 40 L 150 60 L 225 30 L 300 70 L 300 180 L 0 180 Z" fill="url(#grad-spo2)" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <path d="M 0 50 L 75 40 L 150 60 L 225 30 L 300 70" stroke="#FFA500" strokeWidth="3" fill="none" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="0" cy="50" r="4" fill="#FFA500" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="75" cy="40" r="4" fill="#FFA500" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="150" cy="60" r="4" fill="#FFA500" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="225" cy="30" r="4" fill="#FFA500" style={{ transition: "all 0.5s ease-in-out" }} />
-                      <circle cx="300" cy="70" r="4" fill="#FFA500" style={{ transition: "all 0.5s ease-in-out" }} />
-                    </svg>
-                  </div>
-                  <div className="chart-stats">
-                    <div className="stat-col">
-                      <div className="stat-label">Initial</div>
-                      <div className="stat-value">97%</div>
+                // Helpers for trend styling
+                const getTrendStyle = (trend, status) => {
+                  const isCritical = (status || "").toLowerCase() === "critical";
+                  if (trend === "up") return { bg: isCritical ? "#FFECEC" : "#E6FFF5", color: isCritical ? "#FF5C5C" : "#00C187", arrow: "↑" };
+                  if (trend === "down") return { bg: isCritical ? "#FFECEC" : "#E6FFF5", color: isCritical ? "#FF5C5C" : "#00C187", arrow: "↓" };
+                  return { bg: "#FFF4E6", color: "#FFA500", arrow: "—" };
+                };
+
+                const getChartColor = (trend, status) => {
+                  const isCritical = (status || "").toLowerCase() === "critical";
+                  if (trend === "up") return isCritical ? "#FF5C5C" : "#00C187";
+                  if (trend === "down") return isCritical ? "#FF5C5C" : "#00C187";
+                  return "#FFA500";
+                };
+
+                // Build SVG polyline from all_points
+                const buildChartPath = (points) => {
+                  if (!points || points.length === 0) return { line: "", area: "", dots: [] };
+                  const W = 300, H = 160;
+                  const values = points.map(p => Number(p.value));
+                  const minV = Math.min(...values);
+                  const maxV = Math.max(...values);
+                  const range = maxV - minV || 1;
+                  const coords = points.map((p, i) => {
+                    const x = points.length === 1 ? W / 2 : (i / (points.length - 1)) * W;
+                    const y = H - ((Number(p.value) - minV) / range) * (H - 20) - 10;
+                    return { x, y, ...p };
+                  });
+                  const lineD = coords.map((c, i) => `${i === 0 ? "M" : "L"} ${c.x.toFixed(1)} ${c.y.toFixed(1)}`).join(" ");
+                  const areaD = lineD + ` L ${coords[coords.length - 1].x.toFixed(1)} ${H} L ${coords[0].x.toFixed(1)} ${H} Z`;
+                  return { line: lineD, area: areaD, dots: coords };
+                };
+
+                return (
+                  <>
+                    {/* Scrollable Visit Timeline */}
+                    <div style={{ overflowX: "auto", marginBottom: "28px" }}>
+                      <div style={{
+                        display: "flex",
+                        alignItems: "center",
+                        position: "relative",
+                        minWidth: `${Math.max(visitLabels.length * 110, 300)}px`,
+                        padding: "0 8px",
+                      }}>
+                        {/* connector line */}
+                        <div style={{
+                          position: "absolute",
+                          top: "50%",
+                          left: 0,
+                          right: 0,
+                          height: "2px",
+                          background: "linear-gradient(90deg, #2A66FF 0%, #467DFF 100%)",
+                          zIndex: 0,
+                          transform: "translateY(-50%)",
+                        }} />
+                        {visitLabels.map((label, idx) => (
+                          <div key={idx} style={{
+                            position: "relative",
+                            zIndex: 1,
+                            background: "white",
+                            padding: "8px 16px",
+                            borderRadius: "18px",
+                            border: "2px solid #2A66FF",
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            color: "#2A66FF",
+                            cursor: "default",
+                            whiteSpace: "nowrap",
+                            marginRight: idx < visitLabels.length - 1 ? "auto" : "0",
+                            marginLeft: idx === 0 ? "0" : "auto",
+                            transition: "all 0.3s ease",
+                            flexShrink: 0,
+                          }}
+                            onMouseEnter={e => { e.currentTarget.style.background = "#2A66FF"; e.currentTarget.style.color = "white"; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = "white"; e.currentTarget.style.color = "#2A66FF"; }}
+                          >
+                            {label}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="stat-col">
-                      <div className="stat-label">Current</div>
-                      <div className="stat-value" style={{ color: "#FFA500", transition: "all 0.5s ease-in-out" }}>95%</div>
+
+                    {/* Chart Grid */}
+                    <div className="chart-grid">
+                      {comparativeData.map((test, testIdx) => {
+                        const comp = test.comparison || {};
+                        const trend = comp.trend || "stable";
+                        const status = comp.status || "";
+                        const isCritical = status.toLowerCase() === "critical";
+                        const tStyle = getTrendStyle(trend, status);
+                        const chartColor = getChartColor(trend, status);
+                        const points = Array.isArray(test.all_points) ? test.all_points : [];
+                        const { line, area, dots } = buildChartPath(points);
+                        const firstValue = points.length > 0 ? points[0].value : "N/A";
+                        const currentValue = comp.current_value != null ? comp.current_value : "N/A";
+                        const changePercent = comp.change_percentage;
+                        const noPrevious = comp.previous_value === "No previous" || comp.previous_value == null;
+                        const gradId = `ca-grad-${testIdx}`;
+
+                        return (
+                          <div
+                            key={testIdx}
+                            className="chart-card"
+                            style={{
+                              transition: "all 0.5s ease-in-out",
+                              ...(isCritical ? {
+                                boxShadow: "0 0 14px rgba(255, 92, 92, 0.22)",
+                                borderColor: "rgba(255, 92, 92, 0.35)",
+                              } : {}),
+                              position: "relative",
+                            }}
+                          >
+                            {/* Critical badge glow indicator */}
+                            {isCritical && (
+                              <div style={{
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                height: "3px",
+                                borderRadius: "12px 12px 0 0",
+                                background: "linear-gradient(90deg, #FF5C5C, #ff8a8a)",
+                              }} />
+                            )}
+
+                            {/* Card Header */}
+                            <div className="chart-header">
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", flex: 1, minWidth: 0 }}>
+                                <h3 className="chart-title" style={{ margin: 0 }}>{test.test_name}</h3>
+                                {test.category && (
+                                  <span style={{
+                                    fontSize: "10px",
+                                    fontWeight: 700,
+                                    padding: "2px 8px",
+                                    borderRadius: "20px",
+                                    background: "#E9F0FF",
+                                    color: "#2A66FF",
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.4px",
+                                    flexShrink: 0,
+                                  }}>
+                                    {test.category}
+                                  </span>
+                                )}
+                              </div>
+                              <span
+                                className="chart-trend"
+                                style={{ background: tStyle.bg, color: tStyle.color, flexShrink: 0, marginLeft: "8px", transition: "all 0.5s ease-in-out" }}
+                              >
+                                {tStyle.arrow} {noPrevious ? "First Visit" : `${Math.abs(changePercent ?? 0).toFixed(1)}%`}
+                              </span>
+                            </div>
+
+                            {/* SVG Chart */}
+                            <div className="mini-chart" style={{ position: "relative" }}>
+                              <svg
+                                className="chart-canvas"
+                                viewBox="0 0 300 160"
+                                style={{ overflow: "visible" }}
+                                onMouseLeave={() => setChartTooltip(prev => ({ ...prev, visible: false }))}
+                              >
+                                <defs>
+                                  <linearGradient id={gradId} x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" style={{ stopColor: chartColor, stopOpacity: 0.3 }} />
+                                    <stop offset="100%" style={{ stopColor: chartColor, stopOpacity: 0 }} />
+                                  </linearGradient>
+                                </defs>
+                                {points.length > 1 && (
+                                  <>
+                                    <path d={area} fill={`url(#${gradId})`} style={{ transition: "all 0.5s ease" }} />
+                                    <path d={line} stroke={chartColor} strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "all 0.5s ease" }} />
+                                  </>
+                                )}
+                                {points.length === 1 && (
+                                  <line x1="0" y1="80" x2="300" y2="80" stroke={chartColor} strokeWidth="2" strokeDasharray="6 4" opacity="0.4" />
+                                )}
+                                {dots.map((dot, di) => (
+                                  <g key={di}>
+                                    <circle
+                                      cx={dot.x}
+                                      cy={dot.y}
+                                      r="6"
+                                      fill="transparent"
+                                      style={{ cursor: "pointer" }}
+                                      onMouseEnter={(e) => {
+                                        const svgRect = e.currentTarget.closest("svg").getBoundingClientRect();
+                                        const cardRect = e.currentTarget.closest(".chart-card").getBoundingClientRect();
+                                        setChartTooltip({
+                                          visible: true,
+                                          x: svgRect.left - cardRect.left + dot.x * (svgRect.width / 300),
+                                          y: svgRect.top - cardRect.top + dot.y * (svgRect.height / 160),
+                                          date: dot.date || "",
+                                          status: dot.status || "",
+                                          value: `${dot.value} ${test.unit || ""}`,
+                                          testIdx,
+                                          pointIdx: di,
+                                        });
+                                      }}
+                                    />
+                                    <circle
+                                      cx={dot.x}
+                                      cy={dot.y}
+                                      r="4"
+                                      fill={chartColor}
+                                      stroke="white"
+                                      strokeWidth="1.5"
+                                      style={{ pointerEvents: "none" }}
+                                    />
+                                  </g>
+                                ))}
+                              </svg>
+
+                              {/* Tooltip */}
+                              {chartTooltip.visible && chartTooltip.testIdx === testIdx && (
+                                <div style={{
+                                  position: "absolute",
+                                  left: `${chartTooltip.x}px`,
+                                  top: `${chartTooltip.y - 70}px`,
+                                  transform: "translateX(-50%)",
+                                  background: "#0E1A34",
+                                  color: "white",
+                                  padding: "8px 12px",
+                                  borderRadius: "8px",
+                                  fontSize: "12px",
+                                  fontWeight: 500,
+                                  pointerEvents: "none",
+                                  zIndex: 10,
+                                  whiteSpace: "nowrap",
+                                  boxShadow: "0 4px 14px rgba(0,0,0,0.2)",
+                                }}>
+                                  <div style={{ fontWeight: 700, marginBottom: "2px" }}>{chartTooltip.value}</div>
+                                  {chartTooltip.date && <div style={{ color: "#8A94A6", fontSize: "11px" }}>{chartTooltip.date}</div>}
+                                  {chartTooltip.status && (
+                                    <div style={{
+                                      marginTop: "4px",
+                                      fontSize: "11px",
+                                      fontWeight: 700,
+                                      color: chartTooltip.status.toLowerCase() === "critical" ? "#FF5C5C" : "#00C187",
+                                    }}>
+                                      {chartTooltip.status}
+                                    </div>
+                                  )}
+                                  {/* tooltip arrow */}
+                                  <div style={{
+                                    position: "absolute",
+                                    bottom: "-6px",
+                                    left: "50%",
+                                    transform: "translateX(-50%)",
+                                    width: 0,
+                                    height: 0,
+                                    borderLeft: "6px solid transparent",
+                                    borderRight: "6px solid transparent",
+                                    borderTop: "6px solid #0E1A34",
+                                  }} />
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Footer Stats */}
+                            <div className="chart-stats">
+                              <div className="stat-col">
+                                <div className="stat-label">Initial</div>
+                                <div className="stat-value">{firstValue} {test.unit || ""}</div>
+                              </div>
+                              <div className="stat-col">
+                                <div className="stat-label">Current</div>
+                                <div className="stat-value" style={{ color: chartColor }}>{currentValue} {test.unit || ""}</div>
+                              </div>
+                              <div className="stat-col">
+                                <div className="stat-label">Change</div>
+                                <div className="stat-value" style={{ color: noPrevious ? "#8A94A6" : chartColor, transition: "all 0.5s ease-in-out" }}>
+                                  {noPrevious
+                                    ? "N/A"
+                                    : `${(changePercent ?? 0) >= 0 ? "+" : ""}${(changePercent ?? 0).toFixed(1)}%`
+                                  }
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                    <div className="stat-col">
-                      <div className="stat-label">Change</div>
-                      <div className="stat-value" style={{ color: "#FFA500", transition: "all 0.5s ease-in-out" }}>-2%</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  </>
+                );
+              })()}
+
             </div>
           </div>
+
+
 
           {/* Decision Support Tab */}
           <div

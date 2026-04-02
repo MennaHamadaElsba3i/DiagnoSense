@@ -501,6 +501,17 @@ export const getPatientActivitiesAPI = async (patientId) => {
 };
 
 /**
+ * GET /api/patients/{patientId}/comparative-analysis
+ * Returns comparative analysis data (test trends across visits) for a given patient.
+ * Token is injected automatically by apiCall (reads user_token cookie).
+ */
+export const getComparativeAnalysisAPI = async (patientId) => {
+  return await apiCall(`/api/patients/${patientId}/comparative-analysis`, {
+    method: 'GET',
+  });
+};
+
+/**
  * POST /api/visits
  * Sent as application/x-www-form-urlencoded (not JSON) — backend requirement.
  * @param {object} params

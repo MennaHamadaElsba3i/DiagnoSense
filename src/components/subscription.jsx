@@ -66,7 +66,7 @@ function Subscription() {
 
   const openLogoutModal = () => setIsLogoutModalOpen(true);
   const closeLogoutModal = () => setIsLogoutModalOpen(false);
-  
+
   // ── Robust Closure Fallback ────────────────────────────────────────────────
   // If the app is loading inside a stripe_checkout popup (e.g. redirect failed), close it.
   useEffect(() => {
@@ -181,7 +181,7 @@ function Subscription() {
 
   const handleConfirmCancelSub = async () => {
     setIsCancelConfirmModalOpen(false);
-    
+
     const apiResult = await cancelSubscriptionAPI();
 
     if (apiResult.success) {
