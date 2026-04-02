@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Swal from "sweetalert2";
 import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import { getDoctorInitials } from './Dashboard';
@@ -54,6 +54,9 @@ const PatientProfile = () => {
   const [overviewLoading, setOverviewLoading] = useState(true);
   const [overviewError, setOverviewError] = useState(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  // ── Evidence Panel state ──
+  const [sourceFile, setSourceFile] = useState(null);
+  const [evidencePanel, setEvidencePanel] = useState({ open: false, evidence: [], alertTitle: "" });
   const [isDeleting, setIsDeleting] = useState(false);
 
   // ── Decision Support API state ──
@@ -322,6 +325,9 @@ const PatientProfile = () => {
       if (res && res.success !== false) {
         const payload = res?.data ?? res;
         setKeyInfo(payload);
+        // Extract source PDF URL for the Evidence Panel
+        const sf = payload?.source_file ?? res?.source_file ?? null;
+        if (sf) setSourceFile(sf);
       } else {
         console.error("[keyInfo] fetch failed:", res?.message);
       }
@@ -578,6 +584,15 @@ const PatientProfile = () => {
   const cancelEditNote = () => {
     setEditingNoteId(null);
     setEditingNoteText("");
+  };
+
+  // ── Open Evidence Panel with alert-specific data ──
+  const openEvidencePanel = (alertObj) => {
+    setEvidencePanel({
+      open: true,
+      evidence: Array.isArray(alertObj?.evidence) ? alertObj.evidence : [],
+      alertTitle: alertObj?.title || alertObj?.is_manual || "Evidence",
+    });
   };
 
   const messagesEndRef = useRef(null);
@@ -1774,7 +1789,7 @@ const PatientProfile = () => {
                                   </span>
                                   <button
                                     className="pp-evidence-icon-btn"
-                                    onClick={() => setIsPanelOpen(true)}
+                                    onClick={() => openEvidencePanel(null)}
                                     title="View Evidence"
                                   >
                                     <svg
@@ -1829,7 +1844,7 @@ const PatientProfile = () => {
                               <span className="note-date">Jan 28, 2026</span>
                               <button
                                 className="pp-evidence-icon-btn"
-                                onClick={() => setIsPanelOpen(true)}
+                                onClick={() => openEvidencePanel(null)}
                                 title="View Evidence"
                               >
                                 <svg
@@ -1936,7 +1951,7 @@ const PatientProfile = () => {
                                         {!isManualNote && (
                                           <button
                                             className="pp-evidence-icon-btn"
-                                            onClick={() => setIsPanelOpen(true)}
+                                            onClick={() => openEvidencePanel(alertObj)}
                                             title="View Evidence"
                                           >
                                             <svg
@@ -2002,7 +2017,7 @@ const PatientProfile = () => {
                                     {!isManualNote && (
                                       <button
                                         className="pp-evidence-icon-btn"
-                                        onClick={() => setIsPanelOpen(true)}
+                                        onClick={() => openEvidencePanel(alertObj)}
                                         title="View Evidence"
                                       >
                                         <svg
@@ -2223,7 +2238,7 @@ const PatientProfile = () => {
                                   </span>
                                   <button
                                     className="pp-evidence-icon-btn"
-                                    onClick={() => setIsPanelOpen(true)}
+                                    onClick={() => openEvidencePanel(null)}
                                     title="View Evidence"
                                   >
                                     <svg
@@ -2279,7 +2294,7 @@ const PatientProfile = () => {
                               <span className="note-date">Jan 30, 2026</span>
                               <button
                                 className="pp-evidence-icon-btn"
-                                onClick={() => setIsPanelOpen(true)}
+                                onClick={() => openEvidencePanel(null)}
                                 title="View Evidence"
                               >
                                 <svg
@@ -2382,7 +2397,7 @@ const PatientProfile = () => {
                                       {!isManualNote && (
                                         <button
                                           className="pp-evidence-icon-btn"
-                                          onClick={() => setIsPanelOpen(true)}
+                                          onClick={() => openEvidencePanel(alertObj)}
                                           title="View Evidence"
                                         >
                                           <svg
@@ -2452,7 +2467,7 @@ const PatientProfile = () => {
                                   {!isManualNote && (
                                     <button
                                       className="pp-evidence-icon-btn"
-                                      onClick={() => setIsPanelOpen(true)}
+                                      onClick={() => openEvidencePanel(alertObj)}
                                       title="View Evidence"
                                     >
                                       <svg
@@ -2703,7 +2718,7 @@ const PatientProfile = () => {
                               <span className="note-date">Oct 10, 2025</span>
                               <button
                                 className="pp-evidence-icon-btn"
-                                onClick={() => setIsPanelOpen(true)}
+                                onClick={() => openEvidencePanel(null)}
                                 title="View Evidence"
                               >
                                 <svg
@@ -2850,7 +2865,7 @@ const PatientProfile = () => {
                                       !isManualNote && (
                                         <button
                                           className="pp-evidence-icon-btn"
-                                          onClick={() => setIsPanelOpen(true)}
+                                          onClick={() => openEvidencePanel(alertObj)}
                                         >
                                           <svg
                                             width="14"
@@ -3745,8 +3760,11 @@ const PatientProfile = () => {
         </div>
       </div>
       <EvidencePanel
-        isOpen={isPanelOpen}
-        onClose={() => setIsPanelOpen(false)}
+        isOpen={evidencePanel.open}
+        onClose={() => setEvidencePanel(p => ({ ...p, open: false }))}
+        sourceFile={sourceFile}
+        evidence={evidencePanel.evidence}
+        alertTitle={evidencePanel.alertTitle}
       />
     </div>
   );
