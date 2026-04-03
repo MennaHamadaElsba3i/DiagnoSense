@@ -588,10 +588,13 @@ const PatientProfile = () => {
 
   // ── Open Evidence Panel with alert-specific data ──
   const openEvidencePanel = (alertObj) => {
+    console.log("[ViewEvidence] Click triggered. Target alert:", alertObj?.id, alertObj?.title);
+    console.log("[ViewEvidence] Extracted evidence:", alertObj?.evidence);
+    console.log("[ViewEvidence] Source file to pass:", sourceFile);
+    
     setEvidencePanel({
       open: true,
-      evidence: Array.isArray(alertObj?.evidence) ? alertObj.evidence : [],
-      alertTitle: alertObj?.title || alertObj?.is_manual || "Evidence",
+      selectedAlert: alertObj,
     });
   };
 
@@ -3763,8 +3766,7 @@ const PatientProfile = () => {
         isOpen={evidencePanel.open}
         onClose={() => setEvidencePanel(p => ({ ...p, open: false }))}
         sourceFile={sourceFile}
-        evidence={evidencePanel.evidence}
-        alertTitle={evidencePanel.alertTitle}
+        selectedAlert={evidencePanel.selectedAlert}
       />
     </div>
   );
