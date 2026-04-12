@@ -22,6 +22,7 @@ const AddPatient = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const { unreadCount, openNotifications } = useNotifications();
   const [showProcessingScreen, setShowProcessingScreen] = useState(false);
+  const [pollingInfo, setPollingInfo] = useState({ patientId: null, token: null });
   const [selectedGender, setSelectedGender] = useState(null);
   const [isSmoker, setIsSmoker] = useState(null);
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
@@ -401,13 +402,8 @@ const AddPatient = () => {
         );
 
         const token = getCookie('user_token');
-        navigate("/loading", {
-          state: {
-            patientId: result.data.data.patient_id,
-            token: token,
-          },
-        });
-
+        setPollingInfo({ patientId: result.data.data.patient_id, token });
+        setShowProcessingScreen(true);
       } else {
         // Log the raw 422 body so we can see every field the backend flagged
         console.log("[add-patient] 422 raw response:", {
@@ -438,7 +434,23 @@ const AddPatient = () => {
   };
 
   if (showProcessingScreen) {
-    return <ProcessingReports />;
+    return (
+      <ProcessingReports 
+        patientId={pollingInfo.patientId} 
+        token={pollingInfo.token}
+        onSuccess={(data) => {
+          navigate(`/patient-profile/${pollingInfo.patientId}`, {
+            state: { keyInfoData: data, patientId: pollingInfo.patientId }
+          });
+        }}
+        onFailure={(msg) => {
+          setShowProcessingScreen(false);
+          setIsProcessing(false);
+          setFieldErrors({ _general: msg || "AI analysis failed. Please try again." });
+          setCurrentStep(3); // Ensure user is on the final step for retry
+        }}
+      />
+    );
   }
 
   return (
