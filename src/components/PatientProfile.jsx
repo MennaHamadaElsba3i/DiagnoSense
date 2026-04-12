@@ -3007,10 +3007,23 @@ const PatientProfile = () => {
                   const values = points.map(p => Number(p.value));
                   const minV = Math.min(...values);
                   const maxV = Math.max(...values);
-                  const range = maxV - minV || 1;
+                  const range = maxV - minV;
+                  
+                  // Define vertical drawing area with padding to keep points away from edges
+                  const topPadding = 40;
+                  const bottomPadding = 40;
+                  const usableHeight = H - topPadding - bottomPadding;
+
                   const coords = points.map((p, i) => {
                     const x = points.length === 1 ? W / 2 : (i / (points.length - 1)) * W;
-                    const y = H - ((Number(p.value) - minV) / range) * (H - 20) - 10;
+                    let y;
+                    if (range === 0) {
+                      // Center the point vertically if there's no variation or only one point
+                      y = H / 2;
+                    } else {
+                      // Map values into the usable height, inverting so higher values have lower y
+                      y = (H - bottomPadding) - ((Number(p.value) - minV) / range) * usableHeight;
+                    }
                     return { x, y, ...p };
                   });
                   const lineD = coords.map((c, i) => `${i === 0 ? "M" : "L"} ${c.x.toFixed(1)} ${c.y.toFixed(1)}`).join(" ");
@@ -3020,52 +3033,7 @@ const PatientProfile = () => {
 
                 return (
                   <>
-                    {/* Scrollable Visit Timeline */}
-                    <div style={{ overflowX: "auto", marginBottom: "28px" }}>
-                      <div style={{
-                        display: "flex",
-                        alignItems: "center",
-                        position: "relative",
-                        minWidth: `${Math.max(visitLabels.length * 110, 300)}px`,
-                        padding: "0 8px",
-                      }}>
-                        {/* connector line */}
-                        <div style={{
-                          position: "absolute",
-                          top: "50%",
-                          left: 0,
-                          right: 0,
-                          height: "2px",
-                          background: "linear-gradient(90deg, #2A66FF 0%, #467DFF 100%)",
-                          zIndex: 0,
-                          transform: "translateY(-50%)",
-                        }} />
-                        {visitLabels.map((label, idx) => (
-                          <div key={idx} style={{
-                            position: "relative",
-                            zIndex: 1,
-                            background: "white",
-                            padding: "8px 16px",
-                            borderRadius: "18px",
-                            border: "2px solid #2A66FF",
-                            fontSize: "12px",
-                            fontWeight: 600,
-                            color: "#2A66FF",
-                            cursor: "default",
-                            whiteSpace: "nowrap",
-                            marginRight: idx < visitLabels.length - 1 ? "auto" : "0",
-                            marginLeft: idx === 0 ? "0" : "auto",
-                            transition: "all 0.3s ease",
-                            flexShrink: 0,
-                          }}
-                            onMouseEnter={e => { e.currentTarget.style.background = "#2A66FF"; e.currentTarget.style.color = "white"; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = "white"; e.currentTarget.style.color = "#2A66FF"; }}
-                          >
-                            {label}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+
 
                     {/* Chart Grid */}
                     <div className="chart-grid">
@@ -3085,57 +3053,29 @@ const PatientProfile = () => {
                         const gradId = `ca-grad-${testIdx}`;
 
                         return (
-                          <div
-                            key={testIdx}
-                            className="chart-card"
-                            style={{
-                              transition: "all 0.5s ease-in-out",
-                              ...(isCritical ? {
-                                boxShadow: "0 0 14px rgba(255, 92, 92, 0.22)",
-                                borderColor: "rgba(255, 92, 92, 0.35)",
-                              } : {}),
-                              position: "relative",
-                            }}
-                          >
-                            {/* Critical badge glow indicator */}
-                            {isCritical && (
-                              <div style={{
-                                position: "absolute",
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                height: "3px",
-                                borderRadius: "12px 12px 0 0",
-                                background: "linear-gradient(90deg, #FF5C5C, #ff8a8a)",
-                              }} />
-                            )}
+                            <div
+                              key={testIdx}
+                              className="chart-card"
+                              style={{
+                                transition: "all 0.5s ease-in-out",
+                                position: "relative",
+                              }}
+                            >
+
 
                             {/* Card Header */}
                             <div className="chart-header">
                               <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", flex: 1, minWidth: 0 }}>
                                 <h3 className="chart-title" style={{ margin: 0 }}>{test.test_name}</h3>
-                                {test.category && (
-                                  <span style={{
-                                    fontSize: "10px",
-                                    fontWeight: 700,
-                                    padding: "2px 8px",
-                                    borderRadius: "20px",
-                                    background: "#E9F0FF",
-                                    color: "#2A66FF",
-                                    textTransform: "uppercase",
-                                    letterSpacing: "0.4px",
-                                    flexShrink: 0,
-                                  }}>
-                                    {test.category}
-                                  </span>
-                                )}
                               </div>
-                              <span
-                                className="chart-trend"
-                                style={{ background: tStyle.bg, color: tStyle.color, flexShrink: 0, marginLeft: "8px", transition: "all 0.5s ease-in-out" }}
-                              >
-                                {tStyle.arrow} {noPrevious ? "First Visit" : `${Math.abs(changePercent ?? 0).toFixed(1)}%`}
-                              </span>
+                              {!noPrevious && (
+                                <span
+                                  className="chart-trend"
+                                  style={{ background: tStyle.bg, color: tStyle.color, flexShrink: 0, marginLeft: "8px", transition: "all 0.5s ease-in-out" }}
+                                >
+                                  {tStyle.arrow} {Math.abs(changePercent ?? 0).toFixed(1)}%
+                                </span>
+                              )}
                             </div>
 
                             {/* SVG Chart */}
@@ -3148,7 +3088,7 @@ const PatientProfile = () => {
                               >
                                 <defs>
                                   <linearGradient id={gradId} x1="0%" y1="0%" x2="0%" y2="100%">
-                                    <stop offset="0%" style={{ stopColor: chartColor, stopOpacity: 0.3 }} />
+                                    <stop offset="0%" style={{ stopColor: chartColor, stopOpacity: 0.12 }} />
                                     <stop offset="100%" style={{ stopColor: chartColor, stopOpacity: 0 }} />
                                   </linearGradient>
                                 </defs>
@@ -3170,12 +3110,12 @@ const PatientProfile = () => {
                                       fill="transparent"
                                       style={{ cursor: "pointer" }}
                                       onMouseEnter={(e) => {
-                                        const svgRect = e.currentTarget.closest("svg").getBoundingClientRect();
-                                        const cardRect = e.currentTarget.closest(".chart-card").getBoundingClientRect();
+                                        const svg = e.currentTarget.closest("svg");
+                                        const svgRect = svg.getBoundingClientRect();
                                         setChartTooltip({
                                           visible: true,
-                                          x: svgRect.left - cardRect.left + dot.x * (svgRect.width / 300),
-                                          y: svgRect.top - cardRect.top + dot.y * (svgRect.height / 160),
+                                          x: dot.x * (svgRect.width / 300),
+                                          y: dot.y * (svgRect.height / 160),
                                           date: dot.date || "",
                                           status: dot.status || "",
                                           value: `${dot.value} ${test.unit || ""}`,
@@ -3187,7 +3127,7 @@ const PatientProfile = () => {
                                     <circle
                                       cx={dot.x}
                                       cy={dot.y}
-                                      r="4"
+                                      r={chartTooltip.visible && chartTooltip.testIdx === testIdx && chartTooltip.pointIdx === di ? "6" : "4"}
                                       fill={chartColor}
                                       stroke="white"
                                       strokeWidth="1.5"
@@ -3202,26 +3142,31 @@ const PatientProfile = () => {
                                 <div style={{
                                   position: "absolute",
                                   left: `${chartTooltip.x}px`,
-                                  top: `${chartTooltip.y - 70}px`,
+                                  top: chartTooltip.y < 80 ? `${chartTooltip.y + 15}px` : `${chartTooltip.y - 85}px`,
                                   transform: "translateX(-50%)",
-                                  background: "#0E1A34",
-                                  color: "white",
-                                  padding: "8px 12px",
-                                  borderRadius: "8px",
+                                  background: "rgba(255, 255, 255, 0.96)",
+                                  backdropFilter: "blur(8px)",
+                                  border: "1px solid rgba(42, 102, 255, 0.15)",
+                                  color: "#0E1A34",
+                                  padding: "10px 14px",
+                                  borderRadius: "12px",
                                   fontSize: "12px",
                                   fontWeight: 500,
                                   pointerEvents: "none",
-                                  zIndex: 10,
+                                  zIndex: 100,
                                   whiteSpace: "nowrap",
-                                  boxShadow: "0 4px 14px rgba(0,0,0,0.2)",
+                                  boxShadow: "0 8px 24px rgba(14, 26, 52, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04)",
+                                  transition: "all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)",
                                 }}>
-                                  <div style={{ fontWeight: 700, marginBottom: "2px" }}>{chartTooltip.value}</div>
-                                  {chartTooltip.date && <div style={{ color: "#8A94A6", fontSize: "11px" }}>{chartTooltip.date}</div>}
+                                  <div style={{ fontWeight: 800, fontSize: "14px", marginBottom: "2px", color: "#0E1A34" }}>{chartTooltip.value}</div>
+                                  {chartTooltip.date && <div style={{ color: "#8A94A6", fontSize: "11px", fontWeight: 600 }}>{chartTooltip.date}</div>}
                                   {chartTooltip.status && (
                                     <div style={{
-                                      marginTop: "4px",
-                                      fontSize: "11px",
-                                      fontWeight: 700,
+                                      marginTop: "6px",
+                                      fontSize: "10px",
+                                      fontWeight: 800,
+                                      textTransform: "uppercase",
+                                      letterSpacing: "0.5px",
                                       color: chartTooltip.status.toLowerCase() === "critical" ? "#FF5C5C" : "#00C187",
                                     }}>
                                       {chartTooltip.status}
@@ -3230,14 +3175,17 @@ const PatientProfile = () => {
                                   {/* tooltip arrow */}
                                   <div style={{
                                     position: "absolute",
-                                    bottom: "-6px",
+                                    ...(chartTooltip.y < 80 ? { top: "-6px" } : { bottom: "-6px" }),
                                     left: "50%",
                                     transform: "translateX(-50%)",
                                     width: 0,
                                     height: 0,
                                     borderLeft: "6px solid transparent",
                                     borderRight: "6px solid transparent",
-                                    borderTop: "6px solid #0E1A34",
+                                    ...(chartTooltip.y < 80 
+                                      ? { borderBottom: "6px solid rgba(255, 255, 255, 0.96)" } 
+                                      : { borderTop: "6px solid rgba(255, 255, 255, 0.96)" }
+                                    ),
                                   }} />
                                 </div>
                               )}

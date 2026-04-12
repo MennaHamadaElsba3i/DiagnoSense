@@ -424,12 +424,10 @@ export const getPatientKeyInfoAPI = async (patientId, token) => {
     });
     console.log("key-info status:", response.status);
     const data = await response.json();
-    if (!response.ok || !data.success) {
-      return { success: false };
-    }
-    return data;
-  } catch {
-    return { success: false };
+    return data; 
+  } catch (err) {
+    console.error("getPatientKeyInfoAPI catch:", err);
+    return { success: false, message: "Network error" };
   }
 };
 export const getPatientOverviewAPI = async (patientId) => {

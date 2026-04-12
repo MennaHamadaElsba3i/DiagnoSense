@@ -13,6 +13,7 @@ import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import { getCookie } from "./cookieUtils";
 import { useNotifications } from "./NotificationsContext";
 import { getDoctorInitials } from './Dashboard';
+import ProcessingReports from "./ProcessingReports";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -66,6 +67,8 @@ const EditPatient = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [successToast, setSuccessToast] = useState(null);
+  const [showProcessingScreen, setShowProcessingScreen] = useState(false);
+  const [pollingInfo, setPollingInfo] = useState({ patientId: null, token: null });
 
   // ── Step 1: Personal Info ──
   const [formData, setFormData] = useState({
@@ -524,13 +527,8 @@ const EditPatient = () => {
         if (hasAiRelevantChanges) {
           // AI-relevant data changed — go to loading screen so AI reprocesses
           const token = getCookie("user_token");
-          navigate("/loading", {
-            state: {
-              patientId: Number(patientId),
-              token,
-              fromEdit: true,
-            },
-          });
+          setPollingInfo({ patientId: Number(patientId), token });
+          setShowProcessingScreen(true);
         } else {
           // Only personal info changed — no AI needed, go back to profile
           setSuccessToast("Patient file updated successfully.");
@@ -600,6 +598,26 @@ const EditPatient = () => {
           </div>
         </main>
       </div>
+    );
+  }
+
+  if (showProcessingScreen) {
+    return (
+      <ProcessingReports 
+        patientId={pollingInfo.patientId} 
+        token={pollingInfo.token}
+        onSuccess={(data) => {
+          navigate(`/patient-profile/${pollingInfo.patientId}`, {
+            state: { keyInfoData: data, patientId: pollingInfo.patientId }
+          });
+        }}
+        onFailure={(msg) => {
+          setShowProcessingScreen(false);
+          setIsProcessing(false);
+          setFieldErrors({ _general: msg || "AI analysis failed. Please try again." });
+          goToStep(3); // return to upload step
+        }}
+      />
     );
   }
 

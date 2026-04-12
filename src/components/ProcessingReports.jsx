@@ -3,19 +3,24 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { getPatientKeyInfoAPI } from './mockAPI.js'; // adjust path if needed
 import '../css/ProcessingReports.css';
 
-export default function ProcessingReports() {
+export default function ProcessingReports({ 
+  patientId: propsPatientId, 
+  token: propsToken, 
+  onSuccess, 
+  onFailure 
+}) {
   const { state } = useLocation();
   const navigate = useNavigate();
   const pollingRef = useRef(null);
   const hasNavigated = useRef(false);
 
   useEffect(() => {
-    const patientId = state?.patientId;
-    const token = state?.token;
+    const patientId = propsPatientId || state?.patientId;
+    const token = propsToken || state?.token;
 
     // Safety check — if missing, do nothing
     if (!patientId || !token) {
-      console.warn("ProcessingReports: missing patientId or token", state);
+      console.warn("ProcessingReports: missing patientId or token", { patientId, token, state });
       return;
     }
 
@@ -24,18 +29,35 @@ export default function ProcessingReports() {
     pollingRef.current = setInterval(async () => {
       const result = await getPatientKeyInfoAPI(patientId, token);
 
-      console.log("Endpoint 2 response:", result); // <-- debug log
+      console.log("ProcessingReports: polling response:", result);
 
       if (result?.success && result?.data && !hasNavigated.current) {
         hasNavigated.current = true;         // prevent double navigation
         clearInterval(pollingRef.current);
 
-        navigate(`/patient-profile/${patientId}`, {
-          state: {
-            keyInfoData: result.data,
-            patientId: patientId,
-          },
-        });
+        if (onSuccess) {
+          onSuccess(result.data);
+        } else {
+          navigate(`/patient-profile/${patientId}`, {
+            state: {
+              keyInfoData: result.data,
+              patientId: patientId,
+            },
+          });
+        }
+      } else if (result?.success === false) {
+        // Handle definite failure
+        if (result.message === "The AI analysis process failed and no information was retrieved.") {
+          console.error("AI Analysis failed:", result.message);
+          clearInterval(pollingRef.current);
+          if (onFailure) {
+            onFailure(result.message);
+          } else {
+            // Fallback for route-based usage: navigate back with error
+            navigate(-1, { state: { error: result.message } });
+          }
+        }
+        // If message is "AI analysis is processing now", we just let recursion continue
       }
     }, 4000); // polls every 4 seconds
 
