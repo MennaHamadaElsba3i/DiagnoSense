@@ -585,12 +585,13 @@
   background: #f8f9fc;
 }
 
-/* Simple status bar for search status natively */
+/* ─── Status bar: left message + right action ──────────────────────────── */
 .ep-search-status-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 7px 14px;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 10px 7px 14px;
   margin: 8px 0 4px;
   border-radius: 8px;
   background: #f3f4f6;
@@ -599,6 +600,14 @@
   font-weight: 500;
   color: #4b5563;
   transition: background 0.3s, color 0.3s;
+}
+
+.ep-status-message {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  min-width: 0;
 }
 
 .ep-search-status-bar--scanning {
@@ -610,6 +619,44 @@
   background: #f0fdf4;
   color: #15803d;
   font-weight: 600;
+}
+
+/* Jump to Evidence button inside the status bar */
+.ep-jump-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  height: 26px;
+  padding: 0 10px;
+  border: 1.5px solid #d97706;
+  border-radius: 6px;
+  background: #fff7ed;
+  color: #b45309;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.ep-jump-btn:hover {
+  background: #fef3c7;
+  border-color: #b45309;
+  color: #92400e;
+  box-shadow: 0 1px 4px rgba(180, 83, 9, 0.18);
+}
+
+/* Precise sub-span DOM Range highlight marker */
+mark.ev-hl {
+  background: rgba(255, 200, 0, 0.85);
+  color: inherit;
+  border-radius: 3px;
+  outline: 2px solid rgba(200, 155, 0, 0.7);
+  box-shadow: 0 0 0 1px rgba(190, 148, 0, 0.22);
+  padding: 0;
+  display: inline;
 }
 
 
