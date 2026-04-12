@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useSidebar } from "../components/SidebarContext";
 import { useSubscription } from "../components/SubscriptionContext";
 import Sidebar from "./Sidebar";
+import Navbar from "./Navbar";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import { useNotifications } from "./NotificationsContext";
 import { getDoctorInitials } from "./Dashboard";
@@ -368,166 +369,15 @@ const Settings = () => {
       <Sidebar activePage="settings" />
 
       {/* ── Navbar ── */}
-      <nav className={`top-navbar${isSidebarCollapsed ? " collapsed" : ""}`}>
-        <div className="navbar-right">
-          <div
-            className="credits-badge"
-            onClick={() =>
-              navigate("/subscription", { state: { tab: "billing" } })
-            }
-            style={{ cursor: "pointer" }}
-          >
-            <span className="credits-icon">
-              <svg
-                viewBox="0 0 24 24"
-                style={{
-                  width: "18px",
-                  height: "18px",
-                  stroke: "currentColor",
-                  fill: "none",
-                  strokeWidth: 2,
-                }}
-              >
-                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                <line x1="1" y1="10" x2="23" y2="10"></line>
-              </svg>
-            </span>
-            <span>
-              Credits:{" "}
-              {isCreditsLoading ? "..." : (credits?.toLocaleString() ?? "0")}
-            </span>
-          </div>
-
-          <button className="icon-btn" onClick={() => openNotifications()}>
-            <svg viewBox="0 0 24 24">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
-            {unreadCount > 0 && (
-              <span className="notification-badge">{unreadCount}</span>
-            )}
-          </button>
-
-          <div
-            className="user-avatar-container"
-            style={{ position: "relative" }}
-            ref={avatarMenuRef}
-          >
-            <div
-              className="user-avatar"
-              onClick={() => setIsAvatarMenuOpen(!isAvatarMenuOpen)}
-              style={{ cursor: "pointer", userSelect: "none" }}
-            >
-              {getDoctorInitials()}
-            </div>
-            {isAvatarMenuOpen && (
-              <div
-                className="avatar-dropdown-menu"
-                style={{
-                  position: "absolute",
-                  top: "calc(100% + 10px)",
-                  right: 0,
-                  backgroundColor: "var(--surface-color, #ffffff)",
-                  border: "1px solid var(--border-color, #e5e7eb)",
-                  borderRadius: "12px",
-                  boxShadow:
-                    "0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)",
-                  padding: "8px",
-                  minWidth: "180px",
-                  zIndex: 1000,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "4px",
-                }}
-              >
-                <div
-                  className="dropdown-item"
-                  onClick={() => {
-                    setIsAvatarMenuOpen(false);
-                    navigate("/settings");
-                  }}
-                  style={{
-                    padding: "10px 12px",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    color: "var(--text-primary, #111827)",
-                    fontSize: "14px",
-                    transition: "background-color 0.2s",
-                    backgroundColor: "var(--hover-bg, #f3f4f6)",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor =
-                      "var(--hover-bg, #f3f4f6)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor =
-                      "var(--hover-bg, #f3f4f6)")
-                  }
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                  </svg>
-                  Profile Settings
-                </div>
-                <div
-                  className="dropdown-item"
-                  onClick={() => {
-                    setIsAvatarMenuOpen(false);
-                    openLogoutModal();
-                  }}
-                  style={{
-                    padding: "10px 12px",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    color: "var(--danger-color, #ef4444)",
-                    fontSize: "14px",
-                    transition: "background-color 0.2s",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor =
-                      "var(--danger-bg-subtle, #fee2e2)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor = "transparent")
-                  }
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                    <polyline points="16 17 21 12 16 7"></polyline>
-                    <line x1="21" y1="12" x2="9" y2="12"></line>
-                  </svg>
-                  Logout
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </nav>
+      <Navbar
+  isSidebarCollapsed={isSidebarCollapsed}
+  credits={credits}
+  isCreditsLoading={isCreditsLoading}
+  unreadCount={unreadCount}
+  getDoctorInitials={getDoctorInitials}
+  openNotifications={openNotifications}
+  setIsLogoutModalOpen={setIsLogoutModalOpen}
+/>
 
       <LogoutConfirmation
         isOpen={isLogoutModalOpen}
