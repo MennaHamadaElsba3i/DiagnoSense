@@ -8,9 +8,16 @@ import LogoutConfirmation from "./ConfirmationModal.jsx";
 import ConfirmModal from "./ConfirmModal";
 import "../css/subscription.css";
 import Swal from "sweetalert2";
-import { chargeWalletAPI, getTransactionsAPI, getSubscriptionPlansAPI, subscribeToPlanAPI, subscribeToPayPerUseAPI, cancelSubscriptionAPI } from "./mockAPI.js";
+import {
+  chargeWalletAPI,
+  getTransactionsAPI,
+  getSubscriptionPlansAPI,
+  subscribeToPlanAPI,
+  subscribeToPayPerUseAPI,
+  cancelSubscriptionAPI,
+} from "./mockAPI.js";
 import { useNotifications } from "./NotificationsContext";
-import { getDoctorInitials } from './Dashboard';
+import { getDoctorInitials } from "./Dashboard";
 
 function Subscription() {
   const navigate = useNavigate();
@@ -18,12 +25,23 @@ function Subscription() {
   const searchParams = new URLSearchParams(location.search);
   const { isSidebarCollapsed, toggleSidebar } = useSidebar();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const { unreadCount, openNotifications, refreshNotifications } = useNotifications();
+  const { unreadCount, openNotifications, refreshNotifications } =
+    useNotifications();
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const avatarMenuRef = useRef(null);
-  const { subscriptionData, isSubLoading, refreshSubscription, credits, isCreditsLoading, refreshCredits } = useSubscription();
+  const {
+    subscriptionData,
+    isSubLoading,
+    refreshSubscription,
+    credits,
+    isCreditsLoading,
+    refreshCredits,
+  } = useSubscription();
   const prevUnreadCount = useRef(unreadCount);
-  const walletBalance = subscriptionData?.wallet_balance != null ? subscriptionData.wallet_balance.toLocaleString() : "—";
+  const walletBalance =
+    subscriptionData?.wallet_balance != null
+      ? subscriptionData.wallet_balance.toLocaleString()
+      : "—";
   const isPayPerUse = subscriptionData?.billing_mode === "pay_per_use";
   const isSubscription = subscriptionData?.billing_mode === "subscription";
   const [transactions, setTransactions] = useState([]);
@@ -81,21 +99,25 @@ function Subscription() {
   useEffect(() => {
     const handleMessage = (event) => {
       if (event.origin !== window.location.origin) return;
-      if (event.data?.type === 'STRIPE_SUCCESS') {
-        console.log("[Subscription] Stripe success message received from popup.");
+      if (event.data?.type === "STRIPE_SUCCESS") {
+        console.log(
+          "[Subscription] Stripe success message received from popup.",
+        );
         refreshSubscription();
         refreshCredits();
         fetchTransactions();
       }
     };
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
   }, [refreshSubscription, refreshCredits]);
 
   // ── Real-time Refresh when notification arrives ────────────────────────────
   useEffect(() => {
     if (unreadCount > prevUnreadCount.current) {
-      console.log("[Subscription] New notification detected, refreshing data...");
+      console.log(
+        "[Subscription] New notification detected, refreshing data...",
+      );
       refreshSubscription();
       refreshCredits();
       fetchTransactions();
@@ -104,7 +126,7 @@ function Subscription() {
   }, [unreadCount, refreshSubscription, refreshCredits]);
 
   const [activeTab, setActiveTab] = useState(
-    searchParams.get("tab") || location.state?.tab || "plans"
+    searchParams.get("tab") || location.state?.tab || "plans",
   );
 
   useEffect(() => {
@@ -123,12 +145,19 @@ function Subscription() {
   const [plansError, setPlansError] = useState(null);
   const [selectedPlanId, setSelectedPlanId] = useState(null);
 
-
   useEffect(() => {
     if (isSubLoading) return;
 
-    const isEffectivelyCancelled = isCancelledLocally || (subscriptionData?.status && subscriptionData.status.toLowerCase() !== "active");
-    const hasActivePlan = (isSubscription || isPayPerUse) && !isEffectivelyCancelled;
+    console.log("--- Debugging DiagnoSense ---");
+    console.log("Plan Name from Backend:", subscriptionData?.plan_name);
+
+    const isEffectivelyCancelled =
+      isCancelledLocally ||
+      (subscriptionData?.status &&
+        subscriptionData.status.toLowerCase() !== "active");
+
+    const hasActivePlan =
+      (isSubscription || isPayPerUse) && !isEffectivelyCancelled;
 
     if (!hasActivePlan) {
       setSelectedPlanId(null);
@@ -136,19 +165,40 @@ function Subscription() {
     }
 
     let backendPlanId = null;
+
     if (isPayPerUse) {
       backendPlanId = "Pay-per-use";
-    } else if (isSubscription && subscriptionData?.plan_id != null) {
-      backendPlanId = subscriptionData.plan_id;
+    } else if (isSubscription) {
+      if (subscriptionData?.plan_id) {
+        backendPlanId = subscriptionData.plan_id;
+      }
+      else if (subscriptionData?.plan_name && plans.length > 0) {
+        const found = plans.find(
+          (p) =>
+            p.name.toLowerCase() === subscriptionData.plan_name.toLowerCase(),
+        );
+        backendPlanId = found ? found.id : subscriptionData.plan_name;
+      }
+      else {
+        backendPlanId = subscriptionData.plan_name;
+      }
     }
 
     if (backendPlanId != null) {
       setSelectedPlanId(backendPlanId);
     }
-  }, [isSubLoading, isSubscription, isPayPerUse, subscriptionData, isCancelledLocally]);
+  }, [
+    isSubLoading,
+    isSubscription,
+    isPayPerUse,
+    subscriptionData,
+    isCancelledLocally,
+    plans, 
+  ]);
 
   const [isPlanConfirmModalOpen, setIsPlanConfirmModalOpen] = useState(false);
-  const [isCancelConfirmModalOpen, setIsCancelConfirmModalOpen] = useState(false);
+  const [isCancelConfirmModalOpen, setIsCancelConfirmModalOpen] =
+    useState(false);
   const [pendingPlan, setPendingPlan] = useState(null);
   const [subscribingPlanId, setSubscribingPlanId] = useState(null);
 
@@ -171,7 +221,9 @@ function Subscription() {
 
     fetchPlans();
 
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleTabSwitch = (tabId) => setActiveTab(tabId);
@@ -203,7 +255,9 @@ function Subscription() {
 
   const startPlan = (plan) => {
     if (plan === "Enterprise") {
-      window.alert("You selected the Enterprise plan!\nPlease contact our enterprise sales team.");
+      window.alert(
+        "You selected the Enterprise plan!\nPlease contact our enterprise sales team.",
+      );
       return;
     }
     setPendingPlan(plan);
@@ -335,14 +389,14 @@ function Subscription() {
       <Sidebar activePage="subscription" />
 
       <Navbar
-  isSidebarCollapsed={isSidebarCollapsed}
-  credits={credits}
-  isCreditsLoading={isCreditsLoading}
-  unreadCount={unreadCount}
-  getDoctorInitials={getDoctorInitials}
-  openNotifications={openNotifications}
-  setIsLogoutModalOpen={setIsLogoutModalOpen}
-/>
+        isSidebarCollapsed={isSidebarCollapsed}
+        credits={credits}
+        isCreditsLoading={isCreditsLoading}
+        unreadCount={unreadCount}
+        getDoctorInitials={getDoctorInitials}
+        openNotifications={openNotifications}
+        setIsLogoutModalOpen={setIsLogoutModalOpen}
+      />
 
       <LogoutConfirmation
         isOpen={isLogoutModalOpen}
@@ -359,7 +413,14 @@ function Subscription() {
         cancelText="Maybe Later"
         variant="primary"
         icon={
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M9 11l3 3L22 4"></path>
             <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
           </svg>
@@ -376,7 +437,14 @@ function Subscription() {
         cancelText="No, keep it"
         variant="danger"
         icon={
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
             <line x1="12" y1="9" x2="12" y2="13"></line>
             <line x1="12" y1="17" x2="12.01" y2="17"></line>
@@ -392,32 +460,56 @@ function Subscription() {
           <div className="subscription-container">
             <div className="current-banner">
               {isSubLoading ? (
-                <div style={{ padding: "8px 0", color: "var(--text-secondary)" }}>Loading current plan...</div>
+                <div
+                  style={{ padding: "8px 0", color: "var(--text-secondary)" }}
+                >
+                  Loading current plan...
+                </div>
               ) : isSubscription ? (
                 (() => {
-                  const isEffectivelyCancelled = isCancelledLocally || (subscriptionData?.status && subscriptionData.status.toLowerCase() !== "active");
-                  const displayStatus = isEffectivelyCancelled ? "Cancelled" : "Active";
-                  const badgeClass = isEffectivelyCancelled ? "cancelled-badge" : "active-badge";
-                  const dotClass = isEffectivelyCancelled ? "cancelled-dot" : "active-dot";
+                  const isEffectivelyCancelled =
+                    isCancelledLocally ||
+                    (subscriptionData?.status &&
+                      subscriptionData.status.toLowerCase() !== "active");
+                  const displayStatus = isEffectivelyCancelled
+                    ? "Cancelled"
+                    : "Active";
+                  const badgeClass = isEffectivelyCancelled
+                    ? "cancelled-badge"
+                    : "active-badge";
+                  const dotClass = isEffectivelyCancelled
+                    ? "cancelled-dot"
+                    : "active-dot";
                   return (
                     <>
                       <div>
                         <div className="banner-plan-row">
-                          <span className="banner-plan-name">{subscriptionData.plan_name} Plan</span>
+                          <span className="banner-plan-name">
+                            {subscriptionData.plan_name} Plan
+                          </span>
                           <span className={badgeClass}>
                             <span className={dotClass}></span> {displayStatus}
                           </span>
                         </div>
                         <div className="banner-renewal">
-                          Next renewal: {subscriptionData.expires_at}{subscriptionData.features?.length ? " · " + subscriptionData.features.join(", ") : ""}
+                          Next renewal: {subscriptionData.expires_at}
+                          {subscriptionData.features?.length
+                            ? " · " + subscriptionData.features.join(", ")
+                            : ""}
                         </div>
                       </div>
                       <div className="banner-right">
                         <div className="banner-price">
-                          {isCreditsLoading ? "..." : (credits?.toLocaleString() ?? "0")} <span>credits</span>
+                          {isCreditsLoading
+                            ? "..."
+                            : (credits?.toLocaleString() ?? "0")}{" "}
+                          <span>credits</span>
                         </div>
                         {!isEffectivelyCancelled && (
-                          <button className="btn-cancel-sub" onClick={cancelSub}>
+                          <button
+                            className="btn-cancel-sub"
+                            onClick={cancelSub}
+                          >
                             Cancel Subscription
                           </button>
                         )}
@@ -427,10 +519,19 @@ function Subscription() {
                 })()
               ) : isPayPerUse ? (
                 (() => {
-                  const isEffectivelyCancelled = isCancelledLocally || (subscriptionData?.status && subscriptionData.status.toLowerCase() !== "active");
-                  const displayStatus = isEffectivelyCancelled ? "Cancelled" : "Active";
-                  const badgeClass = isEffectivelyCancelled ? "cancelled-badge" : "active-badge";
-                  const dotClass = isEffectivelyCancelled ? "cancelled-dot" : "active-dot";
+                  const isEffectivelyCancelled =
+                    isCancelledLocally ||
+                    (subscriptionData?.status &&
+                      subscriptionData.status.toLowerCase() !== "active");
+                  const displayStatus = isEffectivelyCancelled
+                    ? "Cancelled"
+                    : "Active";
+                  const badgeClass = isEffectivelyCancelled
+                    ? "cancelled-badge"
+                    : "active-badge";
+                  const dotClass = isEffectivelyCancelled
+                    ? "cancelled-dot"
+                    : "active-dot";
                   return (
                     <>
                       <div>
@@ -441,15 +542,22 @@ function Subscription() {
                           </span>
                         </div>
                         <div className="banner-renewal">
-                          {subscriptionData.display_text || "You are currently using the Pay-Per-Use plan."}
+                          {subscriptionData.display_text ||
+                            "You are currently using the Pay-Per-Use plan."}
                         </div>
                       </div>
                       <div className="banner-right">
                         <div className="banner-price">
-                          {isCreditsLoading ? "..." : (credits?.toLocaleString() ?? "0")} <span>credits</span>
+                          {isCreditsLoading
+                            ? "..."
+                            : (credits?.toLocaleString() ?? "0")}{" "}
+                          <span>credits</span>
                         </div>
                         {!isEffectivelyCancelled && (
-                          <button className="btn-cancel-sub" onClick={cancelSub}>
+                          <button
+                            className="btn-cancel-sub"
+                            onClick={cancelSub}
+                          >
                             Cancel Subscription
                           </button>
                         )}
@@ -458,7 +566,11 @@ function Subscription() {
                   );
                 })()
               ) : (
-                <div style={{ padding: "8px 0", color: "var(--text-secondary)" }}>No active plan</div>
+                <div
+                  style={{ padding: "8px 0", color: "var(--text-secondary)" }}
+                >
+                  No active plan
+                </div>
               )}
             </div>
 
@@ -488,32 +600,75 @@ function Subscription() {
             >
               <div className="plans-grid">
                 {isPlansLoading ? (
-                  <div style={{ padding: "3rem", textAlign: "center", gridColumn: "1 / -1", color: "var(--text-secondary)" }}>
+                  <div
+                    style={{
+                      padding: "3rem",
+                      textAlign: "center",
+                      gridColumn: "1 / -1",
+                      color: "var(--text-secondary)",
+                    }}
+                  >
                     Loading available plans...
                   </div>
                 ) : plansError ? (
-                  <div style={{ padding: "3rem", textAlign: "center", gridColumn: "1 / -1", color: "var(--danger-color)" }}>
+                  <div
+                    style={{
+                      padding: "3rem",
+                      textAlign: "center",
+                      gridColumn: "1 / -1",
+                      color: "var(--danger-color)",
+                    }}
+                  >
                     {plansError}
                   </div>
                 ) : plans.length === 0 ? (
-                  <div style={{ padding: "3rem", textAlign: "center", gridColumn: "1 / -1", color: "var(--text-secondary)" }}>
+                  <div
+                    style={{
+                      padding: "3rem",
+                      textAlign: "center",
+                      gridColumn: "1 / -1",
+                      color: "var(--text-secondary)",
+                    }}
+                  >
                     No plans available at the moment.
                   </div>
                 ) : (
                   plans.map((plan) => {
-                    const isCurrent = selectedPlanId === plan.id;
+                    const isCurrent =
+                      (selectedPlanId &&
+                        plan.id &&
+                        String(selectedPlanId) === String(plan.id)) ||
+                      (selectedPlanId &&
+                        plan.name &&
+                        String(selectedPlanId).toLowerCase() ===
+                          String(plan.name).toLowerCase());
                     return (
-                      <div className={`plan-card ${isCurrent ? "popular border-2 border-blue-500" : ""}`} key={plan.id}>
-                        {isCurrent && <div className="badge-current">Current Plan</div>}
+                      <div
+                        className={`plan-card ${isCurrent ? "popular border-2 border-blue-500" : ""}`}
+                        key={plan.id}
+                      >
+                        {isCurrent && (
+                          <div className="badge-current">Current Plan</div>
+                        )}
                         <div className="plan-name">{plan.name}</div>
-                        <span className="plan-price">E£ {plan.price.toLocaleString()}</span>
-                        <div className="plan-period">per {plan.duration_days === 30 ? "month" : `${plan.duration_days} days`}*</div>
+                        <span className="plan-price">
+                          E£ {plan.price.toLocaleString()}
+                        </span>
+                        <div className="plan-period">
+                          per{" "}
+                          {plan.duration_days === 30
+                            ? "month"
+                            : `${plan.duration_days} days`}
+                          *
+                        </div>
                         <div className="plan-tagline"></div>
                         <div className="plan-feats">
                           {plan.summaries_limit > 0 && (
                             <div className="feat">
                               <span className="feat-ck">✓</span>
-                              <span className="feat-t">Up to {plan.summaries_limit} summaries</span>
+                              <span className="feat-t">
+                                Up to {plan.summaries_limit} summaries
+                              </span>
                             </div>
                           )}
                           {plan.features?.map((feature, idx) => (
@@ -527,20 +682,32 @@ function Subscription() {
                           className={`btn-plan ${isCurrent ? "cur" : ""}`}
                           onClick={() => startPlan(plan)}
                           disabled={subscribingPlanId === plan.id || isCurrent}
-                          style={{ cursor: (subscribingPlanId === plan.id || isCurrent) ? 'not-allowed' : 'pointer' }}
+                          style={{
+                            cursor:
+                              subscribingPlanId === plan.id || isCurrent
+                                ? "not-allowed"
+                                : "pointer",
+                          }}
                         >
-                          {subscribingPlanId === plan.id ? "Subscribing..." : isCurrent ? "Current Plan" : "Get Started"}
+                          {subscribingPlanId === plan.id
+                            ? "Subscribing..."
+                            : isCurrent
+                              ? "Current Plan"
+                              : "Get Started"}
                         </button>
                       </div>
-                    )
-                  }
-                  )
+                    );
+                  })
                 )}
               </div>
 
               <div className="bottom-grid">
-                <div className={`ppu-card ${selectedPlanId === "Pay-per-use" ? "popular border-2 border-blue-500" : ""}`}>
-                  {selectedPlanId === "Pay-per-use" && <div className="badge-current">Current Mode</div>}
+                <div
+                  className={`ppu-card ${selectedPlanId === "Pay-per-use" ? "popular border-2 border-blue-500" : ""}`}
+                >
+                  {selectedPlanId === "Pay-per-use" && (
+                    <div className="badge-current">Current Mode</div>
+                  )}
                   <div>
                     <div className="ppu-lbl">Pay-per-use</div>
                     <div className="ppu-sub">Most popular plan</div>
@@ -556,13 +723,24 @@ function Subscription() {
                     <button
                       className={`btn-solid ${selectedPlanId === "Pay-per-use" ? "cur" : ""}`}
                       onClick={() => startPlan("Pay-per-use")}
-                      disabled={subscribingPlanId === "Pay-per-use" || selectedPlanId === "Pay-per-use"}
+                      disabled={
+                        subscribingPlanId === "Pay-per-use" ||
+                        selectedPlanId === "Pay-per-use"
+                      }
                       style={{
-                        cursor: (subscribingPlanId === "Pay-per-use" || selectedPlanId === "Pay-per-use") ? 'not-allowed' : 'pointer',
-                        whiteSpace: "nowrap"
+                        cursor:
+                          subscribingPlanId === "Pay-per-use" ||
+                          selectedPlanId === "Pay-per-use"
+                            ? "not-allowed"
+                            : "pointer",
+                        whiteSpace: "nowrap",
                       }}
                     >
-                      {subscribingPlanId === "Pay-per-use" ? "Switching..." : selectedPlanId === "Pay-per-use" ? "Current Mode" : "Get Started"}
+                      {subscribingPlanId === "Pay-per-use"
+                        ? "Switching..."
+                        : selectedPlanId === "Pay-per-use"
+                          ? "Current Mode"
+                          : "Get Started"}
                     </button>
                   </div>
                 </div>
@@ -607,28 +785,55 @@ function Subscription() {
               className={`tab-panel ${activeTab === "usage" ? "active" : ""}`}
             >
               {isSubLoading ? (
-                <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-secondary)" }}>Loading usage data...</div>
+                <div
+                  style={{
+                    padding: "2rem",
+                    textAlign: "center",
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  Loading usage data...
+                </div>
               ) : isSubscription ? (
                 (() => {
-                  const isEffectivelyCancelled = isCancelledLocally || (subscriptionData?.status && subscriptionData.status.toLowerCase() !== "active");
-                  const displayStatus = isEffectivelyCancelled ? "Cancelled" : "Active";
-                  const badgeClass = isEffectivelyCancelled ? "cancelled-badge" : "green-badge";
-                  const dotClass = isEffectivelyCancelled ? "cancelled-dot" : "g-dot";
+                  const isEffectivelyCancelled =
+                    isCancelledLocally ||
+                    (subscriptionData?.status &&
+                      subscriptionData.status.toLowerCase() !== "active");
+                  const displayStatus = isEffectivelyCancelled
+                    ? "Cancelled"
+                    : "Active";
+                  const badgeClass = isEffectivelyCancelled
+                    ? "cancelled-badge"
+                    : "green-badge";
+                  const dotClass = isEffectivelyCancelled
+                    ? "cancelled-dot"
+                    : "g-dot";
                   return (
                     <>
-
                       <div className="usage-box">
                         <div className="u-big">
-                          {subscriptionData.usage?.used ?? 0} <span>/ {subscriptionData.usage?.total ?? 0} files</span>
+                          {subscriptionData.usage?.used ?? 0}{" "}
+                          <span>
+                            / {subscriptionData.usage?.total ?? 0} files
+                          </span>
                         </div>
                         <div className="u-lbl">Total files used this cycle</div>
                         <div className="u-track">
-                          <div className="u-fill" style={{ width: `${subscriptionData.usage?.percentage ?? 0}%` }}></div>
+                          <div
+                            className="u-fill"
+                            style={{
+                              width: `${subscriptionData.usage?.percentage ?? 0}%`,
+                            }}
+                          ></div>
                         </div>
                         <div className="u-foot">
                           <div className="u-left">
                             <span>0</span>
-                            <span className="u-remain">{subscriptionData.usage?.remaining ?? 0} files remaining</span>
+                            <span className="u-remain">
+                              {subscriptionData.usage?.remaining ?? 0} files
+                              remaining
+                            </span>
                           </div>
                           <span>{subscriptionData.usage?.total ?? 0}</span>
                         </div>
@@ -637,22 +842,41 @@ function Subscription() {
                   );
                 })()
               ) : isPayPerUse ? (
-                <div className="usage-box" style={{ textAlign: "center", padding: "2rem" }}>
-                  <div className="u-lbl" style={{ fontSize: "15px", marginBottom: "8px" }}>
-                    {subscriptionData.display_text || "You are currently using the Pay-Per-Use plan."}
+                <div
+                  className="usage-box"
+                  style={{ textAlign: "center", padding: "2rem" }}
+                >
+                  <div
+                    className="u-lbl"
+                    style={{ fontSize: "15px", marginBottom: "8px" }}
+                  >
+                    {subscriptionData.display_text ||
+                      "You are currently using the Pay-Per-Use plan."}
                   </div>
                   <div className="u-lbl">
-                    Each file costs E£ {subscriptionData.price_per_file ?? 20}. Usage tracking is per-file.
+                    Each file costs E£ {subscriptionData.price_per_file ?? 20}.
+                    Usage tracking is per-file.
                   </div>
                 </div>
               ) : (
-                <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-secondary)" }}>No plan data available.</div>
+                <div
+                  style={{
+                    padding: "2rem",
+                    textAlign: "center",
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  No plan data available.
+                </div>
               )}
               <div className="credits-banner">
                 <div>
                   <div className="cr-lbl">Available Credits</div>
                   <div className="cr-val">
-                    {isCreditsLoading ? "..." : (credits?.toLocaleString() ?? "0")} <em>credits</em>
+                    {isCreditsLoading
+                      ? "..."
+                      : (credits?.toLocaleString() ?? "0")}{" "}
+                    <em>credits</em>
                   </div>
                 </div>
                 <button
@@ -749,7 +973,6 @@ function Subscription() {
                       <th>Description</th>
                       <th>Amount</th>
                       <th>Status</th>
-
                     </tr>
                   </thead>
                   <tbody>
@@ -760,17 +983,25 @@ function Subscription() {
                           <td className="td-desc">{tx.description}</td>
                           <td className="td-amt">E£ {tx.amount}</td>
                           <td>
-                            <span className={tx.status === "completed" ? "paid" : "pending"}>
+                            <span
+                              className={
+                                tx.status === "completed" ? "paid" : "pending"
+                              }
+                            >
                               {tx.status}
                             </span>
                           </td>
-
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="5" style={{ textAlign: "center", padding: "20px" }}>
-                          {isLoadingHistory ? "Loading history..." : "No transactions found."}
+                        <td
+                          colSpan="5"
+                          style={{ textAlign: "center", padding: "20px" }}
+                        >
+                          {isLoadingHistory
+                            ? "Loading history..."
+                            : "No transactions found."}
                         </td>
                       </tr>
                     )}
