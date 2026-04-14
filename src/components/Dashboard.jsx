@@ -789,7 +789,9 @@ export default function Dashboard() {
                               : statusColors[item.status] || "#ccc"
                           }
                           strokeWidth="22"
-                          strokeDasharray={`${strokeLength} ${circumference}`}
+                          strokeDasharray={`${strokeLength + 0.5} ${circumference}`}
+                          // strokeDasharray={`${strokeLength} ${circumference}`}
+                          strokeLinecap="round"
                           strokeDashoffset={-offset}
                           transform="rotate(-90 65 65)"
                           className="dsn-donut-segment"

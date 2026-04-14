@@ -185,6 +185,11 @@ const [phoneValue, setPhoneValue] = useState("");
 
         <button
           type="submit"
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
           className={`btn-primary ${isLoading ? "loading" : ""}`}
         >
           {!isLoading && "Create Account"}

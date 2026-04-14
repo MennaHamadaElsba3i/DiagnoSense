@@ -2666,3 +2666,20 @@ button.pp-note-delete-btn:hover {
         width: 100%;
     }
 }
+
+
+
+
+.note-list-loading {
+  filter: blur(4px);
+  opacity: 0.55;
+  pointer-events: none;
+  user-select: none;
+  transition: filter 0.35s ease, opacity 0.35s ease;
+}
+
+.note-list-loaded {
+  filter: blur(0px);
+  opacity: 1;
+  transition: filter 0.35s ease, opacity 0.35s ease;
+}

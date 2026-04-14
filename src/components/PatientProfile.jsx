@@ -1621,7 +1621,7 @@ const PatientProfile = () => {
                   </button>
                 </div>
 
-                <div className="note-list">
+                <div className={`note-list ${isLoadingAnalysis ? "note-list-loading" : "note-list-loaded"}`}>
                   {isLoadingAnalysis
                     ? // الجزء ده بيظهر فقط وقت التحميل (Static Notes)
                     staticNotes["high-1"] && (
@@ -2067,7 +2067,7 @@ const PatientProfile = () => {
                   </button>
                 </div>
 
-                <div className="note-list">
+                <div className={`note-list ${isLoadingAnalysis ? "note-list-loading" : "note-list-loaded"}`}>
                   {isLoadingAnalysis
                     ? // تعرض النوتس الثابتة فقط أثناء التحميل
                     staticNotes["medium-1"] && (
@@ -2520,7 +2520,7 @@ const PatientProfile = () => {
                   </button>
                 </div>
 
-                <div className="note-list">
+                <div className={`note-list ${isLoadingAnalysis ? "note-list-loading" : "note-list-loaded"}`}>
                   {isLoadingAnalysis
                     ? // نوت افتراضية تظهر أثناء التحميل
                     staticNotes["low-1"] && (
