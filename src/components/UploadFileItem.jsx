@@ -84,27 +84,7 @@ const UploadFileItem = ({
             </svg>
           </a>
         )}
-
-        {/* Remove / Undo button */}
-        {onRemove && (
-          <button
-            className={`file-remove-btn${isRemoved ? " undo-btn" : ""}`}
-            onClick={(e) => { e.stopPropagation(); onRemove(); }}
-            title={isRemoved ? "Undo remove" : "Remove file"}
-          >
-            {isRemoved ? (
-              /* Undo arrow */
-              <svg width="16" height="16" fill="none" stroke="#2A66FF" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            ) : (
-              /* X icon */
-              <svg width="18" height="18" fill="none" stroke="#FF5C5C" viewBox="0 0 24 24" style={{ display: "block", flexShrink: 0 }}>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            )}
-          </button>
-        )}
+    
       </div>
     </div>
   );

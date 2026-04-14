@@ -345,7 +345,15 @@
   align-items: center;
   justify-content: space-between;
   position: relative;
+  transition: box-shadow 0.2s, transform 0.2s;
 }
+.subscription-page .ppu-card:hover,
+.subscription-page .ent-card:hover  {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(42, 102, 255, 0.09);
+}
+
+
 
 .subscription-page .ppu-card.popular {
   border-color: var(--brand);
@@ -408,6 +416,7 @@
   border: 1.5px solid var(--border);
   border-radius: 13px;
   padding: 18px 20px;
+  transition: box-shadow 0.2s, transform 0.2s;
 }
 
 .subscription-page .ent-name {

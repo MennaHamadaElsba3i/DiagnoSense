@@ -9,8 +9,7 @@ import { useNotifications } from "./NotificationsContext";
 import { sendSupportAPI } from "./mockAPI";
 import { getJsonCookie } from "./cookieUtils";
 import "../css/support.css";
-import { getDoctorInitials } from './Dashboard';
-
+import { getDoctorInitials } from "./Dashboard";
 
 const getUser = () => {
   try {
@@ -82,10 +81,9 @@ function Support() {
   }, []);
 
   useEffect(() => {
-  const draft = { category, urgency, message };
-  localStorage.setItem(SUPPORT_DRAFT_KEY, JSON.stringify(draft));
-}, [category, urgency, message]);
-
+    const draft = { category, urgency, message };
+    localStorage.setItem(SUPPORT_DRAFT_KEY, JSON.stringify(draft));
+  }, [category, urgency, message]);
 
   const toggleFAQ = (index) => setActiveFAQ(activeFAQ === index ? null : index);
 
@@ -206,14 +204,14 @@ function Support() {
 
       {/* Top navbar */}
       <Navbar
-  isSidebarCollapsed={isSidebarCollapsed}
-  credits={credits}
-  isCreditsLoading={isCreditsLoading}
-  unreadCount={unreadCount}
-  getDoctorInitials={getDoctorInitials}
-  openNotifications={openNotifications}
-  setIsLogoutModalOpen={setIsLogoutModalOpen}
-/>
+        isSidebarCollapsed={isSidebarCollapsed}
+        credits={credits}
+        isCreditsLoading={isCreditsLoading}
+        unreadCount={unreadCount}
+        getDoctorInitials={getDoctorInitials}
+        openNotifications={openNotifications}
+        setIsLogoutModalOpen={setIsLogoutModalOpen}
+      />
 
       <LogoutConfirmation
         isOpen={isLogoutModalOpen}
@@ -283,7 +281,23 @@ function Support() {
             <div className="card support-card">
               <h3 className="card-title">Frequently Asked Questions</h3>
               <div className="search-bar">
-                <span className="search-bar-icon">🔍</span>
+                <span className="search-bar-icon">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="17" 
+                    height="17" 
+                    viewBox="0 0 24 24"
+                    fill="none" 
+                    stroke="#718096" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                    className="search-icon"
+                  >
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                </span>
                 <input type="text" placeholder="Search help topics..." />
               </div>
 
@@ -387,22 +401,18 @@ function Support() {
               <div className="resource-grid">
                 {[
                   {
-                    icon: "📚",
                     title: "Documentation",
                     desc: "Complete API and platform docs",
                   },
                   {
-                    icon: "🚀",
                     title: "Quick Start Guide",
                     desc: "Get up and running in 5 minutes",
                   },
                   {
-                    icon: "🎥",
                     title: "Video Tutorials",
                     desc: "Step-by-step walkthroughs",
                   },
                   {
-                    icon: "🔧",
                     title: "System Docs",
                     desc: "Technical specifications",
                   },
@@ -603,7 +613,7 @@ function Support() {
                     className="btn btn-secondary"
                     disabled={isSubmitting}
                     onClick={() => {
-                      localStorage.removeItem(SUPPORT_DRAFT_KEY); 
+                      localStorage.removeItem(SUPPORT_DRAFT_KEY);
                       setFormName(user?.name ?? "");
                       setCategory("");
                       setUrgency("Medium");

@@ -761,6 +761,7 @@ body {
     white-space: nowrap;
     flex-shrink: 0;
     letter-spacing: 0.1px;
+    padding-left: 0px;
 }
 
 .pp-evidence-icon-btn svg {
@@ -1502,6 +1503,7 @@ button.pp-note-delete-btn:hover {
 }
 
 .note-date {
+
     font-size: 11px;
     color: #8A94A6;
     line-height: 1.4;
@@ -2663,4 +2665,4 @@ button.pp-note-delete-btn:hover {
     .lf-btn-secondary {
         width: 100%;
     }
-}
+}

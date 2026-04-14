@@ -1247,8 +1247,8 @@ const PatientProfile = () => {
                   cursor: "pointer",
                   transition: " all 0.3s ease",
                   boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
-                  background: "transparent",
-                  color: "#2A66FF",
+                  background: "rgb(42, 102, 255)",
+                  color: "white",
                   border: "1px solid #2A66FF",
                   fontWeight: "bold",
                 }}
@@ -1258,26 +1258,7 @@ const PatientProfile = () => {
               >
                 Edit File
               </button>
-              <button
-                className="btn btn-secondary"
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  textAlign: "center",
-                  padding: "8px 16px",
-                  borderRadius: "10px",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  transition: " all 0.3s ease",
-                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
-                  background: "rgb(42, 102, 255)",
-                  color: "white",
-                  border: "1px solid #2A66FF",
-                  fontWeight: "bold",
-                }}
-              >
-                Start Collaboration
-              </button>
+        
             </div>
           </div>
         </header>
@@ -1842,7 +1823,7 @@ const PatientProfile = () => {
                                     <div className="note-footer">
                                       <div className="note-meta-stack">
                                         <span className="note-date">
-                                          {!isManualNote && (<>{alertObj.is_manual === "AI Generated" ? "🤖" : "📝"}{" "}{alertObj.is_manual} · </>)}
+                                          {!isManualNote && (<>{alertObj.is_manual} · </>)}
                                           {alertObj.date}
                                         </span>
                                         {!isManualNote && (
@@ -1908,7 +1889,7 @@ const PatientProfile = () => {
                                 <div className="note-footer">
                                   <div className="note-meta-stack">
                                     <span className="note-date">
-                                      {!isManualNote && (<>{alertObj.is_manual === "AI Generated" ? "🤖" : "📝"}{" "}{alertObj.is_manual} · </>)}
+                                      {!isManualNote && (<>{alertObj.is_manual} · </>)}
                                       {alertObj.date}
                                     </span>
                                     {!isManualNote && (
@@ -2288,7 +2269,7 @@ const PatientProfile = () => {
                                   <div className="note-footer">
                                     <div className="note-meta-stack">
                                       <span className="note-date">
-                                        {!isManualNote && (<>{alertObj.is_manual === "AI Generated" ? "🤖" : "📝"}{" "}{alertObj.is_manual} · </>)}
+                                        {!isManualNote && (<>{alertObj.is_manual} · </>)}
                                         {alertObj.date}
                                       </span>
                                       {!isManualNote && (
@@ -2358,7 +2339,7 @@ const PatientProfile = () => {
                               <div className="note-footer">
                                 <div className="note-meta-stack">
                                   <span className="note-date">
-                                    {!isManualNote && (<>{alertObj.is_manual === "AI Generated" ? "🤖" : "📝"}{" "}{alertObj.is_manual} · </>)}
+                                    {!isManualNote && (<>{alertObj.is_manual} · </>)}
                                     {alertObj.date}
                                   </span>
                                   {!isManualNote && (

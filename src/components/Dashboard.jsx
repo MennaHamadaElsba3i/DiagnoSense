@@ -274,7 +274,6 @@ function QueueSection() {
           <span className="dsn-queue-count">0 remaining</span>
         </div>
         <div className="dsn-done-card">
-          <div className="dsn-done-emoji">📋</div>
           <div className="dsn-done-title">No patients scheduled for today</div>
           <div className="dsn-done-sub">
             Today's queue is empty. Check back later.
@@ -733,18 +732,6 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="dsn-ai-status">
-              {loading ? (
-                <div className="dsn-loading-blur" style={{ fontSize: "12px" }}>
-                  AI system running v0.0 Core — updated ...
-                </div>
-              ) : (
-                <>
-                  <div className="dsn-ai-dot" />
-                  AI system running v3.2 Neural Core — updated 2h ago
-                </>
-              )}
-            </div>
           </div>
 
           {/* ── CHARTS ROW ── */}
