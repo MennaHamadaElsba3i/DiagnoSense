@@ -40,6 +40,125 @@ export function getDoctorInitials() {
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
+
+const DashboardQueueInsight = ({ text }) => {
+  const containerRef = useRef(null);
+  const textRef = useRef(null);
+  const moreRef = useRef(null);
+  const [displayLength, setDisplayLength] = useState(text.length);
+  const [isTruncated, setIsTruncated] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  useEffect(() => {
+    if (isExpanded) {
+        setDisplayLength(text.length);
+        setIsTruncated(false);
+        if (moreRef.current) moreRef.current.style.display = "inline";
+        if (textRef.current) textRef.current.textContent = text + " ";
+        return;
+    }
+
+    const container = containerRef.current;
+    const textNode = textRef.current;
+    if (!container || !textNode) return;
+
+    let rafId;
+    const measure = () => {
+      textNode.textContent = text;
+      if (moreRef.current) moreRef.current.style.display = "none";
+
+      if (container.scrollHeight <= container.clientHeight) {
+        setDisplayLength((prev) => {
+          if (prev !== text.length) {
+            setIsTruncated(false);
+            return text.length;
+          }
+          return prev;
+        });
+        return;
+      }
+
+      if (moreRef.current) moreRef.current.style.display = "inline";
+
+      let low = 0;
+      let high = text.length;
+      let best = 0;
+
+      while (low <= high) {
+        let mid = Math.floor((low + high) / 2);
+        textNode.textContent = text.slice(0, mid).trimEnd() + "… ";
+        if (container.scrollHeight <= container.clientHeight) {
+          best = mid;
+          low = mid + 1;
+        } else {
+          high = mid - 1;
+        }
+      }
+
+      setDisplayLength((prev) => {
+        if (prev !== best) {
+          setIsTruncated(true);
+          return best;
+        }
+        return prev;
+      });
+
+      textNode.textContent = text.slice(0, best).trimEnd() + "… ";
+    };
+
+    measure();
+
+    const resizeObserver = new ResizeObserver(() => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(measure);
+    });
+
+    resizeObserver.observe(container);
+
+    return () => {
+      resizeObserver.disconnect();
+      cancelAnimationFrame(rafId);
+    };
+  }, [text, isExpanded]);
+
+  const previewText = isTruncated && !isExpanded
+    ? text.slice(0, displayLength).trimEnd() + "… "
+    : text;
+
+  const maxHeight = isExpanded ? "none" : "42px";
+
+  return (
+    <div className="dsn-insight-box">
+      <div className="dsn-insight-label" style={{ display: "flex", alignItems: "center" }}>
+        <svg fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" style={{width: 14, height: 14, marginRight: 6}}>
+           <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+        </svg>
+        AI Insight
+      </div>
+      <div ref={containerRef} className="dsn-insight-text" style={{ maxHeight, overflow: "hidden", display: "inline-block", width: "100%" }}>
+        <span ref={textRef}>
+          {previewText}
+        </span>
+        <button
+          ref={moreRef}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsExpanded(!isExpanded);
+          }}
+          style={{ 
+            display: (isTruncated || isExpanded) ? "inline" : "none", 
+            background: 'none', border: 'none', padding: 0, margin: 0,
+            color: '#2A66FF', fontWeight: 600, fontSize: '13px', cursor: 'pointer',
+            marginLeft: '4px'
+          }}
+        >
+          {isExpanded ? "View less" : "View more"}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 function QueueSection() {
   const [queueData, setQueueData] = useState(null);
   const [queueList, setQueueList] = useState([]);
@@ -274,7 +393,6 @@ function QueueSection() {
           <span className="dsn-queue-count">0 remaining</span>
         </div>
         <div className="dsn-done-card">
-          <div className="dsn-done-emoji">📋</div>
           <div className="dsn-done-title">No patients scheduled for today</div>
           <div className="dsn-done-sub">
             Today's queue is empty. Check back later.
@@ -323,13 +441,7 @@ function QueueSection() {
                 Appointment: {activePatient.apptTime}
               </span>
             </div>
-            <div className="dsn-insight-box">
-              <div className="dsn-insight-label">🤖 AI Insight</div>
-              <div className="dsn-insight-text">
-                {activePatient.aiInsight ||
-                  "No AI insights available for this patient"}
-              </div>
-            </div>
+            <DashboardQueueInsight text={activePatient.aiInsight || "No AI insights available for this patient"} />
           </div>
           <div className="dsn-active-actions">
             <button className="dsn-btn-attended" onClick={handleMarkAttended}>
@@ -478,7 +590,12 @@ function QueueSection() {
               ))}
             </div>
             <div className="dsn-modal-notes">
-              <strong>🤖 AI Insight:</strong>
+              <strong style={{ display: "inline-flex", alignItems: "center" }}>
+                <svg fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" style={{width: 14, height: 14, marginRight: 6}}>
+                  <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+                </svg>
+                AI Insight:
+              </strong>
               <br />
               {modalPatient.aiInsight ||
                 "No AI insights available for this patient"}
@@ -733,18 +850,6 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="dsn-ai-status">
-              {loading ? (
-                <div className="dsn-loading-blur" style={{ fontSize: "12px" }}>
-                  AI system running v0.0 Core — updated ...
-                </div>
-              ) : (
-                <>
-                  <div className="dsn-ai-dot" />
-                  AI system running v3.2 Neural Core — updated 2h ago
-                </>
-              )}
-            </div>
           </div>
 
           {/* ── CHARTS ROW ── */}
@@ -802,7 +907,9 @@ export default function Dashboard() {
                               : statusColors[item.status] || "#ccc"
                           }
                           strokeWidth="22"
-                          strokeDasharray={`${strokeLength} ${circumference}`}
+                          strokeDasharray={`${strokeLength + 0.5} ${circumference}`}
+                          // strokeDasharray={`${strokeLength} ${circumference}`}
+                          strokeLinecap="round"
                           strokeDashoffset={-offset}
                           transform="rotate(-90 65 65)"
                           className="dsn-donut-segment"

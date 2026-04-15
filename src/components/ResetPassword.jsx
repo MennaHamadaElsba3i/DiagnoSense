@@ -233,6 +233,11 @@ const ResetPassword = ({ reset_token, onResetSuccess, onBackToForget }) => {
         <button
           type="submit"
           className={`btn-primary ${isLoading ? "loading" : ""}`}
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
           disabled={isLoading}
         >
           {isLoading ? "Resetting..." : "Reset Password"}

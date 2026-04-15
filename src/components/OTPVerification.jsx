@@ -142,6 +142,11 @@ const OTPVerification = ({
         <button
           type="submit"
           className={`btn-primary ${isLoading ? "loading" : ""}`}
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
           disabled={isLoading}
         >
           {isLoading ? "Verifying..." : buttonLabel}

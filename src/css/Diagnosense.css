@@ -946,3 +946,20 @@
                padding: 2rem;
           }
      }
+
+     .stats-section,
+     .features-section {
+          max-width: 1400px;
+          margin-left: auto;
+          margin-right: auto;
+     }
+
+     
+     .stats-section .section-title,
+     .stats-section .section-subtitle,
+     .features-section .section-title,
+     .features-section .section-subtitle {
+          display: block;
+          text-align: center;
+          width: 100%;
+     }

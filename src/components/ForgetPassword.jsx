@@ -66,6 +66,11 @@ const ForgetPassword = ({ onOTPSent, onBackToLogin }) => {
         <button
           type="submit"
           className={`btn-primary ${isLoading ? "loading" : ""}`}
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
           disabled={isLoading}
         >
           {isLoading ? "Sending..." : "Send Verification Code"}

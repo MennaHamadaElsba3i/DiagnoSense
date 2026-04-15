@@ -2479,6 +2479,368 @@ button.pp-note-delete-btn:hover {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   Medications & Tasks
+   ═══════════════════════════════════════════════════════════ */
+.med-task-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    transition: opacity 0.2s;
+}
+.med-task-grid.loading-overlay {
+    opacity: 0.6;
+}
+.med-task-column {
+    padding: 20px;
+}
+.med-task-column-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+.med-task-icon-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.med-task-icon-box.medication {
+    background: #F0FDF8;
+    color: #00C187;
+}
+.med-task-icon-box.task {
+    background: #E9F0FF;
+    color: #2A66FF;
+}
+.med-task-column-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0E1A34;
+}
+.med-task-item-card {
+    padding: 12px 14px;
+    background: #F8FAFF;
+    border-radius: 10px;
+    border: 1px solid #E6EAF2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+.med-task-item-info {
+    min-width: 0;
+}
+.med-task-item-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0E1A34;
+}
+.med-task-item-details {
+    font-size: 12px;
+    color: #8A94A6;
+    margin-top: 3px;
+}
+.med-task-item-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    flex: 1;
+}
+.med-task-item-content {
+    flex: 1;
+    min-width: 0;
+}
+.med-task-item-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0E1A34;
+}
+.med-task-item-desc {
+    font-size: 12px;
+    color: #8A94A6;
+    margin-top: 2px;
+}
+.med-task-item-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+.med-task-due-pill {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    color: #2A66FF;
+    background: #E9F0FF;
+}
+.med-task-due-pill.urgent {
+    color: #FF5C5C;
+    background: #FFECEC;
+}
+.med-task-delete-btn {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(156,163,175,0.35);
+    background: rgba(156,163,175,0.08);
+    border-radius: 7px;
+    color: #9ca3af;
+    padding: 0;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+.med-task-delete-btn:hover {
+    background: rgba(225,29,72,0.10);
+    border-color: rgba(225,29,72,0.45);
+    color: #e11d48;
+    transform: scale(1.08);
+}
+.med-task-next-visit-bar {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    background: #F8FAFF;
+    border-radius: 12px;
+    border: 1px solid #E6EAF2;
+}
+.med-task-next-visit-bar.has-visit {
+    background: linear-gradient(135deg,#E9F0FF,#F0F7FF);
+    border-color: #C0D4FF;
+}
+.med-task-next-visit-icon {
+    flex-shrink: 0;
+    color: #8A94A6;
+}
+.med-task-next-visit-bar.has-visit .med-task-next-visit-icon {
+    color: #2A66FF;
+}
+.med-task-next-visit-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #8A94A6;
+}
+.med-task-next-visit-bar.has-visit .med-task-next-visit-text {
+    color: #2A66FF;
+}
+.med-task-add-btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    background: linear-gradient(135deg,#2A66FF,#467DFF);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(42,102,255,0.3);
+    transition: all 0.2s;
+}
+.med-task-add-btn:hover {
+    transform: translateY(-1px);
+}
+.med-task-error-banner {
+    padding: 10px 14px;
+    background: #FFF0F0;
+    border-radius: 8px;
+    border: 1px solid #FFD0D0;
+    color: #CC3333;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+.med-task-error-banner.small {
+    margin-top: 12px;
+    margin-bottom: 0;
+}
+.med-task-type-toggle {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+.med-task-type-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1.5px solid #E6EAF2;
+    background: white;
+    font-size: 14px;
+    font-weight: 600;
+    color: #5A6478;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.med-task-type-btn.active {
+    border-color: #2A66FF;
+    background: #F0F5FF;
+    color: #2A66FF;
+}
+.med-task-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+.med-task-added-list-container {
+    margin-top: 20px;
+    padding: 16px;
+    background: #F8FAFF;
+    border-radius: 10px;
+    border: 1px dashed #C0D0FF;
+}
+.med-task-added-list-header {
+    font-size: 12px;
+    font-weight: 600;
+    color: #3A4560;
+    margin-bottom: 12px;
+}
+.med-task-added-list-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.med-task-added-item-mini {
+    padding: 10px 14px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #E6EAF2;
+    font-size: 13px;
+    color: #0E1A34;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.med-task-added-item-text {
+    flex: 1;
+}
+.med-task-added-item-check {
+    color: #00C187;
+    font-weight: 600;
+}
+.med-task-form-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #E6EAF2;
+}
+.med-task-form-footer.no-type {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+}
+.med-task-footer-button-group {
+    display: flex;
+    gap: 12px;
+}
+.med-task-btn-secondary,
+.med-task-btn-back {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid #E6EAF2;
+    background: white;
+    font-size: 14px;
+    font-weight: 600;
+    color: #5A6478;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.med-task-btn-outline {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1.5px solid #2A66FF;
+    background: white;
+    font-size: 14px;
+    font-weight: 600;
+    color: #2A66FF;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.med-task-btn-primary,
+.med-task-btn-next {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    background: #2A66FF;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.med-task-date-status-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.med-task-date-input-wrapper {
+    flex: 1;
+}
+.med-task-check-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #00C187;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+.med-task-form-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 24px;
+}
+.med-task-saved-date-mini-card {
+    margin-top: 16px;
+}
+.med-task-saved-date-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #F0FDF8;
+    border-radius: 8px;
+    border: 1px solid #B0F0D8;
+}
+.med-task-calendar-icon {
+    font-size: 14px;
+}
+.med-task-saved-date-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #008A60;
+}
+.step1-datepicker-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #E6EAF2;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #0E1A34;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.step1-datepicker-input:focus {
+    border-color: #2A66FF;
+    box-shadow: 0 0 0 3px rgba(42, 102, 255, 0.1);
+}
+
+/* ═══════════════════════════════════════════════════════════
    Locked Feature Overlay
    ═══════════════════════════════════════════════════════════ */
 
@@ -3137,4 +3499,17 @@ button.pp-note-delete-btn:hover {
   border: 1px solid var(--dm-border-color) !important;
   color: var(--dm-text-primary) !important;
 }
-
+
+.note-list-loading {
+  filter: blur(4px);
+  opacity: 0.55;
+  pointer-events: none;
+  user-select: none;
+  transition: filter 0.35s ease, opacity 0.35s ease;
+}
+
+.note-list-loaded {
+  filter: blur(0px);
+  opacity: 1;
+  transition: filter 0.35s ease, opacity 0.35s ease;
+}
