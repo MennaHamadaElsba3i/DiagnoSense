@@ -23,6 +23,8 @@ export default function LockedFeatureOverlay({
   onPrimary,
   secondaryLabel,
   onSecondary,
+  tertiaryLabel,
+  onTertiary,
   compact = false,
 }) {
   return (
@@ -40,6 +42,11 @@ export default function LockedFeatureOverlay({
           {secondaryLabel && onSecondary && (
             <button className="lf-btn-secondary" onClick={onSecondary}>
               {secondaryLabel}
+            </button>
+          )}
+          {tertiaryLabel && onTertiary && (
+            <button className="lf-btn-secondary" onClick={onTertiary}>
+              {tertiaryLabel}
             </button>
           )}
         </div>

@@ -252,3 +252,61 @@
   color: var(--text-secondary, #6b7280);
   font-weight: 500;
 }
+
+
+/* ══════════════════════════════════════════════════════════
+   DARK MODE OVERRIDES — Notifications Panel
+   ══════════════════════════════════════════════════════════ */
+
+[data-theme="dark"] .notifications-drawer {
+  background-color: #1e2940;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .notification-header {
+  border-bottom-color: var(--dm-border-subtle);
+}
+
+[data-theme="dark"] .notification-title-area h2 {
+  color: var(--dm-text-primary);
+}
+
+[data-theme="dark"] .notification-actions-bar {
+  background-color: #192338;
+  border-bottom-color: var(--dm-border-subtle);
+}
+
+[data-theme="dark"] .close-btn {
+  color: var(--dm-text-secondary);
+}
+
+[data-theme="dark"] .close-btn:hover {
+  background-color: var(--dm-hover-bg);
+  color: var(--dm-text-primary);
+}
+
+[data-theme="dark"] .notification-item {
+  background: #1a2640;
+  border-color: var(--dm-border-color);
+}
+
+[data-theme="dark"] .notification-item.unread {
+  background-color: rgba(42, 102, 255, 0.1);
+  border-color: rgba(42, 102, 255, 0.3);
+}
+
+[data-theme="dark"] .notification-item-header h4 {
+  color: var(--dm-text-primary);
+}
+
+[data-theme="dark"] .notification-time {
+  color: var(--dm-text-secondary);
+}
+
+[data-theme="dark"] .notification-message {
+  color: var(--dm-text-secondary);
+}
+
+[data-theme="dark"] .empty-notifications p {
+  color: var(--dm-text-primary);
+}

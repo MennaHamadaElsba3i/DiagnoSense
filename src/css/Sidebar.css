@@ -327,3 +327,49 @@
      width: 100%;
      text-align: center;
 }
+
+
+/* ══════════════════════════════════════════════════════════
+   DARK MODE OVERRIDES — Sidebar
+   ══════════════════════════════════════════════════════════ */
+
+[data-theme="dark"] .sidebar {
+  background: var(--dm-bg-sidebar);
+  border-right-color: var(--dm-border-subtle);
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .sidebar-header {
+  border-bottom-color: var(--dm-border-subtle);
+}
+
+[data-theme="dark"] .nav-section-title {
+  color: #64748b;
+}
+
+[data-theme="dark"] .nav-item {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .nav-item:hover {
+  background: rgba(42, 102, 255, 0.12);
+  color: #7ca3ff;
+}
+
+[data-theme="dark"] .nav-item.active {
+  background: linear-gradient(135deg, rgba(42, 102, 255, 0.2), rgba(70, 125, 255, 0.14));
+  color: #7ca3ff;
+  box-shadow: 0 2px 8px rgba(42, 102, 255, 0.2);
+}
+
+[data-theme="dark"] .nav-bottom {
+  border-top-color: var(--dm-border-subtle);
+}
+
+[data-theme="dark"] .logo-expand-btn:hover,
+[data-theme="dark"] .sidebar-toggle:hover {
+  background: rgba(42, 102, 255, 0.12);
+}
+
+/* Decision Support card stays branded blue in dark mode — needs no override.
+   The card subtitle is white already; no change needed. */

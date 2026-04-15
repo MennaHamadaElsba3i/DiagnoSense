@@ -138,3 +138,46 @@
 .cm-btn-primary:hover {
   background: #1C51D9;
 }
+
+
+/* ══════════════════════════════════════════════════════════
+   DARK MODE OVERRIDES — ConfirmModal
+   ══════════════════════════════════════════════════════════ */
+
+[data-theme="dark"] .cm-overlay {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] .cm-box {
+  background: #1e2940;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--dm-border-color);
+}
+
+[data-theme="dark"] .cm-title {
+  color: var(--dm-text-primary);
+}
+
+[data-theme="dark"] .cm-desc {
+  color: var(--dm-text-secondary);
+}
+
+[data-theme="dark"] .cm-icon-primary {
+  background: rgba(42, 102, 255, 0.15);
+  color: #7ca3ff;
+}
+
+[data-theme="dark"] .cm-icon-danger {
+  background: rgba(255, 68, 68, 0.15);
+  color: #f87171;
+}
+
+[data-theme="dark"] .cm-btn-cancel {
+  background: #253352;
+  border-color: var(--dm-border-color);
+  color: var(--dm-text-primary);
+}
+
+[data-theme="dark"] .cm-btn-cancel:hover {
+  background: #2e3e62;
+}

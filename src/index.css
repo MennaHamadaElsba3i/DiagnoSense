@@ -48,7 +48,147 @@
   --status-warning-bg-strong: rgba(255, 165, 0, 0.20);
   --status-warning-border-strong: rgba(255, 165, 0, 0.65);
   --status-warning-text-strong: #CC8800;
+
+  /* ── Light mode shell tokens ── */
+  --dm-bg-page:        linear-gradient(135deg, #f8faff 0%, #e9f0ff 100%);
+  --dm-bg-sidebar:     rgba(255, 255, 255, 0.95);
+  --dm-bg-navbar:      rgba(255, 255, 255, 0.98);
+  --dm-bg-card:        #ffffff;
+  --dm-bg-surface:     #ffffff;
+  --dm-bg-subtle:      #f8faff;
+  --dm-bg-input:       rgba(248, 250, 255, 0.6);
+  --dm-text-primary:   #0e1a34;
+  --dm-text-secondary: #5a6580;
+  --dm-text-muted:     #8a94a6;
+  --dm-border-color:   rgba(230, 234, 242, 0.6);
+  --dm-border-subtle:  rgba(230, 234, 242, 0.5);
+  --dm-hover-bg:       rgba(233, 240, 255, 0.6);
+  --dm-shadow-sm:      0 2px 12px rgba(0, 0, 0, 0.03);
+  --dm-shadow-card:    0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.02);
+  --dm-shadow-hover:   0 8px 24px rgba(42, 102, 255, 0.08), 0 12px 32px rgba(0, 0, 0, 0.04);
 }
+
+/* ══════════════════════════════════════════════════════════════
+   DARK MODE  –  soft navy/charcoal theme
+   Applied via  data-theme="dark"  on <html>  (ThemeContext.jsx)
+   ══════════════════════════════════════════════════════════════ */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* ── Page background ── */
+  --dm-bg-page:        linear-gradient(135deg, #111827 0%, #0f172a 100%);
+
+  /* ── Surfaces ── */
+  --dm-bg-sidebar:     rgba(17, 24, 39, 0.98);
+  --dm-bg-navbar:      rgba(17, 24, 39, 0.98);
+  --dm-bg-card:        #1e2940;
+  --dm-bg-surface:     #1e2940;
+  --dm-bg-subtle:      rgba(30, 41, 64, 0.7);
+  --dm-bg-input:       rgba(30, 41, 64, 0.8);
+
+  /* ── Text ── */
+  --dm-text-primary:   #e2e8f0;
+  --dm-text-secondary: #94a3b8;
+  --dm-text-muted:     #64748b;
+
+  /* ── Borders ── */
+  --dm-border-color:   rgba(51, 65, 85, 0.7);
+  --dm-border-subtle:  rgba(51, 65, 85, 0.5);
+
+  /* ── Interaction ── */
+  --dm-hover-bg:       rgba(42, 102, 255, 0.12);
+
+  /* ── Shadows (softer in dark) ── */
+  --dm-shadow-sm:      0 2px 12px rgba(0, 0, 0, 0.25);
+  --dm-shadow-card:    0 1px 3px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.14);
+  --dm-shadow-hover:   0 12px 32px rgba(0, 0, 0, 0.35);
+
+  /* Status badge overrides – keep same hue, adjust background darkness */
+  --status-stable-bg:   rgba(0, 193, 135, 0.12);
+  --status-critical-bg: rgba(255, 92, 92, 0.12);
+  --status-warning-bg:  rgba(255, 165, 0, 0.12);
+}
+
+/* ── Dark mode: global body / page ── */
+[data-theme="dark"] body {
+  background: var(--dm-bg-page);
+  color: var(--dm-text-primary);
+}
+
+/* ── Dark mode: dropdown danger hover ── */
+[data-theme="dark"] .dropdown-item--danger:hover {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   THEME TOGGLE ROW  (avatar dropdown)
+   ══════════════════════════════════════════════════════════════ */
+.dropdown-theme-row {
+  display: flex;
+  align-items: center;
+  padding: 8px 4px;
+  margin: 4px 0;
+  gap: 0;
+  border-top: 1px solid var(--dm-border-subtle);
+  border-bottom: 1px solid var(--dm-border-subtle);
+}
+
+.dropdown-theme-row > .theme-toggle-btn:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+.dropdown-theme-row > .theme-toggle-btn:last-child {
+  border-radius: 0 8px 8px 0;
+}
+
+.theme-toggle-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: transparent;
+  color: #8a94a6;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+}
+
+.theme-toggle-btn:hover {
+  background: rgba(42, 102, 255, 0.05);
+  color: #2A66FF;
+}
+
+.theme-toggle-btn--active {
+  background: rgba(42, 102, 255, 0.1);
+  color: #2A66FF;
+  border-color: rgba(42, 102, 255, 0.3);
+  box-shadow: inset 0 1px 2px rgba(42, 102, 255, 0.1);
+  z-index: 1;
+}
+
+/* Dark mode overrides for the theme toggle row */
+[data-theme="dark"] .dropdown-theme-row {
+  border-color: rgba(51, 65, 85, 0.5);
+}
+
+[data-theme="dark"] .theme-toggle-btn {
+  border-color: rgba(100, 116, 139, 0.3);
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .theme-toggle-btn:hover {
+  background: rgba(42, 102, 255, 0.1);
+  color: #7ca3ff;
+}
+
+[data-theme="dark"] .theme-toggle-btn--active {
+  background: rgba(42, 102, 255, 0.15);
+  color: #93b4ff;
+  border-color: rgba(42, 102, 255, 0.4);
+}
+
 
 
 a {

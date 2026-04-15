@@ -461,17 +461,7 @@ const formatDateShort = (dateStr) => {
         <div id="tasks-dashboard">
           {/* Inline fetch error */}
           {fetchError && !isLoadingItems && (
-            <div
-              style={{
-                padding: "10px 14px",
-                background: "#FFF0F0",
-                borderRadius: "8px",
-                border: "1px solid #FFD0D0",
-                color: "#CC3333",
-                fontSize: "13px",
-                marginBottom: "16px",
-              }}
-            >
+            <div className="med-task-error-banner">
               ⚠️ {fetchError}
             </div>
           )}
@@ -487,41 +477,22 @@ const formatDateShort = (dateStr) => {
             }}
           >
             {/* Next Visit – always visible, fills the left */}
-            <div
-              style={{
-                flex: 1,
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-                padding: "14px 20px",
-                background: nextVisitDisplay
-                  ? "linear-gradient(135deg,#E9F0FF,#F0F7FF)"
-                  : "#F8FAFF",
-                borderRadius: "12px",
-                border: `1px solid ${nextVisitDisplay ? "#C0D4FF" : "#E6EAF2"}`,
-              }}
-            >
+            <div className={`med-task-next-visit-bar ${nextVisitDisplay ? 'has-visit' : ''}`}>
               <svg
                 width="18"
                 height="18"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke={nextVisitDisplay ? "#2A66FF" : "#8A94A6"}
+                stroke="currentColor"
                 strokeWidth="2"
-                style={{ flexShrink: 0 }}
+                className="med-task-next-visit-icon"
               >
                 <rect x="3" y="4" width="18" height="18" rx="2" />
                 <line x1="16" y1="2" x2="16" y2="6" />
                 <line x1="8" y1="2" x2="8" y2="6" />
                 <line x1="3" y1="10" x2="21" y2="10" />
               </svg>
-              <span
-                style={{
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  color: nextVisitDisplay ? "#2A66FF" : "#8A94A6",
-                }}
-              >
+              <span className="med-task-next-visit-text">
                 {nextVisitDisplay
                   ? `Next Visit: ${nextVisitDisplay}`
                   : "No next visit scheduled"}
@@ -531,74 +502,25 @@ const formatDateShort = (dateStr) => {
             {/* Add button */}
             <button
               onClick={openForm}
-              style={{
-                flexShrink: 0,
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "12px 22px",
-                background: "linear-gradient(135deg,#2A66FF,#467DFF)",
-                color: "white",
-                border: "none",
-                borderRadius: "12px",
-                fontSize: "14px",
-                fontWeight: 600,
-                cursor: "pointer",
-                boxShadow: "0 4px 14px rgba(42,102,255,0.3)",
-                transition: "all 0.2s",
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = "translateY(-1px)";
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = "none";
-              }}
+              className="med-task-add-btn"
             >
               + Add Tasks or Medications
             </button>
           </div>
 
           {/* Two columns: Medications | Tasks */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "20px",
-              opacity:
-                isLoadingItems && (meds.length > 0 || taskItems.length > 0)
-                  ? 0.6
-                  : 1,
-              transition: "opacity 0.2s",
-            }}
-          >
+          <div className={`med-task-grid ${isLoadingItems && (meds.length > 0 || taskItems.length > 0) ? 'loading-overlay' : ''}`}>
             {/* Medications Column */}
-            <div className="card" style={{ padding: "20px" }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
-                  marginBottom: "18px",
-                }}
-              >
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    background: "#F0FDF8",
-                    borderRadius: "10px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
+            <div className="card med-task-column">
+              <div className="med-task-column-header">
+                <div className="med-task-icon-box medication">
                   {/* Pill / medication icon */}
                   <svg
                     width="18"
                     height="18"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="#00C187"
+                    stroke="currentColor"
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -607,13 +529,7 @@ const formatDateShort = (dateStr) => {
                     <line x1="8.5" y1="11.5" x2="15.5" y2="11.5" />
                   </svg>
                 </div>
-                <div
-                  style={{
-                    fontSize: "15px",
-                    fontWeight: 700,
-                    color: "#0E1A34",
-                  }}
-                >
+                <div className="med-task-column-title">
                   Medications
                 </div>
               </div>
@@ -625,36 +541,12 @@ const formatDateShort = (dateStr) => {
                 }}
               >
                 {meds.map((m) => (
-                  <div
-                    key={m.id}
-                    style={{
-                      padding: "12px 14px",
-                      background: "#F8FAFF",
-                      borderRadius: "10px",
-                      border: "1px solid #E6EAF2",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: "10px",
-                    }}
-                  >
-                    <div style={{ minWidth: 0 }}>
-                      <div
-                        style={{
-                          fontSize: "14px",
-                          fontWeight: 600,
-                          color: "#0E1A34",
-                        }}
-                      >
+                  <div key={m.id} className="med-task-item-card">
+                    <div className="med-task-item-info">
+                      <div className="med-task-item-name">
                         {m.name}
                       </div>
-                      <div
-                        style={{
-                          fontSize: "12px",
-                          color: "#8A94A6",
-                          marginTop: "3px",
-                        }}
-                      >
+                      <div className="med-task-item-details">
                         {m.dosage} — {m.frequency}
                       </div>
                     </div>
@@ -723,33 +615,16 @@ const formatDateShort = (dateStr) => {
             </div>
 
             {/* Tasks Column */}
-            <div className="card" style={{ padding: "20px" }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
-                  marginBottom: "18px",
-                }}
-              >
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    background: "#E9F0FF",
-                    borderRadius: "10px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
+            <div className="card med-task-column">
+              <div className="med-task-column-header">
+                <div className="med-task-icon-box task">
                   {/* Clipboard-list / tasks icon */}
                   <svg
                     width="18"
                     height="18"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="#2A66FF"
+                    stroke="currentColor"
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -760,13 +635,7 @@ const formatDateShort = (dateStr) => {
                     <line x1="9" y1="16" x2="13" y2="16" />
                   </svg>
                 </div>
-                <div
-                  style={{
-                    fontSize: "15px",
-                    fontWeight: 700,
-                    color: "#0E1A34",
-                  }}
-                >
+                <div className="med-task-column-title">
                   Tasks
                 </div>
               </div>
@@ -780,115 +649,32 @@ const formatDateShort = (dateStr) => {
                 {taskItems.map((t) => {
                   const isUrgent = t.dueStyle === "urgent";
                   return (
-                    <div
-                      key={t.id}
-                      style={{
-                        padding: "12px 14px",
-                        background: "#F8FAFF",
-                        borderRadius: "10px",
-                        border: "1px solid #E6EAF2",
-                      }}
-                    >
-                      {/* Two-column layout: left = title+desc, right = due pill + delete */}
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "flex-start",
-                          gap: "12px",
-                        }}
-                      >
-                        {/* Left: title + description */}
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div
-                            style={{
-                              fontSize: "14px",
-                              fontWeight: 600,
-                              color: "#0E1A34",
-                            }}
-                          >
+                    <div key={t.id} className="med-task-item-card">
+                      <div className="med-task-item-main">
+                        <div className="med-task-item-content">
+                          <div className="med-task-item-title">
                             {t.title}
                           </div>
                           {t.desc && (
-                            <div
-                              style={{
-                                fontSize: "12px",
-                                color: "#8A94A6",
-                                marginTop: "2px",
-                              }}
-                            >
+                            <div className="med-task-item-desc">
                               {t.desc}
                             </div>
                           )}
                         </div>
 
-                        {/* Right: due pill + delete button on same row */}
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "row",
-                            alignItems: "center",
-                            gap: "8px",
-                            flexShrink: 0,
-                          }}
-                        >
-                          {/* Due pill */}
+                        <div className="med-task-item-actions">
                           {t.due ? (
-                            <span
-                              style={{
-                                fontSize: "11px",
-                                fontWeight: 600,
-                                padding: "3px 8px",
-                                borderRadius: "6px",
-                                color: isUrgent ? "#FF5C5C" : "#2A66FF",
-                                background: isUrgent ? "#FFECEC" : "#E9F0FF",
-                              }}
-                            >
+                            <span className={`med-task-due-pill ${isUrgent ? 'urgent' : ''}`}>
                               Due {t.due}
                             </span>
                           ) : null}
 
-                          {/* Delete task button */}
                           <button
                             onClick={() => openDeleteConfirmModal(t.id, "task")}
                             disabled={deletingIds.has(t.id)}
                             aria-label={`Delete task: ${t.title}`}
                             title="Remove task"
-                            style={{
-                              width: "26px",
-                              height: "26px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              border: "1px solid rgba(156,163,175,0.35)",
-                              background: "rgba(156,163,175,0.08)",
-                              borderRadius: "7px",
-                              cursor: deletingIds.has(t.id)
-                                ? "not-allowed"
-                                : "pointer",
-                              color: "#9ca3af",
-                              padding: 0,
-                              opacity: deletingIds.has(t.id) ? 0.45 : 1,
-                              transition:
-                                "background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease",
-                            }}
-                            onMouseOver={(e) => {
-                              if (deletingIds.has(t.id)) return;
-                              e.currentTarget.style.background =
-                                "rgba(225,29,72,0.10)";
-                              e.currentTarget.style.borderColor =
-                                "rgba(225,29,72,0.45)";
-                              e.currentTarget.style.color = "#e11d48";
-                              e.currentTarget.style.transform = "scale(1.08)";
-                            }}
-                            onMouseOut={(e) => {
-                              e.currentTarget.style.background =
-                                "rgba(156,163,175,0.08)";
-                              e.currentTarget.style.borderColor =
-                                "rgba(156,163,175,0.35)";
-                              e.currentTarget.style.color = "#9ca3af";
-                              e.currentTarget.style.transform = "scale(1)";
-                            }}
+                            className="med-task-delete-btn"
                           >
                             <svg
                               width="14"
@@ -1218,55 +1004,40 @@ const formatDateShort = (dateStr) => {
                         >
                           Next Visit Date &amp; Time
                         </div>
-                        <DatePicker
-                          selected={parseValidDate(visitDateValue)}
-                          onChange={(date) => {
-                            if (date) {
-                              // هيحول التاريخ لـ String بتوقيت القاهرة وصيغة مقبولة للـ Validation
-                              const formattedDate = moment(date).format("YYYY-MM-DD HH:mm:ss");
-                              onVisitDateChange(formattedDate);
-                            } else {
-                              onVisitDateChange("");
-                            }
-                          }}
-                          showTimeSelect
-                          dateFormat="MMMM d, yyyy h:mm aa"
-                          placeholderText="Select date and time"
-                          wrapperClassName="datepicker-wrapper"
-                          className="step1-datepicker-input"
-                          portalId="root"
-                        />
-                      </div>
-                      {visitSaved && (
-                        <div
-                          style={{
-                            color: "#00C187",
-                            fontSize: "18px",
-                            fontWeight: 700,
-                          }}
-                        >
-                          ✓
+                      <div className="med-task-date-status-box">
+                        <div className="med-task-date-input-wrapper">
+                          <DatePicker
+                            selected={parseValidDate(visitDateValue)}
+                            onChange={(date) => {
+                              if (date) {
+                                const formattedDate = moment(date).format("YYYY-MM-DD HH:mm:ss");
+                                onVisitDateChange(formattedDate);
+                              } else {
+                                onVisitDateChange("");
+                              }
+                            }}
+                            showTimeSelect
+                            dateFormat="MMMM d, yyyy h:mm aa"
+                            placeholderText="Select date and time"
+                            wrapperClassName="datepicker-wrapper"
+                            className="step1-datepicker-input"
+                            portalId="root"
+                          />
                         </div>
-                      )}
+                        {visitSaved && (
+                          <div className="med-task-check-icon">
+                            ✓
+                          </div>
+                        )}
+                      </div>
                     </div>
+                  </div>
 
-                    {visitSaved && (
-                      <div style={{ marginTop: "8px" }}>
-                        <div
-                          style={{
-                            padding: "8px 14px",
-                            background: "#F0FDF8",
-                            borderRadius: "8px",
-                            border: "1px solid #C7F0E2",
-                            fontSize: "13px",
-                            color: "#0E1A34",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                          }}
-                        >
-                          <span style={{ color: "#00C187" }}>📅</span>
-                          <span style={{ fontWeight: 600 }}>
+                  {visitSaved && (
+                      <div className="med-task-saved-date-mini-card">
+                        <div className="med-task-saved-date-pill">
+                          <span className="med-task-calendar-icon">📅</span>
+                          <span className="med-task-saved-date-text">
                             {nextVisitDisplay}
                           </span>
                         </div>
@@ -1274,31 +1045,15 @@ const formatDateShort = (dateStr) => {
                     )}
 
                     {submitError && (
-                      <div
-                        style={{
-                          marginTop: "10px",
-                          padding: "8px 14px",
-                          background: "#FFF0F0",
-                          borderRadius: "8px",
-                          border: "1px solid #FFD0D0",
-                          fontSize: "13px",
-                          color: "#CC3333",
-                        }}
-                      >
+                      <div className="med-task-error-banner small">
                         ⚠️ {submitError}
                       </div>
                     )}
 
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginTop: "28px",
-                      }}
-                    >
+                    <div className="med-task-form-actions">
                       <button
                         disabled={isSubmitting}
+                        className="med-task-btn-back"
                         onClick={async () => {
                           if (!visitDateValue) {
                             showToast("⚠️ Please pick a date first");
@@ -1312,10 +1067,10 @@ const formatDateShort = (dateStr) => {
                             next_visit_date: visitDateValue,
                             action: "save",
                           });
+                          setIsSubmitting(true); // Wait for res
                           setIsSubmitting(false);
                           if (res && res.success) {
-                            const savedDate =
-                              res.data?.next_visit_date || visitDateValue;
+                            const savedDate = res.data?.next_visit_date || visitDateValue;
                             if (onNextVisitSaved) onNextVisitSaved(savedDate);
                             window.dispatchEvent(
                               new CustomEvent("patientNextVisitUpdated", {
@@ -1328,28 +1083,15 @@ const formatDateShort = (dateStr) => {
                             showToast("✅ Visit saved successfully!");
                             closeForm();
                           } else {
-                            setSubmitError(
-                              res?.message ||
-                                "Failed to save visit. Please try again.",
-                            );
+                            setSubmitError(res?.message || "Failed to save visit. Please try again.");
                           }
-                        }}
-                        style={{
-                          padding: "11px 24px",
-                          borderRadius: "10px",
-                          border: "1.5px solid #E6EAF2",
-                          background: "white",
-                          fontSize: "14px",
-                          fontWeight: 600,
-                          color: isSubmitting ? "#aaa" : "#3A4560",
-                          cursor: isSubmitting ? "not-allowed" : "pointer",
-                          opacity: isSubmitting ? 0.6 : 1,
                         }}
                       >
                         {isSubmitting ? "Saving…" : "+ Save & Back"}
                       </button>
                       <button
                         disabled={isSubmitting}
+                        className="med-task-btn-next"
                         onClick={async () => {
                           if (!visitDateValue) {
                             showToast("⚠️ Please pick a date first");
@@ -1366,8 +1108,7 @@ const formatDateShort = (dateStr) => {
                           setIsSubmitting(false);
                           if (res && res.success) {
                             if (res.data?.id) setVisitId(res.data.id);
-                            const savedDate =
-                              res.data?.next_visit_date || visitDateValue;
+                            const savedDate = res.data?.next_visit_date || visitDateValue;
                             if (onNextVisitSaved) onNextVisitSaved(savedDate);
                             window.dispatchEvent(
                               new CustomEvent("patientNextVisitUpdated", {
@@ -1379,26 +1120,8 @@ const formatDateShort = (dateStr) => {
                             );
                             goToStep(2);
                           } else {
-                            setSubmitError(
-                              res?.message ||
-                                "Failed to create visit. Please try again.",
-                            );
+                            setSubmitError(res?.message || "Failed to create visit. Please try again.");
                           }
-                        }}
-                        style={{
-                          padding: "11px 32px",
-                          background: isSubmitting
-                            ? "#aaa"
-                            : "linear-gradient(135deg,#2A66FF,#467DFF)",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "10px",
-                          fontSize: "14px",
-                          fontWeight: 600,
-                          cursor: isSubmitting ? "not-allowed" : "pointer",
-                          boxShadow: isSubmitting
-                            ? "none"
-                            : "0 4px 14px rgba(42,102,255,0.3)",
                         }}
                       >
                         {isSubmitting ? "Please wait…" : "Next →"}
@@ -1413,44 +1136,16 @@ const formatDateShort = (dateStr) => {
             {step === 2 && (
               <div>
                 {/* Type toggle */}
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "12px",
-                    justifyContent: "center",
-                    marginBottom: "36px",
-                  }}
-                >
+                <div className="med-task-type-toggle">
                   <button
                     onClick={() => setTaskType("medications")}
-                    style={{
-                      padding: "10px 36px",
-                      borderRadius: "10px",
-                      border: "1.5px solid #2A66FF",
-                      background:
-                        taskType === "medications" ? "#2A66FF" : "white",
-                      color: taskType === "medications" ? "white" : "#2A66FF",
-                      fontSize: "14px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      transition: "all 0.2s",
-                    }}
+                    className={`med-task-type-btn ${taskType === "medications" ? "active" : ""}`}
                   >
                     Medications
                   </button>
                   <button
                     onClick={() => setTaskType("tasks")}
-                    style={{
-                      padding: "10px 36px",
-                      borderRadius: "10px",
-                      border: "1.5px solid #2A66FF",
-                      background: taskType === "tasks" ? "#2A66FF" : "white",
-                      color: taskType === "tasks" ? "white" : "#2A66FF",
-                      fontSize: "14px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      transition: "all 0.2s",
-                    }}
+                    className={`med-task-type-btn ${taskType === "tasks" ? "active" : ""}`}
                   >
                     Tasks
                   </button>
@@ -1459,15 +1154,8 @@ const formatDateShort = (dateStr) => {
                 {/* Medication form */}
                 {taskType === "medications" && (
                   <div>
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "1fr 1fr",
-                        gap: "18px",
-                        marginBottom: "18px",
-                      }}
-                    >
-                      <div className="form-group" style={{ marginBottom: 0 }}>
+                    <div className="med-task-form-grid">
+                      <div className="form-group no-margin">
                         <label className="form-label">
                           Name <span className="required">*</span>
                         </label>
@@ -1486,7 +1174,7 @@ const formatDateShort = (dateStr) => {
                           <p className="field-error">{errors.medName}</p>
                         )}
                       </div>
-                      <div className="form-group" style={{ marginBottom: 0 }}>
+                      <div className="form-group no-margin">
                         <label className="form-label">
                           Dosage <span className="required">*</span>
                         </label>
@@ -1505,7 +1193,7 @@ const formatDateShort = (dateStr) => {
                           <p className="field-error">{errors.medDosage}</p>
                         )}
                       </div>
-                      <div className="form-group" style={{ marginBottom: 0 }}>
+                      <div className="form-group no-margin">
                         <label className="form-label">
                           Frequency <span className="required">*</span>
                         </label>
@@ -1524,7 +1212,7 @@ const formatDateShort = (dateStr) => {
                           <p className="field-error">{errors.medFreq}</p>
                         )}
                       </div>
-                      <div className="form-group" style={{ marginBottom: 0 }}>
+                      <div className="form-group no-margin">
                         <label className="form-label">Duration</label>
                         <input
                           type="text"
@@ -1537,116 +1225,44 @@ const formatDateShort = (dateStr) => {
                     </div>
 
                     {savedMedsInForm.length > 0 && (
-                      <div style={{ marginBottom: "16px" }}>
-                        <div
-                          style={{
-                            fontSize: "12px",
-                            fontWeight: 600,
-                            color: "#3A4560",
-                            marginBottom: "8px",
-                          }}
-                        >
+                      <div className="med-task-added-list-container">
+                        <div className="med-task-added-list-header">
                           💊 Added
                         </div>
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "6px",
-                          }}
-                        >
+                        <div className="med-task-added-list-stack">
                           {savedMedsInForm.map((m) => (
-                            <div
-                              key={m.id}
-                              style={{
-                                padding: "10px 14px",
-                                background: "#F0FDF8",
-                                borderRadius: "8px",
-                                border: "1px solid #C7F0E2",
-                                fontSize: "13px",
-                                color: "#0E1A34",
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                              }}
-                            >
-                              <span>
+                            <div key={m.id} className="med-task-added-item-mini">
+                              <span className="med-task-added-item-text">
                                 💊 <strong>{m.name}</strong> — {m.dosage} —{" "}
                                 {m.frequency}
                               </span>
-                              <span
-                                style={{ color: "#00C187", fontWeight: 600 }}
-                              >
-                                ✓
-                              </span>
+                              <span className="med-task-added-item-check">✓</span>
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
 
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginTop: "24px",
-                      }}
-                    >
+                    <div className="med-task-form-footer">
                       <button
                         onClick={() => goToStep(1)}
                         disabled={isSubmitting}
-                        style={{
-                          padding: "11px 24px",
-                          background: "white",
-                          border: "1.5px solid #E6EAF2",
-                          borderRadius: "10px",
-                          fontSize: "14px",
-                          fontWeight: 600,
-                          color: "#3A4560",
-                          cursor: isSubmitting ? "not-allowed" : "pointer",
-                          opacity: isSubmitting ? 0.6 : 1,
-                        }}
+                        className="med-task-btn-secondary"
                       >
                         ← Back
                       </button>
-                      <div style={{ display: "flex", gap: "10px" }}>
+                      <div className="med-task-footer-button-group">
                         <button
                           onClick={() => saveMedication(false)}
                           disabled={isSubmitting}
-                          style={{
-                            padding: "11px 24px",
-                            background: "white",
-                            border: "1.5px solid #2A66FF",
-                            borderRadius: "10px",
-                            fontSize: "14px",
-                            fontWeight: 600,
-                            color: isSubmitting ? "#aaa" : "#2A66FF",
-                            cursor: isSubmitting ? "not-allowed" : "pointer",
-                            opacity: isSubmitting ? 0.6 : 1,
-                          }}
+                          className="med-task-btn-outline"
                         >
                           {isSubmitting ? "Saving…" : "Save"}
                         </button>
                         <button
                           onClick={() => saveMedication(true)}
                           disabled={isSubmitting}
-                          style={{
-                            padding: "11px 24px",
-                            background: isSubmitting
-                              ? "#aaa"
-                              : "linear-gradient(135deg,#2A66FF,#467DFF)",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "10px",
-                            fontSize: "14px",
-                            fontWeight: 600,
-                            cursor: isSubmitting ? "not-allowed" : "pointer",
-                            boxShadow: isSubmitting
-                              ? "none"
-                              : "0 4px 14px rgba(42,102,255,0.3)",
-                            opacity: isSubmitting ? 0.6 : 1,
-                          }}
+                          className="med-task-btn-primary"
                         >
                           {isSubmitting ? "Saving…" : "Save & create another"}
                         </button>
@@ -1795,68 +1411,26 @@ const formatDateShort = (dateStr) => {
                       </div>
                     )}
 
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginTop: "24px",
-                      }}
-                    >
+                    <div className="med-task-form-footer">
                       <button
                         onClick={() => goToStep(1)}
                         disabled={isSubmitting}
-                        style={{
-                          padding: "11px 24px",
-                          background: "white",
-                          border: "1.5px solid #E6EAF2",
-                          borderRadius: "10px",
-                          fontSize: "14px",
-                          fontWeight: 600,
-                          color: "#3A4560",
-                          cursor: isSubmitting ? "not-allowed" : "pointer",
-                          opacity: isSubmitting ? 0.6 : 1,
-                        }}
+                        className="med-task-btn-secondary"
                       >
                         ← Back
                       </button>
-                      <div style={{ display: "flex", gap: "10px" }}>
+                      <div className="med-task-footer-button-group">
                         <button
                           onClick={() => saveTask(false)}
                           disabled={isSubmitting}
-                          style={{
-                            padding: "11px 24px",
-                            background: "white",
-                            border: "1.5px solid #2A66FF",
-                            borderRadius: "10px",
-                            fontSize: "14px",
-                            fontWeight: 600,
-                            color: isSubmitting ? "#aaa" : "#2A66FF",
-                            cursor: isSubmitting ? "not-allowed" : "pointer",
-                            opacity: isSubmitting ? 0.6 : 1,
-                          }}
+                          className="med-task-btn-outline"
                         >
                           {isSubmitting ? "Saving…" : "Save"}
                         </button>
                         <button
                           onClick={() => saveTask(true)}
                           disabled={isSubmitting}
-                          style={{
-                            padding: "11px 24px",
-                            background: isSubmitting
-                              ? "#aaa"
-                              : "linear-gradient(135deg,#2A66FF,#467DFF)",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "10px",
-                            fontSize: "14px",
-                            fontWeight: 600,
-                            cursor: isSubmitting ? "not-allowed" : "pointer",
-                            boxShadow: isSubmitting
-                              ? "none"
-                              : "0 4px 14px rgba(42,102,255,0.3)",
-                            opacity: isSubmitting ? 0.6 : 1,
-                          }}
+                          className="med-task-btn-primary"
                         >
                           {isSubmitting ? "Saving…" : "Save & create another"}
                         </button>
@@ -1867,25 +1441,10 @@ const formatDateShort = (dateStr) => {
 
                 {/* No type selected yet */}
                 {!taskType && (
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "flex-start",
-                      marginTop: "200px",
-                    }}
-                  >
+                  <div className="med-task-form-footer no-type">
                     <button
                       onClick={() => goToStep(1)}
-                      style={{
-                        padding: "11px 24px",
-                        background: "white",
-                        border: "1.5px solid #E6EAF2",
-                        borderRadius: "10px",
-                        fontSize: "14px",
-                        fontWeight: 600,
-                        color: "#3A4560",
-                        cursor: "pointer",
-                      }}
+                      className="med-task-btn-secondary"
                     >
                       ← Back
                     </button>

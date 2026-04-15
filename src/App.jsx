@@ -22,6 +22,7 @@ import { SubscriptionProvider } from "./components/SubscriptionContext";
 import { NotificationsProvider } from "./components/NotificationsContext";
 import NotificationsPanel from "./components/NotificationsPanel";
 import { getCookie } from "./components/cookieUtils";
+import { ThemeProvider } from "./components/ThemeContext";
 
 const ProtectedRoute = ({ children }) => {
   const token = getCookie("user_token");
@@ -30,6 +31,7 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
   return (
+    <ThemeProvider>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<DiagnoSense />} />
@@ -203,6 +205,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
+    </ThemeProvider>
   );
 }
 

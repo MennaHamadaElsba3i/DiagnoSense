@@ -3,12 +3,12 @@
 .subscription-page {
   --brand: #2A66FF;
   --brand-dark: #1a4fd6;
-  --brand-light: #eef3ff;
-  --bg: #f0f4f8;
-  --white: #ffffff;
-  --text: #0f172a;
-  --text-muted: #64748b;
-  --border: #e2e8f0;
+  --brand-light: rgba(42, 102, 255, 0.1);
+  --bg: var(--dm-bg-page);
+  --white: var(--dm-bg-card);
+  --text: var(--dm-text-primary);
+  --text-muted: var(--dm-text-secondary);
+  --border: var(--dm-border-color);
 
   font-family: 'Inter', sans-serif;
   color: var(--text);
@@ -24,7 +24,7 @@
 .subscription-title {
   font-size: 32px;
   font-weight: 700;
-  color: #0E1A34;
+  color: var(--dm-text-primary);
   margin: 0;
   line-height: 1.2;
   letter-spacing: -0.3px;
@@ -38,7 +38,7 @@
 
 /* ══ CURRENT PLAN BANNER ══ */
 .subscription-page .current-banner {
-  background: #fff;
+  background: var(--dm-bg-card);
   border: 2px solid var(--brand);
   border-radius: 14px;
   padding: 16px 22px;
@@ -125,8 +125,8 @@
 .subscription-page .btn-cancel-sub {
   margin-top: 7px;
   display: inline-block;
-  background: #fff;
-  border: 1px solid #fca5a5;
+  background: var(--dm-bg-card);
+  border: 1px solid rgba(239, 68, 68, 0.4);
   color: #ef4444;
   border-radius: 8px;
   padding: 5px 14px;
@@ -144,7 +144,7 @@
 /* ══ TABS ══ */
 .subscription-page .tabs {
   display: flex;
-  background: #fff;
+  background: var(--dm-bg-input);
   border-radius: 10px;
   padding: 4px;
   margin-bottom: 18px;
@@ -197,6 +197,7 @@
   }
 }
 
+
 /* ══ PLANS ══ */
 .subscription-page .plans-grid {
   display: grid;
@@ -207,10 +208,10 @@
 }
 
 .subscription-page .plan-card {
-  background: #fff;
+  background: var(--dm-bg-card);
   border-radius: 13px;
   padding: 20px 18px;
-  border: 1.5px solid var(--border);
+  border: 1.5px solid var(--dm-border-color);
   position: relative;
   transition: box-shadow 0.2s, transform 0.2s;
   display: flex;
@@ -337,7 +338,7 @@
 }
 
 .subscription-page .ppu-card {
-  background: #fff;
+  background: var(--dm-bg-card);
   border: 1.5px solid var(--border);
   border-radius: 13px;
   padding: 18px 20px;
@@ -404,7 +405,7 @@
 }
 
 .subscription-page .ent-card {
-  background: #fff;
+  background: var(--dm-bg-card);
   border: 1.5px solid var(--border);
   border-radius: 13px;
   padding: 18px 20px;
@@ -429,7 +430,7 @@
 
 /* ══ USAGE ══ */
 .subscription-page .usage-plan-bar {
-  background: #fff;
+  background: var(--dm-bg-card);
   border: 1px solid var(--border);
   border-radius: 11px;
   padding: 12px 18px;
@@ -472,7 +473,7 @@
 }
 
 .subscription-page .usage-box {
-  background: #fff;
+  background: var(--dm-bg-card);
   border: 1px solid var(--border);
   border-radius: 13px;
   padding: 24px 26px;
@@ -499,8 +500,8 @@
 }
 
 .subscription-page .u-track {
-  height: 10px;
-  background: #e2e8f0;
+  height: 100%;
+  background: var(--dm-border-color);
   border-radius: 20px;
   overflow: hidden;
 }
@@ -584,7 +585,7 @@
 
 /* ══ BILLING ══ */
 .subscription-page .b-card {
-  background: #fff;
+  background: var(--dm-bg-card);
   border: 1px solid var(--border);
   border-radius: 13px;
   padding: 22px 24px;
@@ -631,7 +632,7 @@
   padding: 15px 10px;
   border-radius: 9px;
   border: 1.5px solid var(--border);
-  background: #fff;
+  background: var(--dm-bg-card);
   font-weight: 700;
   font-size: 14px;
   color: var(--text);
@@ -659,7 +660,7 @@
   gap: 6px;
   border: 1.5px solid var(--border);
   border-radius: 9px;
-  background: #f8fafc;
+  background: var(--dm-bg-input);
   padding: 0 12px;
   transition: border-color 0.15s;
 }
@@ -756,7 +757,7 @@
   padding: 5px 13px;
   border-radius: 15px;
   border: 1px solid var(--border);
-  background: #f8fafc;
+  background: var(--dm-bg-input);
   color: var(--text-muted);
   font-size: 11px;
   font-weight: 500;
@@ -791,12 +792,12 @@
 }
 
 .subscription-page tbody tr {
-  border-bottom: 1px solid #f8fafc;
+  border-bottom: 1px solid var(--dm-border-subtle);
   transition: background 0.1s;
 }
 
 .subscription-page tbody tr:hover {
-  background: #fafbfc;
+  background: var(--dm-hover-bg);
 }
 
 .subscription-page td {
@@ -839,3 +840,116 @@
 .subscription-page .btn-dl:hover {
   text-decoration: underline;
 }
+
+
+/* ══════════════════════════════════════════════════════════
+   DARK MODE OVERRIDES — Subscription page
+   ══════════════════════════════════════════════════════════ */
+
+[data-theme="dark"] .subscription-page {
+  --bg: var(--dm-bg-page);
+  --white: var(--dm-bg-card);
+  --text: var(--dm-text-primary);
+  --text-muted: var(--dm-text-secondary);
+  --border: var(--dm-border-color);
+  --brand-light: rgba(42, 102, 255, 0.14);
+  color: var(--text);
+}
+
+[data-theme="dark"] .subscription-title {
+  color: var(--dm-text-primary);
+}
+
+[data-theme="dark"] .subscription-page .current-banner,
+[data-theme="dark"] .subscription-page .plan-card,
+[data-theme="dark"] .subscription-page .ppu-card,
+[data-theme="dark"] .subscription-page .ent-card,
+[data-theme="dark"] .subscription-page .usage-plan-bar,
+[data-theme="dark"] .subscription-page .usage-box,
+[data-theme="dark"] .subscription-page .b-card {
+  background: #1e2940;
+  border-color: rgba(51, 65, 85, 0.7);
+}
+
+[data-theme="dark"] .subscription-page .tabs {
+  background: #1e2940;
+  border-color: rgba(51, 65, 85, 0.7);
+}
+
+[data-theme="dark"] .subscription-page .tab-btn {
+  color: var(--dm-text-secondary);
+}
+
+[data-theme="dark"] .subscription-page .amt {
+  background: #1e2940;
+  border-color: rgba(51, 65, 85, 0.7);
+  color: var(--dm-text-primary);
+}
+
+[data-theme="dark"] .subscription-page .amt:hover,
+[data-theme="dark"] .subscription-page .amt.sel {
+  background: rgba(42, 102, 255, 0.14);
+  border-color: rgba(42, 102, 255, 0.5);
+}
+
+[data-theme="dark"] .subscription-page .inp-wrap {
+  background: rgba(30, 41, 64, 0.8);
+  border-color: rgba(51, 65, 85, 0.7);
+}
+
+[data-theme="dark"] .subscription-page .inp-wrap:focus-within {
+  background: #253352;
+  border-color: rgba(42, 102, 255, 0.5);
+}
+
+[data-theme="dark"] .subscription-page .inp {
+  color: var(--dm-text-primary);
+}
+
+[data-theme="dark"] .subscription-page thead tr {
+  border-bottom-color: rgba(51, 65, 85, 0.7);
+}
+
+[data-theme="dark"] .subscription-page tbody tr {
+  border-bottom-color: rgba(51, 65, 85, 0.5);
+}
+
+[data-theme="dark"] .subscription-page tbody tr:hover {
+  background: rgba(42, 102, 255, 0.06);
+}
+
+[data-theme="dark"] .subscription-page .f-btn {
+  background: #1a2640;
+  border-color: rgba(51, 65, 85, 0.7);
+  color: var(--dm-text-secondary);
+}
+
+[data-theme="dark"] .subscription-page .plan-feats {
+  border-top-color: rgba(51, 65, 85, 0.5);
+}
+
+[data-theme="dark"] .subscription-page .u-track {
+  background: #334155;
+}
+
+[data-theme="dark"] .subscription-page .cancelled-badge {
+  background: rgba(100, 116, 139, 0.2);
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .subscription-page .cancelled-dot {
+  background: #94a3b8;
+}
+
+[data-theme="dark"] .subscription-page .active-badge {
+  background: rgba(5, 150, 105, 0.15);
+  color: #34d399;
+}
+
+[data-theme="dark"] .subscription-page .active-dot {
+  background: #34d399;
+}
+
+[data-theme="dark"] .subscription-page .btn-cancel-sub {
+  background: transparent;
+}

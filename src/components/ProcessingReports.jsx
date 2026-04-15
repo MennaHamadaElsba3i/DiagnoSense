@@ -46,18 +46,28 @@ export default function ProcessingReports({
           });
         }
       } else if (result?.success === false) {
-        // Handle definite failure
-        if (result.message === "The AI analysis process failed and no information was retrieved.") {
-          console.error("AI Analysis failed:", result.message);
+        // Check for explicit processing signal - continue polling if still processing
+        if (result.message === "AI analysis is processing now") {
+          // Keep loading / waiting, polling continues
+        } else if (result.message && result.message.toLowerCase().includes('processing')) {
+          // Any message indicating processing/ongoing work - keep polling
+        } else if (result.message && result.message.toLowerCase().includes('failed') && 
+                   result.message.toLowerCase().includes('no information')) {
+          // The "process failed and no information retrieved" message appears to be 
+          // an intermediate response in some cases - continue polling until we get
+          // a definitive terminal state or timeout
+          console.log("Received potential intermediate failure message, continuing polling:", result.message);
+        } else {
+          // Handle definite failure - only messages that clearly indicate terminal failure
+          // Examples: explicit error messages without any processing context, network errors
+          console.error("AI Analysis failed (terminal):", result.message);
           clearInterval(pollingRef.current);
           if (onFailure) {
             onFailure(result.message);
           } else {
-            // Fallback for route-based usage: navigate back with error
-            navigate(-1, { state: { error: result.message } });
+            navigate(-1, { state: { error: result.message || "AI Analysis failed" } });
           }
         }
-        // If message is "AI analysis is processing now", we just let recursion continue
       }
     }, 4000); // polls every 4 seconds
 

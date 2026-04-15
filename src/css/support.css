@@ -1,10 +1,10 @@
 .support-page .page-header {
-    background: #FFFFFF;
+    background: var(--dm-bg-card);
     padding: 24px;
     border-radius: 16px;
-    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--dm-shadow-sm);
     margin-bottom: 24px;
-    border: 1px solid #E6EAF2;
+    border: 1px solid var(--dm-border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -19,7 +19,7 @@
 
 .support-page .page-subtitle {
     font-size: 14px;
-    color: #8A94A6;
+    color: var(--dm-text-secondary);
 }
 
 .support-page .status-badge {
@@ -41,11 +41,11 @@
 }
 
 .support-page .card {
-    background: #FFFFFF;
+    background: var(--dm-bg-card);
     border-radius: 12px;
     padding: 24px;
-    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.04);
-    border: 1px solid #E6EAF2;
+    box-shadow: var(--dm-shadow-card);
+    border: 1px solid var(--dm-border-color);
 }
 
 .support-page .card-title {
@@ -63,10 +63,11 @@
 .support-page .search-bar input {
     width: 100%;
     padding: 10px 16px 10px 36px;
-    border: 1px solid #E6EAF2;
+    border: 1px solid var(--dm-border-color);
     border-radius: 8px;
     font-size: 14px;
-    background: #F8FAFF;
+    background: var(--dm-bg-input);
+    color: var(--dm-text-primary);
     transition: all 0.3s ease;
 }
 
@@ -100,8 +101,8 @@
 }
 
 .support-page .faq-item {
-    background: #F8FAFF;
-    border: 1px solid #E6EAF2;
+    background: var(--dm-bg-subtle);
+    border: 1px solid var(--dm-border-color);
     border-radius: 8px;
     padding: 12px 16px;
     margin-bottom: 8px;
@@ -111,7 +112,7 @@
     justify-content: space-between;
     align-items: center;
     font-size: 14px;
-    color: #3A4560;
+    color: var(--dm-text-primary);
 }
 
 .support-page .faq-item:hover {
@@ -156,7 +157,7 @@
     display: block;
     font-size: 13px;
     font-weight: 500;
-    color: #3A4560;
+    color: var(--dm-text-secondary);
     margin-bottom: 6px;
 }
 
@@ -165,11 +166,12 @@
 .support-page .form-textarea {
     width: 100%;
     padding: 10px 12px;
-    border: 1px solid #E6EAF2;
+    border: 1px solid var(--dm-border-color);
     border-radius: 8px;
     font-size: 14px;
     font-family: 'Inter', sans-serif;
-    background: #FFFFFF;
+    background: var(--dm-bg-input);
+    color: var(--dm-text-primary);
     transition: all 0.2s ease;
 }
 
@@ -257,8 +259,8 @@
 
 .support-page .resource-card {
     padding: 16px;
-    background: #F8FAFF;
-    border: 1px solid #E6EAF2;
+    background: var(--dm-bg-subtle);
+    border: 1px solid var(--dm-border-color);
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -624,3 +626,77 @@
         grid-template-columns: 1fr;
     }
 }
+
+
+/* ══════════════════════════════════════════════════════════
+   DARK MODE OVERRIDES — Support page
+   ══════════════════════════════════════════════════════════ */
+
+[data-theme="dark"] .support-page .chat-widget {
+  background: var(--dm-bg-card);
+  border-color: var(--dm-border-color);
+  box-shadow: var(--dm-shadow-card);
+}
+
+[data-theme="dark"] .support-page .chat-input {
+  background: var(--dm-bg-input);
+  border-color: var(--dm-border-color);
+  color: var(--dm-text-primary);
+}
+
+[data-theme="dark"] .support-page .chat-message.agent {
+    background: rgba(42, 102, 255, 0.12);
+    color: var(--dm-text-primary);
+}
+
+[data-theme="dark"] .support-page .modal-content {
+  background: var(--dm-bg-card);
+  border: 1px solid var(--dm-border-color);
+  box-shadow: var(--dm-shadow-card);
+}
+
+[data-theme="dark"] .support-page .ticket-table thead {
+  background: rgba(30, 41, 64, 0.8);
+}
+
+[data-theme="dark"] .support-page .support-card {
+  background: var(--dm-bg-card);
+  border-color: var(--dm-border-color);
+}
+
+[data-theme="dark"] .support-page .page-header {
+  background: var(--dm-bg-card) !important;
+  border-color: var(--dm-border-color) !important;
+}
+
+[data-theme="dark"] .support-page .page-header-subtitle {
+  color: var(--dm-text-secondary);
+}
+
+[data-theme="dark"] .support-page .faq-item {
+  background: var(--dm-bg-surface);
+  border-color: var(--dm-border-color);
+  color: var(--dm-text-primary);
+}
+
+[data-theme="dark"] .support-page .faq-item:hover {
+  background: rgba(42, 102, 255, 0.12);
+  border-color: rgba(42, 102, 255, 0.4);
+}
+
+[data-theme="dark"] .support-page .faq-answer {
+  background: var(--dm-bg-input);
+  border-color: var(--dm-border-color);
+  color: var(--dm-text-secondary);
+}
+
+[data-theme="dark"] .support-page .resource-card {
+  background: var(--dm-bg-surface);
+  border-color: var(--dm-border-color);
+  color: var(--dm-text-primary);
+}
+
+[data-theme="dark"] .support-page .resource-card:hover {
+  background: var(--dm-bg-card);
+  border-color: rgba(42, 102, 255, 0.3);
+}

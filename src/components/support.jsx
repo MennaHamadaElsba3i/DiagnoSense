@@ -283,7 +283,9 @@ function Support() {
             <div className="card support-card">
               <h3 className="card-title">Frequently Asked Questions</h3>
               <div className="search-bar">
-                <span className="search-bar-icon">🔍</span>
+                <span className="search-bar-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </span>
                 <input type="text" placeholder="Search help topics..." />
               </div>
 
@@ -387,28 +389,36 @@ function Support() {
               <div className="resource-grid">
                 {[
                   {
-                    icon: "📚",
+                    icon: (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: "2px" }}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                    ),
                     title: "Documentation",
                     desc: "Complete API and platform docs",
                   },
                   {
-                    icon: "🚀",
+                    icon: (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: "2px" }}><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path></svg>
+                    ),
                     title: "Quick Start Guide",
                     desc: "Get up and running in 5 minutes",
                   },
                   {
-                    icon: "🎥",
+                    icon: (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: "2px" }}><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                    ),
                     title: "Video Tutorials",
                     desc: "Step-by-step walkthroughs",
                   },
                   {
-                    icon: "🔧",
+                    icon: (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: "2px" }}><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                    ),
                     title: "System Docs",
                     desc: "Technical specifications",
                   },
                 ].map(({ icon, title, desc }) => (
                   <div className="resource-card" key={title}>
-                    <div className="resource-card-title">
+                    <div className="resource-card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       {icon} {title}
                     </div>
                     <div className="resource-card-desc">{desc}</div>

@@ -16,6 +16,10 @@ import {
   sendChatbotMessageAPI,
   updatePatientAPI,
   getPatientForEditAPI,
+  subscribeToPlanAPI,
+  subscribeToPayPerUseAPI,
+  cancelSubscriptionAPI,
+  getSubscriptionPlansAPI,
 } from "./mockAPI";
 import echo from "./echo";
 import { getJsonCookie } from "./cookieUtils";
@@ -26,10 +30,10 @@ import stethoscope from "../assets/Stethoscope.png";
 import closeIcon from "../assets/close.png";
 import openIcon from "../assets/open.png";
 import diagnobotImg from "../assets/DiagnoBot.png";
-import { useSidebar } from "../components/SidebarContext";
-import { useSubscription } from "../components/SubscriptionContext";
+import { useSidebar } from "./SidebarContext";
+import { useSubscription } from "./SubscriptionContext";
 import Sidebar from "./Sidebar";
-import Navbar from "./Navbar"
+import Navbar from "./Navbar.jsx";
 import "../css/PatientProfile.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import MedicationsAndTasksTab from "../components/MedicationsAndTasksTab.jsx";
@@ -47,8 +51,22 @@ const TrashIcon = () => (
 );
 
 const PatientProfile = () => {
+  // ── Hook-based state / context (Must be initialized first at the absolute top) ──
+  const { 
+    credits, 
+    isCreditsLoading, 
+    subscriptionData, 
+    isSubLoading, 
+    refreshSubscription: refreshSubscriptionCtx, 
+    refreshCredits: refreshCreditsCtx 
+  } = useSubscription();
+
+  const { isSidebarCollapsed, toggleSidebar } = useSidebar();
+  const { unreadCount, openNotifications, refreshNotifications: refreshNotificationsCtx } = useNotifications();
+
   const navigate = useNavigate();
   const { patientId } = useParams();
+  const location = useLocation();
 
   // ── Overview API state ──
   const [overviewData, setOverviewData] = useState(null);
@@ -83,7 +101,6 @@ const PatientProfile = () => {
   const [activeTab, setActiveTab] = useState("overview");
 
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
-  const { unreadCount, openNotifications } = useNotifications();
   const avatarMenuRef = useRef(null);
 
   useEffect(() => {
@@ -112,10 +129,22 @@ const PatientProfile = () => {
   const chatChannelRef = useRef(null); // guard against duplicate realtime listeners
 
   const [selectedStatus, setSelectedStatus] = useState(() => {
-    const raw = (JSON.parse(localStorage.getItem("currentPatient"))?.status || "").toLowerCase().trim().replaceAll("_", " ");
-    return ["stable", "critical", "under review"].includes(raw) ? raw : "under review";
+    try {
+      const persisted = localStorage.getItem("currentPatient");
+      if (!persisted) return "under review";
+      const parsed = JSON.parse(persisted);
+      const raw = (parsed?.status || "").toLowerCase().trim().replace(/_/g, " ");
+      return ["stable", "critical", "under review"].includes(raw) ? raw : "under review";
+    } catch {
+      return "under review";
+    }
   });
   const [isStatusUpdating, setIsStatusUpdating] = useState(false);
+  const [isUpgradeConfirmOpen, setIsUpgradeConfirmOpen] = useState(false);
+  const [upgradeTarget, setUpgradeTarget] = useState(null); // { id, name, price, type: 'recurring' | 'ppu' }
+  const [isUpgrading, setIsUpgrading] = useState(false);
+  const [pendingFeatureToOpen, setPendingFeatureToOpen] = useState(null); // 'decision' | 'chatbot'
+  const [availablePlans, setAvailablePlans] = useState([]);
 
 
   //  Add-note API state 
@@ -124,11 +153,11 @@ const PatientProfile = () => {
   const [savingNoteId, setSavingNoteId] = useState(null); // tracks which new note is being saved
   const [editSavingId, setEditSavingId] = useState(null); // tracks which existing note edit is being saved
 
-  const location = useLocation();
   const keyInfoData = location.state?.keyInfoData || null;
 
   // Tracks whether we've already seeded keyInfo from navigation state
   const [keyInfoSeeded, setKeyInfoSeeded] = useState(false);
+
 
   // ── Key info fetched from backend (View Details path) ──
   const [keyInfo, setKeyInfo] = useState(null);
@@ -216,7 +245,7 @@ const PatientProfile = () => {
       if (res && res.success) {
         // Confirm with backend's canonical value (normalised)
         const confirmed = (res.data?.status || newStatus)
-          .toLowerCase().trim().replaceAll("_", " ");
+          .toLowerCase().trim().replace(/_/g, " ");
         const valid = ["stable", "critical", "under review"].includes(confirmed);
         setSelectedStatus(valid ? confirmed : newStatus);
 
@@ -370,7 +399,7 @@ const PatientProfile = () => {
           const normalized = (patient?.status || "")
             .toLowerCase()
             .trim()
-            .replaceAll("_", " ");
+            .replace(/_/g, " ");
           if (
             normalized === "stable" ||
             normalized === "critical" ||
@@ -391,6 +420,115 @@ const PatientProfile = () => {
 
     fetchOverview();
   }, [patientId]);
+
+  // ── Subscription Upgrade Logic ──
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      const res = await getSubscriptionPlansAPI();
+      if (res && res.success) {
+        setAvailablePlans(res.data);
+      }
+    };
+    fetchPlans();
+  }, []);
+
+  useEffect(() => {
+    const handleStripeMessage = (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type === 'STRIPE_SUCCESS') {
+        console.log("[PatientProfile] Stripe success received.");
+        refreshSubscriptionCtx();
+        refreshCreditsCtx();
+        if (pendingFeatureToOpen === 'decision') fetchDecisionSupport();
+        // Chatbot state handles itself via shouldShowLockedChatbot
+        setIsUpgrading(false);
+        setIsUpgradeConfirmOpen(false);
+      }
+    };
+    window.addEventListener('message', handleStripeMessage);
+    return () => window.removeEventListener('message', handleStripeMessage);
+  }, [refreshSubscriptionCtx, refreshCreditsCtx, pendingFeatureToOpen]);
+
+  const initiateUpgrade = (planName, targetType, feature) => {
+    let target = null;
+    if (targetType === 'ppu') {
+      target = { id: 'Pay-per-use', name: 'Pay-Per-Use', type: 'ppu' };
+    } else {
+      const plan = availablePlans.find(p => p.name.toLowerCase() === planName.toLowerCase());
+      if (plan) {
+        target = { id: plan.id, name: plan.name, type: 'recurring', price: plan.price };
+      }
+    }
+
+    if (target) {
+      setUpgradeTarget(target);
+      setPendingFeatureToOpen(feature);
+      setIsUpgradeConfirmOpen(true);
+    }
+  };
+
+  const handleUpgradeConfirm = async () => {
+    if (!upgradeTarget || isUpgrading) return;
+    setIsUpgrading(true);
+
+    try {
+      // 1. Cancel existing recurring subscription if upgrading to another recurring plan
+      if (subscriptionData?.billing_mode === 'subscription' && upgradeTarget.type === 'recurring') {
+        console.log("[Upgrade] Cancelling current subscription first...");
+        await cancelSubscriptionAPI();
+      }
+
+      // 2. Subscribe to new plan
+      let res;
+      if (upgradeTarget.type === 'ppu') {
+        res = await subscribeToPayPerUseAPI();
+      } else {
+        res = await subscribeToPlanAPI(upgradeTarget.id);
+      }
+
+      if (res && res.success) {
+        const paymentUrl = res.payment_url || res.checkout_url || res.url || (res.data && (res.data.payment_url || res.data.checkout_url || res.data.url));
+        if (paymentUrl) {
+          window.open(paymentUrl, "stripe_checkout", "width=600,height=700");
+          // loading remains true until stripe message or manual close
+        } else {
+          await refreshSubscriptionCtx();
+          await refreshCreditsCtx();
+          refreshNotificationsCtx?.();
+          
+          if (pendingFeatureToOpen === 'decision') {
+            await fetchDecisionSupport();
+          }
+          
+          setIsUpgradeConfirmOpen(false);
+          setIsUpgrading(false);
+          
+          Swal.fire({
+            icon: "success",
+            title: "Success!",
+            text: `You have successfully switched to ${upgradeTarget.name}.`,
+            confirmButtonColor: "#2A66FF",
+          });
+        }
+      } else {
+        setIsUpgrading(false);
+        Swal.fire({
+          icon: "error",
+          title: "Upgrade Failed",
+          text: res?.message || "Something went wrong.",
+        });
+      }
+    } catch (err) {
+      console.error("[Upgrade] error:", err);
+      setIsUpgrading(false);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Network error during upgrade.",
+      });
+    }
+  };
 
   const [selectedReport, setSelectedReport] = useState(null);
 
@@ -975,8 +1113,6 @@ const PatientProfile = () => {
   };
 
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const { isSidebarCollapsed, toggleSidebar } = useSidebar();
-  const { credits, isCreditsLoading, subscriptionData, isSubLoading } = useSubscription();
 
   // ── Plan-access & historical data helpers ──
   const isPayPerUse = subscriptionData?.billing_mode === "pay_per_use";
@@ -1196,6 +1332,23 @@ const PatientProfile = () => {
         icon={<TrashIcon />}
       />
 
+      {/* Plan Upgrade Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isUpgradeConfirmOpen}
+        onClose={() => !isUpgrading && setIsUpgradeConfirmOpen(false)}
+        onConfirm={handleUpgradeConfirm}
+        title="Confirm Plan Change"
+        description={isUpgrading ? "Processing your request..." : `Are you sure you want to switch to the ${upgradeTarget?.name} plan?`}
+        confirmText={isUpgrading ? "Processing..." : "Confirm & Subscribe"}
+        cancelText="Maybe Later"
+        variant="primary"
+        icon={
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '24px', height: '24px' }}>
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+        }
+      />
+
       <div
         className="content-layer"
         style={{
@@ -1236,22 +1389,7 @@ const PatientProfile = () => {
             </div>
             <div className="header-actions">
               <button
-                className="btn btn-secondary"
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  textAlign: "center",
-                  padding: "8px 16px",
-                  borderRadius: "10px",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  transition: " all 0.3s ease",
-                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
-                  background: "transparent",
-                  color: "#2A66FF",
-                  border: "1px solid #2A66FF",
-                  fontWeight: "bold",
-                }}
+                className="btn btn-secondary pp-btn-edit-file"
                 onClick={() => {
                   navigate(`/edit-patient/${patientId}`);
                 }}
@@ -1259,22 +1397,7 @@ const PatientProfile = () => {
                 Edit File
               </button>
               <button
-                className="btn btn-secondary"
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  textAlign: "center",
-                  padding: "8px 16px",
-                  borderRadius: "10px",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  transition: " all 0.3s ease",
-                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
-                  background: "rgb(42, 102, 255)",
-                  color: "white",
-                  border: "1px solid #2A66FF",
-                  fontWeight: "bold",
-                }}
+                className="btn btn-secondary pp-btn-collab"
               >
                 Start Collaboration
               </button>
@@ -1529,11 +1652,8 @@ const PatientProfile = () => {
                     </div>
 
                     {/* Row 2 / Col 2 */}
-                    <div
-                      className="info-item"
-                      style={{ background: "#FFECEC", borderColor: "#FF5C5C" }}
-                    >
-                      <div className="info-label" style={{ color: "#FF5C5C" }}>
+                    <div className="info-item pp-allergy-alert">
+                      <div className="info-label allergy-label">
                         <svg
                           width="12"
                           height="12"
@@ -1548,7 +1668,7 @@ const PatientProfile = () => {
                         </svg>
                         Known Allergies
                       </div>
-                      <div className="info-value" style={{ color: "#FF5C5C" }}>
+                      <div className="info-value allergy-value">
                         {overviewLoading
                           ? "…"
                           : formatKeyInfo("allergies", overviewData?.allergies)}
@@ -3292,10 +3412,12 @@ const PatientProfile = () => {
                   <LockedFeatureOverlay
                     title="Unlock Smarter Clinical Decisions"
                     description="Get AI-powered differential insights to support faster and more accurate diagnoses."
-                    primaryLabel={planNameLower === "pro" ? "Upgrade to Premium" : "Upgrade to Pro"}
-                    onPrimary={() => navigate("/subscription")}
-                    secondaryLabel="Or use Pay-Per-Use"
-                    onSecondary={() => navigate("/subscription")}
+                    primaryLabel={planNameLower === "basic" ? "Upgrade to Pro" : "Upgrade to Premium"}
+                    onPrimary={() => initiateUpgrade(planNameLower === "basic" ? "Pro" : "Premium", 'recurring', 'decision')}
+                    secondaryLabel={planNameLower === "basic" ? "Upgrade to Premium" : "Use Pay-Per-Use"}
+                    onSecondary={() => planNameLower === "basic" ? initiateUpgrade("Premium", 'recurring', 'decision') : initiateUpgrade("Pay-Per-Use", 'ppu', 'decision')}
+                    tertiaryLabel={planNameLower === "basic" ? "Use Pay-Per-Use" : null}
+                    onTertiary={planNameLower === "basic" ? () => initiateUpgrade("Pay-Per-Use", 'ppu', 'decision') : null}
                   />
                 </div>
               ) : (
@@ -3562,9 +3684,9 @@ const PatientProfile = () => {
                 title="Meet Your AI Assistant"
                 description="Ask anything about your patient and get instant, source-based answers."
                 primaryLabel="Upgrade to Premium"
-                onPrimary={() => { toggleChat(); navigate("/subscription"); }}
+                onPrimary={() => initiateUpgrade("Premium", 'recurring', 'chatbot')}
                 secondaryLabel="Or use Pay-Per-Use"
-                onSecondary={() => { toggleChat(); navigate("/subscription"); }}
+                onSecondary={() => initiateUpgrade("Pay-Per-Use", 'ppu', 'chatbot')}
               />
             </>
           ) : (
