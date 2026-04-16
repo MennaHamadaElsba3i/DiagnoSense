@@ -2383,25 +2383,6 @@ body {
           width: 95vw;
      }
 }
-.dsn-loading-blur {
-  filter: blur(6px);
-  opacity: 0.5;
-  user-select: none;
-  pointer-events: none;
-  animation: dsn-blur-pulse 1.8s ease-in-out infinite;
-  display: inline-block;
-}
-
-@keyframes dsn-blur-pulse {
-  0%, 100% { 
-    filter: blur(6px); 
-    opacity: 0.4; 
-  }
-  50% { 
-    filter: blur(4px); 
-    opacity: 0.6; 
-  }
-}
 
 .dsn-donut-segment:hover {
   stroke-width: 26; 

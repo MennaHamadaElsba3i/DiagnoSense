@@ -504,29 +504,37 @@ const PatientProfile = () => {
           setIsUpgradeConfirmOpen(false);
           setIsUpgrading(false);
           
-          Swal.fire({
-            icon: "success",
-            title: "Success!",
-            text: `You have successfully switched to ${upgradeTarget.name}.`,
-            confirmButtonColor: "#2A66FF",
-          });
+          setTimeout(() => {
+            Swal.fire({
+              icon: "success",
+              title: "Success!",
+              text: `You have successfully switched to ${upgradeTarget.name}.`,
+              confirmButtonColor: "#2A66FF",
+            });
+          }, 300);
         }
       } else {
+        setIsUpgradeConfirmOpen(false);
         setIsUpgrading(false);
-        Swal.fire({
-          icon: "error",
-          title: "Upgrade Failed",
-          text: res?.message || "Something went wrong.",
-        });
+        setTimeout(() => {
+          Swal.fire({
+            icon: "error",
+            title: "Upgrade Failed",
+            text: res?.message || "Something went wrong.",
+          });
+        }, 300);
       }
     } catch (err) {
       console.error("[Upgrade] error:", err);
+      setIsUpgradeConfirmOpen(false);
       setIsUpgrading(false);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Network error during upgrade.",
-      });
+      setTimeout(() => {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Network error during upgrade.",
+        });
+      }, 300);
     }
   };
 
@@ -1363,8 +1371,8 @@ const PatientProfile = () => {
         <header className="patient-header pp-header">
           <div className="patient-identity">
             <div className="patient-main-info">
-              <div className="patient-avatar" style={{ borderRadius: "50%" }}>
-                {overviewData?.patientName
+              <div className={`patient-avatar ${overviewLoading ? 'preview-shimmer' : ''}`} style={{ borderRadius: "50%" }}>
+                {overviewLoading ? "NH" : (overviewData?.patientName
                   ? overviewData.patientName
                     .split(" ")
                     .filter(Boolean)
@@ -1372,17 +1380,17 @@ const PatientProfile = () => {
                     .map((w) => w[0])
                     .join("")
                     .toUpperCase()
-                  : "NH"}
+                  : "NH")}
               </div>
               <div className="patient-details" style={{ marginBottom: "0px" }}>
                 <h1>
                   {overviewLoading
-                    ? "Loading…"
+                    ? <span className="preview-shimmer">Nada Hassan</span>
                     : (overviewData?.patientName ?? "N/A")}
                 </h1>
                 <p className="patient-meta">
                   {overviewLoading
-                    ? "Loading…"
+                    ? <span className="preview-shimmer" style={{ display: 'inline-block', marginTop: '4px' }}>Dr. Tarek Ahmed / National ID: #30410116471075</span>
                     : `${overviewData?.doctorName ? `Dr. ${overviewData.doctorName}` : "N/A"} / National ID: #${overviewData?.patientId ?? "N/A"}`}
                 </p>
               </div>
@@ -1471,12 +1479,20 @@ const PatientProfile = () => {
                     Smart Summary
                   </h2>
                   <div className="ai-insight">
-                    <strong>AI Summary:</strong>{" "}
-                    {overviewLoading
-                      ? "Loading…"
-                      : overviewData?.smart_summary ||
-                      analysisData?.[0]?.result?.["ai-summary"] ||
-                      "No insights available"}
+                    {overviewLoading ? (
+                      <div className="preview-shimmer" style={{ marginTop: '12px' }}>
+                        <strong>AI Summary:</strong> The patient presents with a history of autoimmune symptoms including joint pain and chronic inflammation.
+                        Recent laboratory tests indicate elevated inflammatory markers suggestive of an active flare-up.
+                        Recommended immediate review of immunosuppressive therapy dosage.
+                      </div>
+                    ) : (
+                      <>
+                        <strong>AI Summary:</strong>{" "}
+                        {overviewData?.smart_summary ||
+                          analysisData?.[0]?.result?.["ai-summary"] ||
+                          "No insights available"}
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -1549,203 +1565,304 @@ const PatientProfile = () => {
                     </div>
                   </div>
                   <div className="key-info-grid">
-                    {/* Row 1 / Col 1 */}
-                    <div className="info-item age-smoker-split">
-                      {/* Mini-field A: Age */}
-                      <div className="mini-field">
-                        <div className="info-label">
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          >
-                            <rect
-                              x="3"
-                              y="4"
-                              width="18"
-                              height="18"
-                              rx="2"
-                              ry="2"
-                            ></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                          </svg>
-                          Age
+                    {overviewLoading ? (
+                      <>
+                        {/* Row 1 / Col 1 */}
+                        <div className="info-item age-smoker-split">
+                          {/* Mini-field A: Age */}
+                          <div className="mini-field">
+                            <div className="preview-shimmer" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              <div className="info-label">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                                </svg>
+                                Age
+                              </div>
+                              <div className="info-value">48 Years</div>
+                            </div>
+                          </div>
+
+                          {/* Mini-field B: Smoker */}
+                          <div className="mini-field">
+                            <div className="preview-shimmer" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              <div className="info-label">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <circle cx="12" cy="12" r="10"></circle>
+                                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                                  <circle cx="12" cy="16" r="1"></circle>
+                                </svg>
+                                Smoker
+                              </div>
+                              <div className="info-value">No</div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="info-value">
-                          {overviewLoading
-                            ? "…"
-                            : formatKeyInfo("age", overviewData?.age)}
+
+                        {/* Row 1 / Col 2 */}
+                        <div className="info-item">
+                          <div className="preview-shimmer" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div className="info-label">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                              </svg>
+                              Chronic Disease
+                            </div>
+                            <div className="info-value">Exercise-induced Bronchospasm</div>
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Mini-field B: Smoker */}
-                      <div className="mini-field">
-                        <div className="info-label">
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          >
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                            <circle cx="12" cy="16" r="1"></circle>
-                          </svg>
-                          Smoker
+                        {/* Row 2 / Col 1 */}
+                        <div className="info-item">
+                          <div className="preview-shimmer" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div className="info-label">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                              </svg>
+                              Previous Surgeries
+                            </div>
+                            <div className="info-value">Left ankle arthroscopy (2023)</div>
+                          </div>
                         </div>
-                        <div className="info-value">
-                          {overviewLoading
-                            ? "…"
-                            : formatKeyInfo("smoker", overviewData?.smoker)}
+
+                        {/* Row 2 / Col 2 */}
+                        <div className="info-item pp-allergy-alert">
+                          <div className="preview-shimmer" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div className="info-label allergy-label">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                              </svg>
+                              Known Allergies
+                            </div>
+                            <div className="info-value allergy-value">Penicillin</div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
 
-                    {/* Row 1 / Col 2 */}
-                    <div className="info-item">
-                      <div className="info-label">
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                          <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                        Chronic Disease
-                      </div>
-                      <div className="info-value">
-                        {overviewLoading
-                          ? "…"
-                          : formatKeyInfo(
-                            "chronicDiseases",
-                            overviewData?.chronicDiseases,
-                          )}
-                      </div>
-                    </div>
+                        {/* Row 3 / Col 1 */}
+                        <div className="info-item">
+                          <div className="preview-shimmer" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div className="info-label">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                              </svg>
+                              Medications
+                            </div>
+                            <div className="info-value">Ibuprofen (600mg)</div>
+                          </div>
+                        </div>
 
-                    {/* Row 2 / Col 1 */}
-                    <div className="info-item">
-                      <div className="info-label">
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                          <polyline points="14 2 14 8 20 8"></polyline>
-                          <line x1="16" y1="13" x2="8" y2="13"></line>
-                          <line x1="16" y1="17" x2="8" y2="17"></line>
-                          <polyline points="10 9 9 9 8 9"></polyline>
-                        </svg>
-                        Previous Surgeries
-                      </div>
-                      <div className="info-value">
-                        {overviewLoading
-                          ? "…"
-                          : formatKeyInfo(
-                            "previousSurgeries",
-                            overviewData?.previousSurgeries,
-                          )}
-                      </div>
-                    </div>
+                        {/* Row 3 / Col 2 */}
+                        <div className="info-item">
+                          <div className="preview-shimmer" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div className="info-label">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                              </svg>
+                              Family Medical History
+                            </div>
+                            <div className="info-value">History of osteoarthritis</div>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {/* Row 1 / Col 1 */}
+                        <div className="info-item age-smoker-split">
+                          {/* Mini-field A: Age */}
+                          <div className="mini-field">
+                            <div className="info-label">
+                              <svg
+                                width="12"
+                                height="12"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <rect
+                                  x="3"
+                                  y="4"
+                                  width="18"
+                                  height="18"
+                                  rx="2"
+                                  ry="2"
+                                ></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                              </svg>
+                              Age
+                            </div>
+                            <div className="info-value">
+                              {formatKeyInfo("age", overviewData?.age)}
+                            </div>
+                          </div>
 
-                    {/* Row 2 / Col 2 */}
-                    <div className="info-item pp-allergy-alert">
-                      <div className="info-label allergy-label">
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                          <line x1="12" y1="9" x2="12" y2="13"></line>
-                          <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                        </svg>
-                        Known Allergies
-                      </div>
-                      <div className="info-value allergy-value">
-                        {overviewLoading
-                          ? "…"
-                          : formatKeyInfo("allergies", overviewData?.allergies)}
-                      </div>
-                    </div>
+                          {/* Mini-field B: Smoker */}
+                          <div className="mini-field">
+                            <div className="info-label">
+                              <svg
+                                width="12"
+                                height="12"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <circle cx="12" cy="16" r="1"></circle>
+                              </svg>
+                              Smoker
+                            </div>
+                            <div className="info-value">
+                              {formatKeyInfo("smoker", overviewData?.smoker)}
+                            </div>
+                          </div>
+                        </div>
 
-                    {/* Row 3 / Col 1 */}
-                    <div className="info-item">
-                      <div className="info-label">
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <rect
-                            x="2"
-                            y="7"
-                            width="20"
-                            height="14"
-                            rx="2"
-                            ry="2"
-                          ></rect>
-                          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-                        </svg>
-                        Medications
-                      </div>
-                      <div className="info-value">
-                        {overviewLoading
-                          ? "…"
-                          : formatKeyInfo(
-                            "medications",
-                            overviewData?.medications,
-                          )}
-                      </div>
-                    </div>
+                        {/* Row 1 / Col 2 */}
+                        <div className="info-item">
+                          <div className="info-label">
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                              <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            Chronic Disease
+                          </div>
+                          <div className="info-value">
+                            {formatKeyInfo(
+                              "chronicDiseases",
+                              overviewData?.chronicDiseases,
+                            )}
+                          </div>
+                        </div>
 
-                    {/* Row 3 / Col 2 */}
-                    <div className="info-item">
-                      <div className="info-label">
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                          <circle cx="9" cy="7" r="4"></circle>
-                          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
-                        Family Medical History
-                      </div>
-                      <div className="info-value">
-                        {overviewLoading
-                          ? "…"
-                          : formatKeyInfo(
-                            "familyHistory",
-                            overviewData?.familyHistory,
-                          )}
-                      </div>
-                    </div>
+                        {/* Row 2 / Col 1 */}
+                        <div className="info-item">
+                          <div className="info-label">
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                              <polyline points="14 2 14 8 20 8"></polyline>
+                              <line x1="16" y1="13" x2="8" y2="13"></line>
+                              <line x1="16" y1="17" x2="8" y2="17"></line>
+                              <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            Previous Surgeries
+                          </div>
+                          <div className="info-value">
+                            {formatKeyInfo(
+                              "previousSurgeries",
+                              overviewData?.previousSurgeries,
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Row 2 / Col 2 */}
+                        <div className="info-item pp-allergy-alert">
+                          <div className="info-label allergy-label">
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                              <line x1="12" y1="9" x2="12" y2="13"></line>
+                              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                            Known Allergies
+                          </div>
+                          <div className="info-value allergy-value">
+                            {formatKeyInfo("allergies", overviewData?.allergies)}
+                          </div>
+                        </div>
+
+                        {/* Row 3 / Col 1 */}
+                        <div className="info-item">
+                          <div className="info-label">
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <rect
+                                x="2"
+                                y="7"
+                                width="20"
+                                height="14"
+                                rx="2"
+                                ry="2"
+                              ></rect>
+                              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                            </svg>
+                            Medications
+                          </div>
+                          <div className="info-value">
+                            {formatKeyInfo(
+                              "medications",
+                              overviewData?.medications,
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Row 3 / Col 2 */}
+                        <div className="info-item">
+                          <div className="info-label">
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                              <circle cx="9" cy="7" r="4"></circle>
+                              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            Family Medical History
+                          </div>
+                          <div className="info-value">
+                            {formatKeyInfo(
+                              "familyHistory",
+                              overviewData?.familyHistory,
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
