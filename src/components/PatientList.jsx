@@ -13,6 +13,7 @@ import "../css/PatientList.css";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import { useNotifications } from "./NotificationsContext";
 import { getDoctorInitials } from "./Dashboard";
+import { usePageCache } from "./PageCacheContext";
 import {
   getPatientsAPI,
   searchPatientsAPI,
@@ -411,6 +412,7 @@ const PatientList = () => {
   const [pageSize, setPageSize] = useState(12);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { getCache, setCache, invalidatePrefix } = usePageCache();
 
   const gridRef = useRef(null);
   const cardRef = useRef(null);
@@ -443,6 +445,16 @@ const PatientList = () => {
   }, [patients.length]);
 
   const fetchPatients = async (pageNumber) => {
+    const cacheKey = `patients_page_${pageNumber}`;
+    const cached = getCache(cacheKey);
+    if (cached) {
+      setPatients(cached.patients);
+      setCurrentPage(cached.currentPage);
+      setLastPage(cached.lastPage);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     console.log("[patients] fetching page", pageNumber);
@@ -556,14 +568,24 @@ const PatientList = () => {
         };
       });
 
+      const resolvedPage = Number(meta?.current_page || pageNumber);
+      const resolvedLastPage = Number(meta?.last_page || 1);
+
       setPatients(mappedPatients);
-      setCurrentPage(Number(meta?.current_page || pageNumber));
-      setLastPage(Number(meta?.last_page || 1));
+      setCurrentPage(resolvedPage);
+      setLastPage(resolvedLastPage);
 
       console.log("[patients] state", {
-        scheduledCurrentPage: Number(meta?.current_page || pageNumber),
-        scheduledLastPage: Number(meta?.last_page || 1),
+        scheduledCurrentPage: resolvedPage,
+        scheduledLastPage: resolvedLastPage,
         listLen: mappedPatients.length,
+      });
+
+      // ── Cache the result ──
+      setCache(cacheKey, {
+        patients: mappedPatients,
+        currentPage: resolvedPage,
+        lastPage: resolvedLastPage,
       });
 
       setLoading(false);
@@ -576,6 +598,16 @@ const PatientList = () => {
 
   // ── Search fetch (reuses same response parsing + patient mapping as fetchPatients) ──
   const fetchSearch = async (pageNumber, term) => {
+    const cacheKey = `patients_search_${term}_${pageNumber}`;
+    const cached = getCache(cacheKey);
+    if (cached) {
+      setPatients(cached.patients);
+      setCurrentPage(cached.currentPage);
+      setLastPage(cached.lastPage);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -667,14 +699,25 @@ const PatientList = () => {
         };
       });
 
+      const resolvedPage = Number(meta?.current_page || pageNumber);
+      const resolvedLastPage = Number(meta?.last_page || 1);
+
       setPatients(mappedPatients);
-      setCurrentPage(Number(meta?.current_page || pageNumber));
-      setLastPage(Number(meta?.last_page || 1));
+      setCurrentPage(resolvedPage);
+      setLastPage(resolvedLastPage);
       console.log("[search] state", {
-        currentPage: Number(meta?.current_page || pageNumber),
-        lastPage: Number(meta?.last_page || 1),
+        currentPage: resolvedPage,
+        lastPage: resolvedLastPage,
         listLen: mappedPatients.length,
       });
+
+      // ── Cache the search result ──
+      setCache(cacheKey, {
+        patients: mappedPatients,
+        currentPage: resolvedPage,
+        lastPage: resolvedLastPage,
+      });
+
       setLoading(false);
     } catch (err) {
       console.log("[search] error", err);
@@ -685,16 +728,25 @@ const PatientList = () => {
 
   // ── Status fetch ──
   const fetchByStatus = async (pageNumber, status) => {
-    setLoading(true);
-    setError(null);
-
     const STATUS_MAP = {
       critical: "critical",
       stable: "stable",
       underReview: "under review",
     };
-
     const statusSlug = STATUS_MAP[status] || status;
+
+    const cacheKey = `patients_status_${statusSlug}_${pageNumber}`;
+    const cached = getCache(cacheKey);
+    if (cached) {
+      setPatients(cached.patients);
+      setCurrentPage(cached.currentPage);
+      setLastPage(cached.lastPage);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
 
     console.log("[status-filter] clicked:", status, "mapped:", statusSlug);
 
@@ -788,9 +840,20 @@ const PatientList = () => {
         };
       });
 
+      const resolvedPage = Number(meta?.current_page || pageNumber);
+      const resolvedLastPage = Number(meta?.last_page || 1);
+
       setPatients(mappedPatients);
-      setCurrentPage(Number(meta?.current_page || pageNumber));
-      setLastPage(Number(meta?.last_page || 1));
+      setCurrentPage(resolvedPage);
+      setLastPage(resolvedLastPage);
+
+      // ── Cache the result ──
+      setCache(cacheKey, {
+        patients: mappedPatients,
+        currentPage: resolvedPage,
+        lastPage: resolvedLastPage,
+      });
+
       setLoading(false);
     } catch (err) {
       console.log(`[status] error ${statusSlug}`, err);
@@ -922,6 +985,9 @@ const PatientList = () => {
           result.message || "Failed to delete patient. Please try again.",
         );
       } else {
+        // ── Invalidate the entire patients cache so next visit re-fetches ──
+        window.dispatchEvent(new CustomEvent("patientListInvalidated"));
+
         const trimmed = searchTerm.trim();
         if (trimmed) {
           fetchSearch(currentPage, trimmed);
@@ -1115,20 +1181,48 @@ const PatientList = () => {
 
         <div className="patient-grid" ref={gridRef}>
           {loading ? (
-            <div
-              style={{
-                padding: "40px 20px",
-                textAlign: "center",
-                width: "100%",
-                gridColumn: "1 / -1",
-                color: "#6b7280",
-              }}
-            >
-              <div style={{ marginBottom: "10px" }}>
-                <i className="fa-solid fa-spinner fa-spin fa-2x"></i>
-              </div>
-              Loading patients...
-            </div>
+            Array.from({ length: 8 }).map((_, i) => {
+              const types = [
+                { status: "critical", type: "critical", label: "🔴 Critical", style: { borderLeftColor: "#FF5C5C", background: "#FFECEC" } },
+                { status: "stable", type: "stable", label: "🟢 Stable", style: { borderLeftColor: "#00C187", background: "#F4FDF8" } },
+                { status: "under-review", type: "warning", label: "🟡 Under Review", style: { borderLeftColor: "#FFA500", background: "#FFF4E6" } },
+              ];
+              const type = types[i % 3];
+              const names = [
+                "Fatma Ahmed Ali", "Mohamed Sayed", "Aisha Mahmoud", "Youssef Ibrahim",
+                "Mona Tarek", "Khaled Yassin", "Nour Hassan", "Sara Othman"
+              ];
+              const initials = ["FA", "MS", "AM", "YI", "MT", "KY", "NH", "SO"];
+              
+              const dummyPatient = {
+                id: `dummy-${i}`,
+                initials: initials[i],
+                name: names[i],
+                age: `${35 + i * 4} Years`,
+                status: type.status,
+                statusLabel: type.label,
+                statusType: type.type,
+                aiInsight: "Based on recent laboratory results and patient history, condition points to typical symptomatic patterns requiring baseline monitoring.",
+                lastVisit: "May 10, 2026",
+                nextAppointment: "Jun 14, 2026",
+                insightStyle: type.style,
+              };
+
+              return (
+                <div key={i} className="preview-shimmer" style={{ width: '100%', height: '100%', pointerEvents: 'none', borderRadius: '16px', display: 'block' }}>
+                  <PatientCard 
+                    patient={dummyPatient}
+                    index={null}
+                    cardRef={null}
+                    navigate={() => {}}
+                    setPatientToDelete={() => {}}
+                    setIsDeleteModalOpen={() => {}}
+                    setDeleteError={() => {}}
+                    openInsightModal={() => {}}
+                  />
+                </div>
+              );
+            })
           ) : error ? (
             <div
               style={{

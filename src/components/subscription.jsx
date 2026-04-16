@@ -18,6 +18,7 @@ import {
 } from "./mockAPI.js";
 import { useNotifications } from "./NotificationsContext";
 import { getDoctorInitials } from "./Dashboard";
+import { usePageCache } from "./PageCacheContext";
 
 function Subscription() {
   const navigate = useNavigate();
@@ -37,6 +38,7 @@ function Subscription() {
     isCreditsLoading,
     refreshCredits,
   } = useSubscription();
+  const { getCache, setCache } = usePageCache();
   const prevUnreadCount = useRef(unreadCount);
   const walletBalance =
     subscriptionData?.wallet_balance != null
@@ -49,11 +51,21 @@ function Subscription() {
   const [isCancelledLocally, setIsCancelledLocally] = useState(false);
 
   const fetchTransactions = async () => {
+    // ── Cache check ──
+    const cached = getCache("subscription_transactions");
+    if (cached) {
+      setTransactions(cached);
+      setIsLoadingHistory(false);
+      return;
+    }
+
     setIsLoadingHistory(true);
     const result = await getTransactionsAPI();
     console.log("--- Transactions API Full Response ---", result);
     if (result.success && result.data) {
       setTransactions(result.data.transactions);
+      // ── Store to cache ──
+      setCache("subscription_transactions", result.data.transactions);
       // credits are managed globally via context — no local state needed
     }
     setIsLoadingHistory(false);
@@ -205,6 +217,14 @@ function Subscription() {
   useEffect(() => {
     let isMounted = true;
     const fetchPlans = async () => {
+      // ── Cache check ──
+      const cachedPlans = getCache("subscription_plans");
+      if (cachedPlans) {
+        setPlans(cachedPlans);
+        setIsPlansLoading(false);
+        return;
+      }
+
       setIsPlansLoading(true);
       setPlansError(null);
       const result = await getSubscriptionPlansAPI();
@@ -214,6 +234,8 @@ function Subscription() {
       setIsPlansLoading(false);
       if (result.success && result.data) {
         setPlans(result.data);
+        // ── Cache the plans ──
+        setCache("subscription_plans", result.data);
       } else {
         setPlansError(result.message || "Failed to load plans");
       }
@@ -224,7 +246,7 @@ function Subscription() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [getCache, setCache]);
 
   const handleTabSwitch = (tabId) => setActiveTab(tabId);
 
@@ -244,6 +266,8 @@ function Subscription() {
       refreshCredits();
       fetchTransactions();
       refreshNotifications();
+      // ── Invalidate subscription cache ──
+      window.dispatchEvent(new CustomEvent("subscriptionChanged"));
     } else {
       Swal.fire({
         icon: "error",
@@ -285,6 +309,8 @@ function Subscription() {
         refreshCredits();
         fetchTransactions();
         refreshNotifications();
+        // ── Invalidate subscription cache ──
+        window.dispatchEvent(new CustomEvent("subscriptionChanged"));
       } else {
         Swal.fire({
           icon: "error",
@@ -311,6 +337,8 @@ function Subscription() {
       refreshCredits();
       fetchTransactions();
       refreshNotifications();
+      // ── Invalidate subscription cache ──
+      window.dispatchEvent(new CustomEvent("subscriptionChanged"));
     } else {
       Swal.fire({
         icon: "error",
@@ -374,6 +402,8 @@ function Subscription() {
 
     if (paymentUrl) {
       window.open(paymentUrl, "stripe_checkout", "width=600,height=700");
+      // Invalidate transaction cache so it re-fetches after wallet top-up
+      window.dispatchEvent(new CustomEvent("subscriptionChanged"));
     }
 
     setChargeAmt("");
@@ -600,16 +630,33 @@ function Subscription() {
             >
               <div className="plans-grid">
                 {isPlansLoading ? (
-                  <div
-                    style={{
-                      padding: "3rem",
-                      textAlign: "center",
-                      gridColumn: "1 / -1",
-                      color: "var(--text-secondary)",
-                    }}
-                  >
-                    Loading available plans...
-                  </div>
+                  Array.from({ length: 3 }).map((_, i) => {
+                    const dummyPlans = [
+                      { name: "Basic", price: "4,000", period: "per month*", features: ["Up to 100 summaries", "Basic Analytics", "Standard Support"] },
+                      { name: "Pro", price: "9,000", period: "per month*", features: ["Up to 500 summaries", "Advanced ML Models", "Priority Queue"] },
+                      { name: "Premium", price: "18,000", period: "per month*", features: ["Unlimited summaries", "Enterprise Tools", "24/7 Priority Support"] }
+                    ];
+                    const p = dummyPlans[i];
+                    return (
+                      <div key={i} className="preview-shimmer" style={{ pointerEvents: 'none', borderRadius: '13px', width: '100%', display: 'block', height: '100%' }}>
+                        <div className="plan-card" style={{ height: '100%' }}>
+                          <div className="plan-name">{p.name}</div>
+                          <span className="plan-price">E£ {p.price}</span>
+                          <div className="plan-period">{p.period}</div>
+                          <div className="plan-tagline"></div>
+                          <div className="plan-feats">
+                            {p.features.map((f, idx) => (
+                                <div className="feat" key={idx}>
+                                  <span className="feat-ck">✓</span>
+                                  <span className="feat-t">{f}</span>
+                                </div>
+                            ))}
+                          </div>
+                          <button className="btn-plan" style={{ cursor: 'not-allowed' }}>Get Started</button>
+                        </div>
+                      </div>
+                    );
+                  })
                 ) : plansError ? (
                   <div
                     style={{
@@ -702,82 +749,125 @@ function Subscription() {
               </div>
 
               <div className="bottom-grid">
-                <div
-                  className={`ppu-card ${selectedPlanId === "Pay-per-use" ? "popular border-2 border-blue-500" : ""}`}
-                >
-                  {selectedPlanId === "Pay-per-use" && (
-                    <div className="badge-current">Current Mode</div>
-                  )}
-                  <div>
-                    <div className="ppu-lbl">Pay-per-use</div>
-                    <div className="ppu-sub">Most popular plan</div>
-                    <div className="ppu-price">
-                      E£ 20 <em>/ file</em>
+                {isPlansLoading ? (
+                  <>
+                    <div className="preview-shimmer" style={{ pointerEvents: 'none', borderRadius: '13px', width: '100%', display: 'block' }}>
+                      <div className="ppu-card" style={{ pointerEvents: 'none' }}>
+                        <div>
+                          <div className="ppu-lbl">Pay-per-use</div>
+                          <div className="ppu-sub">Most popular plan</div>
+                          <div className="ppu-price">
+                            E£ 20 <em>/ file</em>
+                          </div>
+                        </div>
+                        <div className="ppu-right">
+                          <div className="feat">
+                            <span className="feat-ck">✓</span>
+                            <span style={{ fontSize: "12px" }}>All features</span>
+                          </div>
+                          <button className="btn-solid" style={{ cursor: 'not-allowed' }}>Get Started</button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="ppu-right">
-                    <div className="feat">
-                      <span className="feat-ck">✓</span>
-                      <span style={{ fontSize: "12px" }}>All features</span>
+                    <div className="preview-shimmer" style={{ pointerEvents: 'none', borderRadius: '13px', width: '100%', display: 'block' }}>
+                      <div className="ent-card" style={{ pointerEvents: 'none' }}>
+                        <div className="ent-name">Enterprise</div>
+                        <div className="ent-inner">
+                          <div className="ent-feats">
+                            <div className="feat">
+                              <span className="feat-ck">✓</span>
+                              <span className="feat-t">Annual per-doctor license with yearly calculation and volume discount</span>
+                            </div>
+                            <div className="feat">
+                              <span className="feat-ck">✓</span>
+                              <span className="feat-t">One-time setup and implementation fee</span>
+                            </div>
+                          </div>
+                          <button className="btn-solid" style={{ cursor: 'not-allowed' }}>Get Started</button>
+                        </div>
+                      </div>
                     </div>
-                    <button
-                      className={`btn-solid ${selectedPlanId === "Pay-per-use" ? "cur" : ""}`}
-                      onClick={() => startPlan("Pay-per-use")}
-                      disabled={
-                        subscribingPlanId === "Pay-per-use" ||
-                        selectedPlanId === "Pay-per-use"
-                      }
-                      style={{
-                        cursor:
-                          subscribingPlanId === "Pay-per-use" ||
-                          selectedPlanId === "Pay-per-use"
-                            ? "not-allowed"
-                            : "pointer",
-                        whiteSpace: "nowrap",
-                      }}
+                  </>
+                ) : (
+                  <>
+                    <div
+                      className={`ppu-card ${selectedPlanId === "Pay-per-use" ? "popular border-2 border-blue-500" : ""}`}
                     >
-                      {subscribingPlanId === "Pay-per-use"
-                        ? "Switching..."
-                        : selectedPlanId === "Pay-per-use"
-                          ? "Current Mode"
-                          : "Get Started"}
-                    </button>
-                  </div>
-                </div>
-                <div className="ent-card">
-                  <div className="ent-name">Enterprise</div>
-                  <div className="ent-inner">
-                    <div className="ent-feats">
-                      <div className="feat">
-                        <span className="feat-ck">✓</span>
-                        <span className="feat-t">
-                          Annual per-doctor license with yearly calculation and
-                          volume discount
-                        </span>
+                      {selectedPlanId === "Pay-per-use" && (
+                        <div className="badge-current">Current Mode</div>
+                      )}
+                      <div>
+                        <div className="ppu-lbl">Pay-per-use</div>
+                        <div className="ppu-sub">Most popular plan</div>
+                        <div className="ppu-price">
+                          E£ 20 <em>/ file</em>
+                        </div>
                       </div>
-                      <div className="feat">
-                        <span className="feat-ck">✓</span>
-                        <span className="feat-t">
-                          One-time setup and implementation fee
-                        </span>
-                      </div>
-                      <div className="feat">
-                        <span className="feat-ck">✓</span>
-                        <span className="feat-t">
-                          Payment includes discounted annual fee plus setup at
-                          contract start.
-                        </span>
+                      <div className="ppu-right">
+                        <div className="feat">
+                          <span className="feat-ck">✓</span>
+                          <span style={{ fontSize: "12px" }}>All features</span>
+                        </div>
+                        <button
+                          className={`btn-solid ${selectedPlanId === "Pay-per-use" ? "cur" : ""}`}
+                          onClick={() => startPlan("Pay-per-use")}
+                          disabled={
+                            subscribingPlanId === "Pay-per-use" ||
+                            selectedPlanId === "Pay-per-use"
+                          }
+                          style={{
+                            cursor:
+                              subscribingPlanId === "Pay-per-use" ||
+                              selectedPlanId === "Pay-per-use"
+                                ? "not-allowed"
+                                : "pointer",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {subscribingPlanId === "Pay-per-use"
+                            ? "Switching..."
+                            : selectedPlanId === "Pay-per-use"
+                              ? "Current Mode"
+                              : "Get Started"}
+                        </button>
                       </div>
                     </div>
-                    <button
-                      className="btn-solid"
-                      onClick={() => startPlan("Enterprise")}
-                      style={{ whiteSpace: "nowrap" }}
-                    >
-                      Get Started
-                    </button>
-                  </div>
-                </div>
+                    <div className="ent-card">
+                      <div className="ent-name">Enterprise</div>
+                      <div className="ent-inner">
+                        <div className="ent-feats">
+                          <div className="feat">
+                            <span className="feat-ck">✓</span>
+                            <span className="feat-t">
+                              Annual per-doctor license with yearly calculation and
+                              volume discount
+                            </span>
+                          </div>
+                          <div className="feat">
+                            <span className="feat-ck">✓</span>
+                            <span className="feat-t">
+                              One-time setup and implementation fee
+                            </span>
+                          </div>
+                          <div className="feat">
+                            <span className="feat-ck">✓</span>
+                            <span className="feat-t">
+                              Payment includes discounted annual fee plus setup at
+                              contract start.
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          className="btn-solid"
+                          onClick={() => startPlan("Enterprise")}
+                          style={{ whiteSpace: "nowrap" }}
+                        >
+                          Get Started
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 

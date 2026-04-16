@@ -225,6 +225,17 @@
   );
 }
 
+/* ── Dashboard Heavy Render Mask ── */
+.dsn-dashboard-mask {
+  filter: blur(8px) !important;
+  opacity: 0.35 !important;
+}
+
+[data-theme="dark"] .dsn-dashboard-mask {
+  filter: blur(9px) !important;
+  opacity: 0.45 !important;
+}
+
 /* ── Dark mode: global body / page ── */
 [data-theme="dark"] body {
   background: var(--dm-bg-page);

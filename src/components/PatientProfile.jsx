@@ -1391,7 +1391,7 @@ const PatientProfile = () => {
                 <p className="patient-meta">
                   {overviewLoading
                     ? <span className="preview-shimmer" style={{ display: 'inline-block', marginTop: '4px' }}>Dr. Tarek Ahmed / National ID: #30410116471075</span>
-                    : `${overviewData?.doctorName ? `Dr. ${overviewData.doctorName}` : "N/A"} / National ID: #${overviewData?.patientId ?? "N/A"}`}
+                    : `${overviewData?.doctorName ? `Dr. ${overviewData.doctorName}` : "N/A"} / National ID: ${overviewData?.patientId ?? "N/A"}`}
                 </p>
               </div>
             </div>
@@ -1580,7 +1580,7 @@ const PatientProfile = () => {
                                 </svg>
                                 Age
                               </div>
-                              <div className="info-value">48 Years</div>
+                              <div className="info-value">20 Years</div>
                             </div>
                           </div>
 
@@ -1672,7 +1672,7 @@ const PatientProfile = () => {
                               </svg>
                               Family Medical History
                             </div>
-                            <div className="info-value">History of osteoarthritis</div>
+                            <div className="info-value">History of early-onset osteoarthritis</div>
                           </div>
                         </div>
                       </>
@@ -1890,153 +1890,43 @@ const PatientProfile = () => {
 
                 <div className={`note-list ${isLoadingAnalysis ? "note-list-loading" : "note-list-loaded"}`}>
                   {isLoadingAnalysis
-                    ? // الجزء ده بيظهر فقط وقت التحميل (Static Notes)
-                    staticNotes["high-1"] && (
+                    ? (
                       <div className="note-item high-priority">
-                        <div className="pp-note-actions">
-                          <button
-                            className="pp-note-edit-btn"
-                            onClick={() =>
-                              startEditNote("high-1", staticNotes["high-1"])
-                            }
-                            title="Edit"
-                          >
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                          </button>
-                        </div>
-                        {editingNoteId === "high-1" ? (
-                          <>
-                            <textarea
-                              className="pp-note-edit-textarea"
-                              value={editingNoteText}
-                              onChange={(e) =>
-                                setEditingNoteText(e.target.value)
-                              }
-                              autoFocus
-                            />
-                            <div className="pp-edit-footer-row">
-                              <div className="note-footer">
-                                <div className="note-meta-stack">
-                                  <span className="note-date">
-                                    Jan 28, 2026
-                                  </span>
-                                  <button
-                                    className="pp-evidence-icon-btn"
-                                    onClick={() => openEvidencePanel(null)}
-                                    title="View Evidence"
-                                  >
-                                    <svg
-                                      width="14"
-                                      height="14"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2.5"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    >
-                                      <circle cx="11" cy="11" r="8"></circle>
-                                      <line
-                                        x1="21"
-                                        y1="21"
-                                        x2="16.65"
-                                        y2="16.65"
-                                      ></line>
-                                    </svg>
-                                    View Evidence
-                                  </button>
-                                </div>
-                              </div>
-                              <div className="pp-note-save-row">
-                                <button
-                                  className="pp-note-save-btn"
-                                  onClick={() =>
-                                    saveEditNote("high-1", editingNoteText)
-                                  }
-                                  disabled={editSavingId === "high-1"}
-                                >
-                                  {editSavingId === "high-1" ? "Saving..." : "Save"}
-                                </button>
-                                <button
-                                  className="pp-note-cancel-btn"
-                                  onClick={cancelEditNote}
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-                          </>
-                        ) : (
-                          <div className="note-text">
-                            <strong>Critical:</strong> {staticNotes["high-1"]}
-                          </div>
-                        )}
-                        {editingNoteId !== "high-1" && (
-                          <div className="note-footer">
-                            <div className="note-meta-stack">
-                              <span className="note-date">Jan 28, 2026</span>
-                              <button
-                                className="pp-evidence-icon-btn"
-                                onClick={() => openEvidencePanel(null)}
-                                title="View Evidence"
-                              >
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2.5"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <circle cx="11" cy="11" r="8"></circle>
-                                  <line
-                                    x1="21"
-                                    y1="21"
-                                    x2="16.65"
-                                    y2="16.65"
-                                  ></line>
-                                </svg>
-                                View Evidence
-                              </button>
-                            </div>
-                            <button
-                              className="pp-note-edit-btn"
-                              onClick={() =>
-                                startEditNote("high-1", staticNotes["high-1"])
-                              }
-                              title="Edit"
-                            >
-                              <svg
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
+                        <div className="preview-shimmer" style={{ width: '100%', pointerEvents: 'none' }}>
+                          <div className="pp-note-actions">
+                            <button className="pp-note-edit-btn" title="Edit">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                               </svg>
                             </button>
                           </div>
-                        )}
-                      </div >
+                          <div className="note-text">
+                            <strong>Lymphadenopathy:</strong> Patient's lymphadenopathy and night sweats may indicate a more severe condition such as B-Cell Lymphoma.
+                          </div>
+                          <div className="note-footer">
+                            <div className="note-meta-stack">
+                              <span className="note-date">AI Generated • Apr 15, 2026</span>
+                              <button className="pp-evidence-icon-btn" title="View Evidence">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <circle cx="11" cy="11" r="8"></circle>
+                                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                View Evidence
+                              </button>
+                            </div>
+                            <button className="pp-note-delete-btn" title="Delete">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4h8v2" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M10 11v6" />
+                                <path d="M14 11v6" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     )
                     : highAlerts?.length > 0
                       ? // عرض البيانات الحقيقية من الـ API
@@ -2336,159 +2226,43 @@ const PatientProfile = () => {
 
                 <div className={`note-list ${isLoadingAnalysis ? "note-list-loading" : "note-list-loaded"}`}>
                   {isLoadingAnalysis
-                    ? // تعرض النوتس الثابتة فقط أثناء التحميل
-                    staticNotes["medium-1"] && (
+                    ? (
                       <div className="note-item medium-priority">
-                        <div className="pp-note-actions">
-                          <button
-                            className="pp-note-edit-btn"
-                            onClick={() =>
-                              startEditNote(
-                                "medium-1",
-                                staticNotes["medium-1"],
-                              )
-                            }
-                            title="Edit"
-                          >
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                          </button>
-                        </div>
-                        {editingNoteId === "medium-1" ? (
-                          <>
-                            <textarea
-                              className="pp-note-edit-textarea"
-                              value={editingNoteText}
-                              onChange={(e) =>
-                                setEditingNoteText(e.target.value)
-                              }
-                              autoFocus
-                            />
-                            <div className="pp-edit-footer-row">
-                              <div className="note-footer">
-                                <div className="note-meta-stack">
-                                  <span className="note-date">
-                                    Jan 30, 2026
-                                  </span>
-                                  <button
-                                    className="pp-evidence-icon-btn"
-                                    onClick={() => openEvidencePanel(null)}
-                                    title="View Evidence"
-                                  >
-                                    <svg
-                                      width="14"
-                                      height="14"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2.5"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    >
-                                      <circle cx="11" cy="11" r="8"></circle>
-                                      <line
-                                        x1="21"
-                                        y1="21"
-                                        x2="16.65"
-                                        y2="16.65"
-                                      ></line>
-                                    </svg>
-                                    View Evidence
-                                  </button>
-                                </div>
-                              </div>
-                              <div className="pp-note-save-row">
-                                <button
-                                  className="pp-note-save-btn"
-                                  onClick={() =>
-                                    saveEditNote("medium-1", editingNoteText)
-                                  }
-                                  disabled={editSavingId === "medium-1"}
-                                >
-                                  {editSavingId === "medium-1" ? "Saving..." : "Save"}
-                                </button>
-                                <button
-                                  className="pp-note-cancel-btn"
-                                  onClick={cancelEditNote}
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-                          </>
-                        ) : (
-                          <div className="note-text">
-                            <strong>Observation:</strong>{" "}
-                            {staticNotes["medium-1"]}
+                        <div className="preview-shimmer" style={{ width: '100%', pointerEvents: 'none' }}>
+                          <div className="pp-note-actions">
+                            <button className="pp-note-edit-btn" title="Edit">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                              </svg>
+                            </button>
                           </div>
-                        )}
-                        {editingNoteId !== "medium-1" && (
+                          <div className="note-text">
+                            <strong>Rheumatoid Arthritis:</strong> Patient's joint pain and swelling are consistent with Rheumatoid Arthritis which requires ongoing management and treatment.
+                          </div>
                           <div className="note-footer">
                             <div className="note-meta-stack">
-                              <span className="note-date">Jan 30, 2026</span>
-                              <button
-                                className="pp-evidence-icon-btn"
-                                onClick={() => openEvidencePanel(null)}
-                                title="View Evidence"
-                              >
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2.5"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
+                              <span className="note-date">AI Generated • Apr 15, 2026</span>
+                              <button className="pp-evidence-icon-btn" title="View Evidence">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                   <circle cx="11" cy="11" r="8"></circle>
-                                  <line
-                                    x1="21"
-                                    y1="21"
-                                    x2="16.65"
-                                    y2="16.65"
-                                  ></line>
+                                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                                 </svg>
                                 View Evidence
                               </button>
                             </div>
-                            <button
-                              className="pp-note-delete-btn"
-                              onClick={() => openDeleteAlertModal("medium-1")}
-                              title="Delete"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="18"
-                                height="18"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
+                            <button className="pp-note-delete-btn" title="Delete">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M3 6h18" />
                                 <path d="M8 6V4h8v2" />
                                 <path d="M19 6l-1 14H6L5 6" />
                                 <path d="M10 11v6" />
                                 <path d="M14 11v6" />
-                              </svg >
-                            </button >
-                          </div >
-                        )}
-                      </div >
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     )
                     : mediumAlerts?.length > 0
                       ? // عرض البيانات الحقيقية من السيرفر
@@ -2789,130 +2563,43 @@ const PatientProfile = () => {
 
                 <div className={`note-list ${isLoadingAnalysis ? "note-list-loading" : "note-list-loaded"}`}>
                   {isLoadingAnalysis
-                    ? // نوت افتراضية تظهر أثناء التحميل
-                    staticNotes["low-1"] && (
+                    ? (
                       <div className="note-item low-priority">
-                        <div className="pp-note-actions">
-                          <button
-                            className="pp-note-edit-btn"
-                            onClick={() =>
-                              startEditNote("low-1", staticNotes["low-1"])
-                            }
-                            title="Edit"
-                          >
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                          </button>
-                        </div>
-                        {editingNoteId === "low-1" ? (
-                          <>
-                            <textarea
-                              className="pp-note-edit-textarea"
-                              value={editingNoteText}
-                              onChange={(e) =>
-                                setEditingNoteText(e.target.value)
-                              }
-                              autoFocus
-                            />
-                            <div className="pp-edit-footer-row">
-                              <div className="note-footer">
-                                <div className="note-meta-stack">
-                                  <span className="note-date">
-                                    Oct 10, 2025
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="pp-note-save-row">
-                                <button
-                                  className="pp-note-save-btn"
-                                  onClick={() =>
-                                    saveEditNote("low-1", editingNoteText)
-                                  }
-                                  disabled={editSavingId === "low-1"}
-                                >
-                                  {editSavingId === "low-1" ? "Saving..." : "Save"}
-                                </button>
-                                <button
-                                  className="pp-note-cancel-btn"
-                                  onClick={cancelEditNote}
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-                          </>
-                        ) : (
-                          <div className="note-text">
-                            <strong>Note:</strong> {staticNotes["low-1"]}
+                        <div className="preview-shimmer" style={{ width: '100%', pointerEvents: 'none' }}>
+                          <div className="pp-note-actions">
+                            <button className="pp-note-edit-btn" title="Edit">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                              </svg>
+                            </button>
                           </div>
-                        )}
-                        {editingNoteId !== "low-1" && (
+                          <div className="note-text">
+                            <strong>Note:</strong> Mild medication side effect observed. Monitor symptoms during follow-up visits.
+                          </div>
                           <div className="note-footer">
                             <div className="note-meta-stack">
-                              <span className="note-date">Oct 10, 2025</span>
-                              <button
-                                className="pp-evidence-icon-btn"
-                                onClick={() => openEvidencePanel(null)}
-                                title="View Evidence"
-                              >
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2.5"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
+                              <span className="note-date">AI Generated • Apr 15, 2026</span>
+                              <button className="pp-evidence-icon-btn" title="View Evidence">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                   <circle cx="11" cy="11" r="8"></circle>
-                                  <line
-                                    x1="21"
-                                    y1="21"
-                                    x2="16.65"
-                                    y2="16.65"
-                                  ></line>
+                                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                                 </svg>
                                 View Evidence
                               </button>
                             </div>
-                            <button
-                              className="pp-note-delete-btn"
-                              onClick={() => openDeleteAlertModal("low-1")}
-                              title="Delete"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="18"
-                                height="18"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
+                            <button className="pp-note-delete-btn" title="Delete">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M3 6h18" />
                                 <path d="M8 6V4h8v2" />
                                 <path d="M19 6l-1 14H6L5 6" />
                                 <path d="M10 11v6" />
                                 <path d="M14 11v6" />
-                              </svg >
-                            </button >
-                          </div >
-                        )}
-                      </div >
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     )
                     : lowAlerts?.length > 0
                       ? // عرض بيانات السيرفر لـ Low Priority
@@ -3182,10 +2869,265 @@ const PatientProfile = () => {
 
               {/* ── Loading state ── */}
               {comparativeLoading && (
-                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "260px" }}>
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#2A66FF" strokeWidth="3" strokeLinecap="round" style={{ animation: "spin 1s linear infinite" }}>
-                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-                  </svg>
+                <div className="chart-grid">
+                  {/* Chart 1 */}
+                  <div className="chart-card">
+                    <div className="preview-shimmer" style={{ width: '100%', pointerEvents: 'none' }}>
+                      <div className="chart-header">
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", flex: 1, minWidth: 0 }}>
+                          <h3 className="chart-title" style={{ margin: 0 }}>RDW CV</h3>
+                        </div>
+                        <span className="chart-trend" style={{ background: "#FFECEC", color: "#FF5C5C", flexShrink: 0, marginLeft: "8px" }}>
+                          ↑ 75.5%
+                        </span>
+                      </div>
+                      <div className="mini-chart" style={{ position: "relative" }}>
+                        <svg className="chart-canvas" viewBox="0 0 300 160" style={{ overflow: "visible" }}>
+                          <defs>
+                            <linearGradient id="dummy-grad-1" x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" style={{ stopColor: "#FF5C5C", stopOpacity: 0.12 }} />
+                              <stop offset="100%" style={{ stopColor: "#FF5C5C", stopOpacity: 0 }} />
+                            </linearGradient>
+                          </defs>
+                          <path d="M 0.0 120.0 L 150.0 60.0 L 300.0 40.0 L 300.0 160.0 L 0.0 160.0 Z" fill="url(#dummy-grad-1)" />
+                          <path d="M 0.0 120.0 L 150.0 60.0 L 300.0 40.0" stroke="#FF5C5C" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                          <circle cx="0.0" cy="120.0" r="6" fill="transparent" />
+                          <circle cx="150.0" cy="60.0" r="6" fill="transparent" />
+                          <circle cx="300.0" cy="40.0" r="6" fill="transparent" />
+                        </svg>
+                      </div>
+                      <div className="chart-stats">
+                        <div className="stat-col">
+                          <div className="stat-label">Initial</div>
+                          <div className="stat-value">13.6 %</div>
+                        </div>
+                        <div className="stat-col">
+                          <div className="stat-label">Current</div>
+                          <div className="stat-value" style={{ color: "#FF5C5C" }}>18.6 %</div>
+                        </div>
+                        <div className="stat-col">
+                          <div className="stat-label">Change</div>
+                          <div className="stat-value" style={{ color: "#FF5C5C" }}>+75.5%</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Chart 2 */}
+                  <div className="chart-card">
+                    <div className="preview-shimmer" style={{ width: '100%', pointerEvents: 'none' }}>
+                      <div className="chart-header">
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", flex: 1, minWidth: 0 }}>
+                          <h3 className="chart-title" style={{ margin: 0 }}>WBC Count</h3>
+                        </div>
+                        <span className="chart-trend" style={{ background: "#E6FFF5", color: "#00C187", flexShrink: 0, marginLeft: "8px" }}>
+                          ↓ 12.4%
+                        </span>
+                      </div>
+                      <div className="mini-chart" style={{ position: "relative" }}>
+                        <svg className="chart-canvas" viewBox="0 0 300 160" style={{ overflow: "visible" }}>
+                          <defs>
+                            <linearGradient id="dummy-grad-2" x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" style={{ stopColor: "#00C187", stopOpacity: 0.12 }} />
+                              <stop offset="100%" style={{ stopColor: "#00C187", stopOpacity: 0 }} />
+                            </linearGradient>
+                          </defs>
+                          <path d="M 0.0 40.0 L 100.0 50.0 L 200.0 90.0 L 300.0 130.0 L 300.0 160.0 L 0.0 160.0 Z" fill="url(#dummy-grad-2)" />
+                          <path d="M 0.0 40.0 L 100.0 50.0 L 200.0 90.0 L 300.0 130.0" stroke="#00C187" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                          <circle cx="0.0" cy="40.0" r="6" fill="transparent" />
+                          <circle cx="100.0" cy="50.0" r="6" fill="transparent" />
+                          <circle cx="200.0" cy="90.0" r="6" fill="transparent" />
+                          <circle cx="300.0" cy="130.0" r="6" fill="transparent" />
+                        </svg>
+                      </div>
+                      <div className="chart-stats">
+                        <div className="stat-col">
+                          <div className="stat-label">Initial</div>
+                          <div className="stat-value">9.8 10³ /μL</div>
+                        </div>
+                        <div className="stat-col">
+                          <div className="stat-label">Current</div>
+                          <div className="stat-value" style={{ color: "#00C187" }}>8.6 10³ /μL</div>
+                        </div>
+                        <div className="stat-col">
+                          <div className="stat-label">Change</div>
+                          <div className="stat-value" style={{ color: "#00C187" }}>-12.4%</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Chart 3 */}
+                  <div className="chart-card">
+                    <div className="preview-shimmer" style={{ width: '100%', pointerEvents: 'none' }}>
+                      <div className="chart-header">
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", flex: 1, minWidth: 0 }}>
+                          <h3 className="chart-title" style={{ margin: 0 }}>Neutrophils Percentage</h3>
+                        </div>
+                        <span className="chart-trend" style={{ background: "#FFF4E6", color: "#FFA500", flexShrink: 0, marginLeft: "8px" }}>
+                          — 0.0%
+                        </span>
+                      </div>
+                      <div className="mini-chart" style={{ position: "relative" }}>
+                        <svg className="chart-canvas" viewBox="0 0 300 160" style={{ overflow: "visible" }}>
+                          <defs>
+                            <linearGradient id="dummy-grad-3" x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" style={{ stopColor: "#FFA500", stopOpacity: 0.12 }} />
+                              <stop offset="100%" style={{ stopColor: "#FFA500", stopOpacity: 0 }} />
+                            </linearGradient>
+                          </defs>
+                          <path d="M 0.0 80.0 L 100.0 60.0 L 200.0 100.0 L 300.0 80.0 L 300.0 160.0 L 0.0 160.0 Z" fill="url(#dummy-grad-3)" />
+                          <path d="M 0.0 80.0 L 100.0 60.0 L 200.0 100.0 L 300.0 80.0" stroke="#FFA500" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                          <circle cx="0.0" cy="80.0" r="6" fill="transparent" />
+                          <circle cx="100.0" cy="60.0" r="6" fill="transparent" />
+                          <circle cx="200.0" cy="100.0" r="6" fill="transparent" />
+                          <circle cx="300.0" cy="80.0" r="6" fill="transparent" />
+                        </svg>
+                      </div>
+                      <div className="chart-stats">
+                        <div className="stat-col">
+                          <div className="stat-label">Initial</div>
+                          <div className="stat-value">55.0 %</div>
+                        </div>
+                        <div className="stat-col">
+                          <div className="stat-label">Current</div>
+                          <div className="stat-value" style={{ color: "#FFA500" }}>55.0 %</div>
+                        </div>
+                        <div className="stat-col">
+                          <div className="stat-label">Change</div>
+                          <div className="stat-value" style={{ color: "#FFA500" }}>0.0%</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Chart 4 */}
+                  <div className="chart-card">
+                    <div className="preview-shimmer" style={{ width: '100%', pointerEvents: 'none' }}>
+                      <div className="chart-header">
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", flex: 1, minWidth: 0 }}>
+                          <h3 className="chart-title" style={{ margin: 0 }}>Neutrophils Absolute</h3>
+                        </div>
+                        <span className="chart-trend" style={{ background: "#E6FFF5", color: "#00C187", flexShrink: 0, marginLeft: "8px" }}>
+                          ↑ 5.2%
+                        </span>
+                      </div>
+                      <div className="mini-chart" style={{ position: "relative" }}>
+                        <svg className="chart-canvas" viewBox="0 0 300 160" style={{ overflow: "visible" }}>
+                          <defs>
+                            <linearGradient id="dummy-grad-4" x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" style={{ stopColor: "#00C187", stopOpacity: 0.12 }} />
+                              <stop offset="100%" style={{ stopColor: "#00C187", stopOpacity: 0 }} />
+                            </linearGradient>
+                          </defs>
+                          <path d="M 0.0 60.0 L 150.0 130.0 L 300.0 50.0 L 300.0 160.0 L 0.0 160.0 Z" fill="url(#dummy-grad-4)" />
+                          <path d="M 0.0 60.0 L 150.0 130.0 L 300.0 50.0" stroke="#00C187" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                          <circle cx="0.0" cy="60.0" r="6" fill="transparent" />
+                          <circle cx="150.0" cy="130.0" r="6" fill="transparent" />
+                          <circle cx="300.0" cy="50.0" r="6" fill="transparent" />
+                        </svg>
+                      </div>
+                      <div className="chart-stats">
+                        <div className="stat-col">
+                          <div className="stat-label">Initial</div>
+                          <div className="stat-value">4.5 10³ /μL</div>
+                        </div>
+                        <div className="stat-col">
+                          <div className="stat-label">Current</div>
+                          <div className="stat-value" style={{ color: "#00C187" }}>4.7 10³ /μL</div>
+                        </div>
+                        <div className="stat-col">
+                          <div className="stat-label">Change</div>
+                          <div className="stat-value" style={{ color: "#00C187" }}>+5.2%</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Chart 5 */}
+                  <div className="chart-card">
+                    <div className="preview-shimmer" style={{ width: '100%', pointerEvents: 'none' }}>
+                      <div className="chart-header">
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", flex: 1, minWidth: 0 }}>
+                          <h3 className="chart-title" style={{ margin: 0 }}>Lymphocytes Percentage</h3>
+                        </div>
+                        <span className="chart-trend" style={{ background: "#FFECEC", color: "#FF5C5C", flexShrink: 0, marginLeft: "8px" }}>
+                          ↓ 42.1%
+                        </span>
+                      </div>
+                      <div className="mini-chart" style={{ position: "relative" }}>
+                        <svg className="chart-canvas" viewBox="0 0 300 160" style={{ overflow: "visible" }}>
+                          <defs>
+                            <linearGradient id="dummy-grad-5" x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" style={{ stopColor: "#FF5C5C", stopOpacity: 0.12 }} />
+                              <stop offset="100%" style={{ stopColor: "#FF5C5C", stopOpacity: 0 }} />
+                            </linearGradient>
+                          </defs>
+                          <path d="M 0.0 30.0 L 150.0 90.0 L 300.0 140.0 L 300.0 160.0 L 0.0 160.0 Z" fill="url(#dummy-grad-5)" />
+                          <path d="M 0.0 30.0 L 150.0 90.0 L 300.0 140.0" stroke="#FF5C5C" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                          <circle cx="0.0" cy="30.0" r="6" fill="transparent" />
+                          <circle cx="150.0" cy="90.0" r="6" fill="transparent" />
+                          <circle cx="300.0" cy="140.0" r="6" fill="transparent" />
+                        </svg>
+                      </div>
+                      <div className="chart-stats">
+                        <div className="stat-col">
+                          <div className="stat-label">Initial</div>
+                          <div className="stat-value">38.0 %</div>
+                        </div>
+                        <div className="stat-col">
+                          <div className="stat-label">Current</div>
+                          <div className="stat-value" style={{ color: "#FF5C5C" }}>22.0 %</div>
+                        </div>
+                        <div className="stat-col">
+                          <div className="stat-label">Change</div>
+                          <div className="stat-value" style={{ color: "#FF5C5C" }}>-42.1%</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Chart 6 */}
+                  <div className="chart-card">
+                    <div className="preview-shimmer" style={{ width: '100%', pointerEvents: 'none' }}>
+                      <div className="chart-header">
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", flex: 1, minWidth: 0 }}>
+                          <h3 className="chart-title" style={{ margin: 0 }}>Lymphocytes Absolute</h3>
+                        </div>
+                        <span className="chart-trend" style={{ background: "#FFF4E6", color: "#FFA500", flexShrink: 0, marginLeft: "8px" }}>
+                          — 0.0%
+                        </span>
+                      </div>
+                      <div className="mini-chart" style={{ position: "relative" }}>
+                        <svg className="chart-canvas" viewBox="0 0 300 160" style={{ overflow: "visible" }}>
+                          <defs>
+                            <linearGradient id="dummy-grad-6" x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" style={{ stopColor: "#FFA500", stopOpacity: 0.12 }} />
+                              <stop offset="100%" style={{ stopColor: "#FFA500", stopOpacity: 0 }} />
+                            </linearGradient>
+                          </defs>
+                          <path d="M 0.0 80.0 L 300.0 80.0 L 300.0 160.0 L 0.0 160.0 Z" fill="url(#dummy-grad-6)" />
+                          <line x1="0" y1="80" x2="300" y2="80" stroke="#FFA500" strokeWidth="2.5" strokeDasharray="6 4" opacity="0.4" />
+                          <circle cx="0.0" cy="80.0" r="6" fill="transparent" />
+                          <circle cx="300.0" cy="80.0" r="6" fill="transparent" />
+                        </svg>
+                      </div>
+                      <div className="chart-stats">
+                        <div className="stat-col">
+                          <div className="stat-label">Initial</div>
+                          <div className="stat-value">1.8 10³ /μL</div>
+                        </div>
+                        <div className="stat-col">
+                          <div className="stat-label">Current</div>
+                          <div className="stat-value" style={{ color: "#FFA500" }}>1.8 10³ /μL</div>
+                        </div>
+                        <div className="stat-col">
+                          <div className="stat-label">Change</div>
+                          <div className="stat-value" style={{ color: "#FFA500" }}>0.0%</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -3486,19 +3428,76 @@ const PatientProfile = () => {
 
               {/* Priority: sub-loading/generating → locked → ds-loading → error → empty → data */}
               {isSubLoading || decisionSupportLoading || isGeneratingDecisionSupport ? (
-                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "200px" }}>
-                  <svg
-                    width="40"
-                    height="40"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#2A66FF"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    style={{ animation: "spin 1s linear infinite" }}
-                  >
-                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-                  </svg>
+                <div className="likelihood-stack">
+                  {/* Card 1 */}
+                  <div className="preview-shimmer" style={{ pointerEvents: "none", width: "100%" }}>
+                    <div className="likelihood-card high">
+                      <div className="likelihood-header">
+                        <div>
+                          <div style={{ fontSize: "11px", color: "#FF5C5C", marginBottom: "3px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>HIGH LIKELIHOOD</div>
+                          <div className="likelihood-title">Sjogren's Syndrome</div>
+                        </div>
+                        <div className="confidence" style={{ color: "#FF5C5C", flexShrink: 0, marginLeft: "16px" }}>82%</div>
+                      </div>
+                      <div className="reasoning"><strong>Clinical Reasoning:</strong> Patient presentation aligns strongly with typical autoimmune markers and symptomatic progression.</div>
+                    </div>
+                  </div>
+
+                  {/* Card 2 */}
+                  <div className="preview-shimmer" style={{ pointerEvents: "none", width: "100%" }}>
+                    <div className="likelihood-card medium">
+                      <div className="likelihood-header">
+                        <div>
+                          <div style={{ fontSize: "11px", color: "#FFA500", marginBottom: "3px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>POSSIBLE</div>
+                          <div className="likelihood-title">Rheumatoid Arthritis</div>
+                        </div>
+                        <div className="confidence" style={{ color: "#FFA500", flexShrink: 0, marginLeft: "16px" }}>74%</div>
+                      </div>
+                      <div className="reasoning"><strong>Clinical Reasoning:</strong> Secondary indicators and joint inflammation markers suggest an alternative presentation pathway.</div>
+                    </div>
+                  </div>
+
+                  {/* Card 3 */}
+                  <div className="preview-shimmer" style={{ pointerEvents: "none", width: "100%" }}>
+                    <div className="likelihood-card low">
+                      <div className="likelihood-header">
+                        <div>
+                          <div style={{ fontSize: "11px", color: "#8A94A6", marginBottom: "3px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>LOW LIKELIHOOD</div>
+                          <div className="likelihood-title">Systemic Lupus Erythematosus (SLE)</div>
+                        </div>
+                        <div className="confidence" style={{ color: "#8A94A6", flexShrink: 0, marginLeft: "16px" }}>36%</div>
+                      </div>
+                      <div className="reasoning"><strong>Clinical Reasoning:</strong> Baseline ANA titers and lack of systemic involvement decrease diagnostic probability.</div>
+                    </div>
+                  </div>
+
+                  {/* Card 4 */}
+                  <div className="preview-shimmer" style={{ pointerEvents: "none", width: "100%" }}>
+                    <div className="likelihood-card high">
+                      <div className="likelihood-header">
+                        <div>
+                          <div style={{ fontSize: "11px", color: "#FF5C5C", marginBottom: "3px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>HIGH LIKELIHOOD</div>
+                          <div className="likelihood-title">B-Cell Lymphoma</div>
+                        </div>
+                        <div className="confidence" style={{ color: "#FF5C5C", flexShrink: 0, marginLeft: "16px" }}>12%</div>
+                      </div>
+                      <div className="reasoning"><strong>Clinical Reasoning:</strong> Lymphadenopathy and persistent night sweats flag consideration for thorough hematological review.</div>
+                    </div>
+                  </div>
+
+                  {/* Card 5 */}
+                  <div className="preview-shimmer" style={{ pointerEvents: "none", width: "100%" }}>
+                    <div className="likelihood-card low">
+                      <div className="likelihood-header">
+                        <div>
+                          <div style={{ fontSize: "11px", color: "#8A94A6", marginBottom: "3px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>LOW LIKELIHOOD</div>
+                          <div className="likelihood-title">Sarcoidosis</div>
+                        </div>
+                        <div className="confidence" style={{ color: "#8A94A6", flexShrink: 0, marginLeft: "16px" }}>8%</div>
+                      </div>
+                      <div className="reasoning"><strong>Clinical Reasoning:</strong> Low correlation with current clinical presentation and pulmonary workup.</div>
+                    </div>
+                  </div>
                 </div>
               ) : shouldShowLockedDecisionSupport ? (
                 <div className="lf-wrapper">
@@ -3721,11 +3720,40 @@ const PatientProfile = () => {
                 Recent Activity
               </h3>
 
-              {/* Loading */}
-              {activitiesLoading && (
-                <p style={{ color: "#8A94A6", fontSize: "14px", marginBottom: "12px", fontStyle: "italic" }}>
-                  {activities.length > 0 ? "Refreshing..." : "Loading..."}
-                </p>
+              {/* Loading dummy preview */}
+              {activitiesLoading && activities.length === 0 && (
+                <div className="preview-shimmer" style={{ display: 'block', width: '100%', pointerEvents: 'none' }}>
+                  <div className="activity-timeline">
+                    <div className="activity-item">
+                      <div className="activity-text">Dr. Tareq Ahmed deleted Medication: 'Panadol'</div>
+                      <div className="activity-time">Just now</div>
+                    </div>
+                    <div className="activity-item">
+                      <div className="activity-text">Dr. Tareq Ahmed deleted Medication: 'Augmentin'</div>
+                      <div className="activity-time">5 mins ago</div>
+                    </div>
+                    <div className="activity-item">
+                      <div className="activity-text">Dr. Tareq Ahmed deleted Task: 'CBC'</div>
+                      <div className="activity-time">1 hour ago</div>
+                    </div>
+                    <div className="activity-item">
+                      <div className="activity-text">Dr. System updated is_completed to ''</div>
+                      <div className="activity-time">2 hours ago</div>
+                    </div>
+                    <div className="activity-item">
+                      <div className="activity-text">Dr. Tareq Ahmed updated next visit date to 'Wed, April 22, 2026'</div>
+                      <div className="activity-time">1 day ago</div>
+                    </div>
+                    <div className="activity-item">
+                      <div className="activity-text">Dr. Tareq Ahmed created Task: 'MRI 3'</div>
+                      <div className="activity-time">2 days ago</div>
+                    </div>
+                    <div className="activity-item">
+                      <div className="activity-text">Dr. Tareq Ahmed created Visit on Apr 15, 2026</div>
+                      <div className="activity-time">2 days ago</div>
+                    </div>
+                  </div>
+                </div>
               )}
 
               {/* Error */}

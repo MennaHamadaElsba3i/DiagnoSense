@@ -23,6 +23,7 @@ import { NotificationsProvider } from "./components/NotificationsContext";
 import NotificationsPanel from "./components/NotificationsPanel";
 import { getCookie } from "./components/cookieUtils";
 import { ThemeProvider } from "./components/ThemeContext";
+import { PageCacheProvider } from "./components/PageCacheContext";
 
 const ProtectedRoute = ({ children }) => {
   const token = getCookie("user_token");
@@ -32,6 +33,7 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   return (
     <ThemeProvider>
+    <PageCacheProvider>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<DiagnoSense />} />
@@ -205,6 +207,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
+    </PageCacheProvider>
     </ThemeProvider>
   );
 }

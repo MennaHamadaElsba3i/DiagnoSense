@@ -14,6 +14,7 @@ import {
   deleteDoctorAccountAPI,
 } from "./mockAPI";
 import { getJsonCookie } from "./cookieUtils";
+import { usePageCache } from "./PageCacheContext";
 import "../css/Settingsmaincontent.css";
 
 const EyeIcon = () => (
@@ -61,6 +62,7 @@ const Settings = () => {
     type: "",
     message: "",
   });
+  const { getCache, setCache, invalidateCache } = usePageCache();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -108,6 +110,13 @@ const Settings = () => {
 
       setDoctorId(id);
 
+      // ── Cache check ──
+      const cached = getCache("settings_profile");
+      if (cached) {
+        setProfileForm(cached);
+        return;
+      }
+
       try {
         const res = await getDoctorProfileAPI(id);
         const isSuccess = res?.success !== false;
@@ -120,19 +129,23 @@ const Settings = () => {
             actualData.specialty ||
             "";
 
-          setProfileForm({
+          const profileData = {
             fullName: actualData.name || actualData.fullName || "",
             identity:
               actualData.identity || actualData.email || actualData.phone || "",
             specialty: rawSpecialty === "N/A" ? "" : rawSpecialty,
-          });
+          };
+
+          setProfileForm(profileData);
+          // ── Store to cache ──
+          setCache("settings_profile", profileData);
         }
       } catch (err) {
         console.error("Failed to fetch profile", err);
       }
     };
     fetchProfile();
-  }, []);
+  }, [getCache, setCache]);
 
   const handleProfileChange = (e) => {
     setProfileForm({ ...profileForm, [e.target.name]: e.target.value });
@@ -153,6 +166,8 @@ const Settings = () => {
           type: "success",
           message: res.message || "Profile updated successfully.",
         });
+        // ── Invalidate cache so next visit re-fetches updated profile ──
+        window.dispatchEvent(new CustomEvent("profileUpdated"));
       } else {
         setProfileFeedback({
           type: "error",

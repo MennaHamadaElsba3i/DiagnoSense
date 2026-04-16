@@ -524,6 +524,9 @@ const EditPatient = () => {
       if (result.success) {
         const { hasAiRelevantChanges } = computeChanges();
 
+        // ── Invalidate patient list cache so it re-fetches on next visit ──
+        window.dispatchEvent(new CustomEvent("patientListInvalidated"));
+
         if (hasAiRelevantChanges) {
           // AI-relevant data changed — go to loading screen so AI reprocesses
           const token = getCookie("user_token");

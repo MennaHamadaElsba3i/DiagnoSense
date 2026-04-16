@@ -402,6 +402,9 @@ const AddPatient = () => {
           })
         );
 
+        // ── Invalidate patient list cache so it re-fetches on next visit ──
+        window.dispatchEvent(new CustomEvent("patientListInvalidated"));
+
         const token = getCookie('user_token');
         setPollingInfo({ patientId: result.data.data.patient_id, token });
         setShowProcessingScreen(true);
