@@ -1,4 +1,3 @@
-
 .integration-page {
   /* Resets to prevent inherited layout breakage */
   width: 100% !important;
@@ -153,7 +152,7 @@
 }
 
 .integration-page .intg-hero {
-  padding: 5rem 0 4rem !important;
+  padding: 8.5rem 0 4rem !important;
   text-align: center !important;
   width: 100%;
   display: block;
@@ -167,7 +166,8 @@
   border-radius: 9999px;
   font-size: 0.8125rem;
   font-weight: 600;
-  margin-bottom: 1.5rem;
+  margin-top: 50px;
+  margin-bottom: 10px;
 }
 
 .integration-page .intg-hero h1 {

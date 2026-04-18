@@ -3795,7 +3795,7 @@ const PatientProfile = () => {
       >
         <div className="chat-header">
           <div>
-            <div style={{ fontWeight: 600 }}>AI Assistant</div>
+            <div style={{ fontWeight: 600 }}>DiagnoBot</div>
             <div style={{ fontSize: "11px", opacity: 0.9 }}>
               Always here to help
             </div>
@@ -3837,7 +3837,7 @@ const PatientProfile = () => {
               </div>
               <LockedFeatureOverlay
                 compact
-                title="Meet Your AI Assistant"
+                title="Meet Your DiagnoBot"
                 description="Ask anything about your patient and get instant, source-based answers."
                 primaryLabel="Upgrade to Premium"
                 onPrimary={() => initiateUpgrade("Premium", 'recurring', 'chatbot')}

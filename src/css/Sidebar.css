@@ -115,8 +115,8 @@
 }
 
 .logo-expand-btn img {
-     width: 18px;
-     height: 18px;
+     width: 30px;
+     height: 30px;
 }
 
 /* Hover logic for swap and background matching */
@@ -372,4 +372,4 @@
 }
 
 /* Decision Support card stays branded blue in dark mode — needs no override.
-   The card subtitle is white already; no change needed. */
+   The card subtitle is white already; no change needed. */
