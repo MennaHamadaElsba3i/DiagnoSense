@@ -2385,40 +2385,42 @@ body {
 }
 
 .dsn-donut-segment:hover {
-  stroke-width: 26; 
-  opacity: 0.8;
+     stroke-width: 26;
+     opacity: 0.8;
 }
 
 
 .dsn-custom-tooltip {
-    background: rgba(26, 29, 46, 0.95); /* لون غامق شيك */
-    color: white;
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(4px);
-    transition: opacity 0.2s ease;
+     background: rgba(26, 29, 46, 0.95);
+     /* لون غامق شيك */
+     color: white;
+     padding: 8px 12px;
+     border-radius: 8px;
+     font-size: 12px;
+     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+     border: 1px solid rgba(255, 255, 255, 0.1);
+     backdrop-filter: blur(4px);
+     transition: opacity 0.2s ease;
 }
 
 .tooltip-status {
-    margin-bottom: 2px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    padding-bottom: 2px;
+     margin-bottom: 2px;
+     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+     padding-bottom: 2px;
 }
 
 .tooltip-value {
-    color: #cbd5e0;
+     color: #cbd5e0;
 }
 
 /* تأثير بسيط لما نلمس الدائرة */
 .dsn-donut-segment {
-    transition: stroke-width 0.3s ease, opacity 0.3s ease;
+     transition: stroke-width 0.3s ease, opacity 0.3s ease;
 }
 
 .dsn-donut-segment:hover {
-    stroke-width: 25; /* بنعرض السطر شوية وقت الـ hover */
+     stroke-width: 25;
+     /* بنعرض السطر شوية وقت الـ hover */
 }
 
 
@@ -2431,285 +2433,284 @@ body {
 
 /* ── Page background ── */
 [data-theme="dark"] body {
-  background: var(--dm-bg-page);
-  color: var(--dm-text-primary);
+     background: var(--dm-bg-page);
+     color: var(--dm-text-primary);
 }
 
 /* ── Top Navbar ── */
 [data-theme="dark"] .top-navbar {
-  background: var(--dm-bg-navbar);
-  border-bottom-color: var(--dm-border-subtle);
-  box-shadow: var(--dm-shadow-sm);
+     background: var(--dm-bg-navbar);
+     border-bottom-color: var(--dm-border-subtle);
+     box-shadow: var(--dm-shadow-sm);
 }
 
 /* ── Navbar controls ── */
 [data-theme="dark"] .search-input {
-  background: var(--dm-bg-input);
-  border-color: var(--dm-border-color);
-  color: var(--dm-text-primary);
+     background: var(--dm-bg-input);
+     border-color: var(--dm-border-color);
+     color: var(--dm-text-primary);
 }
 
 [data-theme="dark"] .search-input::placeholder {
-  color: var(--dm-text-secondary);
+     color: var(--dm-text-secondary);
 }
 
 [data-theme="dark"] .search-input:focus {
-  background: #253352;
-  border-color: rgba(42, 102, 255, 0.5);
-  box-shadow: 0 0 0 3px rgba(42, 102, 255, 0.12);
+     background: #253352;
+     border-color: rgba(42, 102, 255, 0.5);
+     box-shadow: 0 0 0 3px rgba(42, 102, 255, 0.12);
 }
 
 [data-theme="dark"] .icon-btn {
-  color: var(--dm-text-secondary);
+     color: var(--dm-text-secondary);
 }
 
 [data-theme="dark"] .icon-btn:hover {
-  background: rgba(42, 102, 255, 0.14);
-  color: #7ca3ff;
+     background: rgba(42, 102, 255, 0.14);
+     color: #7ca3ff;
 }
 
 [data-theme="dark"] .credits-badge {
-  background: rgba(42, 102, 255, 0.14);
-  color: #7ca3ff;
+     background: rgba(42, 102, 255, 0.14);
+     color: #7ca3ff;
 }
 
 [data-theme="dark"] .credits-badge:hover {
-  background: rgba(42, 102, 255, 0.22);
+     background: rgba(42, 102, 255, 0.22);
 }
 
 /* ── Avatar dropdown ── */
 [data-theme="dark"] .avatar-dropdown-menu {
-  background-color: #1e2940;
-  border-color: var(--dm-border-color);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.25);
+     background-color: #1e2940;
+     border-color: var(--dm-border-color);
+     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 [data-theme="dark"] .dropdown-item {
-  color: var(--dm-text-primary);
+     color: var(--dm-text-primary);
 }
 
 [data-theme="dark"] .dropdown-item:hover {
-  background-color: var(--dm-hover-bg) !important;
-  color: #7ca3ff;
+     background-color: var(--dm-hover-bg) !important;
+     color: #7ca3ff;
 }
 
 [data-theme="dark"] .dropdown-item--danger {
-  color: #f87171;
+     color: #f87171;
 }
 
 /* ── Cards ── */
 [data-theme="dark"] .card {
-  background: var(--dm-bg-card);
-  border-color: var(--dm-border-color);
-  box-shadow: var(--dm-shadow-card);
+     background: var(--dm-bg-card);
+     border-color: var(--dm-border-color);
+     box-shadow: var(--dm-shadow-card);
 }
 
 [data-theme="dark"] .card:hover {
-  box-shadow: 0 4px 12px rgba(42, 102, 255, 0.12), 0 8px 24px rgba(0, 0, 0, 0.2);
-  border-color: rgba(42, 102, 255, 0.3);
+     box-shadow: 0 4px 12px rgba(42, 102, 255, 0.12), 0 8px 24px rgba(0, 0, 0, 0.2);
+     border-color: rgba(42, 102, 255, 0.3);
 }
 
 [data-theme="dark"] .card-title,
 [data-theme="dark"] .welcome-title,
 [data-theme="dark"] .stat-value,
 [data-theme="dark"] .modal-title {
-  color: var(--dm-text-primary);
+     color: var(--dm-text-primary);
 }
 
 [data-theme="dark"] .welcome-subtitle,
 [data-theme="dark"] .stat-label,
 [data-theme="dark"] .modal-subtitle,
 [data-theme="dark"] .system-status {
-  color: var(--dm-text-secondary);
+     color: var(--dm-text-secondary);
 }
 
 /* ── Stat boxes ── */
 [data-theme="dark"] .stat-box {
-  background: linear-gradient(135deg, #1a2640 0%, #192338 100%);
-  border-color: var(--dm-border-color);
+     background: linear-gradient(135deg, #1a2640 0%, #192338 100%);
+     border-color: var(--dm-border-color);
 }
 
 [data-theme="dark"] .stat-icon {
-  background: rgba(42, 102, 255, 0.12);
+     background: rgba(42, 102, 255, 0.12);
 }
 
 /* ── Main content area ── */
 [data-theme="dark"] .main-content {
-  background: transparent;
+     background: transparent;
 }
 
 /* ── Modals ── */
 [data-theme="dark"] .modal-content {
-  background: #1e2940;
-  color: var(--dm-text-primary);
-  border: 1px solid var(--dm-border-color);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+     background: #1e2940;
+     color: var(--dm-text-primary);
+     border: 1px solid var(--dm-border-color);
+     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
 }
 
 [data-theme="dark"] .modal-overlay {
-  background: rgba(0, 0, 0, 0.6);
+     background: rgba(0, 0, 0, 0.6);
 }
 
 [data-theme="dark"] .modal-close {
-  color: var(--dm-text-secondary);
+     color: var(--dm-text-secondary);
 }
 
 [data-theme="dark"] .modal-close:hover {
-  background: rgba(42, 102, 255, 0.12);
-  color: #7ca3ff;
+     background: rgba(42, 102, 255, 0.12);
+     color: #7ca3ff;
 }
 
 [data-theme="dark"] .modal-text {
-  color: var(--dm-text-primary);
+     color: var(--dm-text-primary);
 }
 
 [data-theme="dark"] .modal-features li {
-  color: var(--dm-text-primary);
+     color: var(--dm-text-primary);
 }
 
 [data-theme="dark"] .modal-button-secondary {
-  background: #253352;
-  color: var(--dm-text-primary);
+     background: #253352;
+     color: var(--dm-text-primary);
 }
 
 [data-theme="dark"] .modal-button-secondary:hover {
-  background: #2e3e62;
+     background: #2e3e62;
 }
 
 /* ── Tables ── */
 [data-theme="dark"] table,
 [data-theme="dark"] .table {
-  color: var(--dm-text-primary);
+     color: var(--dm-text-primary);
 }
 
 [data-theme="dark"] th {
-  color: var(--dm-text-secondary);
-  border-bottom-color: var(--dm-border-color);
-  background: transparent;
+     color: var(--dm-text-secondary);
+     border-bottom-color: var(--dm-border-color);
+     background: transparent;
 }
 
 [data-theme="dark"] td {
-  border-bottom-color: var(--dm-border-subtle);
+     border-bottom-color: var(--dm-border-subtle);
 }
 
 [data-theme="dark"] tr:hover td {
-  background: rgba(42, 102, 255, 0.06);
+     background: rgba(42, 102, 255, 0.06);
 }
 
 /* ── Form inputs (general) ── */
 [data-theme="dark"] input,
 [data-theme="dark"] textarea,
 [data-theme="dark"] select {
-  background: var(--dm-bg-input);
-  border-color: var(--dm-border-color);
-  color: var(--dm-text-primary);
+     background: var(--dm-bg-input);
+     border-color: var(--dm-border-color);
+     color: var(--dm-text-primary);
 }
 
 [data-theme="dark"] input::placeholder,
 [data-theme="dark"] textarea::placeholder {
-  color: var(--dm-text-muted);
+     color: var(--dm-text-muted);
 }
 
 [data-theme="dark"] input:focus,
 [data-theme="dark"] textarea:focus,
 [data-theme="dark"] select:focus {
-  border-color: rgba(42, 102, 255, 0.5);
-  box-shadow: 0 0 0 3px rgba(42, 102, 255, 0.12);
-  outline: none;
+     border-color: rgba(42, 102, 255, 0.5);
+     box-shadow: 0 0 0 3px rgba(42, 102, 255, 0.12);
+     outline: none;
 }
 
 /* ── Notification badge (keep red, stays visible) ── */
 [data-theme="dark"] .notification-badge {
-  border-color: #1e2940;
+     border-color: #1e2940;
 }
 
 /* ── Charts / tooltips ── */
 [data-theme="dark"] .chart-tooltip,
 [data-theme="dark"] .dsn-tooltip {
-  background: #253352;
-  color: var(--dm-text-primary);
-  border-color: var(--dm-border-color);
+     background: #253352;
+     color: var(--dm-text-primary);
+     border-color: var(--dm-border-color);
 }
 
 /* ── Patient list / cards (shared selectors) ── */
 [data-theme="dark"] .patient-card,
 [data-theme="dark"] .info-card,
 [data-theme="dark"] .summary-card {
-  background: var(--dm-bg-card);
-  border-color: var(--dm-border-color);
-  color: var(--dm-text-primary);
+     background: var(--dm-bg-card);
+     border-color: var(--dm-border-color);
+     color: var(--dm-text-primary);
 }
 
 /* ── Dividers ── */
 [data-theme="dark"] hr,
 [data-theme="dark"] .divider {
-  border-color: var(--dm-border-subtle);
+     border-color: var(--dm-border-subtle);
 }
 
 /* ── Scrollbar (webkit) ── */
 [data-theme="dark"] ::-webkit-scrollbar-track {
-  background: #111827;
+     background: #111827;
 }
 
 [data-theme="dark"] ::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 4px;
+     background: #334155;
+     border-radius: 4px;
 }
 
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+     background: #475569;
 }
 
 /* ── Dashboard-Specific App Shell Overrides ── */
 [data-theme="dark"] #dsn-main {
-  --dsn-bg: var(--dm-bg-page);
-  --dsn-card: var(--dm-bg-card);
-  --dsn-primary-light: rgba(42, 102, 255, 0.15);
-  --dsn-danger-light: rgba(240, 62, 62, 0.15);
-  --dsn-success-light: rgba(47, 158, 68, 0.15);
-  --dsn-warning-light: rgba(230, 119, 0, 0.15);
+     --dsn-bg: var(--dm-bg-page);
+     --dsn-card: var(--dm-bg-card);
+     --dsn-primary-light: rgba(42, 102, 255, 0.15);
+     --dsn-danger-light: rgba(240, 62, 62, 0.15);
+     --dsn-success-light: rgba(47, 158, 68, 0.15);
+     --dsn-warning-light: rgba(230, 119, 0, 0.15);
 }
 
 [data-theme="dark"] #dsn-main .dsn-top-wrapper {
-  background: var(--dm-bg-card);
-  border-color: var(--dm-border-color);
-  box-shadow: var(--dm-shadow-sm);
+     background: var(--dm-bg-card);
+     border-color: var(--dm-border-color);
+     box-shadow: var(--dm-shadow-sm);
 }
 
 [data-theme="dark"] #dsn-main .dsn-stat-card {
-  background: var(--dm-bg-card);
-  background-image: none;
-  border-color: var(--dm-border-color);
+     background: var(--dm-bg-card);
+     background-image: none;
+     border-color: var(--dm-border-color);
 }
 
 [data-theme="dark"] #dsn-main .dsn-stat-card--growth {
-  background: var(--dsn-primary-light);
-  border-color: rgba(42, 102, 255, 0.3);
+     background: var(--dsn-primary-light);
+     border-color: rgba(42, 102, 255, 0.3);
 }
 
 [data-theme="dark"] #dsn-main .dsn-legend-row {
-  background: var(--dm-bg-surface) !important;
-  color: var(--dm-text-primary);
-  border: 1px solid var(--dm-border-subtle);
+     background: var(--dm-bg-surface) !important;
+     color: var(--dm-text-primary);
+     border: 1px solid var(--dm-border-subtle);
 }
 
 [data-theme="dark"] #dsn-main .dsn-chart-card {
-  background: var(--dm-bg-card);
-  border-color: var(--dm-border-color);
+     background: var(--dm-bg-card);
+     border-color: var(--dm-border-color);
 }
 
 [data-theme="dark"] #dsn-main .dsn-active-card {
-  background: var(--dm-bg-card);
-  border-color: var(--dm-border-color);
+     background: var(--dm-bg-card);
+     border-color: var(--dm-border-color);
 }
 
 [data-theme="dark"] #dsn-main .dsn-mini-card {
-  background: var(--dm-bg-surface);
-  border-color: var(--dm-border-subtle);
+     background: var(--dm-bg-surface);
+     border-color: var(--dm-border-subtle);
 }
 
 [data-theme="dark"] #dsn-main .dsn-mini-card:hover {
-  background: var(--dm-bg-card);
-  border-color: var(--dm-border-color);
+     background: var(--dm-bg-card);
+     border-color: var(--dm-border-color);
 }
-

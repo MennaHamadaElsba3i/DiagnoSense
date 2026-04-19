@@ -52,11 +52,11 @@ const DashboardQueueInsight = ({ text }) => {
 
   useEffect(() => {
     if (isExpanded) {
-        setDisplayLength(text.length);
-        setIsTruncated(false);
-        if (moreRef.current) moreRef.current.style.display = "inline";
-        if (textRef.current) textRef.current.textContent = text + " ";
-        return;
+      setDisplayLength(text.length);
+      setIsTruncated(false);
+      if (moreRef.current) moreRef.current.style.display = "inline";
+      if (textRef.current) textRef.current.textContent = text + " ";
+      return;
     }
 
     const container = containerRef.current;
@@ -131,8 +131,8 @@ const DashboardQueueInsight = ({ text }) => {
   return (
     <div className="dsn-insight-box">
       <div className="dsn-insight-label" style={{ display: "flex", alignItems: "center" }}>
-        <svg fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" style={{width: 14, height: 14, marginRight: 6}}>
-           <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+        <svg fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 14, height: 14, marginRight: 6 }}>
+          <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
         </svg>
         AI Insight
       </div>
@@ -146,8 +146,8 @@ const DashboardQueueInsight = ({ text }) => {
             e.stopPropagation();
             setIsExpanded(!isExpanded);
           }}
-          style={{ 
-            display: (isTruncated || isExpanded) ? "inline" : "none", 
+          style={{
+            display: (isTruncated || isExpanded) ? "inline" : "none",
             background: 'none', border: 'none', padding: 0, margin: 0,
             color: '#2A66FF', fontWeight: 600, fontSize: '13px', cursor: 'pointer',
             marginLeft: '4px'
@@ -333,7 +333,7 @@ function QueueSection() {
             setCurrentIdx(nowIdx >= 0 ? nowIdx : 0);
             setRemainingLabel(
               data.remaining_count_label ||
-                `${remapped.filter((p) => p.status_tag === "Waiting").length} remaining`,
+              `${remapped.filter((p) => p.status_tag === "Waiting").length} remaining`,
             );
           }
         }
@@ -467,8 +467,8 @@ function QueueSection() {
       </div>
 
       {activePatient &&
-      activePatient.status_tag !== "Attended" &&
-      activePatient.status_tag !== "Skipped" ? (
+        activePatient.status_tag !== "Attended" &&
+        activePatient.status_tag !== "Skipped" ? (
         <div className="dsn-active-card" key={activePatient.id}>
           <div
             className="dsn-active-avatar"
@@ -545,21 +545,19 @@ function QueueSection() {
         {queueList.map((p, i) => (
           <div
             key={p.id}
-            className={`dsn-mini-card${
-              p.status_tag === "Attended"
-                ? " dsn-attended"
-                : p.status_tag === "Skipped"
-                  ? " dsn-skipped"
-                  : ""
-            }`}
+            className={`dsn-mini-card${p.status_tag === "Attended"
+              ? " dsn-attended"
+              : p.status_tag === "Skipped"
+                ? " dsn-skipped"
+                : ""
+              }`}
           >
             <div
-              className={`dsn-queue-num${
-                i === currentIdx &&
+              className={`dsn-queue-num${i === currentIdx &&
                 (p.status_tag === "Now" || p.status_tag === "Waiting")
-                  ? " dsn-active-num"
-                  : ""
-              }`}
+                ? " dsn-active-num"
+                : ""
+                }`}
             >
               {i + 1}
             </div>
@@ -641,7 +639,7 @@ function QueueSection() {
             </div>
             <div className="dsn-modal-notes">
               <strong style={{ display: "inline-flex", alignItems: "center" }}>
-                <svg fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" style={{width: 14, height: 14, marginRight: 6}}>
+                <svg fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 14, height: 14, marginRight: 6 }}>
                   <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
                 </svg>
                 AI Insight:
@@ -788,7 +786,7 @@ export default function Dashboard() {
       <main className={`main-content${isSidebarCollapsed ? " collapsed" : ""}`}>
         <div id="dsn-main">
           {/* ── TOP WHITE WRAPPER ── */}
-                    {loading ? (
+          {loading ? (
             <div className="preview-shimmer" style={{ width: '100%', borderRadius: '24px', pointerEvents: 'none', display: 'block' }}>
               <div className="dsn-top-wrapper" style={{ pointerEvents: 'none' }}>
                 <div className="dsn-greeting">
@@ -950,19 +948,17 @@ export default function Dashboard() {
                         <div className="dsn-growth-col" key={i}>
                           <div className="dsn-growth-sub">{g.sub}</div>
                           <div
-                            className={`dsn-growth-val ${g.className || ""} ${
-                              g.sub === "Diff."
-                                ? g.valPath?.toString().startsWith("-")
-                                  ? "dsn-growth-val--danger"
-                                  : "dsn-growth-val--success"
-                                : ""
-                            } ${
-                              g.sub === "Growth"
+                            className={`dsn-growth-val ${g.className || ""} ${g.sub === "Diff."
+                              ? g.valPath?.toString().startsWith("-")
+                                ? "dsn-growth-val--danger"
+                                : "dsn-growth-val--success"
+                              : ""
+                              } ${g.sub === "Growth"
                                 ? data?.widgets.monthly_growth.details.trend === "up"
                                   ? "dsn-growth-val--success"
                                   : "dsn-growth-val--danger"
                                 : ""
-                            }`}
+                              }`}
                           >
                             {g.sub === "Growth"
                               ? `${data?.widgets.monthly_growth.details.trend === "up" ? "↑" : "↓"}${g.valPath}`
@@ -1061,7 +1057,7 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-            )}
+          )}
 
           {/* ── QUEUE MANAGEMENT ── */}
           <QueueSection />
