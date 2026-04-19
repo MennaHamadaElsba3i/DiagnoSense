@@ -7,11 +7,26 @@ const Register = ({ onRegisterSuccess }) => {
   // const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [emailValue, setEmailValue] = useState("");
-const [phoneValue, setPhoneValue] = useState("");
+  const [phoneValue, setPhoneValue] = useState("");
   const [error, setError] = useState("");
   const [emailErrors, setEmailErrors] = useState([]);
   const [passwordErrors, setPasswordErrors] = useState([]);
+  const [passwordValue, setPasswordValue] = useState("");
 
+  const getPasswordStrength = (password) => {
+    if (!password) return { score: 0, label: "", color: "" };
+
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+
+    if (score <= 1) return { score: 1, label: "Weak", color: "#e74c3c" };
+    if (score === 2) return { score: 2, label: "Fair", color: "#f39c12" };
+    if (score === 3) return { score: 3, label: "Good", color: "#2ecc71" };
+    return { score: 4, label: "Strong", color: "#27ae60" };
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
     const firstName = e.target.firstName.value;
@@ -47,10 +62,10 @@ const [phoneValue, setPhoneValue] = useState("");
       setJsonCookie("user", result.data.user, 7);
       setCookie("isAuthenticated", "true", 7);
 
-      localStorage.removeItem('doctor_name');
-      localStorage.removeItem('support_form_draft');
+      localStorage.removeItem("doctor_name");
+      localStorage.removeItem("support_form_draft");
       if (onRegisterSuccess) {
-        onRegisterSuccess(identityUsed); 
+        onRegisterSuccess(identityUsed);
       }
       // navigate("/dashboard");
     } else {
@@ -110,8 +125,8 @@ const [phoneValue, setPhoneValue] = useState("");
             placeholder="Email address"
             name="email"
             value={emailValue}
-  onChange={(e) => setEmailValue(e.target.value)}
-  disabled={phoneValue.length > 0}
+            onChange={(e) => setEmailValue(e.target.value)}
+            disabled={phoneValue.length > 0}
             className={emailErrors.length > 0 ? "error" : ""}
           />
           {emailErrors.length > 0 && (
@@ -135,20 +150,43 @@ const [phoneValue, setPhoneValue] = useState("");
             placeholder="Phone Number (Optional if email is provided)"
             name="phone"
             value={phoneValue}
-  onChange={(e) => setPhoneValue(e.target.value)}
-  disabled={emailValue.length > 0}
+            onChange={(e) => setPhoneValue(e.target.value)}
+            disabled={emailValue.length > 0}
             className={error.includes("phone") ? "error" : ""}
           />
         </div>
-        <div className="form-group">
+        <div className="form-group" style={{ position: "relative" }}>
           <input
             type="password"
             placeholder="Password"
             name="password"
             required
             minLength="8"
+            value={passwordValue}
+            onChange={(e) => setPasswordValue(e.target.value)}
             className={passwordErrors.length > 0 ? "error" : ""}
+            style={{ paddingRight: "42px" }}
           />
+
+          {passwordValue && (
+            <div className="password-strength-wrapper">
+              <div className="password-strength-bar-track">
+                <div
+                  className="password-strength-bar-fill"
+                  style={{
+                    width: `${(getPasswordStrength(passwordValue).score / 4) * 100}%`,
+                    backgroundColor: getPasswordStrength(passwordValue).color,
+                  }}
+                />
+              </div>
+              <span
+                className="password-strength-label"
+                style={{ color: getPasswordStrength(passwordValue).color }}
+              >
+                {getPasswordStrength(passwordValue).label}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="form-group">

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import logo from "../assets/Logo_Diagnoo.png";
 import stethoscope from "../assets/Stethoscope.png";
@@ -195,10 +196,7 @@ function QueueSection() {
         gender: p.gender,
         apptTime: p.appointment_time,
         status_tag: p.status_tag,
-        aiInsight:
-          data.current_attending?.id === p.id
-            ? data.current_attending?.ai_insight?.summary || null
-            : null,
+        aiInsight: p.ai_insight?.summary || null,
         initials: p.name
           .split(" ")
           .slice(0, 2)
@@ -232,6 +230,17 @@ function QueueSection() {
     fetchQueue();
   }, [fetchQueue]);
 
+  useEffect(() => {
+    if (modalPatient) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [modalPatient]);
+
   const goToNextPatient = () => {
     setCurrentIdx((prev) => {
       const total = queueList.length;
@@ -239,6 +248,26 @@ function QueueSection() {
 
       for (let offset = 1; offset <= total; offset++) {
         const candidateIdx = (prev + offset) % total;
+        const candidate = queueList[candidateIdx];
+        if (
+          candidate.status_tag === "Waiting" ||
+          candidate.status_tag === "Now"
+        ) {
+          return candidateIdx;
+        }
+      }
+
+      return prev;
+    });
+  };
+
+  const goToPreviousPatient = () => {
+    setCurrentIdx((prev) => {
+      const total = queueList.length;
+      if (total === 0) return prev;
+
+      for (let offset = 1; offset <= total; offset++) {
+        const candidateIdx = (prev - offset + total) % total;
         const candidate = queueList[candidateIdx];
         if (
           candidate.status_tag === "Waiting" ||
@@ -314,10 +343,7 @@ function QueueSection() {
             gender: p.gender,
             apptTime: p.appointment_time,
             status_tag: p.status_tag,
-            aiInsight:
-              data.current_attending?.id === p.id
-                ? data.current_attending?.ai_insight?.summary || null
-                : null,
+            aiInsight: p.ai_insight?.summary || null,
             initials: p.name
               .split(" ")
               .slice(0, 2)
@@ -500,16 +526,6 @@ function QueueSection() {
               </svg>
               Mark Attended
             </button>
-            <button className="dsn-btn-next" onClick={goToNextPatient}>
-              <svg
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="dsn-btn-icon"
-              >
-                <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
-              </svg>
-              Next Patient
-            </button>
             <button
               className="dsn-btn-view"
               onClick={() => handleViewDetails(activePatient.id)}
@@ -523,6 +539,24 @@ function QueueSection() {
               </svg>
               View Details
             </button>
+            <div className="dsn-segmented-nav">
+              <button
+                onClick={goToPreviousPatient}
+                className="dsn-btn-nav-segment"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
+                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button
+                onClick={goToNextPatient}
+                className="dsn-btn-nav-segment"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       ) : (
@@ -583,7 +617,7 @@ function QueueSection() {
         ))}
       </div>
 
-      {modalPatient && (
+      {modalPatient && typeof document !== "undefined" ? createPortal(
         <div
           id="dsn-modal-overlay"
           className="dsn-open"
@@ -591,7 +625,8 @@ function QueueSection() {
             if (e.target.id === "dsn-modal-overlay") setModalPatient(null);
           }}
         >
-          <div id="dsn-modal-box">
+          <div id="dsn-main" style={{ display: "contents" }}>
+            <div id="dsn-modal-box">
             <div className="dsn-modal-header">
               <div
                 className="dsn-modal-avatar"
@@ -666,8 +701,10 @@ function QueueSection() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+          </div>
+        </div>,
+        document.body
+      ) : null}
     </div>
   );
 }

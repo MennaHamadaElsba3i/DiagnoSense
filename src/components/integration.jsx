@@ -27,7 +27,7 @@ function Integration() {
         {/* Hero Section */}
         <section className="intg-hero">
           <div className="intg-container">
-            <div className="intg-badge">SMART ON FHIR READY</div>
+            {/* <div className="intg-badge">SMART ON FHIR READY</div> */}
             <h1>Seamless <span className="intg-highlight">EHR Integration</span></h1>
             <p className="intg-subheadline">
               Diagnosense integrates with existing hospital systems as a secure clinical intelligence layer.

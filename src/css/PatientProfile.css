@@ -2856,7 +2856,7 @@ button.pp-note-delete-btn:hover {
     opacity: 0.45;
     pointer-events: none;
     user-select: none;
-    padding: 4px 0;
+    padding: 15px 0;
 }
 
 .lf-chat-dummy {
@@ -2887,7 +2887,7 @@ button.pp-note-delete-btn:hover {
     border: 1px solid rgba(42, 102, 255, 0.15);
     border-radius: 18px;
     box-shadow: 0 12px 40px rgba(42, 102, 255, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
-    padding: 32px 28px;
+    padding: 10px 28px;
     text-align: center;
     max-width: 380px;
     width: 100%;
@@ -2898,7 +2898,7 @@ button.pp-note-delete-btn:hover {
 }
 
 .lf-compact {
-    padding: 8px;
+    padding:8px 20px;
 }
 
 .lf-compact .lf-overlay-card {
