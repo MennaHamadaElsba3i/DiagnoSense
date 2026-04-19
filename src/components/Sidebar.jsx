@@ -4,8 +4,8 @@ import { useSidebar } from "./SidebarContext";
 import ConfirmModal from "./ConfirmModal";
 import logo from "../assets/Logo_Diagnoo.png";
 import stethoscope from "../assets/Stethoscope.png";
-import openIcon from "../assets/Open (2).png";
-import closeIcon from "../assets/Cloose.png";
+import openIcon from "../assets/OpenEdited.png";
+import closeIcon from "../assets/CloseEdited.png";
 import "../css/Sidebar.css";
 
 export default function Sidebar({ activePage }) {
