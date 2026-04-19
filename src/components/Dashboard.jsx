@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
 import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import logo from "../assets/Logo_Diagnoo.png";
 import stethoscope from "../assets/Stethoscope.png";
@@ -52,11 +53,11 @@ const DashboardQueueInsight = ({ text }) => {
 
   useEffect(() => {
     if (isExpanded) {
-        setDisplayLength(text.length);
-        setIsTruncated(false);
-        if (moreRef.current) moreRef.current.style.display = "inline";
-        if (textRef.current) textRef.current.textContent = text + " ";
-        return;
+      setDisplayLength(text.length);
+      setIsTruncated(false);
+      if (moreRef.current) moreRef.current.style.display = "inline";
+      if (textRef.current) textRef.current.textContent = text + " ";
+      return;
     }
 
     const container = containerRef.current;
@@ -131,8 +132,8 @@ const DashboardQueueInsight = ({ text }) => {
   return (
     <div className="dsn-insight-box">
       <div className="dsn-insight-label" style={{ display: "flex", alignItems: "center" }}>
-        <svg fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" style={{width: 14, height: 14, marginRight: 6}}>
-           <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+        <svg fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 14, height: 14, marginRight: 6 }}>
+          <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
         </svg>
         AI Insight
       </div>
@@ -146,8 +147,8 @@ const DashboardQueueInsight = ({ text }) => {
             e.stopPropagation();
             setIsExpanded(!isExpanded);
           }}
-          style={{ 
-            display: (isTruncated || isExpanded) ? "inline" : "none", 
+          style={{
+            display: (isTruncated || isExpanded) ? "inline" : "none",
             background: 'none', border: 'none', padding: 0, margin: 0,
             color: '#2A66FF', fontWeight: 600, fontSize: '13px', cursor: 'pointer',
             marginLeft: '4px'
@@ -195,10 +196,7 @@ function QueueSection() {
         gender: p.gender,
         apptTime: p.appointment_time,
         status_tag: p.status_tag,
-        aiInsight:
-          data.current_attending?.id === p.id
-            ? data.current_attending?.ai_insight?.summary || null
-            : null,
+        aiInsight: p.ai_insight?.summary || null,
         initials: p.name
           .split(" ")
           .slice(0, 2)
@@ -232,6 +230,17 @@ function QueueSection() {
     fetchQueue();
   }, [fetchQueue]);
 
+  useEffect(() => {
+    if (modalPatient) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [modalPatient]);
+
   const goToNextPatient = () => {
     setCurrentIdx((prev) => {
       const total = queueList.length;
@@ -239,6 +248,26 @@ function QueueSection() {
 
       for (let offset = 1; offset <= total; offset++) {
         const candidateIdx = (prev + offset) % total;
+        const candidate = queueList[candidateIdx];
+        if (
+          candidate.status_tag === "Waiting" ||
+          candidate.status_tag === "Now"
+        ) {
+          return candidateIdx;
+        }
+      }
+
+      return prev;
+    });
+  };
+
+  const goToPreviousPatient = () => {
+    setCurrentIdx((prev) => {
+      const total = queueList.length;
+      if (total === 0) return prev;
+
+      for (let offset = 1; offset <= total; offset++) {
+        const candidateIdx = (prev - offset + total) % total;
         const candidate = queueList[candidateIdx];
         if (
           candidate.status_tag === "Waiting" ||
@@ -314,10 +343,7 @@ function QueueSection() {
             gender: p.gender,
             apptTime: p.appointment_time,
             status_tag: p.status_tag,
-            aiInsight:
-              data.current_attending?.id === p.id
-                ? data.current_attending?.ai_insight?.summary || null
-                : null,
+            aiInsight: p.ai_insight?.summary || null,
             initials: p.name
               .split(" ")
               .slice(0, 2)
@@ -333,7 +359,7 @@ function QueueSection() {
             setCurrentIdx(nowIdx >= 0 ? nowIdx : 0);
             setRemainingLabel(
               data.remaining_count_label ||
-                `${remapped.filter((p) => p.status_tag === "Waiting").length} remaining`,
+              `${remapped.filter((p) => p.status_tag === "Waiting").length} remaining`,
             );
           }
         }
@@ -467,8 +493,8 @@ function QueueSection() {
       </div>
 
       {activePatient &&
-      activePatient.status_tag !== "Attended" &&
-      activePatient.status_tag !== "Skipped" ? (
+        activePatient.status_tag !== "Attended" &&
+        activePatient.status_tag !== "Skipped" ? (
         <div className="dsn-active-card" key={activePatient.id}>
           <div
             className="dsn-active-avatar"
@@ -500,16 +526,6 @@ function QueueSection() {
               </svg>
               Mark Attended
             </button>
-            <button className="dsn-btn-next" onClick={goToNextPatient}>
-              <svg
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="dsn-btn-icon"
-              >
-                <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
-              </svg>
-              Next Patient
-            </button>
             <button
               className="dsn-btn-view"
               onClick={() => handleViewDetails(activePatient.id)}
@@ -523,6 +539,24 @@ function QueueSection() {
               </svg>
               View Details
             </button>
+            <div className="dsn-segmented-nav">
+              <button
+                onClick={goToPreviousPatient}
+                className="dsn-btn-nav-segment"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
+                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button
+                onClick={goToNextPatient}
+                className="dsn-btn-nav-segment"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       ) : (
@@ -545,21 +579,19 @@ function QueueSection() {
         {queueList.map((p, i) => (
           <div
             key={p.id}
-            className={`dsn-mini-card${
-              p.status_tag === "Attended"
-                ? " dsn-attended"
-                : p.status_tag === "Skipped"
-                  ? " dsn-skipped"
-                  : ""
-            }`}
+            className={`dsn-mini-card${p.status_tag === "Attended"
+              ? " dsn-attended"
+              : p.status_tag === "Skipped"
+                ? " dsn-skipped"
+                : ""
+              }`}
           >
             <div
-              className={`dsn-queue-num${
-                i === currentIdx &&
+              className={`dsn-queue-num${i === currentIdx &&
                 (p.status_tag === "Now" || p.status_tag === "Waiting")
-                  ? " dsn-active-num"
-                  : ""
-              }`}
+                ? " dsn-active-num"
+                : ""
+                }`}
             >
               {i + 1}
             </div>
@@ -585,7 +617,7 @@ function QueueSection() {
         ))}
       </div>
 
-      {modalPatient && (
+      {modalPatient && typeof document !== "undefined" ? createPortal(
         <div
           id="dsn-modal-overlay"
           className="dsn-open"
@@ -593,7 +625,8 @@ function QueueSection() {
             if (e.target.id === "dsn-modal-overlay") setModalPatient(null);
           }}
         >
-          <div id="dsn-modal-box">
+          <div id="dsn-main" style={{ display: "contents" }}>
+            <div id="dsn-modal-box">
             <div className="dsn-modal-header">
               <div
                 className="dsn-modal-avatar"
@@ -641,7 +674,7 @@ function QueueSection() {
             </div>
             <div className="dsn-modal-notes">
               <strong style={{ display: "inline-flex", alignItems: "center" }}>
-                <svg fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" style={{width: 14, height: 14, marginRight: 6}}>
+                <svg fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 14, height: 14, marginRight: 6 }}>
                   <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
                 </svg>
                 AI Insight:
@@ -668,8 +701,10 @@ function QueueSection() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+          </div>
+        </div>,
+        document.body
+      ) : null}
     </div>
   );
 }
@@ -788,7 +823,7 @@ export default function Dashboard() {
       <main className={`main-content${isSidebarCollapsed ? " collapsed" : ""}`}>
         <div id="dsn-main">
           {/* ── TOP WHITE WRAPPER ── */}
-                    {loading ? (
+          {loading ? (
             <div className="preview-shimmer" style={{ width: '100%', borderRadius: '24px', pointerEvents: 'none', display: 'block' }}>
               <div className="dsn-top-wrapper" style={{ pointerEvents: 'none' }}>
                 <div className="dsn-greeting">
@@ -950,19 +985,17 @@ export default function Dashboard() {
                         <div className="dsn-growth-col" key={i}>
                           <div className="dsn-growth-sub">{g.sub}</div>
                           <div
-                            className={`dsn-growth-val ${g.className || ""} ${
-                              g.sub === "Diff."
-                                ? g.valPath?.toString().startsWith("-")
-                                  ? "dsn-growth-val--danger"
-                                  : "dsn-growth-val--success"
-                                : ""
-                            } ${
-                              g.sub === "Growth"
+                            className={`dsn-growth-val ${g.className || ""} ${g.sub === "Diff."
+                              ? g.valPath?.toString().startsWith("-")
+                                ? "dsn-growth-val--danger"
+                                : "dsn-growth-val--success"
+                              : ""
+                              } ${g.sub === "Growth"
                                 ? data?.widgets.monthly_growth.details.trend === "up"
                                   ? "dsn-growth-val--success"
                                   : "dsn-growth-val--danger"
                                 : ""
-                            }`}
+                              }`}
                           >
                             {g.sub === "Growth"
                               ? `${data?.widgets.monthly_growth.details.trend === "up" ? "↑" : "↓"}${g.valPath}`
@@ -1061,7 +1094,7 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-            )}
+          )}
 
           {/* ── QUEUE MANAGEMENT ── */}
           <QueueSection />
