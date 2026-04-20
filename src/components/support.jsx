@@ -34,6 +34,11 @@ function Support() {
   const { unreadCount, openNotifications } = useNotifications();
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const avatarMenuRef = useRef(null);
+  const categoryRef = useRef(null);
+  const urgencyRef = useRef(null);
+
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [isUrgencyOpen, setIsUrgencyOpen] = useState(false);
 
   const user = getUser();
   const userIdentity = user?.email || user?.phone || "";
@@ -68,6 +73,12 @@ function Support() {
     const handleClickOutside = (e) => {
       if (avatarMenuRef.current && !avatarMenuRef.current.contains(e.target))
         setIsAvatarMenuOpen(false);
+      
+      if (categoryRef.current && !categoryRef.current.contains(e.target))
+        setIsCategoryOpen(false);
+
+      if (urgencyRef.current && !urgencyRef.current.contains(e.target))
+        setIsUrgencyOpen(false);
     };
     const handleEscape = (e) => {
       if (e.key === "Escape") setIsAvatarMenuOpen(false);
@@ -470,22 +481,39 @@ function Support() {
                   <label className="form-label">
                     Category <span style={{ color: "#EF4444" }}>*</span>
                   </label>
-                  <select
-                    className="form-select"
-                    value={category}
-                    onChange={(e) => {
-                      setCategory(e.target.value);
-                      setFormError("");
-                    }}
-                    required
-                  >
-                    <option value="" disabled>
-                      Select a category...
-                    </option>
-                    <option value="technical">Technical Issue</option>
-                    <option value="billing">Billing Question</option>
-                    <option value="general">General</option>
-                  </select>
+                  <div className={`custom-select-container ${isCategoryOpen ? "is-open" : ""}`} ref={categoryRef}>
+                    <div
+                      className={`form-input custom-select-trigger ${!category ? "placeholder" : ""}`}
+                      onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                    >
+                      {category ? (category.charAt(0).toUpperCase() + category.slice(1)) : "Select a category..."}
+                      <svg className="arrow-icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
+                    </div>
+                    {isCategoryOpen && (
+                      <div className="custom-options-list">
+                        {[
+                          { value: "technical", label: "Technical Issue" },
+                          { value: "billing", label: "Billing Question" },
+                          { value: "general", label: "General" },
+                        ].map((opt) => (
+                          <div
+                            key={opt.value}
+                            className={`custom-option ${category === opt.value ? "selected" : ""}`}
+                            onClick={() => {
+                              setCategory(opt.value);
+                              setIsCategoryOpen(false);
+                              setFormError("");
+                            }}
+                          >
+                            {opt.label}
+                            {category === opt.value && (
+                              <svg className="check-icon" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" /></svg>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Urgency */}
@@ -493,16 +521,38 @@ function Support() {
                   <label className="form-label">
                     Urgency <span style={{ color: "#EF4444" }}>*</span>
                   </label>
-                  <select
-                    className="form-select"
-                    value={urgency}
-                    onChange={(e) => setUrgency(e.target.value)}
-                    required
-                  >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                  </select>
+                  <div className={`custom-select-container ${isUrgencyOpen ? "is-open" : ""}`} ref={urgencyRef}>
+                    <div
+                      className={`form-input custom-select-trigger ${!urgency ? "placeholder" : ""}`}
+                      onClick={() => setIsUrgencyOpen(!isUrgencyOpen)}
+                    >
+                      {urgency ? (urgency.charAt(0).toUpperCase() + urgency.slice(1)) : "Select urgency..."}
+                      <svg className="arrow-icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
+                    </div>
+                    {isUrgencyOpen && (
+                      <div className="custom-options-list">
+                        {[
+                          { value: "low", label: "Low" },
+                          { value: "medium", label: "Medium" },
+                          { value: "high", label: "High" },
+                        ].map((opt) => (
+                          <div
+                            key={opt.value}
+                            className={`custom-option ${urgency.toLowerCase() === opt.value ? "selected" : ""}`}
+                            onClick={() => {
+                              setUrgency(opt.value);
+                              setIsUrgencyOpen(false);
+                            }}
+                          >
+                            {opt.label}
+                            {urgency.toLowerCase() === opt.value && (
+                              <svg className="check-icon" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" /></svg>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Message */}
