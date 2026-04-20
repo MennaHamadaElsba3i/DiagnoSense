@@ -292,7 +292,7 @@ function Support() {
             <div className="card support-card">
               <h3 className="card-title">Frequently Asked Questions</h3>
               <div className="search-bar">
-                <span className="search-bar-icon">
+                <span className="search-bar-icon" style={{left:"0px"}}>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="17" 
@@ -317,13 +317,13 @@ function Support() {
                 {[
                   {
                     id: 1,
-                    q: "How do I create my first diagnostic report?",
-                    a: "Navigate to the Reports section and click 'New Report'. Upload patient data and our AI will analyze it instantly.",
+                    q: "How do I create a new patient profile?",
+                    a: "Click on “Add Patient”, fill in the basic details (name, age, contact info), then start adding medical history or files.",
                   },
                   {
                     id: 2,
-                    q: "How do I invite team members?",
-                    a: "Go to Settings > Team Management and click 'Invite Member'. Enter their email and assign permissions.",
+                    q: "Can I start using the system without uploading files first?",
+                    a: "You can manually type the history or use our Speech-to-Text feature to record and transcribe the patient's current complaints directly into their new profile.",
                   },
                 ].map(({ id, q, a }) => (
                   <React.Fragment key={id}>
@@ -348,8 +348,8 @@ function Support() {
                 {[
                   {
                     id: 3,
-                    q: "What file formats are supported?",
-                    a: "We support PDF, DICOM, PNG, JPG, and CSV formats. Maximum file size is 50MB.",
+                    q: "Can I upload multiple files at once?",
+                    a: "Yes, you can upload multiple files in one go, and the system will process them together automatically.",
                   },
                   {
                     id: 4,
@@ -380,12 +380,11 @@ function Support() {
                   className={`faq-item ${activeFAQ === 5 ? "active" : ""}`}
                   onClick={() => toggleFAQ(5)}
                 >
-                  <span>How do I upgrade my plan?</span>
+                  <span>How do I upgrade or change my subscription plan?</span>
                   <span className="chevron">▼</span>
                 </div>
                 <div className={`faq-answer ${activeFAQ === 5 ? "show" : ""}`}>
-                  Visit Billing Settings to view available plans and upgrade
-                  instantly.
+                  Navigate to subscriptions > available plans tab. From there, you can switch between the Basic, Pro, or Premium plans, or opt for the Pay-per-use model based on your clinic's volume.
                 </div>
               </div>
 
@@ -395,13 +394,11 @@ function Support() {
                   className={`faq-item ${activeFAQ === 6 ? "active" : ""}`}
                   onClick={() => toggleFAQ(6)}
                 >
-                  <span>How accurate is the AI analysis?</span>
+                  <span>What is the DiagnoBot and how does it help me?</span>
                   <span className="chevron">▼</span>
                 </div>
                 <div className={`faq-answer ${activeFAQ === 6 ? "show" : ""}`}>
-                  Our AI models achieve 94%+ accuracy on validated medical
-                  datasets. All results should be reviewed by qualified
-                  professionals.
+                  DiagnoBot is an AI assistant trained only on your patient’s files. You can ask it specific questions, such as "What was the last prescribed dosage?" to get instant answers without manually searching through reports.
                 </div>
               </div>
             </div>

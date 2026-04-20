@@ -217,6 +217,7 @@ const AuthPage = () => {
                   style={{ marginBottom: "10px", width: "165px" }}
                   alt="DiagnoSense Logo"
                   onError={(e) => (e.target.style.display = "none")}
+                  onClick={() => navigate("/home")}
                 />
               </span>
             </div>
