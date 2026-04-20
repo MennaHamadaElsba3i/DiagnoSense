@@ -7,47 +7,69 @@ const API_BASE_URL = 'http://127.0.0.1:8000';
 
 import { getCookie, setCookie, deleteCookie, setJsonCookie } from './cookieUtils';
 
+const inflightRequests = new Map();
+
 const apiCall = async (endpoint, options = {}) => {
-  try {
-    const token = getCookie('user_token');
+  const isGet = !options.method || options.method === 'GET';
+  const key = isGet ? endpoint : null;
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'ngrok-skip-browser-warning': 'true',
+  if (key && inflightRequests.has(key)) {
+    console.log("[mockAPI] Deduplicating in-flight GET request:", key);
+    return inflightRequests.get(key);
+  }
 
-        ...(token && { 'Authorization': `Bearer ${token}` }),
-        ...options.headers,
-      },
-      ...options,
-    });
+  const executeCall = async () => {
+    try {
+      const token = getCookie('user_token');
 
-    const data = await response.json();
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
 
-    if (!response.ok) {
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+          ...options.headers,
+        },
+        ...options,
+      });
 
-      if (response.status === 401) {
-        deleteCookie('user_token');
-        deleteCookie('user');
-        deleteCookie('isAuthenticated');
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          deleteCookie('user_token');
+          deleteCookie('user');
+          deleteCookie('isAuthenticated');
+        }
+
+        return {
+          success: false,
+          message: data.message || 'Something went wrong',
+          errors: data.errors || null,
+        };
       }
 
+      return data;
+    } catch (error) {
+      console.error('API Error:', error);
       return {
         success: false,
-        message: data.message || 'Something went wrong',
-        errors: data.errors || null,
+        message: 'Network error. Please check your connection.',
       };
     }
+  };
 
-    return data;
-  } catch (error) {
-    console.error('API Error:', error);
-    return {
-      success: false,
-      message: 'Network error. Please check your connection.',
-    };
+  const promise = executeCall();
+  if (key) {
+    inflightRequests.set(key, promise);
+    promise.finally(() => {
+      // Remove from map once the request lands, allowing natural refresh
+      inflightRequests.delete(key);
+    });
   }
+
+  return promise;
 };
 
 // export const registerAPI = async (userData) => {
@@ -109,6 +131,9 @@ export const loginAPI = async (identity, password) => {
     setCookie('user_token', result.data.token, 7);
     setJsonCookie('user', result.data.user, 7);
     setCookie('isAuthenticated', 'true', 7);
+
+    // ── Flush entire page cache so this user never sees a previous user's cached data ──
+    window.dispatchEvent(new CustomEvent("authChanged"));
   }
 
   return result;
@@ -193,6 +218,9 @@ export const googleCallbackAPI = async (code) => {
     }
     // Also mirror to localStorage for axios-based callers
     localStorage.setItem('user_token', token);
+
+    // ── Flush entire page cache so this user never sees a previous user's cached data ──
+    window.dispatchEvent(new CustomEvent("authChanged"));
   }
 
   return { success: !!token, token, user, raw: result };
@@ -208,6 +236,9 @@ export const googleLoginAPI = async (googleToken) => {
     setCookie('user_token', result.data.token, 7);
     setJsonCookie('user', result.data.user, 7);
     setCookie('isAuthenticated', 'true', 7);
+
+    // ── Flush entire page cache so this user never sees a previous user's cached data ──
+    window.dispatchEvent(new CustomEvent("authChanged"));
   }
 
   return result;

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { getCurrentSubscriptionAPI, getTransactionsAPI } from "./mockAPI";
+import { getCurrentSubscriptionAPI } from "./mockAPI";
 
 const SubscriptionContext = createContext(null);
 
@@ -8,49 +8,57 @@ export function SubscriptionProvider({ children }) {
   const [isSubLoading, setIsSubLoading] = useState(true);
   const [subError, setSubError] = useState(null);
 
-  // ── Global Credits (from /api/transactions) ──────────────────────────────
+  // Credits are derived from subscriptionData — no separate API call needed
   const [credits, setCredits] = useState(null);
   const [isCreditsLoading, setIsCreditsLoading] = useState(true);
 
-  const fetchCredits = useCallback(async () => {
-    setIsCreditsLoading(true);
-    try {
-      const result = await getTransactionsAPI();
-      if (result.success && result.data != null) {
-        setCredits(result.data.credits ?? null);
-      }
-    } catch {
-      // fail silently — badge will show "—"
-    }
-    setIsCreditsLoading(false);
-  }, []);
-
-  useEffect(() => {
-    fetchCredits();
-  }, [fetchCredits]);
-  // ─────────────────────────────────────────────────────────────────────────
-
+  // ── Single fetch for both subscription data AND credits ───────────────────
+  // /api/subscription/current returns all the data we need for both.
+  // We call it once and split the result instead of making two separate requests.
   const fetchSubscription = useCallback(async () => {
     setIsSubLoading(true);
+    setIsCreditsLoading(true);
     setSubError(null);
     try {
       const result = await getCurrentSubscriptionAPI();
       if (result.success && result.data) {
         setSubscriptionData(result.data);
+        // Derive credits from the same response — no second request needed
+        const balance = result.data.balance ?? result.data.credits ?? 0;
+        setCredits(balance);
       } else {
         setSubscriptionData(null);
+        setCredits(null);
         setSubError(result.message || "Failed to load subscription data");
       }
     } catch (err) {
+      console.error("[SubscriptionContext] fetch error:", err);
       setSubscriptionData(null);
+      setCredits(null);
       setSubError("Network error loading subscription data");
     }
     setIsSubLoading(false);
+    setIsCreditsLoading(false);
   }, []);
 
   useEffect(() => {
     fetchSubscription();
   }, [fetchSubscription]);
+
+  // refreshCredits re-uses the same combined fetch — avoids a separate call
+  const refreshCredits = useCallback(async () => {
+    try {
+      const result = await getCurrentSubscriptionAPI();
+      if (result.success && result.data) {
+        const balance = result.data.balance ?? result.data.credits ?? 0;
+        setCredits(balance);
+        // Also keep subscriptionData fresh (same response, no extra cost)
+        setSubscriptionData(result.data);
+      }
+    } catch (err) {
+      console.error("[SubscriptionContext] refreshCredits error:", err);
+    }
+  }, []);
 
   return (
     <SubscriptionContext.Provider
@@ -62,7 +70,7 @@ export function SubscriptionProvider({ children }) {
         // Credits
         credits,
         isCreditsLoading,
-        refreshCredits: fetchCredits,
+        refreshCredits,
       }}
     >
       {children}

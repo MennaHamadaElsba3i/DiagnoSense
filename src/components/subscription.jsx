@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSidebar } from "./SidebarContext";
 import { useSubscription } from "./SubscriptionContext";
@@ -26,7 +26,7 @@ function Subscription() {
   const searchParams = new URLSearchParams(location.search);
   const { isSidebarCollapsed, toggleSidebar } = useSidebar();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const { unreadCount, openNotifications, refreshNotifications } =
+  const { unreadCount, openNotifications, refreshNotifications, fetchAndToastLatest } =
     useNotifications();
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const avatarMenuRef = useRef(null);
@@ -49,8 +49,10 @@ function Subscription() {
   const [transactions, setTransactions] = useState([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isCancelledLocally, setIsCancelledLocally] = useState(false);
+  // Tracks if transactions have been loaded at least once for the billing tab
+  const transactionsFetchedRef = useRef(false);
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     // ── Cache check ──
     const cached = getCache("subscription_transactions");
     if (cached) {
@@ -69,11 +71,9 @@ function Subscription() {
       // credits are managed globally via context — no local state needed
     }
     setIsLoadingHistory(false);
-  };
+  }, [getCache, setCache]);
 
-  useEffect(() => {
-    fetchTransactions();
-  }, []);
+  // (Transaction load moved below activeTab declaration to avoid ReferenceError)
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -99,10 +99,18 @@ function Subscription() {
   const closeLogoutModal = () => setIsLogoutModalOpen(false);
 
   // ── Robust Closure Fallback ────────────────────────────────────────────────
-  // If the app is loading inside a stripe_checkout popup (e.g. redirect failed), close it.
+  // Stripe redirects back to this page inside the popup after payment.
+  // We post STRIPE_SUCCESS to the opener so the parent window can refresh
+  // credits, unread count, and toast — then close the popup.
   useEffect(() => {
     if (window.name === "stripe_checkout" && window.opener) {
-      console.log("[Subscription] Stripe checkout popup detected, closing...");
+      console.log(
+        "[Subscription] Stripe checkout popup detected — notifying opener then closing.",
+      );
+      window.opener.postMessage(
+        { type: "STRIPE_SUCCESS" },
+        window.location.origin,
+      );
       window.close();
     }
   }, []);
@@ -115,14 +123,30 @@ function Subscription() {
         console.log(
           "[Subscription] Stripe success message received from popup.",
         );
+
+        // 1. Toast first — fetchAndToastLatest hits the notifications endpoint
+        //    and renders the popup with real backend content as fast as possible.
+        //    Fire without await so it runs in parallel with everything below.
+        fetchAndToastLatest();
+
+        // 2. Refresh credits + subscription data (runs in parallel with #1)
         refreshSubscription();
-        refreshCredits();
+
+        // 3. Force-refresh transactions for Billing & History.
+        //    Clear the cache entry so fetchTransactions() bypasses its guard,
+        //    then call it immediately. This is scoped to this one handler —
+        //    transactions remain lazy everywhere else in the app.
+        setCache("subscription_transactions", null);
+        transactionsFetchedRef.current = false;
         fetchTransactions();
+
+        // 4. Notify any other components that subscription state changed
+        window.dispatchEvent(new CustomEvent("subscriptionChanged"));
       }
     };
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [refreshSubscription, refreshCredits]);
+  }, [refreshSubscription, fetchAndToastLatest, setCache, fetchTransactions]);
 
   // ── Real-time Refresh when notification arrives ────────────────────────────
   useEffect(() => {
@@ -132,7 +156,9 @@ function Subscription() {
       );
       refreshSubscription();
       refreshCredits();
-      fetchTransactions();
+      // Invalidate transactions cache so billing tab re-fetches on next open
+      window.dispatchEvent(new CustomEvent("subscriptionChanged"));
+      transactionsFetchedRef.current = false;
     }
     prevUnreadCount.current = unreadCount;
   }, [unreadCount, refreshSubscription, refreshCredits]);
@@ -140,6 +166,18 @@ function Subscription() {
   const [activeTab, setActiveTab] = useState(
     searchParams.get("tab") || location.state?.tab || "plans",
   );
+
+  // ── Lazy: fetch transactions only when user opens Billing & History tab ──
+  useEffect(() => {
+    if (activeTab !== "billing") return;
+    // Invalidate stale ref so re-entering the tab after a mutation re-fetches
+    if (!getCache("subscription_transactions")) {
+      transactionsFetchedRef.current = false;
+    }
+    if (transactionsFetchedRef.current) return;
+    transactionsFetchedRef.current = true;
+    fetchTransactions();
+  }, [activeTab, getCache]);
 
   useEffect(() => {
     if (location.state?.tab) {
@@ -264,10 +302,10 @@ function Subscription() {
       setSelectedPlanId(null);
       refreshSubscription();
       refreshCredits();
-      fetchTransactions();
-      refreshNotifications();
-      // ── Invalidate subscription cache ──
+      // Invalidate transactions cache so billing tab re-fetches on next open
       window.dispatchEvent(new CustomEvent("subscriptionChanged"));
+      transactionsFetchedRef.current = false;
+      fetchAndToastLatest();
     }
   };
 
@@ -300,10 +338,10 @@ function Subscription() {
         setSelectedPlanId("Pay-per-use");
         refreshSubscription();
         refreshCredits();
-        fetchTransactions();
-        refreshNotifications();
-        // ── Invalidate subscription cache ──
+        // Invalidate transactions cache so billing tab re-fetches on next open
         window.dispatchEvent(new CustomEvent("subscriptionChanged"));
+        transactionsFetchedRef.current = false;
+        fetchAndToastLatest();
       }
       return;
     }
@@ -322,10 +360,10 @@ function Subscription() {
       setSelectedPlanId(planId);
       refreshSubscription();
       refreshCredits();
-      fetchTransactions();
-      refreshNotifications();
-      // ── Invalidate subscription cache ──
+      // Invalidate transactions cache so billing tab re-fetches on next open
       window.dispatchEvent(new CustomEvent("subscriptionChanged"));
+      transactionsFetchedRef.current = false;
+      fetchAndToastLatest();
     }
   };
 
@@ -491,15 +529,15 @@ function Subscription() {
                       <div>
                         <div className="banner-plan-row">
                           <span className="banner-plan-name">
-                            {subscriptionData.plan_name} Plan
+                            {subscriptionData?.plan_name || "Unknown"} Plan
                           </span>
                           <span className={badgeClass}>
                             <span className={dotClass}></span> {displayStatus}
                           </span>
                         </div>
                         <div className="banner-renewal">
-                          Next renewal: {subscriptionData.expires_at}
-                          {subscriptionData.features?.length
+                          Next renewal: {subscriptionData?.expires_at || "N/A"}
+                          {subscriptionData?.features?.length
                             ? " · " + subscriptionData.features.join(", ")
                             : ""}
                         </div>
@@ -879,9 +917,9 @@ function Subscription() {
                     <>
                       <div className="usage-box">
                         <div className="u-big">
-                          {subscriptionData.usage?.used ?? 0}{" "}
+                          {subscriptionData?.usage?.used ?? 0}{" "}
                           <span>
-                            / {subscriptionData.usage?.total ?? 0} files
+                            / {subscriptionData?.usage?.total ?? 0} files
                           </span>
                         </div>
                         <div className="u-lbl">Total files used this cycle</div>
@@ -889,7 +927,7 @@ function Subscription() {
                           <div
                             className="u-fill"
                             style={{
-                              width: `${subscriptionData.usage?.percentage ?? 0}%`,
+                              width: `${subscriptionData?.usage?.percentage ?? 0}%`,
                             }}
                           ></div>
                         </div>
@@ -897,11 +935,11 @@ function Subscription() {
                           <div className="u-left">
                             <span>0</span>
                             <span className="u-remain">
-                              {subscriptionData.usage?.remaining ?? 0} files
+                              {subscriptionData?.usage?.remaining ?? 0} files
                               remaining
                             </span>
                           </div>
-                          <span>{subscriptionData.usage?.total ?? 0}</span>
+                          <span>{subscriptionData?.usage?.total ?? 0}</span>
                         </div>
                       </div>
                     </>
@@ -916,11 +954,11 @@ function Subscription() {
                     className="u-lbl"
                     style={{ fontSize: "15px", marginBottom: "8px" }}
                   >
-                    {subscriptionData.display_text ||
+                    {subscriptionData?.display_text ||
                       "You are currently using the Pay-Per-Use plan."}
                   </div>
                   <div className="u-lbl">
-                    Each file costs E£ {subscriptionData.price_per_file ?? 20}.
+                    Each file costs E£ {subscriptionData?.price_per_file ?? 20}.
                     Usage tracking is per-file.
                   </div>
                 </div>

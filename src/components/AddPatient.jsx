@@ -57,7 +57,7 @@ const AddPatient = () => {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const { isSidebarCollapsed, toggleSidebar } = useSidebar();
-  const { credits, isCreditsLoading } = useSubscription();
+  const { credits, isCreditsLoading, refreshCredits } = useSubscription();
 
   const [fieldErrors, setFieldErrors] = useState({});
 
@@ -402,8 +402,11 @@ const AddPatient = () => {
           })
         );
 
-        // ── Invalidate patient list cache so it re-fetches on next visit ──
+        // ── Invalidate patient list + dashboard caches so both re-fetch on next visit ──
         window.dispatchEvent(new CustomEvent("patientListInvalidated"));
+        window.dispatchEvent(new CustomEvent("dashboardInvalidated"));
+
+        refreshCredits(); // Update top bar credits
 
         const token = getCookie('user_token');
         setPollingInfo({ patientId: result.data.data.patient_id, token });

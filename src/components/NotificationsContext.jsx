@@ -15,7 +15,7 @@ export function NotificationsProvider({ children }) {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [nextCursor, setNextCursor] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [liveToast, setLiveToast] = useState(null);
@@ -24,29 +24,19 @@ export function NotificationsProvider({ children }) {
   const isLoadingMoreRef = useRef(false);
   // Keep track of which notification IDs we've already shown as live toasts in this session
   const displayedToastIds = useRef(new Set());
+  // Tracks whether the full notifications list has been fetched at least once
+  const notificationsLoadedRef = useRef(false);
+  // Tracks whether a panel-open fetch is already in progress (prevents double-fetching)
+  const isFetchingListRef = useRef(false);
 
-  // ── Initial fetch ──────────────────────────────────────────────────────────
+  // ── Initial fetch: ONLY unread count — do NOT fetch full list ─────────────
   useEffect(() => {
     let cancelled = false;
 
     const init = async () => {
-      setIsLoading(true);
       try {
-        const [notifResult, countResult] = await Promise.all([
-          getNotificationsAPI(),
-          getUnreadNotificationsCountAPI(),
-        ]);
-
+        const countResult = await getUnreadNotificationsCountAPI();
         if (cancelled) return;
-
-        if (notifResult && notifResult.success !== false && (notifResult.data || Array.isArray(notifResult))) {
-          const list = Array.isArray(notifResult)
-            ? notifResult
-            : (Array.isArray(notifResult.data) ? notifResult.data : notifResult.data?.data ?? []);
-          setNotifications(list);
-          setNextCursor(notifResult.data?.next_cursor ?? notifResult.meta?.next_cursor ?? null);
-        }
-
         if (countResult.success && countResult.data != null) {
           const count =
             typeof countResult.data === "number"
@@ -57,20 +47,65 @@ export function NotificationsProvider({ children }) {
       } catch (err) {
         console.error("[NotificationsProvider] init error", err);
       }
-      if (!cancelled) setIsLoading(false);
     };
 
     init();
     return () => { cancelled = true; };
   }, []);
 
+  // ── Lazy fetch: full notifications list only when panel is opened ──────────
+  useEffect(() => {
+    if (!isOpen) return;                         // panel closed — skip
+    if (notificationsLoadedRef.current) return;  // already loaded — reuse
+    if (isFetchingListRef.current) return;       // fetch in progress — skip
+
+    isFetchingListRef.current = true;
+    setIsLoading(true);
+
+    const fetchList = async () => {
+      try {
+        const result = await getNotificationsAPI();
+        if (result && result.success !== false && (result.data || Array.isArray(result))) {
+          const list = Array.isArray(result)
+            ? result
+            : (Array.isArray(result.data) ? result.data : result.data?.data ?? []);
+
+          setNotifications((prev) => {
+            // Merge: preserve any real-time items that arrived before the list loaded
+            const ids = new Set(list.map((n) => n.id));
+            const realtimeOnly = prev.filter((n) => !ids.has(n.id));
+            return [...realtimeOnly, ...list];
+          });
+          setNextCursor(result.data?.next_cursor ?? result.meta?.next_cursor ?? null);
+        }
+        notificationsLoadedRef.current = true;
+      } catch (err) {
+        console.error("[NotificationsProvider] lazy-load error", err);
+      }
+      setIsLoading(false);
+      isFetchingListRef.current = false;
+    };
+
+    fetchList();
+  }, [isOpen]);
+
+  // ── refreshNotifications: always refresh count; list only if already loaded ─
   const refreshNotifications = useCallback(async () => {
     try {
-      const [notifResult, countResult] = await Promise.all([
-        getNotificationsAPI(),
-        getUnreadNotificationsCountAPI(),
-      ]);
+      // Always refresh the unread count (used by the bell badge on every page)
+      const countResult = await getUnreadNotificationsCountAPI();
+      if (countResult.success && countResult.data != null) {
+        const count =
+          typeof countResult.data === "number"
+            ? countResult.data
+            : countResult.data.count ?? countResult.data.unread_count ?? 0;
+        setUnreadCount(count);
+      }
 
+      // Only refresh the full list if the panel was already opened at least once
+      if (!notificationsLoadedRef.current) return;
+
+      const notifResult = await getNotificationsAPI();
       if (notifResult && notifResult.success !== false && (notifResult.data || Array.isArray(notifResult))) {
         const list = Array.isArray(notifResult)
           ? notifResult
@@ -83,7 +118,39 @@ export function NotificationsProvider({ children }) {
         });
         setNextCursor(notifResult.data?.next_cursor ?? notifResult.meta?.next_cursor ?? null);
       }
+    } catch (err) {
+      console.error("[NotificationsProvider] refresh error", err);
+    }
+  }, []);
 
+  // ── fetchAndToastLatest: on-demand fetch used after subscription actions ────
+  // Fetches the notifications list, merges it into state, refreshes the unread
+  // count, and shows the most recently unread notification as a toast popup.
+  // This is intentionally NOT called on every page load — only explicitly after
+  // successful mutations (cancel sub, subscribe, Stripe top-up, etc.).
+  const fetchAndToastLatest = useCallback(async () => {
+    try {
+      // 1. Fetch fresh list — always, regardless of whether panel was opened
+      const notifResult = await getNotificationsAPI();
+      if (!notifResult || notifResult.success === false) return;
+
+      const list = Array.isArray(notifResult)
+        ? notifResult
+        : (Array.isArray(notifResult.data) ? notifResult.data : notifResult.data?.data ?? []);
+
+      // 2. Merge into state (keep real-time items, replace any overlapping IDs)
+      if (list.length > 0) {
+        setNotifications((prev) => {
+          const ids = new Set(list.map((n) => n.id));
+          const realtimeOnly = prev.filter((n) => !ids.has(n.id));
+          return [...realtimeOnly, ...list];
+        });
+        setNextCursor(notifResult.data?.next_cursor ?? notifResult.meta?.next_cursor ?? null);
+        notificationsLoadedRef.current = true;
+      }
+
+      // 3. Refresh unread count from server
+      const countResult = await getUnreadNotificationsCountAPI();
       if (countResult.success && countResult.data != null) {
         const count =
           typeof countResult.data === "number"
@@ -91,8 +158,23 @@ export function NotificationsProvider({ children }) {
             : countResult.data.count ?? countResult.data.unread_count ?? 0;
         setUnreadCount(count);
       }
+
+      // 4. Show toast for most recent unread notification from the fresh list
+      const latestUnread = list.find((n) => !n.is_read);
+      if (latestUnread) {
+        const toastId = latestUnread.id || `fetch-${Date.now()}`;
+        if (!displayedToastIds.current.has(toastId)) {
+          displayedToastIds.current.add(toastId);
+          setLiveToast({
+            id: toastId,
+            title: latestUnread.title || "New Notification",
+            message: latestUnread.message || latestUnread.body || "",
+          });
+          setTimeout(() => setLiveToast(null), 5000);
+        }
+      }
     } catch (err) {
-      console.error("[NotificationsProvider] refresh error", err);
+      console.error("[NotificationsProvider] fetchAndToastLatest error:", err);
     }
   }, []);
 
@@ -174,27 +256,14 @@ export function NotificationsProvider({ children }) {
     channel.notification((notification) => {
       console.log(`[Echo Debug] Realtime notification received on ${channelName}:`, notification);
 
-      setNotifications((prev) => {
-        // Safe fallback logic - make payload robust if missing id/created_at
-        const safeId = notification.id || `realtime-${Date.now()}-${Math.random()}`;
-        const safeTitle = notification.title || "New Notification";
-        const safeMessage = notification.message || notification.body || "";
+      // Resolve safe fields OUTSIDE the updater so they are stable closures
+      const safeId = notification.id || `realtime-${Date.now()}-${Math.random()}`;
+      const safeTitle = notification.title || "New Notification";
+      const safeMessage = notification.message || notification.body || "";
 
+      setNotifications((prev) => {
         // Deduplicate based on safe id
         if (prev.some((n) => n.id === safeId)) return prev;
-
-        // Mark as displayed so auto-toast doesn't double-trigger
-        displayedToastIds.current.add(safeId);
-
-        // Show lightweight toast for the new incoming notification
-        setLiveToast({
-          id: safeId,
-          title: safeTitle,
-          message: safeMessage
-        });
-
-        // Auto-dismiss toast
-        setTimeout(() => setLiveToast(null), 4000);
 
         return [{
           ...notification,
@@ -205,6 +274,16 @@ export function NotificationsProvider({ children }) {
           is_read: notification.is_read || false
         }, ...prev];
       });
+
+      // ── IMPORTANT: setLiveToast must be called OUTSIDE the setNotifications
+      // updater. In React 18 concurrent mode, calling setState for other state
+      // variables from inside a functional updater is unreliable — calls can be
+      // silently dropped during batching. Calling here (in the event handler
+      // closure) guarantees the toast always fires.
+      displayedToastIds.current.add(safeId);
+      setLiveToast({ id: safeId, title: safeTitle, message: safeMessage });
+      setTimeout(() => setLiveToast(null), 4000);
+
       setUnreadCount((c) => c + 1);
     });
 
@@ -278,6 +357,8 @@ export function NotificationsProvider({ children }) {
         setNotifications([]);
         setUnreadCount(0);
         setNextCursor(null);
+        // Allow re-fetch next time panel is opened
+        notificationsLoadedRef.current = false;
       }
     } catch (err) {
       console.error("[NotificationsProvider] clearAll error", err);
@@ -295,10 +376,12 @@ export function NotificationsProvider({ children }) {
         openNotifications,
         closeNotifications,
         loadMore,
+        refreshNotifications,
+        refreshUnreadCount: refreshNotifications,
+        fetchAndToastLatest,
         markAsRead,
         markAllAsRead,
         clearAll,
-        refreshNotifications,
         triggerToast: (notification) => {
           if (!notification) return;
           const safeId = notification.id || `manual-${Date.now()}`;
@@ -372,6 +455,9 @@ export function useNotifications() {
       openNotifications: () => { },
       closeNotifications: () => { },
       loadMore: () => { },
+      refreshNotifications: () => { },
+      refreshUnreadCount: () => { },
+      fetchAndToastLatest: () => { },
       markAsRead: () => { },
       markAllAsRead: () => { },
       clearAll: () => { },

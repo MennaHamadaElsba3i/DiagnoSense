@@ -10,10 +10,14 @@
  *   const { getCache, setCache, invalidateCache, invalidatePrefix } = usePageCache();
  *
  * Invalidation events (window custom events):
- *   "patientListInvalidated"  → clears all  patients_*  keys
- *   "subscriptionChanged"     → clears subscription_plans + subscription_transactions
- *   "profileUpdated"          → clears settings_profile
- *   "dashboardInvalidated"    → clears all  dashboard_*  keys
+ *   "patientListInvalidated"    → clears all  patients_*  keys
+ *   "subscriptionChanged"       → clears subscription_plans + subscription_transactions
+ *   "profileUpdated"            → clears settings_profile
+ *   "dashboardInvalidated"      → clears all  dashboard_*  keys
+ *   "patientNextVisitUpdated"   → clears all  dashboard_*  keys (Today's Appointments / Queue may change)
+ *   "patientStatusUpdated"      → clears all  dashboard_*  keys (Status Distribution may change)
+ *   "authChanged"               → clears ENTIRE cache (user switched — must never reuse another user's data)
+ *   "cacheInvalidateAll"        → clears ENTIRE cache (emergency / manual full reset)
  */
 
 import React, { createContext, useContext, useRef, useEffect } from "react";
@@ -51,9 +55,14 @@ export function PageCacheProvider({ children }) {
       }
     },
 
-    /** Clear the entire cache */
+    /** Clear the entire cache — use on logout / user switch */
     clearAll() {
       _cache.clear();
+    },
+
+    /** Optional helper for future use */
+    getCurrentUserId() {
+      return undefined;
     },
   });
 
@@ -61,33 +70,60 @@ export function PageCacheProvider({ children }) {
   useEffect(() => {
     const h = helpers.current;
 
+    // patients_* cache cleared when list changes
     const onPatientListInvalidated = () => {
       h.invalidatePrefix("patients_");
     };
 
+    // subscription cache cleared on plan change
     const onSubscriptionChanged = () => {
       h.invalidateCache("subscription_plans");
       h.invalidateCache("subscription_transactions");
     };
 
+    // settings cache cleared on profile save
     const onProfileUpdated = () => {
       h.invalidateCache("settings_profile");
     };
 
+    // dashboard_* cleared on direct dashboard invalidation (add/edit/delete patient)
     const onDashboardInvalidated = () => {
       h.invalidatePrefix("dashboard_");
+    };
+
+    // Next visit change → Today's Appointments / Critical Queue may change
+    const onPatientNextVisitUpdated = () => {
+      h.invalidatePrefix("dashboard_");
+    };
+
+    // Status change → Patient Status Distribution on Dashboard may change
+    const onPatientStatusUpdated = () => {
+      h.invalidatePrefix("dashboard_");
+    };
+
+    // ── Auth events: wipe entire cache to prevent cross-user data leakage ──
+    const onAuthChanged = () => {
+      h.clearAll();
     };
 
     window.addEventListener("patientListInvalidated", onPatientListInvalidated);
     window.addEventListener("subscriptionChanged", onSubscriptionChanged);
     window.addEventListener("profileUpdated", onProfileUpdated);
     window.addEventListener("dashboardInvalidated", onDashboardInvalidated);
+    window.addEventListener("patientNextVisitUpdated", onPatientNextVisitUpdated);
+    window.addEventListener("patientStatusUpdated", onPatientStatusUpdated);
+    window.addEventListener("authChanged", onAuthChanged);
+    window.addEventListener("cacheInvalidateAll", onAuthChanged);
 
     return () => {
       window.removeEventListener("patientListInvalidated", onPatientListInvalidated);
       window.removeEventListener("subscriptionChanged", onSubscriptionChanged);
       window.removeEventListener("profileUpdated", onProfileUpdated);
       window.removeEventListener("dashboardInvalidated", onDashboardInvalidated);
+      window.removeEventListener("patientNextVisitUpdated", onPatientNextVisitUpdated);
+      window.removeEventListener("patientStatusUpdated", onPatientStatusUpdated);
+      window.removeEventListener("authChanged", onAuthChanged);
+      window.removeEventListener("cacheInvalidateAll", onAuthChanged);
     };
   }, []);
 
@@ -108,6 +144,7 @@ export function usePageCache() {
       invalidateCache: () => {},
       invalidatePrefix: () => {},
       clearAll: () => {},
+      getCurrentUserId: () => undefined,
     };
   }
   return ctx;
