@@ -62,7 +62,7 @@ const PatientProfile = () => {
   } = useSubscription();
 
   const { isSidebarCollapsed, toggleSidebar } = useSidebar();
-  const { unreadCount, openNotifications, refreshNotifications: refreshNotificationsCtx } = useNotifications();
+  const { unreadCount, openNotifications, refreshNotifications: refreshNotificationsCtx, fetchAndToastLatest } = useNotifications();
 
   const navigate = useNavigate();
   const { patientId } = useParams();
@@ -99,6 +99,7 @@ const PatientProfile = () => {
   const [chartTooltip, setChartTooltip] = useState({ visible: false, x: 0, y: 0, date: "", status: "", value: "", testIdx: -1, pointIdx: -1 });
 
   const [activeTab, setActiveTab] = useState("overview");
+  const [visitedTabs, setVisitedTabs] = useState({ overview: true });
 
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const avatarMenuRef = useRef(null);
@@ -412,12 +413,16 @@ const PatientProfile = () => {
   //     fetchAnalysisData();
   //   }, []);
 
+  const [keyInfoLoadedFor, setKeyInfoLoadedFor] = useState(null);
+
   // ── Fetch Key Important Info from backend (both flows) ──
   useEffect(() => {
-    if (!patientId) {
-      setIsLoadingAnalysis(false);
+    if (!patientId || !visitedTabs["keyinfo"]) {
+      if (!patientId) setIsLoadingAnalysis(false);
       return;
     }
+    if (keyInfoLoadedFor === patientId) return;
+
     // Seed keyInfo with navigation-state data so the UI isn't blank during the fetch.
     // The fetch will overwrite this with real mutable state, enabling edit/delete in both flows.
     if (keyInfoData && !keyInfoSeeded) {
@@ -433,13 +438,14 @@ const PatientProfile = () => {
         // Extract source PDF URL for the Evidence Panel
         const sf = payload?.source_file ?? res?.source_file ?? null;
         if (sf) setSourceFile(sf);
+        setKeyInfoLoadedFor(patientId);
       } else {
         console.error("[keyInfo] fetch failed:", res?.message);
       }
       setIsLoadingAnalysis(false);
     };
     fetchKeyInfo();
-  }, [patientId]);
+  }, [patientId, visitedTabs, keyInfoLoadedFor, keyInfoData, keyInfoSeeded]);
 
   // ── Fetch Patient Overview on mount ──
   useEffect(() => {
@@ -448,6 +454,7 @@ const PatientProfile = () => {
       return;
     }
     console.log("[overview] patientId", patientId);
+    setVisitedTabs({ overview: true });
 
     const fetchOverview = async () => {
       setOverviewLoading(true);
@@ -513,8 +520,10 @@ const PatientProfile = () => {
       if (event.origin !== window.location.origin) return;
       if (event.data?.type === 'STRIPE_SUCCESS') {
         console.log("[PatientProfile] Stripe success received.");
+        // 1. Show toast with real backend notification content first
+        fetchAndToastLatest();
+        // 2. Refresh credits + subscription data in parallel
         refreshSubscriptionCtx();
-        refreshCreditsCtx();
         if (pendingFeatureToOpen === 'decision') fetchDecisionSupport();
         // Chatbot state handles itself via shouldShowLockedChatbot
         setIsUpgrading(false);
@@ -523,7 +532,7 @@ const PatientProfile = () => {
     };
     window.addEventListener('message', handleStripeMessage);
     return () => window.removeEventListener('message', handleStripeMessage);
-  }, [refreshSubscriptionCtx, refreshCreditsCtx, pendingFeatureToOpen]);
+  }, [refreshSubscriptionCtx, fetchAndToastLatest, pendingFeatureToOpen]);
 
   const initiateUpgrade = (planName, targetType, feature) => {
     let target = null;
@@ -568,9 +577,11 @@ const PatientProfile = () => {
           window.open(paymentUrl, "stripe_checkout", "width=600,height=700");
           // loading remains true until stripe message or manual close
         } else {
+          // Direct success (no Stripe redirect) — refresh everything immediately
           await refreshSubscriptionCtx();
-          await refreshCreditsCtx();
-          refreshNotificationsCtx?.();
+          // fetchAndToastLatest: fetch real backend notification, show toast,
+          // and refresh unread count in one shot.
+          fetchAndToastLatest();
 
           if (pendingFeatureToOpen === 'decision') {
             await fetchDecisionSupport();
@@ -1023,11 +1034,12 @@ const PatientProfile = () => {
 
   const handleTabClick = (tabId) => {
     setActiveTab(tabId);
+    setVisitedTabs((prev) => ({ ...prev, [tabId]: true }));
     window.scrollTo({ top: 0, behavior: "smooth" });
     if (tabId === "decision" && patientId && decisionSupportLoadedFor !== patientId) {
       fetchDecisionSupport();
     }
-    if (tabId === "activity" && patientId) {
+    if (tabId === "activity" && patientId && activitiesLoadedFor !== patientId) {
       fetchActivities();
     }
     if (tabId === "comparative" && patientId && comparativeLoadedFor !== patientId) {
@@ -3749,11 +3761,14 @@ const PatientProfile = () => {
             className={`tab-content ${activeTab === "medications-tasks" ? "active" : ""}`}
             id="medications-tasks"
           >
-            <MedicationsAndTasksTab
-              patientId={patientId}
-              initialNextVisitDate={nextVisitDate}
-              onNextVisitSaved={(date) => setNextVisitDate(date)}
-            />
+            {visitedTabs["medications-tasks"] && (
+              <MedicationsAndTasksTab
+                patientId={patientId}
+                isActive={activeTab === "medications-tasks"}
+                initialNextVisitDate={nextVisitDate}
+                onNextVisitSaved={(date) => setNextVisitDate(date)}
+              />
+            )}
           </div>
 
           {/* Activity Log Tab */}

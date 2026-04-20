@@ -161,7 +161,7 @@ const DashboardQueueInsight = ({ text }) => {
   );
 };
 
-function QueueSection() {
+function QueueSection({ parentLoading }) {
   const [queueData, setQueueData] = useState(null);
   const [queueList, setQueueList] = useState([]);
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -318,11 +318,21 @@ function QueueSection() {
       status_tag: i === 0 ? "Now" : "Waiting",
     }));
 
+    const optimisticLabel = `${queueAfterShift.filter((p) => p.status_tag === "Waiting").length} remaining`;
+
     setQueueList(queueAfterShift);
     setCurrentIdx(0);
-    setRemainingLabel(
-      `${queueAfterShift.filter((p) => p.status_tag === "Waiting").length} remaining`,
-    );
+    setRemainingLabel(optimisticLabel);
+
+    // ── Write optimistic state to cache so a quick navigation away stays consistent ──
+    setCache("dashboard_queue", {
+      queueList: queueAfterShift,
+      currentIdx: 0,
+      remainingLabel: optimisticLabel,
+    });
+
+    // ── Signal parent Dashboard to decrement Today's Appointments immediately ──
+    window.dispatchEvent(new CustomEvent("attendedPatientOptimistic"));
 
     try {
       const result = await markPatientAttendedAPI(patientId);
@@ -353,29 +363,63 @@ function QueueSection() {
           }));
 
           const nowIdx = remapped.findIndex((p) => p.status_tag === "Now");
+          const resolvedIdx = nowIdx >= 0 ? nowIdx : 0;
+          const freshLabel =
+            data.remaining_count_label ||
+            `${remapped.filter((p) => p.status_tag === "Waiting").length} remaining`;
 
           if (remapped.length >= queueAfterShift.length) {
             setQueueList(remapped);
-            setCurrentIdx(nowIdx >= 0 ? nowIdx : 0);
-            setRemainingLabel(
-              data.remaining_count_label ||
-              `${remapped.filter((p) => p.status_tag === "Waiting").length} remaining`,
-            );
+            setCurrentIdx(resolvedIdx);
+            setRemainingLabel(freshLabel);
+
+            // ── Write confirmed server state back to cache ──
+            setCache("dashboard_queue", {
+              queueList: remapped,
+              currentIdx: resolvedIdx,
+              remainingLabel: freshLabel,
+            });
           }
+        } else if (refreshed?.success && refreshed?.data?.full_queue_list?.length === 0) {
+          // Queue fully drained — update cache to reflect empty queue
+          setQueueList([]);
+          setRemainingLabel("0 remaining");
+          setCache("dashboard_queue", {
+            queueList: [],
+            currentIdx: 0,
+            remainingLabel: "0 remaining",
+          });
         }
       } else {
         console.error("[MarkAttended] backend rejected:", result?.message);
         setQueueList(prevQueueList);
         setCurrentIdx(prevCurrentIdx);
         setRemainingLabel(prevRemainingLabel);
+        // ── Restore cache on rollback ──
+        setCache("dashboard_queue", {
+          queueList: prevQueueList,
+          currentIdx: prevCurrentIdx,
+          remainingLabel: prevRemainingLabel,
+        });
+        // ── Signal parent to undo the optimistic decrement ──
+        window.dispatchEvent(new CustomEvent("attendedPatientRollback"));
       }
     } catch (err) {
       console.error("[MarkAttended] network error:", err);
       setQueueList(prevQueueList);
       setCurrentIdx(prevCurrentIdx);
       setRemainingLabel(prevRemainingLabel);
+      // ── Restore cache on error ──
+      setCache("dashboard_queue", {
+        queueList: prevQueueList,
+        currentIdx: prevCurrentIdx,
+        remainingLabel: prevRemainingLabel,
+      });
+      // ── Signal parent to undo the optimistic decrement ──
+      window.dispatchEvent(new CustomEvent("attendedPatientRollback"));
     }
   };
+
   const markAttended = (id) => {
     setQueueList((list) =>
       list.map((p) => (p.id === id ? { ...p, status_tag: "Attended" } : p)),
@@ -408,7 +452,7 @@ function QueueSection() {
     return `#${i + 1} Waiting`;
   };
 
-  if (loadingQueue) {
+  if (loadingQueue || parentLoading) {
     return (
       <div className="preview-shimmer" style={{ width: '100%', borderRadius: '13px', pointerEvents: 'none' }}>
         <div className="dsn-queue-section">
@@ -795,6 +839,54 @@ export default function Dashboard() {
     fetchData();
   }, [getCache, setCache]);
 
+  // ── React to Mark Attended: immediately update Today's Appointments on the same page ──
+  useEffect(() => {
+    const onAttendedOptimistic = () => {
+      setData((prev) => {
+        if (!prev) return prev;
+        const updated = {
+          ...prev,
+          widgets: {
+            ...prev.widgets,
+            today_appointments: Math.max(0, (prev.widgets.today_appointments ?? 0) - 1),
+          },
+        };
+        // ── Patch cache in-place so revisiting this page is also accurate ──
+        const cachedWidgets = getCache("dashboard_widgets");
+        if (cachedWidgets) {
+          setCache("dashboard_widgets", { ...cachedWidgets, data: updated });
+        }
+        return updated;
+      });
+    };
+
+    const onAttendedRollback = () => {
+      setData((prev) => {
+        if (!prev) return prev;
+        const restored = {
+          ...prev,
+          widgets: {
+            ...prev.widgets,
+            today_appointments: (prev.widgets.today_appointments ?? 0) + 1,
+          },
+        };
+        // ── Patch cache in-place with restored value ──
+        const cachedWidgets = getCache("dashboard_widgets");
+        if (cachedWidgets) {
+          setCache("dashboard_widgets", { ...cachedWidgets, data: restored });
+        }
+        return restored;
+      });
+    };
+
+    window.addEventListener("attendedPatientOptimistic", onAttendedOptimistic);
+    window.addEventListener("attendedPatientRollback", onAttendedRollback);
+    return () => {
+      window.removeEventListener("attendedPatientOptimistic", onAttendedOptimistic);
+      window.removeEventListener("attendedPatientRollback", onAttendedRollback);
+    };
+  }, [getCache, setCache]);
+
   const handleLogout = () => {
     setIsLogoutModalOpen(true);
   };
@@ -1068,36 +1160,65 @@ export default function Dashboard() {
                 <div className="dsn-chart-card">
                   <div className="dsn-chart-title">Top 5 Chronic Diseases</div>
                   <div className="dsn-chart-subtitle">Selected by doctor in medical forms</div>
-                  <div className="dsn-bar-chart-wrap">
-                    <div className="dsn-bar-columns">
-                      {(() => {
-                        const barColors = [
-                          "linear-gradient(180deg,#4361EE,#748FFC)", "linear-gradient(180deg,#06D6A0,#3DCFB4)", "linear-gradient(180deg,#FF8C42,#FFA96B)", "linear-gradient(180deg,#FF4D6D,#FF7A93)", "linear-gradient(180deg,#9B5DE5,#BB8AEE)",
-                        ];
-                        const displayData = TopDiseases || [];
-                        const maxVal = Math.max(...(displayData.map((d) => d.value) || [1]));
-                        const maxHeight = 160;
-                        return displayData.map((item, i) => (
-                          <div className="dsn-bar-col" key={i}>
-                            <span className="dsn-bar-val">{item.value}</span>
-                            <div className="dsn-bar-fill" style={{ background: barColors[i % barColors.length], height: `${(item.value / maxVal) * maxHeight}px`, transition: "height 0.5s ease" }} />
-                          </div>
-                        ));
-                      })()}
+                  
+                  {!(TopDiseases && TopDiseases.length > 0) ? (
+                    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#8A94A6", fontSize: "14px", fontWeight: "500", paddingBottom: "20px" }}>
+                      There are no chronic diseases yet.
                     </div>
-                    <div className="dsn-bar-labels">
-                      {(TopDiseases || []).map((item, i) => (
-                        <div key={i} className="dsn-bar-lbl" style={{ whiteSpace: "pre-line", textTransform: "capitalize" }}>{item.label}</div>
-                      ))}
+                  ) : (
+                    <div className="dsn-bar-chart-wrap">
+                      <div className="dsn-bar-columns">
+                        {(() => {
+                          const barColors = [
+                            "linear-gradient(180deg,#4361EE,#748FFC)", "linear-gradient(180deg,#06D6A0,#3DCFB4)", "linear-gradient(180deg,#FF8C42,#FFA96B)", "linear-gradient(180deg,#FF4D6D,#FF7A93)", "linear-gradient(180deg,#9B5DE5,#BB8AEE)",
+                          ];
+                          const realData = TopDiseases || [];
+                          const maxVal = Math.max(...(realData.map((d) => d.value) || [1]));
+                          const maxHeight = 160;
+
+                          const paddedData = [...realData];
+                          while (paddedData.length < 5) {
+                            paddedData.push({ isPlaceholder: true, value: 0, label: " " });
+                          }
+
+                          return paddedData.map((item, i) => (
+                            <div className="dsn-bar-col" key={i} style={item.isPlaceholder ? { pointerEvents: "none" } : {}}>
+                              <span className="dsn-bar-val" style={{ opacity: item.isPlaceholder ? 0 : 1 }}>{item.value}</span>
+                              <div 
+                                className="dsn-bar-fill" 
+                                style={{ 
+                                  background: item.isPlaceholder ? "#f1f5f9" : barColors[i % barColors.length], 
+                                  height: item.isPlaceholder ? "8px" : `${Math.max((item.value / maxVal) * maxHeight, 10)}px`, 
+                                  transition: "height 0.5s ease" 
+                                }} 
+                              />
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                      <div className="dsn-bar-labels">
+                        {(() => {
+                          const realData = TopDiseases || [];
+                          const paddedData = [...realData];
+                          while (paddedData.length < 5) {
+                            paddedData.push({ isPlaceholder: true, label: " " });
+                          }
+                          return paddedData.map((item, i) => (
+                            <div key={i} className="dsn-bar-lbl" style={{ whiteSpace: "pre-line", textTransform: "capitalize", opacity: item.isPlaceholder ? 0 : 1 }}>
+                              {item.label || "Placeholder"}
+                            </div>
+                          ));
+                        })()}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
           )}
 
           {/* ── QUEUE MANAGEMENT ── */}
-          <QueueSection />
+          <QueueSection parentLoading={loading} />
         </div>
       </main>
     </>

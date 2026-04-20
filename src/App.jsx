@@ -1,7 +1,7 @@
 // [Merge conflict resolved: removed all conflict markers and duplicate/commented dead code]
 // No code needed in this section; relevant code is below in the file.
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import AuthPage from "./pages/AuthPage.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import PatientList from "./components/PatientList.jsx";
@@ -30,6 +30,21 @@ const ProtectedRoute = ({ children }) => {
   return token ? children : <Navigate to="/login" />;
 };
 
+const ProtectedLayout = () => {
+  return (
+    <ProtectedRoute>
+      <SidebarProvider>
+        <SubscriptionProvider>
+          <NotificationsProvider>
+            <Outlet />
+            <NotificationsPanel />
+          </NotificationsProvider>
+        </SubscriptionProvider>
+      </SidebarProvider>
+    </ProtectedRoute>
+  );
+};
+
 function App() {
   return (
     <ThemeProvider>
@@ -49,161 +64,20 @@ function App() {
         {/* Google OAuth callback - backend redirects here after sign in */}
         <Route path="/google-callback" element={<GoogleCallback />} />
         <Route path="/auth/google/callback" element={<GoogleCallback />} />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <SidebarProvider>
-                <SubscriptionProvider>
-                  <NotificationsProvider>
-                    <Dashboard />
-                    <NotificationsPanel />
-                  </NotificationsProvider>
-                </SubscriptionProvider>
-              </SidebarProvider>
-            </ProtectedRoute>
-          }
-        />
 
-        <Route
-          path="/patients"
-          element={
-            <ProtectedRoute>
-              <SidebarProvider>
-                <SubscriptionProvider>
-                  <NotificationsProvider>
-                    <PatientList />
-                    <NotificationsPanel />
-                  </NotificationsProvider>
-                </SubscriptionProvider>
-              </SidebarProvider>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
-              <SidebarProvider>
-                <SubscriptionProvider>
-                  <NotificationsProvider>
-                    <Settings />
-                    <NotificationsPanel />
-                  </NotificationsProvider>
-                </SubscriptionProvider>
-              </SidebarProvider>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/subscription"
-          element={
-            <ProtectedRoute>
-              <SidebarProvider>
-                <SubscriptionProvider>
-                  <NotificationsProvider>
-                    <Subscription />
-                    <NotificationsPanel />
-                  </NotificationsProvider>
-                </SubscriptionProvider>
-              </SidebarProvider>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/addpatient"
-          element={
-            <ProtectedRoute>
-              <SidebarProvider>
-                <SubscriptionProvider>
-                  <NotificationsProvider>
-                    <AddPatient />
-                    <NotificationsPanel />
-                  </NotificationsProvider>
-                </SubscriptionProvider>
-              </SidebarProvider>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/patient-profile"
-          element={
-            <ProtectedRoute>
-              <SidebarProvider>
-                <SubscriptionProvider>
-                  <NotificationsProvider>
-                    <PatientProfile />
-                    <NotificationsPanel />
-                  </NotificationsProvider>
-                </SubscriptionProvider>
-              </SidebarProvider>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/patient-profile/:patientId"
-          element={
-            <ProtectedRoute>
-              <SidebarProvider>
-                <SubscriptionProvider>
-                  <NotificationsProvider>
-                    <PatientProfile />
-                    <NotificationsPanel />
-                  </NotificationsProvider>
-                </SubscriptionProvider>
-              </SidebarProvider>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/add-patient"
-          element={
-            <ProtectedRoute>
-              <SidebarProvider>
-                <SubscriptionProvider>
-                  <NotificationsProvider>
-                    <AddPatient />
-                    <NotificationsPanel />
-                  </NotificationsProvider>
-                </SubscriptionProvider>
-              </SidebarProvider>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/edit-patient/:patientId"
-          element={
-            <ProtectedRoute>
-              <SidebarProvider>
-                <SubscriptionProvider>
-                  <NotificationsProvider>
-                    <EditPatient />
-                    <NotificationsPanel />
-                  </NotificationsProvider>
-                </SubscriptionProvider>
-              </SidebarProvider>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/support"
-          element={
-            <ProtectedRoute>
-              <SidebarProvider>
-                <SubscriptionProvider>
-                  <NotificationsProvider>
-                    <Support />
-                    <NotificationsPanel />
-                  </NotificationsProvider>
-                </SubscriptionProvider>
-              </SidebarProvider>
-            </ProtectedRoute>
-          }
-        />
+        {/* Global Authenticated Layout */}
+        <Route element={<ProtectedLayout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/patients" element={<PatientList />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/subscription" element={<Subscription />} />
+          <Route path="/addpatient" element={<AddPatient />} />
+          <Route path="/add-patient" element={<AddPatient />} />
+          <Route path="/patient-profile" element={<PatientProfile />} />
+          <Route path="/patient-profile/:patientId" element={<PatientProfile />} />
+          <Route path="/edit-patient/:patientId" element={<EditPatient />} />
+          <Route path="/support" element={<Support />} />
+        </Route>
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>

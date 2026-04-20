@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {
@@ -35,6 +35,7 @@ export default function MedicationsAndTasksTab({
   patientId,
   initialNextVisitDate,
   onNextVisitSaved,
+  isActive,
 }) {
   // ── View state: "dashboard" | "form" ──
   const [view, setView] = useState("dashboard");
@@ -179,10 +180,15 @@ const formatDateShort = (dateStr) => {
     }
   }, [patientId, onNextVisitSaved]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const hasFetchedRef = useRef(null);
+
   // ── On mount and when patientId changes, fetch items ──
   useEffect(() => {
+    if (!isActive) return;
+    if (hasFetchedRef.current === patientId) return;
     fetchVisitItems();
-  }, [fetchVisitItems]);
+    hasFetchedRef.current = patientId;
+  }, [fetchVisitItems, isActive, patientId]);
 
   // ─── Open / close form ────────────────────
   const openForm = () => {

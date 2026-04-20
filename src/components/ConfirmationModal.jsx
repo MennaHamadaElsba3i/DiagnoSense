@@ -28,6 +28,9 @@ const LogoutConfirmation = ({ isOpen, onClose }) => {
       deleteCookie("user");
       deleteCookie("isAuthenticated");
 
+      // ── Clear the entire page cache so the next user never sees this doctor's data ──
+      window.dispatchEvent(new CustomEvent("authChanged"));
+
       onClose();
 
       navigate("/login");

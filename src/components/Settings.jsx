@@ -166,7 +166,21 @@ const Settings = () => {
           type: "success",
           message: res.message || "Profile updated successfully.",
         });
-        // ── Invalidate cache so next visit re-fetches updated profile ──
+
+        // ── Patch settings_profile cache in-place so revisiting shows fresh data ──
+        const updatedProfile = {
+          fullName: profileForm.fullName,
+          identity: profileForm.identity,
+          specialty: profileForm.specialty,
+        };
+        setCache("settings_profile", updatedProfile);
+
+        // ── Update localStorage so Navbar initials reflect name change immediately ──
+        if (profileForm.fullName) {
+          localStorage.setItem("doctor_name", profileForm.fullName);
+        }
+
+        // ── Notify other consumers (backup invalidation) ──
         window.dispatchEvent(new CustomEvent("profileUpdated"));
       } else {
         setProfileFeedback({

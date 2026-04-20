@@ -985,8 +985,9 @@ const PatientList = () => {
           result.message || "Failed to delete patient. Please try again.",
         );
       } else {
-        // ── Invalidate the entire patients cache so next visit re-fetches ──
+        // ── Invalidate patient list + dashboard caches so both re-fetch on next visit ──
         window.dispatchEvent(new CustomEvent("patientListInvalidated"));
+        window.dispatchEvent(new CustomEvent("dashboardInvalidated"));
 
         const trimmed = searchTerm.trim();
         if (trimmed) {
