@@ -205,7 +205,7 @@ function Subscription() {
     isPayPerUse,
     subscriptionData,
     isCancelledLocally,
-    plans, 
+    plans,
   ]);
 
   const [isPlanConfirmModalOpen, setIsPlanConfirmModalOpen] = useState(false);
@@ -268,12 +268,6 @@ function Subscription() {
       refreshNotifications();
       // ── Invalidate subscription cache ──
       window.dispatchEvent(new CustomEvent("subscriptionChanged"));
-    } else {
-      Swal.fire({
-        icon: "error",
-        title: "Cancellation Failed",
-        text: apiResult.message || "Something went wrong.",
-      });
     }
   };
 
@@ -287,7 +281,6 @@ function Subscription() {
     setPendingPlan(plan);
     setIsPlanConfirmModalOpen(true);
   };
-
   const handleConfirmPlan = async () => {
     const plan = pendingPlan;
     if (!plan) return;
@@ -311,12 +304,6 @@ function Subscription() {
         refreshNotifications();
         // ── Invalidate subscription cache ──
         window.dispatchEvent(new CustomEvent("subscriptionChanged"));
-      } else {
-        Swal.fire({
-          icon: "error",
-          title: "Switch Failed",
-          text: result.message || "Something went wrong. Please try again.",
-        });
       }
       return;
     }
@@ -339,12 +326,6 @@ function Subscription() {
       refreshNotifications();
       // ── Invalidate subscription cache ──
       window.dispatchEvent(new CustomEvent("subscriptionChanged"));
-    } else {
-      Swal.fire({
-        icon: "error",
-        title: "Subscription Failed",
-        text: result.message || "Something went wrong. Please try again.",
-      });
     }
   };
 
@@ -383,11 +364,6 @@ function Subscription() {
     setIsCharged(false);
 
     if (!result.success) {
-      Swal.fire({
-        icon: "error",
-        title: "Charge Failed",
-        text: result.message,
-      });
       return;
     }
 
@@ -646,10 +622,10 @@ function Subscription() {
                           <div className="plan-tagline"></div>
                           <div className="plan-feats">
                             {p.features.map((f, idx) => (
-                                <div className="feat" key={idx}>
-                                  <span className="feat-ck">✓</span>
-                                  <span className="feat-t">{f}</span>
-                                </div>
+                              <div className="feat" key={idx}>
+                                <span className="feat-ck">✓</span>
+                                <span className="feat-t">{f}</span>
+                              </div>
                             ))}
                           </div>
                           <button className="btn-plan" style={{ cursor: 'not-allowed' }}>Get Started</button>
@@ -688,7 +664,7 @@ function Subscription() {
                       (selectedPlanId &&
                         plan.name &&
                         String(selectedPlanId).toLowerCase() ===
-                          String(plan.name).toLowerCase());
+                        String(plan.name).toLowerCase());
                     return (
                       <div
                         className={`plan-card ${isCurrent ? "popular border-2 border-blue-500" : ""}`}
@@ -818,7 +794,7 @@ function Subscription() {
                           style={{
                             cursor:
                               subscribingPlanId === "Pay-per-use" ||
-                              selectedPlanId === "Pay-per-use"
+                                selectedPlanId === "Pay-per-use"
                                 ? "not-allowed"
                                 : "pointer",
                             whiteSpace: "nowrap",

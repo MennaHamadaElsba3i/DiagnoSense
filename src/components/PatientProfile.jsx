@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import Swal from "sweetalert2";
 import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import { getDoctorInitials } from './Dashboard';
@@ -52,13 +52,13 @@ const TrashIcon = () => (
 
 const PatientProfile = () => {
   // ── Hook-based state / context (Must be initialized first at the absolute top) ──
-  const { 
-    credits, 
-    isCreditsLoading, 
-    subscriptionData, 
-    isSubLoading, 
-    refreshSubscription: refreshSubscriptionCtx, 
-    refreshCredits: refreshCreditsCtx 
+  const {
+    credits,
+    isCreditsLoading,
+    subscriptionData,
+    isSubLoading,
+    refreshSubscription: refreshSubscriptionCtx,
+    refreshCredits: refreshCreditsCtx
   } = useSubscription();
 
   const { isSidebarCollapsed, toggleSidebar } = useSidebar();
@@ -140,6 +140,81 @@ const PatientProfile = () => {
     }
   });
   const [isStatusUpdating, setIsStatusUpdating] = useState(false);
+  
+  // ── Sniper-Static Header Logic ──
+  const headerRef = useRef(null);
+  const contentLayerRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const header = headerRef.current;
+    const sidebar = document.querySelector('aside.sidebar');
+    const contentLayer = contentLayerRef.current;
+
+    if (!header || !sidebar || !contentLayer) return;
+
+    let rafId = null;
+
+    function apply() {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        const sidebarRect = sidebar.getBoundingClientRect();
+        const targetLeft = sidebarRect.right;
+        const targetWidth = window.innerWidth - targetLeft;
+
+        header.style.boxSizing = 'border-box';
+        header.style.transition = 'none';
+        header.style.willChange = 'auto';
+        header.style.marginLeft = '0px';
+        header.style.width = `${targetWidth}px`;
+        header.style.maxWidth = `${targetWidth}px`;
+
+        const headerRectAfter = header.getBoundingClientRect();
+        const correction = targetLeft - headerRectAfter.left;
+
+        if (Math.abs(correction) > 0.5) {
+          header.style.marginLeft = `${correction}px`;
+        }
+      });
+    }
+
+    const mutationObserver = new MutationObserver(() => apply());
+    mutationObserver.observe(sidebar, {
+      attributes: true,
+      attributeFilter: ['class', 'style']
+    });
+    mutationObserver.observe(contentLayer, {
+      attributes: true,
+      attributeFilter: ['class', 'style']
+    });
+
+    const resizeObserver = new ResizeObserver(() => apply());
+    resizeObserver.observe(sidebar);
+    resizeObserver.observe(contentLayer);
+
+    window.addEventListener('resize', apply);
+    sidebar.addEventListener('transitionstart', apply);
+    sidebar.addEventListener('transitionrun', apply);
+    sidebar.addEventListener('transitionend', apply);
+    contentLayer.addEventListener('transitionstart', apply);
+    contentLayer.addEventListener('transitionrun', apply);
+    contentLayer.addEventListener('transitionend', apply);
+
+    apply();
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      mutationObserver.disconnect();
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', apply);
+      sidebar.removeEventListener('transitionstart', apply);
+      sidebar.removeEventListener('transitionrun', apply);
+      sidebar.removeEventListener('transitionend', apply);
+      contentLayer.removeEventListener('transitionstart', apply);
+      contentLayer.removeEventListener('transitionrun', apply);
+      contentLayer.removeEventListener('transitionend', apply);
+    };
+  }, [isSidebarCollapsed]);
+
   const [isUpgradeConfirmOpen, setIsUpgradeConfirmOpen] = useState(false);
   const [upgradeTarget, setUpgradeTarget] = useState(null); // { id, name, price, type: 'recurring' | 'ppu' }
   const [isUpgrading, setIsUpgrading] = useState(false);
@@ -496,45 +571,22 @@ const PatientProfile = () => {
           await refreshSubscriptionCtx();
           await refreshCreditsCtx();
           refreshNotificationsCtx?.();
-          
+
           if (pendingFeatureToOpen === 'decision') {
             await fetchDecisionSupport();
           }
-          
+
           setIsUpgradeConfirmOpen(false);
           setIsUpgrading(false);
-          
-          setTimeout(() => {
-            Swal.fire({
-              icon: "success",
-              title: "Success!",
-              text: `You have successfully switched to ${upgradeTarget.name}.`,
-              confirmButtonColor: "#2A66FF",
-            });
-          }, 300);
         }
       } else {
         setIsUpgradeConfirmOpen(false);
         setIsUpgrading(false);
-        setTimeout(() => {
-          Swal.fire({
-            icon: "error",
-            title: "Upgrade Failed",
-            text: res?.message || "Something went wrong.",
-          });
-        }, 300);
       }
     } catch (err) {
       console.error("[Upgrade] error:", err);
       setIsUpgradeConfirmOpen(false);
       setIsUpgrading(false);
-      setTimeout(() => {
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "Network error during upgrade.",
-        });
-      }, 300);
     }
   };
 
@@ -738,7 +790,7 @@ const PatientProfile = () => {
     console.log("[ViewEvidence] Click triggered. Target alert:", alertObj?.id, alertObj?.title);
     console.log("[ViewEvidence] Extracted evidence:", alertObj?.evidence);
     console.log("[ViewEvidence] Source file to pass:", sourceFile);
-    
+
     setEvidencePanel({
       open: true,
       selectedAlert: alertObj,
@@ -853,7 +905,7 @@ const PatientProfile = () => {
       // 3) Build the SAME payload used by Edit File / Save Changes
       const apiFormData = new FormData();
       apiFormData.append("_method", "PUT");
-      
+
       apiFormData.append("name", pi.name || "");
       if (pi.email) apiFormData.append("email", pi.email);
       if (pi.phone) apiFormData.append("phone", pi.phone);
@@ -901,7 +953,7 @@ const PatientProfile = () => {
       let finalDataArr = [];
       let attempts = 0;
       const maxAttempts = 10;
-      
+
       while (attempts < maxAttempts) {
         attempts++;
         const retryRes = await getDecisionSupportAPI(patientId);
@@ -912,10 +964,10 @@ const PatientProfile = () => {
         // Wait 4 seconds before polling again
         await new Promise((resolve) => setTimeout(resolve, 4000));
       }
-      
+
       setDecisionSupport(finalDataArr);
       setDecisionSupportLoadedFor(patientId);
-      
+
     } catch (err) {
       console.error("[decision-support-flow] exception:", err);
       setDecisionSupportError("Network error or generation failed.");
@@ -1131,16 +1183,16 @@ const PatientProfile = () => {
   const hasExistingDecisionSupportData = Boolean(
     Array.isArray(decisionSupport) && decisionSupport.length > 0
   );
-  
+
   const canAccessDecisionSupportNow = canGenerateDecisionSupportNow;
-  
+
   // We determine final locked behavior dynamically within JSX:
   const shouldShowLockedDecisionSupport = !hasExistingDecisionSupportData && !canAccessDecisionSupportNow;
 
   const canUseChatbotNow = Boolean(isPayPerUse || planNameLower === "premium");
   const hasExistingChatbotAccessOrData = Boolean(
     Array.isArray(chatMessages) && chatMessages.length > 1
-  ); 
+  );
   const shouldShowLockedChatbot = !hasExistingChatbotAccessOrData && !canUseChatbotNow;
 
   const openLogoutModal = () => setIsLogoutModalOpen(true);
@@ -1314,14 +1366,14 @@ const PatientProfile = () => {
       <Sidebar activePage="patients" />
 
       <Navbar
-  isSidebarCollapsed={isSidebarCollapsed}
-  credits={credits}
-  isCreditsLoading={isCreditsLoading}
-  unreadCount={unreadCount}
-  getDoctorInitials={getDoctorInitials}
-  openNotifications={openNotifications}
-  setIsLogoutModalOpen={setIsLogoutModalOpen}
-/>
+        isSidebarCollapsed={isSidebarCollapsed}
+        credits={credits}
+        isCreditsLoading={isCreditsLoading}
+        unreadCount={unreadCount}
+        getDoctorInitials={getDoctorInitials}
+        openNotifications={openNotifications}
+        setIsLogoutModalOpen={setIsLogoutModalOpen}
+      />
 
       <LogoutConfirmation
         isOpen={isLogoutModalOpen}
@@ -1358,6 +1410,7 @@ const PatientProfile = () => {
       />
 
       <div
+        ref={contentLayerRef}
         className="content-layer"
         style={{
           position: "relative",
@@ -1368,7 +1421,7 @@ const PatientProfile = () => {
           transition: "margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
         }}
       >
-        <header className="patient-header pp-header">
+        <header ref={headerRef} className="patient-header pp-header">
           <div className="patient-identity">
             <div className="patient-main-info">
               <div className={`patient-avatar ${overviewLoading ? 'preview-shimmer' : ''}`} style={{ borderRadius: "50%" }}>
@@ -1419,7 +1472,7 @@ const PatientProfile = () => {
               >
                 Edit File
               </button>
-        
+
             </div>
           </div>
         </header>
@@ -3135,7 +3188,7 @@ const PatientProfile = () => {
               {!comparativeLoading && comparativeError && (
                 <div style={{ textAlign: "center", padding: "48px 24px", color: "#FF5C5C" }}>
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginBottom: "12px" }}>
-                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                   </svg>
                   <p style={{ fontWeight: 600, marginBottom: "6px" }}>Failed to load analysis</p>
                   <p style={{ fontSize: "13px", color: "#8A94A6", marginBottom: "16px" }}>{comparativeError}</p>
@@ -3198,7 +3251,7 @@ const PatientProfile = () => {
                   const minV = Math.min(...values);
                   const maxV = Math.max(...values);
                   const range = maxV - minV;
-                  
+
                   // Define vertical drawing area with padding to keep points away from edges
                   const topPadding = 40;
                   const bottomPadding = 40;
@@ -3243,14 +3296,14 @@ const PatientProfile = () => {
                         const gradId = `ca-grad-${testIdx}`;
 
                         return (
-                            <div
-                              key={testIdx}
-                              className="chart-card"
-                              style={{
-                                transition: "all 0.5s ease-in-out",
-                                position: "relative",
-                              }}
-                            >
+                          <div
+                            key={testIdx}
+                            className="chart-card"
+                            style={{
+                              transition: "all 0.5s ease-in-out",
+                              position: "relative",
+                            }}
+                          >
 
 
                             {/* Card Header */}
@@ -3372,8 +3425,8 @@ const PatientProfile = () => {
                                     height: 0,
                                     borderLeft: "6px solid transparent",
                                     borderRight: "6px solid transparent",
-                                    ...(chartTooltip.y < 80 
-                                      ? { borderBottom: "6px solid rgba(255, 255, 255, 0.96)" } 
+                                    ...(chartTooltip.y < 80
+                                      ? { borderBottom: "6px solid rgba(255, 255, 255, 0.96)" }
                                       : { borderTop: "6px solid rgba(255, 255, 255, 0.96)" }
                                     ),
                                   }} />
@@ -3549,143 +3602,143 @@ const PatientProfile = () => {
                 </div>
               ) : (
                 <>
-              {/* ── Error state ── (only reached when data exists but fetch failed) */}
-              {!shouldShowLockedDecisionSupport && !decisionSupportLoading && decisionSupportError && (
-                <div
-                  style={{
-                    textAlign: "center",
-                    padding: "48px 24px",
-                    color: decisionSupportError === "401" ? "#FF5C5C" : "#8A94A6",
-                  }}
-                >
-                  <svg
-                    width="48"
-                    height="48"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    style={{ marginBottom: "16px", opacity: 0.6 }}
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="12" />
-                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                  </svg>
-                  <p style={{ fontSize: "15px", fontWeight: 600, marginBottom: "8px" }}>
-                    {decisionSupportError === "401"
-                      ? "Session Expired"
-                      : "Unable to Load Decision Support"}
-                  </p>
-                  <p style={{ fontSize: "13px", opacity: 0.75, marginBottom: "20px" }}>
-                    {decisionSupportError === "401"
-                      ? "Your session has expired. Please log in again to continue."
-                      : decisionSupportError}
-                  </p>
-                  {decisionSupportError === "401" ? (
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => navigate("/login")}
+                  {/* ── Error state ── (only reached when data exists but fetch failed) */}
+                  {!shouldShowLockedDecisionSupport && !decisionSupportLoading && decisionSupportError && (
+                    <div
+                      style={{
+                        textAlign: "center",
+                        padding: "48px 24px",
+                        color: decisionSupportError === "401" ? "#FF5C5C" : "#8A94A6",
+                      }}
                     >
-                      Go to Login
-                    </button>
-                  ) : (
-                    <button
-                      className="btn btn-secondary"
-                      onClick={fetchDecisionSupport}
-                    >
-                      Retry
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* ── Empty state ── (only reached if data is STILL empty despite retry, but we shifted to locked UI above, so this acts as final fallback) */}
-              {!shouldShowLockedDecisionSupport && !(canAccessDecisionSupportNow && hasTriggeredDecisionSupportGeneration.current) && !decisionSupportLoading && !decisionSupportError && Array.isArray(decisionSupport) && decisionSupport.length === 0 && decisionSupportLoadedFor === patientId && (
-                <div
-                  style={{
-                    textAlign: "center",
-                    padding: "48px 24px",
-                    color: "#8A94A6",
-                  }}
-                >
-                  <svg
-                    width="48"
-                    height="48"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    style={{ marginBottom: "16px", opacity: 0.5 }}
-                  >
-                    <path d="M9 11l3 3L22 4" />
-                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-                  </svg>
-                  <p style={{ fontSize: "15px", fontWeight: 600, marginBottom: "6px" }}>
-                    No decision support available yet.
-                  </p>
-                  <p style={{ fontSize: "13px", opacity: 0.7 }}>
-                    Decision support data will appear here once reports are processed.
-                  </p>
-                </div>
-              )}
-
-              {/* ── Data state ── */}
-              {!decisionSupportLoading && !decisionSupportError && Array.isArray(decisionSupport) && decisionSupport.length > 0 && (
-                <div className="likelihood-stack">
-                  {decisionSupport.map((item) => {
-                    const statusUpper = (item.status || "").toUpperCase();
-                    const isHigh = statusUpper.includes("HIGH");
-                    const isLow = statusUpper.includes("LOW");
-                    const statusColor = isHigh ? "#FF5C5C" : isLow ? "#8A94A6" : "#FFA500";
-                    const cardClass = isHigh ? "high" : isLow ? "low" : "medium";
-
-                    return (
-                      <div
-                        key={item.id}
-                        className={`likelihood-card ${cardClass} ${expandedLikelihoods[item.id] ? "expanded" : ""}`}
-                        onClick={() => toggleLikelihood(item.id)}
-                        style={{ cursor: "pointer" }}
+                      <svg
+                        width="48"
+                        height="48"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        style={{ marginBottom: "16px", opacity: 0.6 }}
                       >
-                        <div className="likelihood-header">
-                          <div>
-                            <div
-                              style={{
-                                fontSize: "11px",
-                                color: statusColor,
-                                marginBottom: "3px",
-                                fontWeight: 600,
-                                textTransform: "uppercase",
-                                letterSpacing: "0.5px",
-                              }}
-                            >
-                              {item.status}
-                            </div>
-                            <div className="likelihood-title">{item.condition}</div>
-                          </div>
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                      </svg>
+                      <p style={{ fontSize: "15px", fontWeight: 600, marginBottom: "8px" }}>
+                        {decisionSupportError === "401"
+                          ? "Session Expired"
+                          : "Unable to Load Decision Support"}
+                      </p>
+                      <p style={{ fontSize: "13px", opacity: 0.75, marginBottom: "20px" }}>
+                        {decisionSupportError === "401"
+                          ? "Your session has expired. Please log in again to continue."
+                          : decisionSupportError}
+                      </p>
+                      {decisionSupportError === "401" ? (
+                        <button
+                          className="btn btn-primary"
+                          onClick={() => navigate("/login")}
+                        >
+                          Go to Login
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btn-secondary"
+                          onClick={fetchDecisionSupport}
+                        >
+                          Retry
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ── Empty state ── (only reached if data is STILL empty despite retry, but we shifted to locked UI above, so this acts as final fallback) */}
+                  {!shouldShowLockedDecisionSupport && !(canAccessDecisionSupportNow && hasTriggeredDecisionSupportGeneration.current) && !decisionSupportLoading && !decisionSupportError && Array.isArray(decisionSupport) && decisionSupport.length === 0 && decisionSupportLoadedFor === patientId && (
+                    <div
+                      style={{
+                        textAlign: "center",
+                        padding: "48px 24px",
+                        color: "#8A94A6",
+                      }}
+                    >
+                      <svg
+                        width="48"
+                        height="48"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        style={{ marginBottom: "16px", opacity: 0.5 }}
+                      >
+                        <path d="M9 11l3 3L22 4" />
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                      </svg>
+                      <p style={{ fontSize: "15px", fontWeight: 600, marginBottom: "6px" }}>
+                        No decision support available yet.
+                      </p>
+                      <p style={{ fontSize: "13px", opacity: 0.7 }}>
+                        Decision support data will appear here once reports are processed.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* ── Data state ── */}
+                  {!decisionSupportLoading && !decisionSupportError && Array.isArray(decisionSupport) && decisionSupport.length > 0 && (
+                    <div className="likelihood-stack">
+                      {decisionSupport.map((item) => {
+                        const statusUpper = (item.status || "").toUpperCase();
+                        const isHigh = statusUpper.includes("HIGH");
+                        const isLow = statusUpper.includes("LOW");
+                        const statusColor = isHigh ? "#FF5C5C" : isLow ? "#8A94A6" : "#FFA500";
+                        const cardClass = isHigh ? "high" : isLow ? "low" : "medium";
+
+                        return (
                           <div
-                            className="confidence"
-                            style={{
-                              color: statusColor,
-                              flexShrink: 0,
-                              marginLeft: "16px",
-                            }}
+                            key={item.id}
+                            className={`likelihood-card ${cardClass} ${expandedLikelihoods[item.id] ? "expanded" : ""}`}
+                            onClick={() => toggleLikelihood(item.id)}
+                            style={{ cursor: "pointer" }}
                           >
-                            {item.probability}
+                            <div className="likelihood-header">
+                              <div>
+                                <div
+                                  style={{
+                                    fontSize: "11px",
+                                    color: statusColor,
+                                    marginBottom: "3px",
+                                    fontWeight: 600,
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.5px",
+                                  }}
+                                >
+                                  {item.status}
+                                </div>
+                                <div className="likelihood-title">{item.condition}</div>
+                              </div>
+                              <div
+                                className="confidence"
+                                style={{
+                                  color: statusColor,
+                                  flexShrink: 0,
+                                  marginLeft: "16px",
+                                }}
+                              >
+                                {item.probability}
+                              </div>
+                            </div>
+                            <div className="reasoning">
+                              <strong>Clinical Reasoning:</strong>{" "}
+                              {item.clinical_reasoning}
+                            </div>
                           </div>
-                        </div>
-                        <div className="reasoning">
-                          <strong>Clinical Reasoning:</strong>{" "}
-                          {item.clinical_reasoning}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                        );
+                      })}
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -3847,20 +3900,20 @@ const PatientProfile = () => {
             </>
           ) : (
             <>
-          {chatMessages.map((msg, index) => (
-            <div
-              key={index}
-              className={`message ${msg.type}${msg.preparing ? " preparing" : ""}`}
-            >
-              {msg.text}
-            </div>
-          ))}
-          {isChatSending && !isChatPreparing && (
-            <div className="message ai chat-typing">
-              <span /><span /><span />
-            </div>
-          )}
-          <div ref={messagesEndRef} />
+              {chatMessages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`message ${msg.type}${msg.preparing ? " preparing" : ""}`}
+                >
+                  {msg.text}
+                </div>
+              ))}
+              {isChatSending && !isChatPreparing && (
+                <div className="message ai chat-typing">
+                  <span /><span /><span />
+                </div>
+              )}
+              <div ref={messagesEndRef} />
             </>
           )}
         </div>
