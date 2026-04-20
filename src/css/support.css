@@ -8,6 +8,14 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;        /* ← allows children to wrap to next line */
+  gap: 16px;  
+}
+.support-page .page-header-subtitle {
+  font-size: 14px;
+  color: #8A94A6;
+  margin-top: 4px;
+  line-height: 1.5;
 }
 
 .support-page .page-header h1 {
@@ -620,12 +628,6 @@
 }
 
 @media (max-width: 968px) {
-
-
-
-
-
-
     .support-page .content-grid {
         grid-template-columns: 1fr;
     }
@@ -635,6 +637,40 @@
     }
 }
 
+@media (max-width: 968px) {
+  /* your existing rules... */
+
+  /* ── Page header ── */
+  .support-page .page-header {
+    flex-direction: column;     /* stack title and badge vertically */
+    align-items: flex-start;    /* left-align everything */
+    gap: 12px;
+  }
+
+  .support-page .page-header h1 {
+    font-size: 22px;            /* slightly smaller on tablet */
+  }
+}
+
+@media (max-width: 600px) {
+  .support-page .page-header {
+    padding: 16px;              /* reduce padding on mobile */
+  }
+
+  .support-page .page-header h1 {
+    font-size: 18px;
+  }
+
+  .support-page .page-header .page-header-subtitle {
+    font-size: 12px;
+  }
+
+  /* Badge takes full width on very small screens */
+  .support-page .status-badge {
+    width: 100%;
+    justify-content: center;
+  }
+}
 
 /* ══════════════════════════════════════════════════════════
    DARK MODE OVERRIDES — Support page

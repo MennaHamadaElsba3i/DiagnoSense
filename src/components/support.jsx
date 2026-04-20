@@ -238,40 +238,19 @@ function Support() {
         {/* Page header */}
         <div
           className="page-header"
-          style={{
-            background: "#FFFFFF",
-            padding: "24px",
-            borderRadius: "16px",
-            boxShadow: "0px 2px 8px rgba(0,0,0,0.04)",
-            marginBottom: "24px",
-            border: "1px solid #E6EAF2",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
+          
         >
           <div className="head">
             <div className="title">
               <h1>Help & Support</h1>
               <p className="page-header-subtitle">
-                We're here to help — typical response time under 24 hours
+                We're here to help . typical response time under 24 hours
               </p>
             </div>
           </div>
           <div
             className="status-badge"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "8px 16px",
-              borderRadius: "24px",
-              fontSize: "13px",
-              fontWeight: "600",
-              background: "#E6FFF5",
-              color: "#00C187",
-              boxShadow: "0 2px 4px rgba(0, 193, 135, 0.1)",
-            }}
+            
           >
             <span
               className="status-dot"
