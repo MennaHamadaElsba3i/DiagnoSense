@@ -25,11 +25,7 @@ const TrashIcon = () => (
     <line x1="10" y1="11" x2="10" y2="17"></line>
     <line x1="14" y1="11" x2="14" y2="17"></line>
   </svg>
-); /* ─────────────────────────────────────────────
-   MedicationsAndTasksTab
-   Tasks & medications are fetched from:
-   GET /api/patients/{patientId}/items
-───────────────────────────────────────────── */
+); 
 
 export default function MedicationsAndTasksTab({
   patientId,
@@ -37,56 +33,44 @@ export default function MedicationsAndTasksTab({
   onNextVisitSaved,
   isActive,
 }) {
-  // ── View state: "dashboard" | "form" ──
   const [view, setView] = useState("dashboard");
 
-  // ── Data ──
   const [meds, setMeds] = useState([]);
   const [taskItems, setTaskItems] = useState([]);
   const [nextVisitDisplay, setNextVisitDisplay] = useState(null);
 
-  // ── Fetch state ──
   const [isLoadingItems, setIsLoadingItems] = useState(false);
   const [fetchError, setFetchError] = useState(null);
 
-  // ── Form step state: 1 | 2 ──
   const [step, setStep] = useState(1);
 
-  // ── Step 1: visit date ──
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [visitDateValue, setVisitDateValue] = useState("");
   const [visitSaved, setVisitSaved] = useState(false);
 
-  // ── Step 2: type selection ──
-  const [taskType, setTaskType] = useState(null); // "medications" | "tasks" | null
+  const [taskType, setTaskType] = useState(null); 
 
-  // ── Medication form fields ──
   const [medName, setMedName] = useState("");
   const [medDosage, setMedDosage] = useState("");
   const [medFreq, setMedFreq] = useState("");
   const [medDuration, setMedDuration] = useState("");
   const [savedMedsInForm, setSavedMedsInForm] = useState([]);
 
-  // ── Task form fields ──
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDesc, setTaskDesc] = useState("");
-  const [taskNextVisitDate, setTaskNextVisitDate] = useState(""); // maps to next_visit_date (shown as "Due Date" when hasNextVisit===false)
+  const [taskNextVisitDate, setTaskNextVisitDate] = useState(""); 
   const [taskNotes, setTaskNotes] = useState("");
   const [savedTasksInForm, setSavedTasksInForm] = useState([]);
 
-  // ── hasNextVisit: tracks whether the user chose YES (true) or NO (false) in Step 1 ──
-  const [hasNextVisit, setHasNextVisit] = useState(null); // null = not yet decided
+  const [hasNextVisit, setHasNextVisit] = useState(null); 
 
-  // ── Inline field validation errors ──
   const [errors, setErrors] = useState({});
 
-  // ── Set of item IDs whose delete is in-flight (prevents double-click) ──
   const [deletingIds, setDeletingIds] = useState(new Set());
 
-  // ── Delete Confirmation Modal State ──
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState(null);
-  const [deleteTargetType, setDeleteTargetType] = useState(null); // "medication" | "task"
+  const [deleteTargetType, setDeleteTargetType] = useState(null); 
 
   const openDeleteConfirmModal = (id, type) => {
     setDeleteTargetId(id);
@@ -103,7 +87,6 @@ export default function MedicationsAndTasksTab({
   const confirmDelete = async () => {
     if (!deleteTargetId || !deleteTargetType) return;
 
-    // Call the appropriate delete function
     if (deleteTargetType === "medication") {
       await removeMedication(deleteTargetId);
     } else if (deleteTargetType === "task") {
@@ -113,54 +96,73 @@ export default function MedicationsAndTasksTab({
     closeDeleteConfirmModal();
   };
 
-  // ── Visit API state ──
-  const [visitId, setVisitId] = useState(null); // populated after action="next"
+  const [visitId, setVisitId] = useState(null); 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
-  // ── Toast ──
   const [toast, setToast] = useState({ show: false, msg: "" });
   const showToast = (msg) => {
     setToast({ show: true, msg });
     setTimeout(() => setToast({ show: false, msg: "" }), 3000);
   };
 
-const parseValidDate = (value) => {
-  if (!value || value === "No next visit") return null;
-  const m = moment(value, "YYYY-MM-DD HH:mm:ss"); 
-  return m.isValid() ? m.toDate() : null;
-};
+  const parseValidDate = (value) => {
+    if (!value || value === "No next visit") return null;
+    const m = moment(value, "YYYY-MM-DD HH:mm:ss");
+    return m.isValid() ? m.toDate() : null;
+  };
 
-const formatDate = (dateStr) => {
-  if (!dateStr) return "";
-  // بنجبره يقرأ التنسيق اللي إحنا مخزنينه
-  return moment(dateStr, "YYYY-MM-DD HH:mm:ss").format("ddd, MMMM D, YYYY, h:mm A");
-};
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "";
+    return moment(dateStr, "YYYY-MM-DD HH:mm:ss").format(
+      "ddd, MMMM D, YYYY, h:mm A",
+    );
+  };
 
 const formatDateShort = (dateStr) => {
   if (!dateStr) return "";
-  return moment(dateStr, "YYYY-MM-DD HH:mm:ss").format("MMM D, h:mm A");
+  const m = moment(dateStr, [
+    "YYYY-MM-DD HH:mm:ss",
+    "YYYY-MM-DDTHH:mm:ss",
+    "YYYY-MM-DD",
+    "MMMM D",              
+  ]);
+  if (!m.isValid()) return dateStr; 
+  return m.hours() === 0 && m.minutes() === 0
+    ? m.format("MMM D")
+    : m.format("MMM D, h:mm A");
 };
 
-  // ── Normalize a raw backend task object into the frontend shape ──
-  const normalizeTask = (t) => ({
+const normalizeTask = (t) => {
+
+  const buildVisitDateTime = (visit) => {
+    if (!visit) return null;
+
+    const dateStr = visit.next_visit_date; 
+    const timeStr = visit.time;            
+
+    if (!dateStr) return null;
+
+    if (timeStr) {
+      const combined = `${dateStr} ${timeStr}`;
+      const m = moment(combined, "YYYY-MM-DD h:mm A");
+      if (m.isValid()) return m.format("MMM D, h:mm A"); 
+    }
+
+    const m = moment(dateStr, "YYYY-MM-DD");
+    return m.isValid() ? m.format("MMM D") : null;
+  };
+
+  return {
     id: t.id,
     title: t.title ?? "",
     desc: t.description ?? t.desc ?? "",
     notes: t.notes ?? "",
-    // Due_date comes from the backend with capital D.
-    // Fallback: visit.next_visit_date formatted short.
-    due:
-      t.Due_date ??
-      t.due_date ??
-      t.dueDate ??
-      (t.visit?.next_visit_date
-        ? formatDateShort(t.visit.next_visit_date)
-        : null),
+    due: buildVisitDateTime(t.visit) ?? (t.Due_date ? t.Due_date : null),
     dueStyle: "normal",
-  });
+  };
+};
 
-  // ── Fetch all items (tasks + medications + next_visit_date) from backend ──
   const fetchVisitItems = useCallback(async () => {
     if (!patientId) return;
     setIsLoadingItems(true);
@@ -178,11 +180,10 @@ const formatDateShort = (dateStr) => {
     } else {
       setFetchError(res?.message || "Failed to load items.");
     }
-  }, [patientId, onNextVisitSaved]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [patientId, onNextVisitSaved]); 
 
   const hasFetchedRef = useRef(null);
 
-  // ── On mount and when patientId changes, fetch items ──
   useEffect(() => {
     if (!isActive) return;
     if (hasFetchedRef.current === patientId) return;
@@ -190,7 +191,6 @@ const formatDateShort = (dateStr) => {
     hasFetchedRef.current = patientId;
   }, [fetchVisitItems, isActive, patientId]);
 
-  // ─── Open / close form ────────────────────
   const openForm = () => {
     setView("form");
     setTaskType(null);
@@ -206,18 +206,15 @@ const formatDateShort = (dateStr) => {
     setSavedTasksInForm([]);
     setErrors({});
 
-    // ALWAYS start at Step 1 — show the Yes/No question every time
     setStep(1);
     setHasNextVisit(null);
 
-    // Always show the Yes/No question first (showDatePicker=false).
-    // Pre-populate the date field so if the user picks "Yes" it's ready,
-    // but do NOT skip past the question screen.
+
     setShowDatePicker(false);
     setVisitSaved(false);
     setVisitId(null);
     if (initialNextVisitDate) {
-      setVisitDateValue(initialNextVisitDate); // pre-fill for convenience after "Yes"
+      setVisitDateValue(initialNextVisitDate); 
     } else {
       setVisitDateValue("");
     }
@@ -230,7 +227,6 @@ const formatDateShort = (dateStr) => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // ─── Step navigation ──────────────────────
   const goToStep = (s) => {
     setStep(s);
     if (s === 1) {
@@ -238,7 +234,6 @@ const formatDateShort = (dateStr) => {
     }
   };
 
-  // ─── Visit date change ────────────────────
   const onVisitDateChange = (val) => {
     setVisitDateValue(val);
     if (val) {
@@ -250,10 +245,8 @@ const formatDateShort = (dateStr) => {
     }
   };
 
-  // ─── Ensure we have a visitId (create draft if user chose "No") ─────────
   const ensureVisitId = async () => {
     if (visitId) return visitId;
-    // Auto-create a draft visit so we have an id to post items under
     const res = await createVisitAPI({
       patient_id: patientId,
       has_next_visit: 0,
@@ -266,9 +259,7 @@ const formatDateShort = (dateStr) => {
     return null;
   };
 
-  // ─── Save medication ──────────────────────
   const saveMedication = async (createAnother) => {
-    // Validate all required fields at once
     const newErrors = {};
     if (!medName.trim()) newErrors.medName = "Medication name is required";
     if (!medDosage.trim()) newErrors.medDosage = "Dosage is required";
@@ -301,12 +292,16 @@ const formatDateShort = (dateStr) => {
     const res = await createVisitItem(vid, payload);
     setIsSubmitting(false);
 
+    console.log(
+      "[saveTask] backend response:",
+      JSON.stringify(res?.data, null, 2),
+    );
+    console.log("[saveTask] user input date:", taskNextVisitDate);
     if (!res || res.success === false) {
       showToast(`❌ ${res?.message || "Failed to save medication."}`);
       return;
     }
 
-    // Track the saved med in the form's summary list (lightweight, no state shape needed)
     const returnedMed = res.data?.medication ?? res.data ?? null;
     const savedMedSummary = {
       id: returnedMed?.id ?? Date.now(),
@@ -316,10 +311,8 @@ const formatDateShort = (dateStr) => {
     };
     setSavedMedsInForm((prev) => [...prev, savedMedSummary]);
 
-    // Re-fetch to get backend-sourced list + updated next_visit_date
     fetchVisitItems();
 
-    // Case: save_and_create_another → keep form open, reset inputs
     if (res.data?.action === "save_and_create_another" || createAnother) {
       setMedName("");
       setMedDosage("");
@@ -328,18 +321,14 @@ const formatDateShort = (dateStr) => {
       setErrors({});
       showToast("💊 Medication saved! Add another.");
     } else {
-      // Case: save → status=completed → close flow
       showToast("✅ Medication saved successfully!");
       closeForm();
     }
   };
 
-  // ─── Save task ────────────────────────────
   const saveTask = async (createAnother) => {
-    // Validate all required fields at once
     const newErrors = {};
     if (!taskTitle.trim()) newErrors.taskTitle = "Task title is required";
-    // Due Date shown only on NO path
     if (hasNextVisit === false && !taskNextVisitDate)
       newErrors.taskNextVisitDate = "Due date is required";
     if (Object.keys(newErrors).length > 0) {
@@ -364,7 +353,6 @@ const formatDateShort = (dateStr) => {
       title: taskTitle.trim(),
       ...(taskDesc.trim() && { description: taskDesc.trim() }),
       ...(taskNotes.trim() && { notes: taskNotes.trim() }),
-      // Only include next_visit_date when the user did NOT schedule one in step 1
       ...(!hasNextVisit &&
         taskNextVisitDate && { next_visit_date: taskNextVisitDate }),
     };
@@ -377,25 +365,22 @@ const formatDateShort = (dateStr) => {
       return;
     }
 
-    // Track the saved task in the form's summary list
     const returnedTask = res.data?.task ?? res.data ?? null;
     const savedTaskSummary = {
       id: returnedTask?.id ?? Date.now(),
       title: returnedTask?.title ?? taskTitle.trim(),
-      due: returnedTask?.next_visit_date
-        ? formatDateShort(returnedTask.next_visit_date)
+      due: taskNextVisitDate 
+        ? formatDateShort(taskNextVisitDate)
         : returnedTask?.Due_date
           ? formatDateShort(returnedTask.Due_date)
-          : taskNextVisitDate
-            ? formatDateShort(taskNextVisitDate)
+          : returnedTask?.next_visit_date
+            ? formatDateShort(returnedTask.next_visit_date)
             : null,
     };
     setSavedTasksInForm((prev) => [...prev, savedTaskSummary]);
 
-    // Re-fetch to get backend-sourced list + updated next_visit_date
     fetchVisitItems();
 
-    // Case: save_and_create_another → keep form open, reset inputs
     if (res.data?.action === "save_and_create_another" || createAnother) {
       setTaskTitle("");
       setTaskDesc("");
@@ -404,15 +389,13 @@ const formatDateShort = (dateStr) => {
       setErrors({});
       showToast("✅ Task saved! Add another.");
     } else {
-      // Case: save → status=completed → close flow
       showToast("✅ Task saved successfully!");
       closeForm();
     }
   };
 
-  // ─── Delete medication (calls backend, then removes from state) ─────────
   const removeMedication = async (medicationId) => {
-    if (deletingIds.has(medicationId)) return; // already in-flight
+    if (deletingIds.has(medicationId)) return; 
     setDeletingIds((prev) => new Set(prev).add(medicationId));
     const res = await deletePatientMedication(patientId, medicationId);
     setDeletingIds((prev) => {
@@ -422,15 +405,14 @@ const formatDateShort = (dateStr) => {
     });
     if (res?.success) {
       setMeds((prev) => prev.filter((m) => m.id !== medicationId));
-      fetchVisitItems(); // re-sync with backend
+      fetchVisitItems(); 
     } else {
       showToast(`❌ ${res?.message || "Failed to delete medication."}`);
     }
   };
 
-  // ─── Delete task (calls backend, then removes from state) ────────────────
   const removeTask = async (taskId) => {
-    if (deletingIds.has(taskId)) return; // already in-flight
+    if (deletingIds.has(taskId)) return; 
     setDeletingIds((prev) => new Set(prev).add(taskId));
     const res = await deletePatientTask(patientId, taskId);
     setDeletingIds((prev) => {
@@ -440,13 +422,12 @@ const formatDateShort = (dateStr) => {
     });
     if (res?.success) {
       setTaskItems((prev) => prev.filter((t) => t.id !== taskId));
-      fetchVisitItems(); // re-sync with backend
+      fetchVisitItems(); 
     } else {
       showToast(`❌ ${res?.message || "Failed to delete task."}`);
     }
   };
 
-  // ─── Stepper helpers ──────────────────────
   const stepperBg1 = step === 1 ? "#2A66FF" : "#00C187";
   const stepperColor1 = "white";
   const stepperLabel1 = step === 1 ? "#2A66FF" : "#00C187";
@@ -459,20 +440,14 @@ const formatDateShort = (dateStr) => {
 
   const lineBg = step === 2 ? "#00C187" : "#E6EAF2";
 
-  // ─── Render ───────────────────────────────
   return (
     <div className="medications-tasks-tab">
-      {/* ══ DASHBOARD VIEW ══ */}
       {view === "dashboard" && (
         <div id="tasks-dashboard">
-          {/* Inline fetch error */}
           {fetchError && !isLoadingItems && (
-            <div className="med-task-error-banner">
-              ⚠️ {fetchError}
-            </div>
+            <div className="med-task-error-banner">⚠️ {fetchError}</div>
           )}
 
-          {/* Top bar: Next Visit (left, flex-grow) + Add button (right) */}
           <div
             style={{
               display: "flex",
@@ -482,8 +457,9 @@ const formatDateShort = (dateStr) => {
               marginBottom: "24px",
             }}
           >
-            {/* Next Visit – always visible, fills the left */}
-            <div className={`med-task-next-visit-bar ${nextVisitDisplay ? 'has-visit' : ''}`}>
+            <div
+              className={`med-task-next-visit-bar ${nextVisitDisplay ? "has-visit" : ""}`}
+            >
               <svg
                 width="18"
                 height="18"
@@ -505,17 +481,14 @@ const formatDateShort = (dateStr) => {
               </span>
             </div>
 
-            {/* Add button */}
-            <button
-              onClick={openForm}
-              className="med-task-add-btn"
-            >
+            <button onClick={openForm} className="med-task-add-btn">
               + Add Tasks or Medications
             </button>
           </div>
 
-          {/* Two columns: Medications | Tasks */}
-          <div className={`med-task-grid ${isLoadingItems && (meds.length > 0 || taskItems.length > 0) ? 'loading-overlay' : ''}`}>
+          <div
+            className={`med-task-grid ${isLoadingItems && (meds.length > 0 || taskItems.length > 0) ? "loading-overlay" : ""}`}
+          >
             {/* Medications Column */}
             <div className="card med-task-column">
               <div className="med-task-column-header">
@@ -535,9 +508,7 @@ const formatDateShort = (dateStr) => {
                     <line x1="8.5" y1="11.5" x2="15.5" y2="11.5" />
                   </svg>
                 </div>
-                <div className="med-task-column-title">
-                  Medications
-                </div>
+                <div className="med-task-column-title">Medications</div>
               </div>
               <div
                 style={{
@@ -549,9 +520,7 @@ const formatDateShort = (dateStr) => {
                 {meds.map((m) => (
                   <div key={m.id} className="med-task-item-card">
                     <div className="med-task-item-info">
-                      <div className="med-task-item-name">
-                        {m.name}
-                      </div>
+                      <div className="med-task-item-name">{m.name}</div>
                       <div className="med-task-item-details">
                         {m.dosage} — {m.frequency}
                       </div>
@@ -641,9 +610,7 @@ const formatDateShort = (dateStr) => {
                     <line x1="9" y1="16" x2="13" y2="16" />
                   </svg>
                 </div>
-                <div className="med-task-column-title">
-                  Tasks
-                </div>
+                <div className="med-task-column-title">Tasks</div>
               </div>
               <div
                 style={{
@@ -658,19 +625,17 @@ const formatDateShort = (dateStr) => {
                     <div key={t.id} className="med-task-item-card">
                       <div className="med-task-item-main">
                         <div className="med-task-item-content">
-                          <div className="med-task-item-title">
-                            {t.title}
-                          </div>
+                          <div className="med-task-item-title">{t.title}</div>
                           {t.desc && (
-                            <div className="med-task-item-desc">
-                              {t.desc}
-                            </div>
+                            <div className="med-task-item-desc">{t.desc}</div>
                           )}
                         </div>
 
                         <div className="med-task-item-actions">
                           {t.due ? (
-                            <span className={`med-task-due-pill ${isUrgent ? 'urgent' : ''}`}>
+                            <span
+                              className={`med-task-due-pill ${isUrgent ? "urgent" : ""}`}
+                            >
                               Due {t.due}
                             </span>
                           ) : null}
@@ -923,7 +888,6 @@ const formatDateShort = (dateStr) => {
                           setVisitId(res.data.id);
                         }
                         setHasNextVisit(false);
-                        // Even if draft creation failed we still navigate (ensureVisitId will retry)
                         goToStep(2);
                       }}
                       style={{
@@ -1010,39 +974,55 @@ const formatDateShort = (dateStr) => {
                         >
                           Next Visit Date &amp; Time
                         </div>
-                      <div className="med-task-date-status-box">
-                        <div className="med-task-date-input-wrapper">
-                          <DatePicker
-                            selected={parseValidDate(visitDateValue)}
-                            onChange={(date) => {
-                              if (date) {
-                                const formattedDate = moment(date).format("YYYY-MM-DD HH:mm:ss");
-                                onVisitDateChange(formattedDate);
-                              } else {
-                                onVisitDateChange("");
-                              }
-                            }}
-                            showTimeSelect
-                            dateFormat="MMMM d, yyyy h:mm aa"
-                            placeholderText="Select date and time"
-                            wrapperClassName="datepicker-wrapper"
-                            className="step1-datepicker-input"
-                            portalId="root"
-                          />
-                        </div>
-                        {visitSaved && (
-                          <div className="med-task-check-icon">
-                            ✓
+                        <div className="med-task-date-status-box">
+                          <div className="med-task-date-input-wrapper">
+                            <DatePicker
+                              selected={parseValidDate(visitDateValue)}
+                              onChange={(date) => {
+                                if (date) {
+                                  const formattedDate = moment(date).format(
+                                    "YYYY-MM-DD HH:mm:ss",
+                                  );
+                                  onVisitDateChange(formattedDate);
+                                } else {
+                                  onVisitDateChange("");
+                                }
+                              }}
+                              showTimeSelect
+                              dateFormat="MMMM d, yyyy h:mm aa"
+                              placeholderText="Select date and time"
+                              wrapperClassName="datepicker-wrapper"
+                              className="step1-datepicker-input"
+                              portalId="root"
+                            />
                           </div>
-                        )}
+                          {visitSaved && (
+                            <div className="med-task-check-icon">✓</div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {visitSaved && (
+                    {visitSaved && (
                       <div className="med-task-saved-date-mini-card">
                         <div className="med-task-saved-date-pill">
-                          <span className="med-task-calendar-icon">📅</span>
+                          <span
+                            className="icon-container"
+                            style={{ color: "#3B66F5", display: "inline-flex" }}
+                          >
+                            <svg
+                              width="17"
+                              height="17"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M17 2V4H7V2H5V4H4C2.89543 4 2 4.89543 2 6V20C2 21.1046 2.89543 22 4 22H20C21.1046 22 22 21.1046 22 20V6C22 4.89543 21.1046 4 20 4H19V2H17ZM20 20H4V9H20V20ZM16 13H12V17H16V13Z"
+                                fill="currentColor"
+                              />
+                            </svg>
+                          </span>
                           <span className="med-task-saved-date-text">
                             {nextVisitDisplay}
                           </span>
@@ -1052,7 +1032,7 @@ const formatDateShort = (dateStr) => {
 
                     {submitError && (
                       <div className="med-task-error-banner small">
-                        ⚠️ {submitError}
+                        {submitError}
                       </div>
                     )}
 
@@ -1062,7 +1042,7 @@ const formatDateShort = (dateStr) => {
                         className="med-task-btn-back"
                         onClick={async () => {
                           if (!visitDateValue) {
-                            showToast("⚠️ Please pick a date first");
+                            showToast("Please pick a date first");
                             return;
                           }
                           setIsSubmitting(true);
@@ -1076,7 +1056,8 @@ const formatDateShort = (dateStr) => {
                           setIsSubmitting(true); // Wait for res
                           setIsSubmitting(false);
                           if (res && res.success) {
-                            const savedDate = res.data?.next_visit_date || visitDateValue;
+                            const savedDate =
+                              res.data?.next_visit_date || visitDateValue;
                             if (onNextVisitSaved) onNextVisitSaved(savedDate);
                             window.dispatchEvent(
                               new CustomEvent("patientNextVisitUpdated", {
@@ -1089,7 +1070,10 @@ const formatDateShort = (dateStr) => {
                             showToast("✅ Visit saved successfully!");
                             closeForm();
                           } else {
-                            setSubmitError(res?.message || "Failed to save visit. Please try again.");
+                            setSubmitError(
+                              res?.message ||
+                                "Failed to save visit. Please try again.",
+                            );
                           }
                         }}
                       >
@@ -1114,7 +1098,8 @@ const formatDateShort = (dateStr) => {
                           setIsSubmitting(false);
                           if (res && res.success) {
                             if (res.data?.id) setVisitId(res.data.id);
-                            const savedDate = res.data?.next_visit_date || visitDateValue;
+                            const savedDate =
+                              res.data?.next_visit_date || visitDateValue;
                             if (onNextVisitSaved) onNextVisitSaved(savedDate);
                             window.dispatchEvent(
                               new CustomEvent("patientNextVisitUpdated", {
@@ -1126,7 +1111,10 @@ const formatDateShort = (dateStr) => {
                             );
                             goToStep(2);
                           } else {
-                            setSubmitError(res?.message || "Failed to create visit. Please try again.");
+                            setSubmitError(
+                              res?.message ||
+                                "Failed to create visit. Please try again.",
+                            );
                           }
                         }}
                       >
@@ -1237,12 +1225,17 @@ const formatDateShort = (dateStr) => {
                         </div>
                         <div className="med-task-added-list-stack">
                           {savedMedsInForm.map((m) => (
-                            <div key={m.id} className="med-task-added-item-mini">
+                            <div
+                              key={m.id}
+                              className="med-task-added-item-mini"
+                            >
                               <span className="med-task-added-item-text">
                                 💊 <strong>{m.name}</strong> — {m.dosage} —{" "}
                                 {m.frequency}
                               </span>
-                              <span className="med-task-added-item-check">✓</span>
+                              <span className="med-task-added-item-check">
+                                ✓
+                              </span>
                             </div>
                           ))}
                         </div>
@@ -1327,7 +1320,9 @@ const formatDateShort = (dateStr) => {
                             selected={parseValidDate(taskNextVisitDate)}
                             onChange={(date) => {
                               if (date) {
-                                const formattedDate = moment(date).format("YYYY-MM-DD HH:mm:ss");
+                                const formattedDate = moment(date).format(
+                                  "YYYY-MM-DD HH:mm:ss",
+                                );
                                 setTaskNextVisitDate(formattedDate);
                                 if (errors.taskNextVisitDate)
                                   setErrors((p) => ({
@@ -1378,7 +1373,7 @@ const formatDateShort = (dateStr) => {
                             marginBottom: "8px",
                           }}
                         >
-                          ✅ Added
+                          Added
                         </div>
                         <div
                           style={{
@@ -1403,7 +1398,7 @@ const formatDateShort = (dateStr) => {
                               }}
                             >
                               <span>
-                                ✅ <strong>{t.title}</strong>
+                                <strong>{t.title}</strong>
                                 {t.due ? ` — Due: ${t.due}` : ""}
                               </span>
                               <span

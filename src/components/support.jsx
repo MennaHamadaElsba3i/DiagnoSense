@@ -244,7 +244,7 @@ function Support() {
             <div className="title">
               <h1>Help & Support</h1>
               <p className="page-header-subtitle">
-                We're here to help . typical response time under 24 hours
+                We're here to help. typical response time under 24 hours
               </p>
             </div>
           </div>
