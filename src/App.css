@@ -104,10 +104,11 @@ body .decision-support-card .card-cta-btn {
     padding: 20px;
   }
 
-  body .credits-badge,
+  
   body .status-indicator {
     display: none;
   }
+ 
 }
 
 @media (max-width: 480px) {
@@ -140,4 +141,4 @@ body .decision-support-card .card-cta-btn {
   line-height: 1;
 }
 
-
+
