@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import Swal from "sweetalert2";
 import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
-import { getDoctorInitials } from './Dashboard';
+import { getDoctorInitials } from "./Dashboard";
 import {
   getPatientAnalysisAPI,
   getPatientOverviewAPI,
@@ -42,7 +42,14 @@ import ConfirmModal from "./ConfirmModal.jsx";
 import LockedFeatureOverlay from "./LockedFeatureOverlay.jsx";
 
 const TrashIcon = () => (
-  <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    fill="none"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <polyline points="3 6 5 6 21 6"></polyline>
     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
     <line x1="10" y1="11" x2="10" y2="17"></line>
@@ -58,11 +65,16 @@ const PatientProfile = () => {
     subscriptionData,
     isSubLoading,
     refreshSubscription: refreshSubscriptionCtx,
-    refreshCredits: refreshCreditsCtx
+    refreshCredits: refreshCreditsCtx,
   } = useSubscription();
 
   const { isSidebarCollapsed, toggleSidebar } = useSidebar();
-  const { unreadCount, openNotifications, refreshNotifications: refreshNotificationsCtx, fetchAndToastLatest } = useNotifications();
+  const {
+    unreadCount,
+    openNotifications,
+    refreshNotifications: refreshNotificationsCtx,
+    fetchAndToastLatest,
+  } = useNotifications();
 
   const navigate = useNavigate();
   const { patientId } = useParams();
@@ -75,14 +87,19 @@ const PatientProfile = () => {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   // ── Evidence Panel state ──
   const [sourceFile, setSourceFile] = useState(null);
-  const [evidencePanel, setEvidencePanel] = useState({ open: false, evidence: [], alertTitle: "" });
+  const [evidencePanel, setEvidencePanel] = useState({
+    open: false,
+    evidence: [],
+    alertTitle: "",
+  });
   const [isDeleting, setIsDeleting] = useState(false);
 
   // ── Decision Support API state ──
   const [decisionSupport, setDecisionSupport] = useState([]);
   const [decisionSupportLoading, setDecisionSupportLoading] = useState(false);
   const [decisionSupportError, setDecisionSupportError] = useState(null);
-  const [decisionSupportLoadedFor, setDecisionSupportLoadedFor] = useState(null);
+  const [decisionSupportLoadedFor, setDecisionSupportLoadedFor] =
+    useState(null);
 
   // ── Activity Log API state ──
   const [activities, setActivities] = useState([]);
@@ -96,7 +113,16 @@ const PatientProfile = () => {
   const [comparativeError, setComparativeError] = useState(null);
   const [comparativeLoadedFor, setComparativeLoadedFor] = useState(null);
   // Tooltip state for SVG chart hover
-  const [chartTooltip, setChartTooltip] = useState({ visible: false, x: 0, y: 0, date: "", status: "", value: "", testIdx: -1, pointIdx: -1 });
+  const [chartTooltip, setChartTooltip] = useState({
+    visible: false,
+    x: 0,
+    y: 0,
+    date: "",
+    status: "",
+    value: "",
+    testIdx: -1,
+    pointIdx: -1,
+  });
 
   const [activeTab, setActiveTab] = useState("overview");
   const [visitedTabs, setVisitedTabs] = useState({ overview: true });
@@ -104,9 +130,40 @@ const PatientProfile = () => {
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const avatarMenuRef = useRef(null);
 
+  const tabNavRef = useRef(null);
+  const [showBack, setShowBack] = useState(false);
+  const [showNext, setShowNext] = useState(false);
+
+  // Check if scroll arrows are needed
+  const checkScrollButtons = () => {
+    const el = tabNavRef.current;
+    if (!el) return;
+    setShowBack(el.scrollLeft > 0);
+    setShowNext(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  };
+
+  useEffect(() => {
+    checkScrollButtons();
+    window.addEventListener("resize", checkScrollButtons);
+    return () => window.removeEventListener("resize", checkScrollButtons);
+  }, []);
+
+  const scrollTabs = (direction) => {
+    const el = tabNavRef.current;
+    if (!el) return;
+    el.scrollBy({
+      left: direction === "next" ? 150 : -150,
+      behavior: "smooth",
+    });
+    setTimeout(checkScrollButtons, 300);
+  };
+
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (avatarMenuRef.current && !avatarMenuRef.current.contains(event.target)) {
+      if (
+        avatarMenuRef.current &&
+        !avatarMenuRef.current.contains(event.target)
+      ) {
         setIsAvatarMenuOpen(false);
       }
     };
@@ -134,21 +191,26 @@ const PatientProfile = () => {
       const persisted = localStorage.getItem("currentPatient");
       if (!persisted) return "under review";
       const parsed = JSON.parse(persisted);
-      const raw = (parsed?.status || "").toLowerCase().trim().replace(/_/g, " ");
-      return ["stable", "critical", "under review"].includes(raw) ? raw : "under review";
+      const raw = (parsed?.status || "")
+        .toLowerCase()
+        .trim()
+        .replace(/_/g, " ");
+      return ["stable", "critical", "under review"].includes(raw)
+        ? raw
+        : "under review";
     } catch {
       return "under review";
     }
   });
   const [isStatusUpdating, setIsStatusUpdating] = useState(false);
-  
+
   // ── Sniper-Static Header Logic ──
   const headerRef = useRef(null);
   const contentLayerRef = useRef(null);
 
   useLayoutEffect(() => {
     const header = headerRef.current;
-    const sidebar = document.querySelector('aside.sidebar');
+    const sidebar = document.querySelector("aside.sidebar");
     const contentLayer = contentLayerRef.current;
 
     if (!header || !sidebar || !contentLayer) return;
@@ -162,10 +224,10 @@ const PatientProfile = () => {
         const targetLeft = sidebarRect.right;
         const targetWidth = window.innerWidth - targetLeft;
 
-        header.style.boxSizing = 'border-box';
-        header.style.transition = 'none';
-        header.style.willChange = 'auto';
-        header.style.marginLeft = '0px';
+        header.style.boxSizing = "border-box";
+        header.style.transition = "none";
+        header.style.willChange = "auto";
+        header.style.marginLeft = "0px";
         header.style.width = `${targetWidth}px`;
         header.style.maxWidth = `${targetWidth}px`;
 
@@ -181,24 +243,24 @@ const PatientProfile = () => {
     const mutationObserver = new MutationObserver(() => apply());
     mutationObserver.observe(sidebar, {
       attributes: true,
-      attributeFilter: ['class', 'style']
+      attributeFilter: ["class", "style"],
     });
     mutationObserver.observe(contentLayer, {
       attributes: true,
-      attributeFilter: ['class', 'style']
+      attributeFilter: ["class", "style"],
     });
 
     const resizeObserver = new ResizeObserver(() => apply());
     resizeObserver.observe(sidebar);
     resizeObserver.observe(contentLayer);
 
-    window.addEventListener('resize', apply);
-    sidebar.addEventListener('transitionstart', apply);
-    sidebar.addEventListener('transitionrun', apply);
-    sidebar.addEventListener('transitionend', apply);
-    contentLayer.addEventListener('transitionstart', apply);
-    contentLayer.addEventListener('transitionrun', apply);
-    contentLayer.addEventListener('transitionend', apply);
+    window.addEventListener("resize", apply);
+    sidebar.addEventListener("transitionstart", apply);
+    sidebar.addEventListener("transitionrun", apply);
+    sidebar.addEventListener("transitionend", apply);
+    contentLayer.addEventListener("transitionstart", apply);
+    contentLayer.addEventListener("transitionrun", apply);
+    contentLayer.addEventListener("transitionend", apply);
 
     apply();
 
@@ -206,13 +268,13 @@ const PatientProfile = () => {
       if (rafId) cancelAnimationFrame(rafId);
       mutationObserver.disconnect();
       resizeObserver.disconnect();
-      window.removeEventListener('resize', apply);
-      sidebar.removeEventListener('transitionstart', apply);
-      sidebar.removeEventListener('transitionrun', apply);
-      sidebar.removeEventListener('transitionend', apply);
-      contentLayer.removeEventListener('transitionstart', apply);
-      contentLayer.removeEventListener('transitionrun', apply);
-      contentLayer.removeEventListener('transitionend', apply);
+      window.removeEventListener("resize", apply);
+      sidebar.removeEventListener("transitionstart", apply);
+      sidebar.removeEventListener("transitionrun", apply);
+      sidebar.removeEventListener("transitionend", apply);
+      contentLayer.removeEventListener("transitionstart", apply);
+      contentLayer.removeEventListener("transitionrun", apply);
+      contentLayer.removeEventListener("transitionend", apply);
     };
   }, [isSidebarCollapsed]);
 
@@ -222,9 +284,12 @@ const PatientProfile = () => {
   const [pendingFeatureToOpen, setPendingFeatureToOpen] = useState(null); // 'decision' | 'chatbot'
   const [availablePlans, setAvailablePlans] = useState([]);
 
-
-  //  Add-note API state 
-  const [keyInfoOverride, setKeyInfoOverride] = useState({ high: [], medium: [], low: [] });
+  //  Add-note API state
+  const [keyInfoOverride, setKeyInfoOverride] = useState({
+    high: [],
+    medium: [],
+    low: [],
+  });
   const [addNoteToast, setAddNoteToast] = useState(null); // null | error string
   const [savingNoteId, setSavingNoteId] = useState(null); // tracks which new note is being saved
   const [editSavingId, setEditSavingId] = useState(null); // tracks which existing note edit is being saved
@@ -233,7 +298,6 @@ const PatientProfile = () => {
 
   // Tracks whether we've already seeded keyInfo from navigation state
   const [keyInfoSeeded, setKeyInfoSeeded] = useState(false);
-
 
   // ── Key info fetched from backend (View Details path) ──
   const [keyInfo, setKeyInfo] = useState(null);
@@ -313,7 +377,7 @@ const PatientProfile = () => {
     if (isStatusUpdating || newStatus === selectedStatus) return;
 
     const prevStatus = selectedStatus;
-    setSelectedStatus(newStatus);        // optimistic update
+    setSelectedStatus(newStatus); // optimistic update
     setIsStatusUpdating(true);
 
     try {
@@ -321,21 +385,26 @@ const PatientProfile = () => {
       if (res && res.success) {
         // Confirm with backend's canonical value (normalised)
         const confirmed = (res.data?.status || newStatus)
-          .toLowerCase().trim().replace(/_/g, " ");
-        const valid = ["stable", "critical", "under review"].includes(confirmed);
+          .toLowerCase()
+          .trim()
+          .replace(/_/g, " ");
+        const valid = ["stable", "critical", "under review"].includes(
+          confirmed,
+        );
         setSelectedStatus(valid ? confirmed : newStatus);
 
         // Notify PatientList of the change
         window.dispatchEvent(
           new CustomEvent("patientStatusUpdated", {
             detail: { patientId, status: valid ? confirmed : newStatus },
-          })
+          }),
         );
         // No success toast — the active badge highlight is the visual feedback
       } else {
-        setSelectedStatus(prevStatus);   // rollback
+        setSelectedStatus(prevStatus); // rollback
         const isAuthError =
-          res?.message?.includes("401") || res?.message?.includes("403") ||
+          res?.message?.includes("401") ||
+          res?.message?.includes("403") ||
           res?.message?.toLowerCase().includes("unauthorized") ||
           res?.message?.toLowerCase().includes("forbidden");
         Swal.fire({
@@ -347,7 +416,7 @@ const PatientProfile = () => {
       }
     } catch (err) {
       console.error("[status] exception:", err);
-      setSelectedStatus(prevStatus);     // rollback
+      setSelectedStatus(prevStatus); // rollback
       Swal.fire({
         icon: "error",
         title: "Network Error",
@@ -474,7 +543,11 @@ const PatientProfile = () => {
           setOverviewData(patient);
 
           // Seed next visit date from overview if backend includes it
-          const nvd = patient?.next_visit_date || patient?.next_appointment_date || patient?.next_appointment || null;
+          const nvd =
+            patient?.next_visit_date ||
+            patient?.next_appointment_date ||
+            patient?.next_appointment ||
+            null;
           if (nvd) setNextVisitDate(nvd);
 
           // Sync status pill: normalize to "stable" | "critical" | "under review"
@@ -518,30 +591,37 @@ const PatientProfile = () => {
   useEffect(() => {
     const handleStripeMessage = (event) => {
       if (event.origin !== window.location.origin) return;
-      if (event.data?.type === 'STRIPE_SUCCESS') {
+      if (event.data?.type === "STRIPE_SUCCESS") {
         console.log("[PatientProfile] Stripe success received.");
         // 1. Show toast with real backend notification content first
         fetchAndToastLatest();
         // 2. Refresh credits + subscription data in parallel
         refreshSubscriptionCtx();
-        if (pendingFeatureToOpen === 'decision') fetchDecisionSupport();
+        if (pendingFeatureToOpen === "decision") fetchDecisionSupport();
         // Chatbot state handles itself via shouldShowLockedChatbot
         setIsUpgrading(false);
         setIsUpgradeConfirmOpen(false);
       }
     };
-    window.addEventListener('message', handleStripeMessage);
-    return () => window.removeEventListener('message', handleStripeMessage);
+    window.addEventListener("message", handleStripeMessage);
+    return () => window.removeEventListener("message", handleStripeMessage);
   }, [refreshSubscriptionCtx, fetchAndToastLatest, pendingFeatureToOpen]);
 
   const initiateUpgrade = (planName, targetType, feature) => {
     let target = null;
-    if (targetType === 'ppu') {
-      target = { id: 'Pay-per-use', name: 'Pay-Per-Use', type: 'ppu' };
+    if (targetType === "ppu") {
+      target = { id: "Pay-per-use", name: "Pay-Per-Use", type: "ppu" };
     } else {
-      const plan = availablePlans.find(p => p.name.toLowerCase() === planName.toLowerCase());
+      const plan = availablePlans.find(
+        (p) => p.name.toLowerCase() === planName.toLowerCase(),
+      );
       if (plan) {
-        target = { id: plan.id, name: plan.name, type: 'recurring', price: plan.price };
+        target = {
+          id: plan.id,
+          name: plan.name,
+          type: "recurring",
+          price: plan.price,
+        };
       }
     }
 
@@ -558,21 +638,29 @@ const PatientProfile = () => {
 
     try {
       // 1. Cancel existing recurring subscription if upgrading to another recurring plan
-      if (subscriptionData?.billing_mode === 'subscription' && upgradeTarget.type === 'recurring') {
+      if (
+        subscriptionData?.billing_mode === "subscription" &&
+        upgradeTarget.type === "recurring"
+      ) {
         console.log("[Upgrade] Cancelling current subscription first...");
         await cancelSubscriptionAPI();
       }
 
       // 2. Subscribe to new plan
       let res;
-      if (upgradeTarget.type === 'ppu') {
+      if (upgradeTarget.type === "ppu") {
         res = await subscribeToPayPerUseAPI();
       } else {
         res = await subscribeToPlanAPI(upgradeTarget.id);
       }
 
       if (res && res.success) {
-        const paymentUrl = res.payment_url || res.checkout_url || res.url || (res.data && (res.data.payment_url || res.data.checkout_url || res.data.url));
+        const paymentUrl =
+          res.payment_url ||
+          res.checkout_url ||
+          res.url ||
+          (res.data &&
+            (res.data.payment_url || res.data.checkout_url || res.data.url));
         if (paymentUrl) {
           window.open(paymentUrl, "stripe_checkout", "width=600,height=700");
           // loading remains true until stripe message or manual close
@@ -583,7 +671,7 @@ const PatientProfile = () => {
           // and refresh unread count in one shot.
           fetchAndToastLatest();
 
-          if (pendingFeatureToOpen === 'decision') {
+          if (pendingFeatureToOpen === "decision") {
             await fetchDecisionSupport();
           }
 
@@ -635,13 +723,21 @@ const PatientProfile = () => {
     }
 
     try {
-      const res = await addPatientKeyInfoNoteAPI(patientId, { insight, priority });
+      const res = await addPatientKeyInfoNoteAPI(patientId, {
+        insight,
+        priority,
+      });
       console.log("[add-note] response:", res);
 
       if (res && res.success) {
         // Backend may return { data: { id, ... } } or { data: { data: { id, ... } } }
         const newNote = res.data?.data ?? res.data;
-        console.log("[add-note] note saved — id:", newNote?.id, "| full note:", newNote);
+        console.log(
+          "[add-note] note saved — id:",
+          newNote?.id,
+          "| full note:",
+          newNote,
+        );
 
         // Append to override – effectiveKeyInfo merges baseKeyInfo + keyInfoOverride,
         // so a single insert here is enough for both Add Patient and View Details flows.
@@ -713,7 +809,8 @@ const PatientProfile = () => {
     console.log("Saving note:", id, "with text:", newText);
 
     // Detect if this is a backend-managed note (numeric id) vs a static/hardcoded note
-    const isBackendNote = typeof id === "number" || (typeof id === "string" && /^\d+$/.test(id));
+    const isBackendNote =
+      typeof id === "number" || (typeof id === "string" && /^\d+$/.test(id));
 
     if (isBackendNote) {
       // ── PATCH /api/key-points/{id} ──
@@ -729,7 +826,9 @@ const PatientProfile = () => {
           // Helper: update insight by id in a priority array
           const updateById = (arr) =>
             (arr || []).map((item) =>
-              String(item.id) === String(id) ? { ...item, insight: updatedInsight } : item
+              String(item.id) === String(id)
+                ? { ...item, insight: updatedInsight }
+                : item,
             );
 
           // Update keyInfo (base fetched data)
@@ -798,7 +897,11 @@ const PatientProfile = () => {
 
   // ── Open Evidence Panel with alert-specific data ──
   const openEvidencePanel = (alertObj) => {
-    console.log("[ViewEvidence] Click triggered. Target alert:", alertObj?.id, alertObj?.title);
+    console.log(
+      "[ViewEvidence] Click triggered. Target alert:",
+      alertObj?.id,
+      alertObj?.title,
+    );
     console.log("[ViewEvidence] Extracted evidence:", alertObj?.evidence);
     console.log("[ViewEvidence] Source file to pass:", sourceFile);
 
@@ -848,7 +951,8 @@ const PatientProfile = () => {
   }, [patientId]);
 
   // ── Fetch Decision Support from backend (Includes Legacy Auto-Generation Flow) ──
-  const [isGeneratingDecisionSupport, setIsGeneratingDecisionSupport] = useState(false);
+  const [isGeneratingDecisionSupport, setIsGeneratingDecisionSupport] =
+    useState(false);
   const hasTriggeredDecisionSupportGeneration = useRef(false);
 
   const fetchDecisionSupport = async () => {
@@ -864,7 +968,9 @@ const PatientProfile = () => {
       // 1) First call the normal Decision Support endpoint directly
       let dsRes = await getDecisionSupportAPI(patientId);
 
-      const is401 = dsRes?.message?.toLowerCase().includes("unauthenticated") || dsRes?.message?.includes("401");
+      const is401 =
+        dsRes?.message?.toLowerCase().includes("unauthenticated") ||
+        dsRes?.message?.includes("401");
       if (is401) {
         setDecisionSupportError("401");
         setDecisionSupportLoading(false);
@@ -907,7 +1013,10 @@ const PatientProfile = () => {
 
       // 2) Call: GET /api/patients/{patientId} ("Get Pre-Filled Patient Data for Editing")
       const fetchRes = await getPatientForEditAPI(patientId);
-      if (!fetchRes?.success) throw new Error(fetchRes?.message || "Failed to fetch patient data for generation");
+      if (!fetchRes?.success)
+        throw new Error(
+          fetchRes?.message || "Failed to fetch patient data for generation",
+        );
 
       const d = fetchRes.data;
       const pi = d?.personal_info || {};
@@ -925,12 +1034,21 @@ const PatientProfile = () => {
       if (pi.national_id) apiFormData.append("national_id", pi.national_id);
 
       apiFormData.append("is_smoker", mh.is_smoker ? "1" : "0");
-      apiFormData.append("previous_surgeries", mh.previous_surgeries ? "1" : "0");
+      apiFormData.append(
+        "previous_surgeries",
+        mh.previous_surgeries ? "1" : "0",
+      );
       if (mh.previous_surgeries) {
-        apiFormData.append("previous_surgeries_name", mh.previous_surgeries_name || "");
+        apiFormData.append(
+          "previous_surgeries_name",
+          mh.previous_surgeries_name || "",
+        );
       }
 
-      if (Array.isArray(mh.chronic_diseases) && mh.chronic_diseases.length > 0) {
+      if (
+        Array.isArray(mh.chronic_diseases) &&
+        mh.chronic_diseases.length > 0
+      ) {
         mh.chronic_diseases.forEach((disease) => {
           apiFormData.append("chronic_diseases[]", disease);
         });
@@ -946,15 +1064,24 @@ const PatientProfile = () => {
         apiFormData.append("ai_summary", mh.ai_summary || d.ai_summary);
       }
       if (mh.smart_summary || d.smart_summary) {
-        apiFormData.append("smart_summary", mh.smart_summary || d.smart_summary);
+        apiFormData.append(
+          "smart_summary",
+          mh.smart_summary || d.smart_summary,
+        );
       }
       if (mh.key_points || d.key_points) {
         const kp = mh.key_points || d.key_points;
-        apiFormData.append("key_points", typeof kp === 'string' ? kp : JSON.stringify(kp));
+        apiFormData.append(
+          "key_points",
+          typeof kp === "string" ? kp : JSON.stringify(kp),
+        );
       }
       if (mh.key_important_information || d.key_important_information) {
         const ki = mh.key_important_information || d.key_important_information;
-        apiFormData.append("key_important_information", typeof ki === 'string' ? ki : JSON.stringify(ki));
+        apiFormData.append(
+          "key_important_information",
+          typeof ki === "string" ? ki : JSON.stringify(ki),
+        );
       }
 
       // 4) Call: PUT /api/patients/{patientId} ("Update Patient Data")
@@ -968,7 +1095,12 @@ const PatientProfile = () => {
       while (attempts < maxAttempts) {
         attempts++;
         const retryRes = await getDecisionSupportAPI(patientId);
-        if (retryRes && retryRes.success && Array.isArray(retryRes.data) && retryRes.data.length > 0) {
+        if (
+          retryRes &&
+          retryRes.success &&
+          Array.isArray(retryRes.data) &&
+          retryRes.data.length > 0
+        ) {
           finalDataArr = retryRes.data;
           break; // Data has successfully hydrated!
         }
@@ -978,7 +1110,6 @@ const PatientProfile = () => {
 
       setDecisionSupport(finalDataArr);
       setDecisionSupportLoadedFor(patientId);
-
     } catch (err) {
       console.error("[decision-support-flow] exception:", err);
       setDecisionSupportError("Network error or generation failed.");
@@ -1022,7 +1153,9 @@ const PatientProfile = () => {
         setComparativeData(Array.isArray(res.data) ? res.data : []);
         setComparativeLoadedFor(patientId);
       } else {
-        setComparativeError(res?.message || "Failed to load comparative analysis.");
+        setComparativeError(
+          res?.message || "Failed to load comparative analysis.",
+        );
       }
     } catch (err) {
       console.error("[comparative-analysis] exception:", err);
@@ -1036,13 +1169,25 @@ const PatientProfile = () => {
     setActiveTab(tabId);
     setVisitedTabs((prev) => ({ ...prev, [tabId]: true }));
     window.scrollTo({ top: 0, behavior: "smooth" });
-    if (tabId === "decision" && patientId && decisionSupportLoadedFor !== patientId) {
+    if (
+      tabId === "decision" &&
+      patientId &&
+      decisionSupportLoadedFor !== patientId
+    ) {
       fetchDecisionSupport();
     }
-    if (tabId === "activity" && patientId && activitiesLoadedFor !== patientId) {
+    if (
+      tabId === "activity" &&
+      patientId &&
+      activitiesLoadedFor !== patientId
+    ) {
       fetchActivities();
     }
-    if (tabId === "comparative" && patientId && comparativeLoadedFor !== patientId) {
+    if (
+      tabId === "comparative" &&
+      patientId &&
+      comparativeLoadedFor !== patientId
+    ) {
       fetchComparativeAnalysis();
     }
   };
@@ -1108,8 +1253,7 @@ const PatientProfile = () => {
     chatChannelRef.current = channelName;
 
     echo.private(channelName).listen(".ChatbotAnswerReady", (payload) => {
-      const answer =
-        payload?.answer || payload?.data || payload?.message || "";
+      const answer = payload?.answer || payload?.data || payload?.message || "";
       const isFailed =
         !answer ||
         answer.toLowerCase().includes("fail") ||
@@ -1190,22 +1334,25 @@ const PatientProfile = () => {
   const isPayPerUse = subscriptionData?.billing_mode === "pay_per_use";
   const planNameLower = (subscriptionData?.plan_name || "").toLowerCase();
 
-  const canGenerateDecisionSupportNow =
-    Boolean(isPayPerUse || ["pro", "premium"].includes(planNameLower));
+  const canGenerateDecisionSupportNow = Boolean(
+    isPayPerUse || ["pro", "premium"].includes(planNameLower),
+  );
   const hasExistingDecisionSupportData = Boolean(
-    Array.isArray(decisionSupport) && decisionSupport.length > 0
+    Array.isArray(decisionSupport) && decisionSupport.length > 0,
   );
 
   const canAccessDecisionSupportNow = canGenerateDecisionSupportNow;
 
   // We determine final locked behavior dynamically within JSX:
-  const shouldShowLockedDecisionSupport = !hasExistingDecisionSupportData && !canAccessDecisionSupportNow;
+  const shouldShowLockedDecisionSupport =
+    !hasExistingDecisionSupportData && !canAccessDecisionSupportNow;
 
   const canUseChatbotNow = Boolean(isPayPerUse || planNameLower === "premium");
   const hasExistingChatbotAccessOrData = Boolean(
-    Array.isArray(chatMessages) && chatMessages.length > 1
+    Array.isArray(chatMessages) && chatMessages.length > 1,
   );
-  const shouldShowLockedChatbot = !hasExistingChatbotAccessOrData && !canUseChatbotNow;
+  const shouldShowLockedChatbot =
+    !hasExistingChatbotAccessOrData && !canUseChatbotNow;
 
   const openLogoutModal = () => setIsLogoutModalOpen(true);
   const closeLogoutModal = () => setIsLogoutModalOpen(false);
@@ -1410,12 +1557,24 @@ const PatientProfile = () => {
         onClose={() => !isUpgrading && setIsUpgradeConfirmOpen(false)}
         onConfirm={handleUpgradeConfirm}
         title="Confirm Plan Change"
-        description={isUpgrading ? "Processing your request..." : `Are you sure you want to switch to the ${upgradeTarget?.name} plan?`}
+        description={
+          isUpgrading
+            ? "Processing your request..."
+            : `Are you sure you want to switch to the ${upgradeTarget?.name} plan?`
+        }
         confirmText={isUpgrading ? "Processing..." : "Confirm & Subscribe"}
         cancelText="Maybe Later"
         variant="primary"
         icon={
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '24px', height: '24px' }}>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ width: "24px", height: "24px" }}
+          >
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
           </svg>
         }
@@ -1428,7 +1587,8 @@ const PatientProfile = () => {
           position: "relative",
           zIndex: "1",
           marginLeft: isSidebarCollapsed ? "72px" : "240px",
-          marginTop: "64px",
+          marginTop: "0px",
+          paddingTop: "64px",
           minHeight: "calc(100vh - 64px)",
           transition: "margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
         }}
@@ -1436,27 +1596,41 @@ const PatientProfile = () => {
         <header ref={headerRef} className="patient-header pp-header">
           <div className="patient-identity">
             <div className="patient-main-info">
-              <div className={`patient-avatar ${overviewLoading ? 'preview-shimmer' : ''}`} style={{ borderRadius: "50%" }}>
-                {overviewLoading ? "NH" : (overviewData?.patientName
-                  ? overviewData.patientName
-                    .split(" ")
-                    .filter(Boolean)
-                    .slice(0, 2)
-                    .map((w) => w[0])
-                    .join("")
-                    .toUpperCase()
-                  : "NH")}
+              <div
+                className={`patient-avatar ${overviewLoading ? "preview-shimmer" : ""}`}
+                style={{ borderRadius: "50%" }}
+              >
+                {overviewLoading
+                  ? "NH"
+                  : overviewData?.patientName
+                    ? overviewData.patientName
+                        .split(" ")
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map((w) => w[0])
+                        .join("")
+                        .toUpperCase()
+                    : "NH"}
               </div>
               <div className="patient-details" style={{ marginBottom: "0px" }}>
                 <h1>
-                  {overviewLoading
-                    ? <span className="preview-shimmer">Nada Hassan</span>
-                    : (overviewData?.patientName ?? "N/A")}
+                  {overviewLoading ? (
+                    <span className="preview-shimmer">Nada Hassan</span>
+                  ) : (
+                    (overviewData?.patientName ?? "N/A")
+                  )}
                 </h1>
                 <p className="patient-meta">
-                  {overviewLoading
-                    ? <span className="preview-shimmer" style={{ display: 'inline-block', marginTop: '4px' }}>Dr. Tarek Ahmed / National ID: #30410116471075</span>
-                    : `${overviewData?.doctorName ? `Dr. ${overviewData.doctorName}` : "N/A"} / National ID: ${overviewData?.patientId ?? "N/A"}`}
+                  {overviewLoading ? (
+                    <span
+                      className="preview-shimmer"
+                      style={{ display: "inline-block", marginTop: "4px" }}
+                    >
+                      Dr. Tarek Ahmed / National ID: #30410116471075
+                    </span>
+                  ) : (
+                    `${overviewData?.doctorName ? `Dr. ${overviewData.doctorName}` : "N/A"} / National ID: ${overviewData?.patientId ?? "N/A"}`
+                  )}
                 </p>
               </div>
             </div>
@@ -1484,56 +1658,99 @@ const PatientProfile = () => {
               >
                 Edit File
               </button>
-
             </div>
           </div>
         </header>
 
-
-
         <div className="container">
-          <nav className="tab-nav">
-            <button
-              className={`tab-btn ${activeTab === "overview" ? "active" : ""}`}
-              onClick={() => handleTabClick("overview")}
+          <div className="tab-nav-wrapper">
+            {/* {showBack && (
+              <button
+                className="tab-scroll-btn"
+                onClick={() => scrollTabs("back")}
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+            )} */}
+
+            <nav
+              className="tab-nav"
+              ref={tabNavRef}
+              onScroll={checkScrollButtons}
             >
-              Overview
-            </button>
-            <button
-              className={`tab-btn ${activeTab === "keyinfo" ? "active" : ""}`}
-              onClick={() => handleTabClick("keyinfo")}
-            >
-              Key Important Info
-            </button>
-            <button
-              className={`tab-btn ${activeTab === "comparative" ? "active" : ""
-                }`}
-              onClick={() => handleTabClick("comparative")}
-            >
-              Comparative Analysis
-            </button>
-            <button
-              className={`tab-btn ${activeTab === "decision" ? "active" : ""}`}
-              onClick={() => handleTabClick("decision")}
-            >
-              Decision Support
-            </button>
-            <button
-              className={`tab-btn ${activeTab === "medications-tasks" ? "active" : ""}`}
-              onClick={() => handleTabClick("medications-tasks")}
-            >
-              Medications & Tasks
-            </button>
-            <button
-              className={`tab-btn ${activeTab === "activity" ? "active" : ""}`}
-              onClick={() => handleTabClick("activity")}
-            >
-              Activity Log
-            </button>
-          </nav>
+              <button
+                className={`tab-btn ${activeTab === "overview" ? "active" : ""}`}
+                onClick={() => handleTabClick("overview")}
+              >
+                Overview
+              </button>
+              <button
+                className={`tab-btn ${activeTab === "keyinfo" ? "active" : ""}`}
+                onClick={() => handleTabClick("keyinfo")}
+              >
+                Key Important Info
+              </button>
+              <button
+                className={`tab-btn ${activeTab === "comparative" ? "active" : ""}`}
+                onClick={() => handleTabClick("comparative")}
+              >
+                Comparative Analysis
+              </button>
+              <button
+                className={`tab-btn ${activeTab === "decision" ? "active" : ""}`}
+                onClick={() => handleTabClick("decision")}
+              >
+                Decision Support
+              </button>
+              <button
+                className={`tab-btn ${activeTab === "medications-tasks" ? "active" : ""}`}
+                onClick={() => handleTabClick("medications-tasks")}
+              >
+                Medications & Tasks
+              </button>
+              <button
+                className={`tab-btn ${activeTab === "activity" ? "active" : ""}`}
+                onClick={() => handleTabClick("activity")}
+              >
+                Activity Log
+              </button>
+            </nav>
+
+            {/* {showNext && (
+              <button
+                className="tab-scroll-btn"
+                onClick={() => scrollTabs("next")}
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+            )} */}
+          </div>
           <div
-            className={`tab-content ${activeTab === "overview" ? "active" : ""
-              }`}
+            className={`tab-content ${
+              activeTab === "overview" ? "active" : ""
+            }`}
             id="overview"
           >
             <div className="overview-layout">
@@ -1545,10 +1762,16 @@ const PatientProfile = () => {
                   </h2>
                   <div className="ai-insight">
                     {overviewLoading ? (
-                      <div className="preview-shimmer" style={{ marginTop: '12px' }}>
-                        <strong>AI Summary:</strong> The patient presents with a history of autoimmune symptoms including joint pain and chronic inflammation.
-                        Recent laboratory tests indicate elevated inflammatory markers suggestive of an active flare-up.
-                        Recommended immediate review of immunosuppressive therapy dosage.
+                      <div
+                        className="preview-shimmer"
+                        style={{ marginTop: "12px" }}
+                      >
+                        <strong>AI Summary:</strong> The patient presents with a
+                        history of autoimmune symptoms including joint pain and
+                        chronic inflammation. Recent laboratory tests indicate
+                        elevated inflammatory markers suggestive of an active
+                        flare-up. Recommended immediate review of
+                        immunosuppressive therapy dosage.
                       </div>
                     ) : (
                       <>
@@ -1583,9 +1806,8 @@ const PatientProfile = () => {
                     </h3>
                     <div className="status-buttons-group">
                       <span
-                        className={`status-badge stable ${selectedStatus === "stable" ? "active" : "inactive"}`}
+                        className={`status-badge stable ${selectedStatus === "stable" ? "active" : "inactive"} ${isStatusUpdating ? "disabled" : ""}`}
                         onClick={() => handleStatusChange("stable")}
-                        style={{ cursor: isStatusUpdating ? "not-allowed" : "pointer" }}
                       >
                         <span
                           className="status-dot"
@@ -1600,7 +1822,9 @@ const PatientProfile = () => {
                       <span
                         className={`status-badge critical ${selectedStatus === "critical" ? "active" : "inactive"}`}
                         onClick={() => handleStatusChange("critical")}
-                        style={{ cursor: isStatusUpdating ? "not-allowed" : "pointer" }}
+                        style={{
+                          cursor: isStatusUpdating ? "not-allowed" : "pointer",
+                        }}
                       >
                         <span
                           className="status-dot"
@@ -1615,7 +1839,9 @@ const PatientProfile = () => {
                       <span
                         className={`status-badge warning ${selectedStatus === "under review" ? "active" : "inactive"}`}
                         onClick={() => handleStatusChange("under review")}
-                        style={{ cursor: isStatusUpdating ? "not-allowed" : "pointer" }}
+                        style={{
+                          cursor: isStatusUpdating ? "not-allowed" : "pointer",
+                        }}
                       >
                         <span
                           className="status-dot"
@@ -1636,10 +1862,32 @@ const PatientProfile = () => {
                         <div className="info-item age-smoker-split">
                           {/* Mini-field A: Age */}
                           <div className="mini-field">
-                            <div className="preview-shimmer" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div
+                              className="preview-shimmer"
+                              style={{
+                                width: "100%",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "8px",
+                              }}
+                            >
                               <div className="info-label">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <svg
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                >
+                                  <rect
+                                    x="3"
+                                    y="4"
+                                    width="18"
+                                    height="18"
+                                    rx="2"
+                                    ry="2"
+                                  ></rect>
                                   <line x1="16" y1="2" x2="16" y2="6"></line>
                                   <line x1="8" y1="2" x2="8" y2="6"></line>
                                 </svg>
@@ -1651,9 +1899,24 @@ const PatientProfile = () => {
 
                           {/* Mini-field B: Smoker */}
                           <div className="mini-field">
-                            <div className="preview-shimmer" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div
+                              className="preview-shimmer"
+                              style={{
+                                width: "100%",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "8px",
+                              }}
+                            >
                               <div className="info-label">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <svg
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                >
                                   <circle cx="12" cy="12" r="10"></circle>
                                   <line x1="12" y1="8" x2="12" y2="12"></line>
                                   <circle cx="12" cy="16" r="1"></circle>
@@ -1667,23 +1930,55 @@ const PatientProfile = () => {
 
                         {/* Row 1 / Col 2 */}
                         <div className="info-item">
-                          <div className="preview-shimmer" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div
+                            className="preview-shimmer"
+                            style={{
+                              width: "100%",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "8px",
+                            }}
+                          >
                             <div className="info-label">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <svg
+                                width="12"
+                                height="12"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                 <circle cx="12" cy="7" r="4"></circle>
                               </svg>
                               Chronic Disease
                             </div>
-                            <div className="info-value">Exercise-induced Bronchospasm</div>
+                            <div className="info-value">
+                              Exercise-induced Bronchospasm
+                            </div>
                           </div>
                         </div>
 
                         {/* Row 2 / Col 1 */}
                         <div className="info-item">
-                          <div className="preview-shimmer" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div
+                            className="preview-shimmer"
+                            style={{
+                              width: "100%",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "8px",
+                            }}
+                          >
                             <div className="info-label">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <svg
+                                width="12"
+                                height="12"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                 <polyline points="14 2 14 8 20 8"></polyline>
                                 <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -1692,31 +1987,72 @@ const PatientProfile = () => {
                               </svg>
                               Previous Surgeries
                             </div>
-                            <div className="info-value">Left ankle arthroscopy (2023)</div>
+                            <div className="info-value">
+                              Left ankle arthroscopy (2023)
+                            </div>
                           </div>
                         </div>
 
                         {/* Row 2 / Col 2 */}
                         <div className="info-item pp-allergy-alert">
-                          <div className="preview-shimmer" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div
+                            className="preview-shimmer"
+                            style={{
+                              width: "100%",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "8px",
+                            }}
+                          >
                             <div className="info-label allergy-label">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <svg
+                                width="12"
+                                height="12"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
                                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
                                 <line x1="12" y1="9" x2="12" y2="13"></line>
                                 <line x1="12" y1="17" x2="12.01" y2="17"></line>
                               </svg>
                               Known Allergies
                             </div>
-                            <div className="info-value allergy-value">Penicillin</div>
+                            <div className="info-value allergy-value">
+                              Penicillin
+                            </div>
                           </div>
                         </div>
 
                         {/* Row 3 / Col 1 */}
                         <div className="info-item">
-                          <div className="preview-shimmer" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div
+                            className="preview-shimmer"
+                            style={{
+                              width: "100%",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "8px",
+                            }}
+                          >
                             <div className="info-label">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                              <svg
+                                width="12"
+                                height="12"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <rect
+                                  x="2"
+                                  y="7"
+                                  width="20"
+                                  height="14"
+                                  rx="2"
+                                  ry="2"
+                                ></rect>
                                 <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                               </svg>
                               Medications
@@ -1727,9 +2063,24 @@ const PatientProfile = () => {
 
                         {/* Row 3 / Col 2 */}
                         <div className="info-item">
-                          <div className="preview-shimmer" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div
+                            className="preview-shimmer"
+                            style={{
+                              width: "100%",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "8px",
+                            }}
+                          >
                             <div className="info-label">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <svg
+                                width="12"
+                                height="12"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
                                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                                 <circle cx="9" cy="7" r="4"></circle>
                                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -1737,7 +2088,9 @@ const PatientProfile = () => {
                               </svg>
                               Family Medical History
                             </div>
-                            <div className="info-value">History of early-onset osteoarthritis</div>
+                            <div className="info-value">
+                              History of early-onset osteoarthritis
+                            </div>
                           </div>
                         </div>
                       </>
@@ -1866,7 +2219,10 @@ const PatientProfile = () => {
                             Known Allergies
                           </div>
                           <div className="info-value allergy-value">
-                            {formatKeyInfo("allergies", overviewData?.allergies)}
+                            {formatKeyInfo(
+                              "allergies",
+                              overviewData?.allergies,
+                            )}
                           </div>
                         </div>
 
@@ -1953,171 +2309,147 @@ const PatientProfile = () => {
                   </button>
                 </div>
 
-                <div className={`note-list ${isLoadingAnalysis ? "note-list-loading" : "note-list-loaded"}`}>
-                  {isLoadingAnalysis
-                    ? (
-                      <div className="note-item high-priority">
-                        <div className="preview-shimmer" style={{ width: '100%', pointerEvents: 'none' }}>
+                <div
+                  className={`note-list ${isLoadingAnalysis ? "note-list-loading" : "note-list-loaded"}`}
+                >
+                  {isLoadingAnalysis ? (
+                    <div className="note-item high-priority">
+                      <div
+                        className="preview-shimmer"
+                        style={{ width: "100%", pointerEvents: "none" }}
+                      >
+                        <div className="pp-note-actions">
+                          <button className="pp-note-edit-btn" title="Edit">
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                          </button>
+                        </div>
+                        <div className="note-text">
+                          <strong>Lymphadenopathy:</strong> Patient's
+                          lymphadenopathy and night sweats may indicate a more
+                          severe condition such as B-Cell Lymphoma.
+                        </div>
+                        <div className="note-footer">
+                          <div className="note-meta-stack">
+                            <span className="note-date">
+                              AI Generated • Apr 15, 2026
+                            </span>
+                            <button
+                              className="pp-evidence-icon-btn"
+                              title="View Evidence"
+                            >
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line
+                                  x1="21"
+                                  y1="21"
+                                  x2="16.65"
+                                  y2="16.65"
+                                ></line>
+                              </svg>
+                              View Evidence
+                            </button>
+                          </div>
+                          <button className="pp-note-delete-btn" title="Delete">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M3 6h18" />
+                              <path d="M8 6V4h8v2" />
+                              <path d="M19 6l-1 14H6L5 6" />
+                              <path d="M10 11v6" />
+                              <path d="M14 11v6" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : highAlerts?.length > 0 ? (
+                    // عرض البيانات الحقيقية من الـ API
+                    highAlerts.map((alertObj) => {
+                      const noteId = alertObj.id;
+                      const alertInsight = alertObj.insight;
+                      const isManualNote = alertObj.is_manual === "Doctor Note";
+                      const alertTitle = alertObj.title || alertObj.is_manual;
+
+                      return (
+                        <div className="note-item high-priority" key={noteId}>
                           <div className="pp-note-actions">
-                            <button className="pp-note-edit-btn" title="Edit">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <button
+                              className="pp-note-edit-btn"
+                              onClick={() =>
+                                startEditNote(noteId, alertInsight)
+                              }
+                              title="Edit"
+                            >
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                               </svg>
                             </button>
                           </div>
-                          <div className="note-text">
-                            <strong>Lymphadenopathy:</strong> Patient's lymphadenopathy and night sweats may indicate a more severe condition such as B-Cell Lymphoma.
-                          </div>
-                          <div className="note-footer">
-                            <div className="note-meta-stack">
-                              <span className="note-date">AI Generated • Apr 15, 2026</span>
-                              <button className="pp-evidence-icon-btn" title="View Evidence">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                  <circle cx="11" cy="11" r="8"></circle>
-                                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                                </svg>
-                                View Evidence
-                              </button>
-                            </div>
-                            <button className="pp-note-delete-btn" title="Delete">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M3 6h18" />
-                                <path d="M8 6V4h8v2" />
-                                <path d="M19 6l-1 14H6L5 6" />
-                                <path d="M10 11v6" />
-                                <path d="M14 11v6" />
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                    : highAlerts?.length > 0
-                      ? // عرض البيانات الحقيقية من الـ API
-                      highAlerts.map((alertObj) => {
-                        const noteId = alertObj.id;
-                        const alertInsight = alertObj.insight;
-                        const isManualNote = alertObj.is_manual === "Doctor Note";
-                        const alertTitle =
-                          alertObj.title || alertObj.is_manual;
-
-                        return (
-                          <div
-                            className="note-item high-priority"
-                            key={noteId}
-                          >
-                            <div className="pp-note-actions">
-                              <button
-                                className="pp-note-edit-btn"
-                                onClick={() =>
-                                  startEditNote(noteId, alertInsight)
+                          {editingNoteId === noteId ? (
+                            <>
+                              <textarea
+                                className="pp-note-edit-textarea"
+                                value={editingNoteText}
+                                onChange={(e) =>
+                                  setEditingNoteText(e.target.value)
                                 }
-                                title="Edit"
-                              >
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                              </button>
-                            </div>
-                            {
-                              editingNoteId === noteId ? (
-                                <>
-                                  <textarea
-                                    className="pp-note-edit-textarea"
-                                    value={editingNoteText}
-                                    onChange={(e) =>
-                                      setEditingNoteText(e.target.value)
-                                    }
-                                    autoFocus
-                                  />
-                                  <div className="pp-edit-footer-row">
-                                    <div className="note-footer">
-                                      <div className="note-meta-stack">
-                                        <span className="note-date">
-                                          {!isManualNote && (<>{alertObj.is_manual} · </>)}
-                                          {alertObj.date}
-                                        </span>
-                                        {!isManualNote && (
-                                          <button
-                                            className="pp-evidence-icon-btn"
-                                            onClick={() => openEvidencePanel(alertObj)}
-                                            title="View Evidence"
-                                          >
-                                            <svg
-                                              width="14"
-                                              height="14"
-                                              viewBox="0 0 24 24"
-                                              fill="none"
-                                              stroke="currentColor"
-                                              strokeWidth="2.5"
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                            >
-                                              <circle
-                                                cx="11"
-                                                cy="11"
-                                                r="8"
-                                              ></circle>
-                                              <line
-                                                x1="21"
-                                                y1="21"
-                                                x2="16.65"
-                                                y2="16.65"
-                                              ></line>
-                                            </svg>
-                                            View Evidence
-                                          </button>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <div className="pp-note-save-row">
-                                      <button
-                                        className="pp-note-save-btn"
-                                        onClick={() =>
-                                          saveEditNote(noteId, editingNoteText)
-                                        }
-                                        disabled={editSavingId === noteId}
-                                      >
-                                        {editSavingId === noteId ? "Saving..." : "Save"}
-                                      </button>
-                                      <button
-                                        className="pp-note-cancel-btn"
-                                        onClick={cancelEditNote}
-                                      >
-                                        Cancel
-                                      </button>
-                                    </div>
-                                  </div>
-                                </>
-                              ) : (
-                                <div className="note-text">
-                                  {!isManualNote && <strong>{alertTitle}: </strong>} {alertInsight}
-                                </div>
-                              )
-                            }
-                            {
-                              editingNoteId !== noteId && (
+                                autoFocus
+                              />
+                              <div className="pp-edit-footer-row">
                                 <div className="note-footer">
                                   <div className="note-meta-stack">
                                     <span className="note-date">
-                                      {!isManualNote && (<>{alertObj.is_manual} · </>)}
+                                      {!isManualNote && (
+                                        <>{alertObj.is_manual} · </>
+                                      )}
                                       {alertObj.date}
                                     </span>
                                     {!isManualNote && (
                                       <button
                                         className="pp-evidence-icon-btn"
-                                        onClick={() => openEvidencePanel(alertObj)}
+                                        onClick={() =>
+                                          openEvidencePanel(alertObj)
+                                        }
                                         title="View Evidence"
                                       >
                                         <svg
@@ -2130,79 +2462,90 @@ const PatientProfile = () => {
                                           strokeLinecap="round"
                                           strokeLinejoin="round"
                                         >
-                                          <circle cx="11" cy="11" r="8"></circle>
-                                          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                          <circle
+                                            cx="11"
+                                            cy="11"
+                                            r="8"
+                                          ></circle>
+                                          <line
+                                            x1="21"
+                                            y1="21"
+                                            x2="16.65"
+                                            y2="16.65"
+                                          ></line>
                                         </svg>
                                         View Evidence
                                       </button>
                                     )}
                                   </div>
+                                </div>
+                                <div className="pp-note-save-row">
                                   <button
-                                    className="pp-note-delete-btn"
-                                    onClick={() => openDeleteAlertModal(noteId)}
-                                    title="Delete"
+                                    className="pp-note-save-btn"
+                                    onClick={() =>
+                                      saveEditNote(noteId, editingNoteText)
+                                    }
+                                    disabled={editSavingId === noteId}
+                                  >
+                                    {editSavingId === noteId
+                                      ? "Saving..."
+                                      : "Save"}
+                                  </button>
+                                  <button
+                                    className="pp-note-cancel-btn"
+                                    onClick={cancelEditNote}
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="note-text">
+                              {!isManualNote && <strong>{alertTitle}: </strong>}{" "}
+                              {alertInsight}
+                            </div>
+                          )}
+                          {editingNoteId !== noteId && (
+                            <div className="note-footer">
+                              <div className="note-meta-stack">
+                                <span className="note-date">
+                                  {!isManualNote && (
+                                    <>{alertObj.is_manual} · </>
+                                  )}
+                                  {alertObj.date}
+                                </span>
+                                {!isManualNote && (
+                                  <button
+                                    className="pp-evidence-icon-btn"
+                                    onClick={() => openEvidencePanel(alertObj)}
+                                    title="View Evidence"
                                   >
                                     <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="18"
-                                      height="18"
+                                      width="14"
+                                      height="14"
                                       viewBox="0 0 24 24"
                                       fill="none"
                                       stroke="currentColor"
-                                      strokeWidth="2"
+                                      strokeWidth="2.5"
                                       strokeLinecap="round"
                                       strokeLinejoin="round"
                                     >
-                                      <path d="M3 6h18" />
-                                      <path d="M8 6V4h8v2" />
-                                      <path d="M19 6l-1 14H6L5 6" />
-                                      <path d="M10 11v6" />
-                                      <path d="M14 11v6" />
+                                      <circle cx="11" cy="11" r="8"></circle>
+                                      <line
+                                        x1="21"
+                                        y1="21"
+                                        x2="16.65"
+                                        y2="16.65"
+                                      ></line>
                                     </svg>
+                                    View Evidence
                                   </button>
-                                </div>
-                              )
-                            }
-                          </div>
-                        );
-                      })
-                      : null}
-
-                  {/* Doctor-added new notes (الجزء الخاص بإضافة نوت جديدة يدوياً) */}
-                  {
-                    newNotes.high.map((note) => (
-                      <div className="note-item high-priority" key={note.id}>
-                        {note.saved ? (
-                          <>
-                            <div className="pp-note-actions">
-                              <button
-                                className="pp-note-edit-btn"
-                                onClick={() => startEditNewNote(note.id)}
-                                title="Edit"
-                              >
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                              </button>
-                            </div>
-                            <div className="note-text">{note.text}</div>
-                            <div className="note-footer">
-                              <div className="note-meta-stack">
-                                <span className="note-date">{note.date}</span>
+                                )}
                               </div>
                               <button
                                 className="pp-note-delete-btn"
-                                onClick={() => openDeleteAlertModal(note.id)}
+                                onClick={() => openDeleteAlertModal(noteId)}
                                 title="Delete"
                               >
                                 <svg
@@ -2224,56 +2567,118 @@ const PatientProfile = () => {
                                 </svg>
                               </button>
                             </div>
-                          </>
-                        ) : (
-                          <>
-                            <textarea
-                              className="pp-note-edit-textarea"
-                              value={newNoteTexts[note.id] || ""}
-                              onChange={(e) =>
-                                setNewNoteTexts((prev) => ({
-                                  ...prev,
-                                  [note.id]: e.target.value,
-                                }))
-                              }
-                              autoFocus
-                              placeholder="Type your note here..."
-                            />
-                            <div className="pp-edit-footer-row">
-                              <div className="note-footer">
-                                <div className="note-meta-stack">
-                                  <span className="note-date">
-                                    {new Date().toLocaleDateString("en-US", {
-                                      month: "short",
-                                      day: "numeric",
-                                      year: "numeric",
-                                    })}
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="pp-note-save-row">
-                                <button
-                                  className="pp-note-save-btn"
-                                  onClick={() => saveNewNote("high", note.id)}
-                                  disabled={savingNoteId === note.id}
-                                >
-                                  {savingNoteId === note.id ? "Saving..." : "Save"}
-                                </button>
-                                <button
-                                  className="pp-note-cancel-btn"
-                                  onClick={() => cancelNewNote("high", note.id)}
-                                >
-                                  Cancel
-                                </button>
+                          )}
+                        </div>
+                      );
+                    })
+                  ) : null}
+
+                  {/* Doctor-added new notes (الجزء الخاص بإضافة نوت جديدة يدوياً) */}
+                  {newNotes.high.map((note) => (
+                    <div className="note-item high-priority" key={note.id}>
+                      {note.saved ? (
+                        <>
+                          <div className="pp-note-actions">
+                            <button
+                              className="pp-note-edit-btn"
+                              onClick={() => startEditNewNote(note.id)}
+                              title="Edit"
+                            >
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                              </svg>
+                            </button>
+                          </div>
+                          <div className="note-text">{note.text}</div>
+                          <div className="note-footer">
+                            <div className="note-meta-stack">
+                              <span className="note-date">{note.date}</span>
+                            </div>
+                            <button
+                              className="pp-note-delete-btn"
+                              onClick={() => openDeleteAlertModal(note.id)}
+                              title="Delete"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4h8v2" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M10 11v6" />
+                                <path d="M14 11v6" />
+                              </svg>
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <textarea
+                            className="pp-note-edit-textarea"
+                            value={newNoteTexts[note.id] || ""}
+                            onChange={(e) =>
+                              setNewNoteTexts((prev) => ({
+                                ...prev,
+                                [note.id]: e.target.value,
+                              }))
+                            }
+                            autoFocus
+                            placeholder="Type your note here..."
+                          />
+                          <div className="pp-edit-footer-row">
+                            <div className="note-footer">
+                              <div className="note-meta-stack">
+                                <span className="note-date">
+                                  {new Date().toLocaleDateString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  })}
+                                </span>
                               </div>
                             </div>
-                          </>
-                        )}
-                      </div>
-                    ))
-                  }
-                </div >
-              </div >
+                            <div className="pp-note-save-row">
+                              <button
+                                className="pp-note-save-btn"
+                                onClick={() => saveNewNote("high", note.id)}
+                                disabled={savingNoteId === note.id}
+                              >
+                                {savingNoteId === note.id
+                                  ? "Saving..."
+                                  : "Save"}
+                              </button>
+                              <button
+                                className="pp-note-cancel-btn"
+                                onClick={() => cancelNewNote("high", note.id)}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               <div className="priority-card">
                 <div className="priority-header">
@@ -2289,259 +2694,250 @@ const PatientProfile = () => {
                   </button>
                 </div>
 
-                <div className={`note-list ${isLoadingAnalysis ? "note-list-loading" : "note-list-loaded"}`}>
-                  {isLoadingAnalysis
-                    ? (
-                      <div className="note-item medium-priority">
-                        <div className="preview-shimmer" style={{ width: '100%', pointerEvents: 'none' }}>
+                <div
+                  className={`note-list ${isLoadingAnalysis ? "note-list-loading" : "note-list-loaded"}`}
+                >
+                  {isLoadingAnalysis ? (
+                    <div className="note-item medium-priority">
+                      <div
+                        className="preview-shimmer"
+                        style={{ width: "100%", pointerEvents: "none" }}
+                      >
+                        <div className="pp-note-actions">
+                          <button className="pp-note-edit-btn" title="Edit">
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                          </button>
+                        </div>
+                        <div className="note-text">
+                          <strong>Rheumatoid Arthritis:</strong> Patient's joint
+                          pain and swelling are consistent with Rheumatoid
+                          Arthritis which requires ongoing management and
+                          treatment.
+                        </div>
+                        <div className="note-footer">
+                          <div className="note-meta-stack">
+                            <span className="note-date">
+                              AI Generated • Apr 15, 2026
+                            </span>
+                            <button
+                              className="pp-evidence-icon-btn"
+                              title="View Evidence"
+                            >
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line
+                                  x1="21"
+                                  y1="21"
+                                  x2="16.65"
+                                  y2="16.65"
+                                ></line>
+                              </svg>
+                              View Evidence
+                            </button>
+                          </div>
+                          <button className="pp-note-delete-btn" title="Delete">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M3 6h18" />
+                              <path d="M8 6V4h8v2" />
+                              <path d="M19 6l-1 14H6L5 6" />
+                              <path d="M10 11v6" />
+                              <path d="M14 11v6" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : mediumAlerts?.length > 0 ? (
+                    // عرض البيانات الحقيقية من السيرفر
+                    mediumAlerts.map((alertObj) => {
+                      const isManualNote = alertObj.is_manual === "Doctor Note";
+                      return (
+                        <div
+                          className="note-item medium-priority"
+                          key={alertObj.id}
+                        >
                           <div className="pp-note-actions">
-                            <button className="pp-note-edit-btn" title="Edit">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <button
+                              className="pp-note-edit-btn"
+                              onClick={() =>
+                                startEditNote(alertObj.id, alertObj.insight)
+                              }
+                              title="Edit"
+                            >
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                               </svg>
                             </button>
                           </div>
-                          <div className="note-text">
-                            <strong>Rheumatoid Arthritis:</strong> Patient's joint pain and swelling are consistent with Rheumatoid Arthritis which requires ongoing management and treatment.
-                          </div>
-                          <div className="note-footer">
-                            <div className="note-meta-stack">
-                              <span className="note-date">AI Generated • Apr 15, 2026</span>
-                              <button className="pp-evidence-icon-btn" title="View Evidence">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                  <circle cx="11" cy="11" r="8"></circle>
-                                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                                </svg>
-                                View Evidence
-                              </button>
-                            </div>
-                            <button className="pp-note-delete-btn" title="Delete">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M3 6h18" />
-                                <path d="M8 6V4h8v2" />
-                                <path d="M19 6l-1 14H6L5 6" />
-                                <path d="M10 11v6" />
-                                <path d="M14 11v6" />
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                    : mediumAlerts?.length > 0
-                      ? // عرض البيانات الحقيقية من السيرفر
-                      mediumAlerts.map((alertObj) => {
-                        const isManualNote = alertObj.is_manual === "Doctor Note";
-                        return (
-                          <div
-                            className="note-item medium-priority"
-                            key={alertObj.id}
-                          >
-                            <div className="pp-note-actions">
-                              <button
-                                className="pp-note-edit-btn"
-                                onClick={() =>
-                                  startEditNote(alertObj.id, alertObj.insight)
+                          {editingNoteId === alertObj.id ? (
+                            <>
+                              <textarea
+                                className="pp-note-edit-textarea"
+                                value={editingNoteText}
+                                onChange={(e) =>
+                                  setEditingNoteText(e.target.value)
                                 }
-                                title="Edit"
-                              >
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                              </button>
-                            </div>
-                            {editingNoteId === alertObj.id ? (
-                              <>
-                                <textarea
-                                  className="pp-note-edit-textarea"
-                                  value={editingNoteText}
-                                  onChange={(e) =>
-                                    setEditingNoteText(e.target.value)
-                                  }
-                                  autoFocus
-                                />
-                                <div className="pp-edit-footer-row">
-                                  <div className="note-footer">
-                                    <div className="note-meta-stack">
-                                      <span className="note-date">
-                                        {!isManualNote && (<>{alertObj.is_manual} · </>)}
-                                        {alertObj.date}
-                                      </span>
+                                autoFocus
+                              />
+                              <div className="pp-edit-footer-row">
+                                <div className="note-footer">
+                                  <div className="note-meta-stack">
+                                    <span className="note-date">
                                       {!isManualNote && (
-                                        <button
-                                          className="pp-evidence-icon-btn"
-                                          onClick={() => openEvidencePanel(alertObj)}
-                                          title="View Evidence"
-                                        >
-                                          <svg
-                                            width="14"
-                                            height="14"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth="2.5"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                          >
-                                            <circle
-                                              cx="11"
-                                              cy="11"
-                                              r="8"
-                                            ></circle>
-                                            <line
-                                              x1="21"
-                                              y1="21"
-                                              x2="16.65"
-                                              y2="16.65"
-                                            ></line>
-                                          </svg>
-                                          View Evidence
-                                        </button>
+                                        <>{alertObj.is_manual} · </>
                                       )}
-                                    </div>
-                                  </div>
-                                  <div className="pp-note-save-row">
-                                    <button
-                                      className="pp-note-save-btn"
-                                      onClick={() =>
-                                        saveEditNote(
-                                          alertObj.id,
-                                          editingNoteText,
-                                        )
-                                      }
-                                      disabled={editSavingId === alertObj.id}
-                                    >
-                                      {editSavingId === alertObj.id ? "Saving..." : "Save"}
-                                    </button>
-                                    <button
-                                      className="pp-note-cancel-btn"
-                                      onClick={cancelEditNote}
-                                    >
-                                      Cancel
-                                    </button>
-                                  </div>
-                                </div>
-                              </>
-                            ) : (
-                              <div className="note-text">
-                                {!isManualNote && <strong>
-                                  {alertObj.title || alertObj.is_manual}:
-                                </strong>}{" "}
-                                {alertObj.insight}
-                              </div>
-                            )}
-                            {editingNoteId !== alertObj.id && (
-                              <div className="note-footer">
-                                <div className="note-meta-stack">
-                                  <span className="note-date">
-                                    {!isManualNote && (<>{alertObj.is_manual} · </>)}
-                                    {alertObj.date}
-                                  </span>
-                                  {!isManualNote && (
-                                    <button
-                                      className="pp-evidence-icon-btn"
-                                      onClick={() => openEvidencePanel(alertObj)}
-                                      title="View Evidence"
-                                    >
-                                      <svg
-                                        width="14"
-                                        height="14"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2.5"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
+                                      {alertObj.date}
+                                    </span>
+                                    {!isManualNote && (
+                                      <button
+                                        className="pp-evidence-icon-btn"
+                                        onClick={() =>
+                                          openEvidencePanel(alertObj)
+                                        }
+                                        title="View Evidence"
                                       >
-                                        <circle cx="11" cy="11" r="8"></circle>
-                                        <line
-                                          x1="21"
-                                          y1="21"
-                                          x2="16.65"
-                                          y2="16.65"
-                                        ></line>
-                                      </svg>
-                                      View Evidence
-                                    </button>
-                                  )}
+                                        <svg
+                                          width="14"
+                                          height="14"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth="2.5"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        >
+                                          <circle
+                                            cx="11"
+                                            cy="11"
+                                            r="8"
+                                          ></circle>
+                                          <line
+                                            x1="21"
+                                            y1="21"
+                                            x2="16.65"
+                                            y2="16.65"
+                                          ></line>
+                                        </svg>
+                                        View Evidence
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
-
-                                <button
-                                  className="pp-note-delete-btn"
-                                  onClick={() =>
-                                    openDeleteAlertModal(alertObj.id)
-                                  }
-                                  title="Delete"
-                                >
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="18"
-                                    height="18"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
+                                <div className="pp-note-save-row">
+                                  <button
+                                    className="pp-note-save-btn"
+                                    onClick={() =>
+                                      saveEditNote(alertObj.id, editingNoteText)
+                                    }
+                                    disabled={editSavingId === alertObj.id}
                                   >
-                                    <path d="M3 6h18" />
-                                    <path d="M8 6V4h8v2" />
-                                    <path d="M19 6l-1 14H6L5 6" />
-                                    <path d="M10 11v6" />
-                                    <path d="M14 11v6" />
-                                  </svg>
-                                </button>
-                              </div >
-                            )}
-                          </div >
-                        );
-                      })
-                      : null}
-
-                  {/* ملاحظات الطبيب المضافة يدوياً */}
-                  {
-                    newNotes.medium.map((note) => (
-                      <div className="note-item medium-priority" key={note.id}>
-                        {note.saved ? (
-                          <>
-                            <div className="pp-note-actions">
-                              <button
-                                className="pp-note-edit-btn"
-                                onClick={() => startEditNewNote(note.id)}
-                                title="Edit"
-                              >
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                              </button>
+                                    {editSavingId === alertObj.id
+                                      ? "Saving..."
+                                      : "Save"}
+                                  </button>
+                                  <button
+                                    className="pp-note-cancel-btn"
+                                    onClick={cancelEditNote}
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="note-text">
+                              {!isManualNote && (
+                                <strong>
+                                  {alertObj.title || alertObj.is_manual}:
+                                </strong>
+                              )}{" "}
+                              {alertObj.insight}
                             </div>
-                            <div className="note-text">{note.text}</div>
+                          )}
+                          {editingNoteId !== alertObj.id && (
                             <div className="note-footer">
-                              <span className="note-date">{note.date}</span>
+                              <div className="note-meta-stack">
+                                <span className="note-date">
+                                  {!isManualNote && (
+                                    <>{alertObj.is_manual} · </>
+                                  )}
+                                  {alertObj.date}
+                                </span>
+                                {!isManualNote && (
+                                  <button
+                                    className="pp-evidence-icon-btn"
+                                    onClick={() => openEvidencePanel(alertObj)}
+                                    title="View Evidence"
+                                  >
+                                    <svg
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2.5"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <circle cx="11" cy="11" r="8"></circle>
+                                      <line
+                                        x1="21"
+                                        y1="21"
+                                        x2="16.65"
+                                        y2="16.65"
+                                      ></line>
+                                    </svg>
+                                    View Evidence
+                                  </button>
+                                )}
+                              </div>
+
                               <button
                                 className="pp-note-delete-btn"
-                                onClick={() => openDeleteAlertModal(note.id)}
+                                onClick={() =>
+                                  openDeleteAlertModal(alertObj.id)
+                                }
                                 title="Delete"
                               >
                                 <svg
@@ -2563,54 +2959,114 @@ const PatientProfile = () => {
                                 </svg>
                               </button>
                             </div>
-                          </>
-                        ) : (
-                          <>
-                            <textarea
-                              className="pp-note-edit-textarea"
-                              value={newNoteTexts[note.id] || ""}
-                              onChange={(e) =>
-                                setNewNoteTexts((prev) => ({
-                                  ...prev,
-                                  [note.id]: e.target.value,
-                                }))
-                              }
-                              autoFocus
-                              placeholder="Type your note here..."
-                            />
-                            <div className="pp-edit-footer-row">
-                              <div className="note-footer">
-                                <span className="note-date">
-                                  {new Date().toLocaleDateString("en-US", {
-                                    month: "short",
-                                    day: "numeric",
-                                    year: "numeric",
-                                  })}
-                                </span>
-                              </div>
-                              <div className="pp-note-save-row">
-                                <button
-                                  className="pp-note-save-btn"
-                                  onClick={() => saveNewNote("medium", note.id)}
-                                  disabled={savingNoteId === note.id}
-                                >
-                                  {savingNoteId === note.id ? "Saving..." : "Save"}
-                                </button>
-                                <button
-                                  className="pp-note-cancel-btn"
-                                  onClick={() => cancelNewNote("medium", note.id)}
-                                >
-                                  Cancel
-                                </button>
-                              </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  ) : null}
+
+                  {/* ملاحظات الطبيب المضافة يدوياً */}
+                  {newNotes.medium.map((note) => (
+                    <div className="note-item medium-priority" key={note.id}>
+                      {note.saved ? (
+                        <>
+                          <div className="pp-note-actions">
+                            <button
+                              className="pp-note-edit-btn"
+                              onClick={() => startEditNewNote(note.id)}
+                              title="Edit"
+                            >
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                              </svg>
+                            </button>
+                          </div>
+                          <div className="note-text">{note.text}</div>
+                          <div className="note-footer">
+                            <span className="note-date">{note.date}</span>
+                            <button
+                              className="pp-note-delete-btn"
+                              onClick={() => openDeleteAlertModal(note.id)}
+                              title="Delete"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4h8v2" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M10 11v6" />
+                                <path d="M14 11v6" />
+                              </svg>
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <textarea
+                            className="pp-note-edit-textarea"
+                            value={newNoteTexts[note.id] || ""}
+                            onChange={(e) =>
+                              setNewNoteTexts((prev) => ({
+                                ...prev,
+                                [note.id]: e.target.value,
+                              }))
+                            }
+                            autoFocus
+                            placeholder="Type your note here..."
+                          />
+                          <div className="pp-edit-footer-row">
+                            <div className="note-footer">
+                              <span className="note-date">
+                                {new Date().toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                })}
+                              </span>
                             </div>
-                          </>
-                        )}
-                      </div>
-                    ))
-                  }
-                </div >
-              </div >
+                            <div className="pp-note-save-row">
+                              <button
+                                className="pp-note-save-btn"
+                                onClick={() => saveNewNote("medium", note.id)}
+                                disabled={savingNoteId === note.id}
+                              >
+                                {savingNoteId === note.id
+                                  ? "Saving..."
+                                  : "Save"}
+                              </button>
+                              <button
+                                className="pp-note-cancel-btn"
+                                onClick={() => cancelNewNote("medium", note.id)}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               <div className="priority-card">
                 <div className="priority-header">
@@ -2626,233 +3082,208 @@ const PatientProfile = () => {
                   </button>
                 </div>
 
-                <div className={`note-list ${isLoadingAnalysis ? "note-list-loading" : "note-list-loaded"}`}>
-                  {isLoadingAnalysis
-                    ? (
-                      <div className="note-item low-priority">
-                        <div className="preview-shimmer" style={{ width: '100%', pointerEvents: 'none' }}>
+                <div
+                  className={`note-list ${isLoadingAnalysis ? "note-list-loading" : "note-list-loaded"}`}
+                >
+                  {isLoadingAnalysis ? (
+                    <div className="note-item low-priority">
+                      <div
+                        className="preview-shimmer"
+                        style={{ width: "100%", pointerEvents: "none" }}
+                      >
+                        <div className="pp-note-actions">
+                          <button className="pp-note-edit-btn" title="Edit">
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                          </button>
+                        </div>
+                        <div className="note-text">
+                          <strong>Note:</strong> Mild medication side effect
+                          observed. Monitor symptoms during follow-up visits.
+                        </div>
+                        <div className="note-footer">
+                          <div className="note-meta-stack">
+                            <span className="note-date">
+                              AI Generated • Apr 15, 2026
+                            </span>
+                            <button
+                              className="pp-evidence-icon-btn"
+                              title="View Evidence"
+                            >
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line
+                                  x1="21"
+                                  y1="21"
+                                  x2="16.65"
+                                  y2="16.65"
+                                ></line>
+                              </svg>
+                              View Evidence
+                            </button>
+                          </div>
+                          <button className="pp-note-delete-btn" title="Delete">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M3 6h18" />
+                              <path d="M8 6V4h8v2" />
+                              <path d="M19 6l-1 14H6L5 6" />
+                              <path d="M10 11v6" />
+                              <path d="M14 11v6" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : lowAlerts?.length > 0 ? (
+                    // عرض بيانات السيرفر لـ Low Priority
+                    lowAlerts.map((alertObj) => {
+                      const isManualNote = alertObj.is_manual === "Doctor Note";
+                      return (
+                        <div
+                          className="note-item low-priority"
+                          key={alertObj.id}
+                        >
                           <div className="pp-note-actions">
-                            <button className="pp-note-edit-btn" title="Edit">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <button
+                              className="pp-note-edit-btn"
+                              onClick={() =>
+                                startEditNote(alertObj.id, alertObj.insight)
+                              }
+                              title="Edit"
+                            >
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                               </svg>
                             </button>
                           </div>
-                          <div className="note-text">
-                            <strong>Note:</strong> Mild medication side effect observed. Monitor symptoms during follow-up visits.
-                          </div>
-                          <div className="note-footer">
-                            <div className="note-meta-stack">
-                              <span className="note-date">AI Generated • Apr 15, 2026</span>
-                              <button className="pp-evidence-icon-btn" title="View Evidence">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                  <circle cx="11" cy="11" r="8"></circle>
-                                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                                </svg>
-                                View Evidence
-                              </button>
-                            </div>
-                            <button className="pp-note-delete-btn" title="Delete">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M3 6h18" />
-                                <path d="M8 6V4h8v2" />
-                                <path d="M19 6l-1 14H6L5 6" />
-                                <path d="M10 11v6" />
-                                <path d="M14 11v6" />
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                    : lowAlerts?.length > 0
-                      ? // عرض بيانات السيرفر لـ Low Priority
-                      lowAlerts.map((alertObj) => {
-                        const isManualNote = alertObj.is_manual === "Doctor Note";
-                        return (
-                          <div
-                            className="note-item low-priority"
-                            key={alertObj.id}
-                          >
-                            <div className="pp-note-actions">
-                              <button
-                                className="pp-note-edit-btn"
-                                onClick={() =>
-                                  startEditNote(alertObj.id, alertObj.insight)
-                                }
-                                title="Edit"
-                              >
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                              </button>
-                            </div>
 
-                            {
-                              editingNoteId === alertObj.id ? (
-                                <>
-                                  <textarea
-                                    className="pp-note-edit-textarea"
-                                    value={editingNoteText}
-                                    onChange={(e) =>
-                                      setEditingNoteText(e.target.value)
-                                    }
-                                    autoFocus
-                                  />
-                                  <div className="pp-edit-footer-row">
-                                    <div className="note-footer">
-                                      <div className="note-meta-stack">
-                                        <span className="note-date">
-                                          {alertObj.date}
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <div className="pp-note-save-row">
-                                      <button
-                                        className="pp-note-save-btn"
-                                        onClick={() =>
-                                          saveEditNote(
-                                            alertObj.id,
-                                            editingNoteText,
-                                          )
-                                        }
-                                        disabled={editSavingId === alertObj.id}
-                                      >
-                                        {editSavingId === alertObj.id ? "Saving..." : "Save"}
-                                      </button>
-                                      <button
-                                        className="pp-note-cancel-btn"
-                                        onClick={cancelEditNote}
-                                      >
-                                        Cancel
-                                      </button>
-                                    </div>
-                                  </div>
-                                </>
-                              ) : (
-                                <div className="note-text">
-                                  {
-                                    !isManualNote && <strong>
-                                      {alertObj.title || "Minor Alert"}:
-                                    </strong>
-                                  } {" "}
-                                  {alertObj.insight}
-                                </div >
-                              )
-                            }
-                            {
-                              editingNoteId !== alertObj.id && (
+                          {editingNoteId === alertObj.id ? (
+                            <>
+                              <textarea
+                                className="pp-note-edit-textarea"
+                                value={editingNoteText}
+                                onChange={(e) =>
+                                  setEditingNoteText(e.target.value)
+                                }
+                                autoFocus
+                              />
+                              <div className="pp-edit-footer-row">
                                 <div className="note-footer">
                                   <div className="note-meta-stack">
                                     <span className="note-date">
                                       {alertObj.date}
                                     </span>
-                                    {
-                                      !isManualNote && (
-                                        <button
-                                          className="pp-evidence-icon-btn"
-                                          onClick={() => openEvidencePanel(alertObj)}
-                                        >
-                                          <svg
-                                            width="14"
-                                            height="14"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth="2.5"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                          >
-                                            <circle cx="11" cy="11" r="8"></circle>
-                                            <line
-                                              x1="21"
-                                              y1="21"
-                                              x2="16.65"
-                                              y2="16.65"
-                                            ></line>
-                                          </svg>
-                                          View Evidence
-                                        </button>
-                                      )
-                                    }
-                                  </div >
+                                  </div>
+                                </div>
+                                <div className="pp-note-save-row">
                                   <button
-                                    className="pp-note-delete-btn"
+                                    className="pp-note-save-btn"
                                     onClick={() =>
-                                      openDeleteAlertModal(alertObj.id)
+                                      saveEditNote(alertObj.id, editingNoteText)
                                     }
-                                    title="Delete"
+                                    disabled={editSavingId === alertObj.id}
+                                  >
+                                    {editSavingId === alertObj.id
+                                      ? "Saving..."
+                                      : "Save"}
+                                  </button>
+                                  <button
+                                    className="pp-note-cancel-btn"
+                                    onClick={cancelEditNote}
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="note-text">
+                              {!isManualNote && (
+                                <strong>
+                                  {alertObj.title || "Minor Alert"}:
+                                </strong>
+                              )}{" "}
+                              {alertObj.insight}
+                            </div>
+                          )}
+                          {editingNoteId !== alertObj.id && (
+                            <div className="note-footer">
+                              <div className="note-meta-stack">
+                                <span className="note-date">
+                                  {alertObj.date}
+                                </span>
+                                {!isManualNote && (
+                                  <button
+                                    className="pp-evidence-icon-btn"
+                                    onClick={() => openEvidencePanel(alertObj)}
                                   >
                                     <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="18"
-                                      height="18"
+                                      width="14"
+                                      height="14"
                                       viewBox="0 0 24 24"
                                       fill="none"
                                       stroke="currentColor"
-                                      strokeWidth="2"
+                                      strokeWidth="2.5"
                                       strokeLinecap="round"
                                       strokeLinejoin="round"
                                     >
-                                      <path d="M3 6h18" />
-                                      <path d="M8 6V4h8v2" />
-                                      <path d="M19 6l-1 14H6L5 6" />
-                                      <path d="M10 11v6" />
-                                      <path d="M14 11v6" />
+                                      <circle cx="11" cy="11" r="8"></circle>
+                                      <line
+                                        x1="21"
+                                        y1="21"
+                                        x2="16.65"
+                                        y2="16.65"
+                                      ></line>
                                     </svg>
+                                    View Evidence
                                   </button>
-                                </div >
-                              )
-                            }
-                          </div >
-                        );
-                      })
-                      : null}
-
-                  {/* ملاحظات الطبيب المضافة يدوياً لـ Low Priority */}
-                  {
-                    newNotes.low.map((note) => (
-                      <div className="note-item low-priority" key={note.id}>
-                        {note.saved ? (
-                          <>
-                            <div className="pp-note-actions">
-                              <button
-                                className="pp-note-edit-btn"
-                                onClick={() => startEditNewNote(note.id)}
-                                title="Edit"
-                              >
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                              </button>
-                            </div>
-                            <div className="note-text">{note.text}</div>
-                            <div className="note-footer">
-                              <span className="note-date">{note.date}</span>
+                                )}
+                              </div>
                               <button
                                 className="pp-note-delete-btn"
-                                onClick={() => openDeleteAlertModal(note.id)}
+                                onClick={() =>
+                                  openDeleteAlertModal(alertObj.id)
+                                }
                                 title="Delete"
                               >
                                 <svg
@@ -2874,91 +3305,220 @@ const PatientProfile = () => {
                                 </svg>
                               </button>
                             </div>
-                          </>
-                        ) : (
-                          <>
-                            <textarea
-                              className="pp-note-edit-textarea"
-                              value={newNoteTexts[note.id] || ""}
-                              onChange={(e) =>
-                                setNewNoteTexts((prev) => ({
-                                  ...prev,
-                                  [note.id]: e.target.value,
-                                }))
-                              }
-                              autoFocus
-                              placeholder="Type your note here..."
-                            />
-                            <div className="pp-edit-footer-row">
-                              <div className="note-footer">
-                                <span className="note-date">
-                                  {new Date().toLocaleDateString("en-US", {
-                                    month: "short",
-                                    day: "numeric",
-                                    year: "numeric",
-                                  })}
-                                </span>
-                              </div>
-                              <div className="pp-note-save-row">
-                                <button
-                                  className="pp-note-save-btn"
-                                  onClick={() => saveNewNote("low", note.id)}
-                                  disabled={savingNoteId === note.id}
-                                >
-                                  {savingNoteId === note.id ? "Saving..." : "Save"}
-                                </button>
-                                <button
-                                  className="pp-note-cancel-btn"
-                                  onClick={() => cancelNewNote("low", note.id)}
-                                >
-                                  Cancel
-                                </button>
-                              </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  ) : null}
+
+                  {/* ملاحظات الطبيب المضافة يدوياً لـ Low Priority */}
+                  {newNotes.low.map((note) => (
+                    <div className="note-item low-priority" key={note.id}>
+                      {note.saved ? (
+                        <>
+                          <div className="pp-note-actions">
+                            <button
+                              className="pp-note-edit-btn"
+                              onClick={() => startEditNewNote(note.id)}
+                              title="Edit"
+                            >
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                              </svg>
+                            </button>
+                          </div>
+                          <div className="note-text">{note.text}</div>
+                          <div className="note-footer">
+                            <span className="note-date">{note.date}</span>
+                            <button
+                              className="pp-note-delete-btn"
+                              onClick={() => openDeleteAlertModal(note.id)}
+                              title="Delete"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4h8v2" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M10 11v6" />
+                                <path d="M14 11v6" />
+                              </svg>
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <textarea
+                            className="pp-note-edit-textarea"
+                            value={newNoteTexts[note.id] || ""}
+                            onChange={(e) =>
+                              setNewNoteTexts((prev) => ({
+                                ...prev,
+                                [note.id]: e.target.value,
+                              }))
+                            }
+                            autoFocus
+                            placeholder="Type your note here..."
+                          />
+                          <div className="pp-edit-footer-row">
+                            <div className="note-footer">
+                              <span className="note-date">
+                                {new Date().toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                })}
+                              </span>
                             </div>
-                          </>
-                        )}
-                      </div>
-                    ))
-                  }
-                </div >
-              </div >
-            </div >
-          </div >
+                            <div className="pp-note-save-row">
+                              <button
+                                className="pp-note-save-btn"
+                                onClick={() => saveNewNote("low", note.id)}
+                                disabled={savingNoteId === note.id}
+                              >
+                                {savingNoteId === note.id
+                                  ? "Saving..."
+                                  : "Save"}
+                              </button>
+                              <button
+                                className="pp-note-cancel-btn"
+                                onClick={() => cancelNewNote("low", note.id)}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div
-            className={`tab-content ${activeTab === "comparative" ? "active" : ""
-              }`}
+            className={`tab-content ${
+              activeTab === "comparative" ? "active" : ""
+            }`}
             id="comparative"
           >
             <div className="card">
-
               {/* ── Loading state ── */}
               {comparativeLoading && (
                 <div className="chart-grid">
                   {/* Chart 1 */}
                   <div className="chart-card">
-                    <div className="preview-shimmer" style={{ width: '100%', pointerEvents: 'none' }}>
+                    <div
+                      className="preview-shimmer"
+                      style={{ width: "100%", pointerEvents: "none" }}
+                    >
                       <div className="chart-header">
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", flex: 1, minWidth: 0 }}>
-                          <h3 className="chart-title" style={{ margin: 0 }}>RDW CV</h3>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            flexWrap: "wrap",
+                            flex: 1,
+                            minWidth: 0,
+                          }}
+                        >
+                          <h3 className="chart-title" style={{ margin: 0 }}>
+                            RDW CV
+                          </h3>
                         </div>
-                        <span className="chart-trend" style={{ background: "#FFECEC", color: "#FF5C5C", flexShrink: 0, marginLeft: "8px" }}>
+                        <span
+                          className="chart-trend"
+                          style={{
+                            background: "#FFECEC",
+                            color: "#FF5C5C",
+                            flexShrink: 0,
+                            marginLeft: "8px",
+                          }}
+                        >
                           ↑ 75.5%
                         </span>
                       </div>
-                      <div className="mini-chart" style={{ position: "relative" }}>
-                        <svg className="chart-canvas" viewBox="0 0 300 160" style={{ overflow: "visible" }}>
+                      <div
+                        className="mini-chart"
+                        style={{ position: "relative" }}
+                      >
+                        <svg
+                          className="chart-canvas"
+                          viewBox="0 0 300 160"
+                          style={{ overflow: "visible" }}
+                        >
                           <defs>
-                            <linearGradient id="dummy-grad-1" x1="0%" y1="0%" x2="0%" y2="100%">
-                              <stop offset="0%" style={{ stopColor: "#FF5C5C", stopOpacity: 0.12 }} />
-                              <stop offset="100%" style={{ stopColor: "#FF5C5C", stopOpacity: 0 }} />
+                            <linearGradient
+                              id="dummy-grad-1"
+                              x1="0%"
+                              y1="0%"
+                              x2="0%"
+                              y2="100%"
+                            >
+                              <stop
+                                offset="0%"
+                                style={{
+                                  stopColor: "#FF5C5C",
+                                  stopOpacity: 0.12,
+                                }}
+                              />
+                              <stop
+                                offset="100%"
+                                style={{ stopColor: "#FF5C5C", stopOpacity: 0 }}
+                              />
                             </linearGradient>
                           </defs>
-                          <path d="M 0.0 120.0 L 150.0 60.0 L 300.0 40.0 L 300.0 160.0 L 0.0 160.0 Z" fill="url(#dummy-grad-1)" />
-                          <path d="M 0.0 120.0 L 150.0 60.0 L 300.0 40.0" stroke="#FF5C5C" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                          <circle cx="0.0" cy="120.0" r="6" fill="transparent" />
-                          <circle cx="150.0" cy="60.0" r="6" fill="transparent" />
-                          <circle cx="300.0" cy="40.0" r="6" fill="transparent" />
+                          <path
+                            d="M 0.0 120.0 L 150.0 60.0 L 300.0 40.0 L 300.0 160.0 L 0.0 160.0 Z"
+                            fill="url(#dummy-grad-1)"
+                          />
+                          <path
+                            d="M 0.0 120.0 L 150.0 60.0 L 300.0 40.0"
+                            stroke="#FF5C5C"
+                            strokeWidth="2.5"
+                            fill="none"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <circle
+                            cx="0.0"
+                            cy="120.0"
+                            r="6"
+                            fill="transparent"
+                          />
+                          <circle
+                            cx="150.0"
+                            cy="60.0"
+                            r="6"
+                            fill="transparent"
+                          />
+                          <circle
+                            cx="300.0"
+                            cy="40.0"
+                            r="6"
+                            fill="transparent"
+                          />
                         </svg>
                       </div>
                       <div className="chart-stats">
@@ -2968,11 +3528,21 @@ const PatientProfile = () => {
                         </div>
                         <div className="stat-col">
                           <div className="stat-label">Current</div>
-                          <div className="stat-value" style={{ color: "#FF5C5C" }}>18.6 %</div>
+                          <div
+                            className="stat-value"
+                            style={{ color: "#FF5C5C" }}
+                          >
+                            18.6 %
+                          </div>
                         </div>
                         <div className="stat-col">
                           <div className="stat-label">Change</div>
-                          <div className="stat-value" style={{ color: "#FF5C5C" }}>+75.5%</div>
+                          <div
+                            className="stat-value"
+                            style={{ color: "#FF5C5C" }}
+                          >
+                            +75.5%
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -2980,29 +3550,98 @@ const PatientProfile = () => {
 
                   {/* Chart 2 */}
                   <div className="chart-card">
-                    <div className="preview-shimmer" style={{ width: '100%', pointerEvents: 'none' }}>
+                    <div
+                      className="preview-shimmer"
+                      style={{ width: "100%", pointerEvents: "none" }}
+                    >
                       <div className="chart-header">
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", flex: 1, minWidth: 0 }}>
-                          <h3 className="chart-title" style={{ margin: 0 }}>WBC Count</h3>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            flexWrap: "wrap",
+                            flex: 1,
+                            minWidth: 0,
+                          }}
+                        >
+                          <h3 className="chart-title" style={{ margin: 0 }}>
+                            WBC Count
+                          </h3>
                         </div>
-                        <span className="chart-trend" style={{ background: "#E6FFF5", color: "#00C187", flexShrink: 0, marginLeft: "8px" }}>
+                        <span
+                          className="chart-trend"
+                          style={{
+                            background: "#E6FFF5",
+                            color: "#00C187",
+                            flexShrink: 0,
+                            marginLeft: "8px",
+                          }}
+                        >
                           ↓ 12.4%
                         </span>
                       </div>
-                      <div className="mini-chart" style={{ position: "relative" }}>
-                        <svg className="chart-canvas" viewBox="0 0 300 160" style={{ overflow: "visible" }}>
+                      <div
+                        className="mini-chart"
+                        style={{ position: "relative" }}
+                      >
+                        <svg
+                          className="chart-canvas"
+                          viewBox="0 0 300 160"
+                          style={{ overflow: "visible" }}
+                        >
                           <defs>
-                            <linearGradient id="dummy-grad-2" x1="0%" y1="0%" x2="0%" y2="100%">
-                              <stop offset="0%" style={{ stopColor: "#00C187", stopOpacity: 0.12 }} />
-                              <stop offset="100%" style={{ stopColor: "#00C187", stopOpacity: 0 }} />
+                            <linearGradient
+                              id="dummy-grad-2"
+                              x1="0%"
+                              y1="0%"
+                              x2="0%"
+                              y2="100%"
+                            >
+                              <stop
+                                offset="0%"
+                                style={{
+                                  stopColor: "#00C187",
+                                  stopOpacity: 0.12,
+                                }}
+                              />
+                              <stop
+                                offset="100%"
+                                style={{ stopColor: "#00C187", stopOpacity: 0 }}
+                              />
                             </linearGradient>
                           </defs>
-                          <path d="M 0.0 40.0 L 100.0 50.0 L 200.0 90.0 L 300.0 130.0 L 300.0 160.0 L 0.0 160.0 Z" fill="url(#dummy-grad-2)" />
-                          <path d="M 0.0 40.0 L 100.0 50.0 L 200.0 90.0 L 300.0 130.0" stroke="#00C187" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                          <path
+                            d="M 0.0 40.0 L 100.0 50.0 L 200.0 90.0 L 300.0 130.0 L 300.0 160.0 L 0.0 160.0 Z"
+                            fill="url(#dummy-grad-2)"
+                          />
+                          <path
+                            d="M 0.0 40.0 L 100.0 50.0 L 200.0 90.0 L 300.0 130.0"
+                            stroke="#00C187"
+                            strokeWidth="2.5"
+                            fill="none"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
                           <circle cx="0.0" cy="40.0" r="6" fill="transparent" />
-                          <circle cx="100.0" cy="50.0" r="6" fill="transparent" />
-                          <circle cx="200.0" cy="90.0" r="6" fill="transparent" />
-                          <circle cx="300.0" cy="130.0" r="6" fill="transparent" />
+                          <circle
+                            cx="100.0"
+                            cy="50.0"
+                            r="6"
+                            fill="transparent"
+                          />
+                          <circle
+                            cx="200.0"
+                            cy="90.0"
+                            r="6"
+                            fill="transparent"
+                          />
+                          <circle
+                            cx="300.0"
+                            cy="130.0"
+                            r="6"
+                            fill="transparent"
+                          />
                         </svg>
                       </div>
                       <div className="chart-stats">
@@ -3012,11 +3651,21 @@ const PatientProfile = () => {
                         </div>
                         <div className="stat-col">
                           <div className="stat-label">Current</div>
-                          <div className="stat-value" style={{ color: "#00C187" }}>8.6 10³ /μL</div>
+                          <div
+                            className="stat-value"
+                            style={{ color: "#00C187" }}
+                          >
+                            8.6 10³ /μL
+                          </div>
                         </div>
                         <div className="stat-col">
                           <div className="stat-label">Change</div>
-                          <div className="stat-value" style={{ color: "#00C187" }}>-12.4%</div>
+                          <div
+                            className="stat-value"
+                            style={{ color: "#00C187" }}
+                          >
+                            -12.4%
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -3024,29 +3673,98 @@ const PatientProfile = () => {
 
                   {/* Chart 3 */}
                   <div className="chart-card">
-                    <div className="preview-shimmer" style={{ width: '100%', pointerEvents: 'none' }}>
+                    <div
+                      className="preview-shimmer"
+                      style={{ width: "100%", pointerEvents: "none" }}
+                    >
                       <div className="chart-header">
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", flex: 1, minWidth: 0 }}>
-                          <h3 className="chart-title" style={{ margin: 0 }}>Neutrophils Percentage</h3>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            flexWrap: "wrap",
+                            flex: 1,
+                            minWidth: 0,
+                          }}
+                        >
+                          <h3 className="chart-title" style={{ margin: 0 }}>
+                            Neutrophils Percentage
+                          </h3>
                         </div>
-                        <span className="chart-trend" style={{ background: "#FFF4E6", color: "#FFA500", flexShrink: 0, marginLeft: "8px" }}>
+                        <span
+                          className="chart-trend"
+                          style={{
+                            background: "#FFF4E6",
+                            color: "#FFA500",
+                            flexShrink: 0,
+                            marginLeft: "8px",
+                          }}
+                        >
                           — 0.0%
                         </span>
                       </div>
-                      <div className="mini-chart" style={{ position: "relative" }}>
-                        <svg className="chart-canvas" viewBox="0 0 300 160" style={{ overflow: "visible" }}>
+                      <div
+                        className="mini-chart"
+                        style={{ position: "relative" }}
+                      >
+                        <svg
+                          className="chart-canvas"
+                          viewBox="0 0 300 160"
+                          style={{ overflow: "visible" }}
+                        >
                           <defs>
-                            <linearGradient id="dummy-grad-3" x1="0%" y1="0%" x2="0%" y2="100%">
-                              <stop offset="0%" style={{ stopColor: "#FFA500", stopOpacity: 0.12 }} />
-                              <stop offset="100%" style={{ stopColor: "#FFA500", stopOpacity: 0 }} />
+                            <linearGradient
+                              id="dummy-grad-3"
+                              x1="0%"
+                              y1="0%"
+                              x2="0%"
+                              y2="100%"
+                            >
+                              <stop
+                                offset="0%"
+                                style={{
+                                  stopColor: "#FFA500",
+                                  stopOpacity: 0.12,
+                                }}
+                              />
+                              <stop
+                                offset="100%"
+                                style={{ stopColor: "#FFA500", stopOpacity: 0 }}
+                              />
                             </linearGradient>
                           </defs>
-                          <path d="M 0.0 80.0 L 100.0 60.0 L 200.0 100.0 L 300.0 80.0 L 300.0 160.0 L 0.0 160.0 Z" fill="url(#dummy-grad-3)" />
-                          <path d="M 0.0 80.0 L 100.0 60.0 L 200.0 100.0 L 300.0 80.0" stroke="#FFA500" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                          <path
+                            d="M 0.0 80.0 L 100.0 60.0 L 200.0 100.0 L 300.0 80.0 L 300.0 160.0 L 0.0 160.0 Z"
+                            fill="url(#dummy-grad-3)"
+                          />
+                          <path
+                            d="M 0.0 80.0 L 100.0 60.0 L 200.0 100.0 L 300.0 80.0"
+                            stroke="#FFA500"
+                            strokeWidth="2.5"
+                            fill="none"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
                           <circle cx="0.0" cy="80.0" r="6" fill="transparent" />
-                          <circle cx="100.0" cy="60.0" r="6" fill="transparent" />
-                          <circle cx="200.0" cy="100.0" r="6" fill="transparent" />
-                          <circle cx="300.0" cy="80.0" r="6" fill="transparent" />
+                          <circle
+                            cx="100.0"
+                            cy="60.0"
+                            r="6"
+                            fill="transparent"
+                          />
+                          <circle
+                            cx="200.0"
+                            cy="100.0"
+                            r="6"
+                            fill="transparent"
+                          />
+                          <circle
+                            cx="300.0"
+                            cy="80.0"
+                            r="6"
+                            fill="transparent"
+                          />
                         </svg>
                       </div>
                       <div className="chart-stats">
@@ -3056,11 +3774,21 @@ const PatientProfile = () => {
                         </div>
                         <div className="stat-col">
                           <div className="stat-label">Current</div>
-                          <div className="stat-value" style={{ color: "#FFA500" }}>55.0 %</div>
+                          <div
+                            className="stat-value"
+                            style={{ color: "#FFA500" }}
+                          >
+                            55.0 %
+                          </div>
                         </div>
                         <div className="stat-col">
                           <div className="stat-label">Change</div>
-                          <div className="stat-value" style={{ color: "#FFA500" }}>0.0%</div>
+                          <div
+                            className="stat-value"
+                            style={{ color: "#FFA500" }}
+                          >
+                            0.0%
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -3068,28 +3796,92 @@ const PatientProfile = () => {
 
                   {/* Chart 4 */}
                   <div className="chart-card">
-                    <div className="preview-shimmer" style={{ width: '100%', pointerEvents: 'none' }}>
+                    <div
+                      className="preview-shimmer"
+                      style={{ width: "100%", pointerEvents: "none" }}
+                    >
                       <div className="chart-header">
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", flex: 1, minWidth: 0 }}>
-                          <h3 className="chart-title" style={{ margin: 0 }}>Neutrophils Absolute</h3>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            flexWrap: "wrap",
+                            flex: 1,
+                            minWidth: 0,
+                          }}
+                        >
+                          <h3 className="chart-title" style={{ margin: 0 }}>
+                            Neutrophils Absolute
+                          </h3>
                         </div>
-                        <span className="chart-trend" style={{ background: "#E6FFF5", color: "#00C187", flexShrink: 0, marginLeft: "8px" }}>
+                        <span
+                          className="chart-trend"
+                          style={{
+                            background: "#E6FFF5",
+                            color: "#00C187",
+                            flexShrink: 0,
+                            marginLeft: "8px",
+                          }}
+                        >
                           ↑ 5.2%
                         </span>
                       </div>
-                      <div className="mini-chart" style={{ position: "relative" }}>
-                        <svg className="chart-canvas" viewBox="0 0 300 160" style={{ overflow: "visible" }}>
+                      <div
+                        className="mini-chart"
+                        style={{ position: "relative" }}
+                      >
+                        <svg
+                          className="chart-canvas"
+                          viewBox="0 0 300 160"
+                          style={{ overflow: "visible" }}
+                        >
                           <defs>
-                            <linearGradient id="dummy-grad-4" x1="0%" y1="0%" x2="0%" y2="100%">
-                              <stop offset="0%" style={{ stopColor: "#00C187", stopOpacity: 0.12 }} />
-                              <stop offset="100%" style={{ stopColor: "#00C187", stopOpacity: 0 }} />
+                            <linearGradient
+                              id="dummy-grad-4"
+                              x1="0%"
+                              y1="0%"
+                              x2="0%"
+                              y2="100%"
+                            >
+                              <stop
+                                offset="0%"
+                                style={{
+                                  stopColor: "#00C187",
+                                  stopOpacity: 0.12,
+                                }}
+                              />
+                              <stop
+                                offset="100%"
+                                style={{ stopColor: "#00C187", stopOpacity: 0 }}
+                              />
                             </linearGradient>
                           </defs>
-                          <path d="M 0.0 60.0 L 150.0 130.0 L 300.0 50.0 L 300.0 160.0 L 0.0 160.0 Z" fill="url(#dummy-grad-4)" />
-                          <path d="M 0.0 60.0 L 150.0 130.0 L 300.0 50.0" stroke="#00C187" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                          <path
+                            d="M 0.0 60.0 L 150.0 130.0 L 300.0 50.0 L 300.0 160.0 L 0.0 160.0 Z"
+                            fill="url(#dummy-grad-4)"
+                          />
+                          <path
+                            d="M 0.0 60.0 L 150.0 130.0 L 300.0 50.0"
+                            stroke="#00C187"
+                            strokeWidth="2.5"
+                            fill="none"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
                           <circle cx="0.0" cy="60.0" r="6" fill="transparent" />
-                          <circle cx="150.0" cy="130.0" r="6" fill="transparent" />
-                          <circle cx="300.0" cy="50.0" r="6" fill="transparent" />
+                          <circle
+                            cx="150.0"
+                            cy="130.0"
+                            r="6"
+                            fill="transparent"
+                          />
+                          <circle
+                            cx="300.0"
+                            cy="50.0"
+                            r="6"
+                            fill="transparent"
+                          />
                         </svg>
                       </div>
                       <div className="chart-stats">
@@ -3099,11 +3891,21 @@ const PatientProfile = () => {
                         </div>
                         <div className="stat-col">
                           <div className="stat-label">Current</div>
-                          <div className="stat-value" style={{ color: "#00C187" }}>4.7 10³ /μL</div>
+                          <div
+                            className="stat-value"
+                            style={{ color: "#00C187" }}
+                          >
+                            4.7 10³ /μL
+                          </div>
                         </div>
                         <div className="stat-col">
                           <div className="stat-label">Change</div>
-                          <div className="stat-value" style={{ color: "#00C187" }}>+5.2%</div>
+                          <div
+                            className="stat-value"
+                            style={{ color: "#00C187" }}
+                          >
+                            +5.2%
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -3111,28 +3913,92 @@ const PatientProfile = () => {
 
                   {/* Chart 5 */}
                   <div className="chart-card">
-                    <div className="preview-shimmer" style={{ width: '100%', pointerEvents: 'none' }}>
+                    <div
+                      className="preview-shimmer"
+                      style={{ width: "100%", pointerEvents: "none" }}
+                    >
                       <div className="chart-header">
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", flex: 1, minWidth: 0 }}>
-                          <h3 className="chart-title" style={{ margin: 0 }}>Lymphocytes Percentage</h3>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            flexWrap: "wrap",
+                            flex: 1,
+                            minWidth: 0,
+                          }}
+                        >
+                          <h3 className="chart-title" style={{ margin: 0 }}>
+                            Lymphocytes Percentage
+                          </h3>
                         </div>
-                        <span className="chart-trend" style={{ background: "#FFECEC", color: "#FF5C5C", flexShrink: 0, marginLeft: "8px" }}>
+                        <span
+                          className="chart-trend"
+                          style={{
+                            background: "#FFECEC",
+                            color: "#FF5C5C",
+                            flexShrink: 0,
+                            marginLeft: "8px",
+                          }}
+                        >
                           ↓ 42.1%
                         </span>
                       </div>
-                      <div className="mini-chart" style={{ position: "relative" }}>
-                        <svg className="chart-canvas" viewBox="0 0 300 160" style={{ overflow: "visible" }}>
+                      <div
+                        className="mini-chart"
+                        style={{ position: "relative" }}
+                      >
+                        <svg
+                          className="chart-canvas"
+                          viewBox="0 0 300 160"
+                          style={{ overflow: "visible" }}
+                        >
                           <defs>
-                            <linearGradient id="dummy-grad-5" x1="0%" y1="0%" x2="0%" y2="100%">
-                              <stop offset="0%" style={{ stopColor: "#FF5C5C", stopOpacity: 0.12 }} />
-                              <stop offset="100%" style={{ stopColor: "#FF5C5C", stopOpacity: 0 }} />
+                            <linearGradient
+                              id="dummy-grad-5"
+                              x1="0%"
+                              y1="0%"
+                              x2="0%"
+                              y2="100%"
+                            >
+                              <stop
+                                offset="0%"
+                                style={{
+                                  stopColor: "#FF5C5C",
+                                  stopOpacity: 0.12,
+                                }}
+                              />
+                              <stop
+                                offset="100%"
+                                style={{ stopColor: "#FF5C5C", stopOpacity: 0 }}
+                              />
                             </linearGradient>
                           </defs>
-                          <path d="M 0.0 30.0 L 150.0 90.0 L 300.0 140.0 L 300.0 160.0 L 0.0 160.0 Z" fill="url(#dummy-grad-5)" />
-                          <path d="M 0.0 30.0 L 150.0 90.0 L 300.0 140.0" stroke="#FF5C5C" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                          <path
+                            d="M 0.0 30.0 L 150.0 90.0 L 300.0 140.0 L 300.0 160.0 L 0.0 160.0 Z"
+                            fill="url(#dummy-grad-5)"
+                          />
+                          <path
+                            d="M 0.0 30.0 L 150.0 90.0 L 300.0 140.0"
+                            stroke="#FF5C5C"
+                            strokeWidth="2.5"
+                            fill="none"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
                           <circle cx="0.0" cy="30.0" r="6" fill="transparent" />
-                          <circle cx="150.0" cy="90.0" r="6" fill="transparent" />
-                          <circle cx="300.0" cy="140.0" r="6" fill="transparent" />
+                          <circle
+                            cx="150.0"
+                            cy="90.0"
+                            r="6"
+                            fill="transparent"
+                          />
+                          <circle
+                            cx="300.0"
+                            cy="140.0"
+                            r="6"
+                            fill="transparent"
+                          />
                         </svg>
                       </div>
                       <div className="chart-stats">
@@ -3142,11 +4008,21 @@ const PatientProfile = () => {
                         </div>
                         <div className="stat-col">
                           <div className="stat-label">Current</div>
-                          <div className="stat-value" style={{ color: "#FF5C5C" }}>22.0 %</div>
+                          <div
+                            className="stat-value"
+                            style={{ color: "#FF5C5C" }}
+                          >
+                            22.0 %
+                          </div>
                         </div>
                         <div className="stat-col">
                           <div className="stat-label">Change</div>
-                          <div className="stat-value" style={{ color: "#FF5C5C" }}>-42.1%</div>
+                          <div
+                            className="stat-value"
+                            style={{ color: "#FF5C5C" }}
+                          >
+                            -42.1%
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -3154,27 +4030,88 @@ const PatientProfile = () => {
 
                   {/* Chart 6 */}
                   <div className="chart-card">
-                    <div className="preview-shimmer" style={{ width: '100%', pointerEvents: 'none' }}>
+                    <div
+                      className="preview-shimmer"
+                      style={{ width: "100%", pointerEvents: "none" }}
+                    >
                       <div className="chart-header">
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", flex: 1, minWidth: 0 }}>
-                          <h3 className="chart-title" style={{ margin: 0 }}>Lymphocytes Absolute</h3>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            flexWrap: "wrap",
+                            flex: 1,
+                            minWidth: 0,
+                          }}
+                        >
+                          <h3 className="chart-title" style={{ margin: 0 }}>
+                            Lymphocytes Absolute
+                          </h3>
                         </div>
-                        <span className="chart-trend" style={{ background: "#FFF4E6", color: "#FFA500", flexShrink: 0, marginLeft: "8px" }}>
+                        <span
+                          className="chart-trend"
+                          style={{
+                            background: "#FFF4E6",
+                            color: "#FFA500",
+                            flexShrink: 0,
+                            marginLeft: "8px",
+                          }}
+                        >
                           — 0.0%
                         </span>
                       </div>
-                      <div className="mini-chart" style={{ position: "relative" }}>
-                        <svg className="chart-canvas" viewBox="0 0 300 160" style={{ overflow: "visible" }}>
+                      <div
+                        className="mini-chart"
+                        style={{ position: "relative" }}
+                      >
+                        <svg
+                          className="chart-canvas"
+                          viewBox="0 0 300 160"
+                          style={{ overflow: "visible" }}
+                        >
                           <defs>
-                            <linearGradient id="dummy-grad-6" x1="0%" y1="0%" x2="0%" y2="100%">
-                              <stop offset="0%" style={{ stopColor: "#FFA500", stopOpacity: 0.12 }} />
-                              <stop offset="100%" style={{ stopColor: "#FFA500", stopOpacity: 0 }} />
+                            <linearGradient
+                              id="dummy-grad-6"
+                              x1="0%"
+                              y1="0%"
+                              x2="0%"
+                              y2="100%"
+                            >
+                              <stop
+                                offset="0%"
+                                style={{
+                                  stopColor: "#FFA500",
+                                  stopOpacity: 0.12,
+                                }}
+                              />
+                              <stop
+                                offset="100%"
+                                style={{ stopColor: "#FFA500", stopOpacity: 0 }}
+                              />
                             </linearGradient>
                           </defs>
-                          <path d="M 0.0 80.0 L 300.0 80.0 L 300.0 160.0 L 0.0 160.0 Z" fill="url(#dummy-grad-6)" />
-                          <line x1="0" y1="80" x2="300" y2="80" stroke="#FFA500" strokeWidth="2.5" strokeDasharray="6 4" opacity="0.4" />
+                          <path
+                            d="M 0.0 80.0 L 300.0 80.0 L 300.0 160.0 L 0.0 160.0 Z"
+                            fill="url(#dummy-grad-6)"
+                          />
+                          <line
+                            x1="0"
+                            y1="80"
+                            x2="300"
+                            y2="80"
+                            stroke="#FFA500"
+                            strokeWidth="2.5"
+                            strokeDasharray="6 4"
+                            opacity="0.4"
+                          />
                           <circle cx="0.0" cy="80.0" r="6" fill="transparent" />
-                          <circle cx="300.0" cy="80.0" r="6" fill="transparent" />
+                          <circle
+                            cx="300.0"
+                            cy="80.0"
+                            r="6"
+                            fill="transparent"
+                          />
                         </svg>
                       </div>
                       <div className="chart-stats">
@@ -3184,11 +4121,21 @@ const PatientProfile = () => {
                         </div>
                         <div className="stat-col">
                           <div className="stat-label">Current</div>
-                          <div className="stat-value" style={{ color: "#FFA500" }}>1.8 10³ /μL</div>
+                          <div
+                            className="stat-value"
+                            style={{ color: "#FFA500" }}
+                          >
+                            1.8 10³ /μL
+                          </div>
                         </div>
                         <div className="stat-col">
                           <div className="stat-label">Change</div>
-                          <div className="stat-value" style={{ color: "#FFA500" }}>0.0%</div>
+                          <div
+                            className="stat-value"
+                            style={{ color: "#FFA500" }}
+                          >
+                            0.0%
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -3198,15 +4145,50 @@ const PatientProfile = () => {
 
               {/* ── Error state ── */}
               {!comparativeLoading && comparativeError && (
-                <div style={{ textAlign: "center", padding: "48px 24px", color: "#FF5C5C" }}>
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginBottom: "12px" }}>
-                    <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: "48px 24px",
+                    color: "#FF5C5C",
+                  }}
+                >
+                  <svg
+                    width="40"
+                    height="40"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    style={{ marginBottom: "12px" }}
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
                   </svg>
-                  <p style={{ fontWeight: 600, marginBottom: "6px" }}>Failed to load analysis</p>
-                  <p style={{ fontSize: "13px", color: "#8A94A6", marginBottom: "16px" }}>{comparativeError}</p>
+                  <p style={{ fontWeight: 600, marginBottom: "6px" }}>
+                    Failed to load analysis
+                  </p>
+                  <p
+                    style={{
+                      fontSize: "13px",
+                      color: "#8A94A6",
+                      marginBottom: "16px",
+                    }}
+                  >
+                    {comparativeError}
+                  </p>
                   <button
                     onClick={fetchComparativeAnalysis}
-                    style={{ padding: "8px 20px", background: "#2A66FF", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: 600, fontSize: "13px" }}
+                    style={{
+                      padding: "8px 20px",
+                      background: "#2A66FF",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontWeight: 600,
+                      fontSize: "13px",
+                    }}
                   >
                     Retry
                   </button>
@@ -3214,275 +4196,469 @@ const PatientProfile = () => {
               )}
 
               {/* ── Empty state ── */}
-              {!comparativeLoading && !comparativeError && comparativeLoadedFor !== null && comparativeData.length === 0 && (
-                <div style={{ textAlign: "center", padding: "64px 24px" }}>
-                  <div style={{ fontSize: "48px", marginBottom: "16px" }}>📊</div>
-                  <h3 style={{ fontSize: "17px", fontWeight: 700, color: "#0E1A34", marginBottom: "8px" }}>No Analysis Data Available</h3>
-                  <p style={{ fontSize: "14px", color: "#8A94A6", maxWidth: "380px", margin: "0 auto" }}>
-                    No comparative analysis data has been generated for this patient yet. Add lab reports across multiple visits to see trend charts here.
-                  </p>
-                </div>
-              )}
+              {!comparativeLoading &&
+                !comparativeError &&
+                comparativeLoadedFor !== null &&
+                comparativeData.length === 0 && (
+                  <div style={{ textAlign: "center", padding: "64px 24px" }}>
+                    <div style={{ fontSize: "48px", marginBottom: "16px" }}>
+                      📊
+                    </div>
+                    <h3
+                      style={{
+                        fontSize: "17px",
+                        fontWeight: 700,
+                        color: "#0E1A34",
+                        marginBottom: "8px",
+                      }}
+                    >
+                      No Analysis Data Available
+                    </h3>
+                    <p
+                      style={{
+                        fontSize: "14px",
+                        color: "#8A94A6",
+                        maxWidth: "380px",
+                        margin: "0 auto",
+                      }}
+                    >
+                      No comparative analysis data has been generated for this
+                      patient yet. Add lab reports across multiple visits to see
+                      trend charts here.
+                    </p>
+                  </div>
+                )}
 
               {/* ── Data state ── */}
-              {!comparativeLoading && !comparativeError && comparativeData.length > 0 && (() => {
-                // Derive the max number of visits across all tests
-                const maxVisits = comparativeData.reduce((max, test) => {
-                  const pts = Array.isArray(test.all_points) ? test.all_points.length : 0;
-                  return pts > max ? pts : max;
-                }, 0);
+              {!comparativeLoading &&
+                !comparativeError &&
+                comparativeData.length > 0 &&
+                (() => {
+                  // Derive the max number of visits across all tests
+                  const maxVisits = comparativeData.reduce((max, test) => {
+                    const pts = Array.isArray(test.all_points)
+                      ? test.all_points.length
+                      : 0;
+                    return pts > max ? pts : max;
+                  }, 0);
 
-                // Build deduplicated visit labels in order
-                const visitLabels = [];
-                comparativeData.forEach(test => {
-                  (test.all_points || []).forEach(pt => {
-                    if (!visitLabels.includes(pt.visit_label)) visitLabels.push(pt.visit_label);
+                  // Build deduplicated visit labels in order
+                  const visitLabels = [];
+                  comparativeData.forEach((test) => {
+                    (test.all_points || []).forEach((pt) => {
+                      if (!visitLabels.includes(pt.visit_label))
+                        visitLabels.push(pt.visit_label);
+                    });
                   });
-                });
 
-                // Helpers for trend styling
-                const getTrendStyle = (trend, status) => {
-                  const isCritical = (status || "").toLowerCase() === "critical";
-                  if (trend === "up") return { bg: isCritical ? "#FFECEC" : "#E6FFF5", color: isCritical ? "#FF5C5C" : "#00C187", arrow: "↑" };
-                  if (trend === "down") return { bg: isCritical ? "#FFECEC" : "#E6FFF5", color: isCritical ? "#FF5C5C" : "#00C187", arrow: "↓" };
-                  return { bg: "#FFF4E6", color: "#FFA500", arrow: "—" };
-                };
+                  // Helpers for trend styling
+                  const getTrendStyle = (trend, status) => {
+                    const isCritical =
+                      (status || "").toLowerCase() === "critical";
+                    if (trend === "up")
+                      return {
+                        bg: isCritical ? "#FFECEC" : "#E6FFF5",
+                        color: isCritical ? "#FF5C5C" : "#00C187",
+                        arrow: "↑",
+                      };
+                    if (trend === "down")
+                      return {
+                        bg: isCritical ? "#FFECEC" : "#E6FFF5",
+                        color: isCritical ? "#FF5C5C" : "#00C187",
+                        arrow: "↓",
+                      };
+                    return { bg: "#FFF4E6", color: "#FFA500", arrow: "—" };
+                  };
 
-                const getChartColor = (trend, status) => {
-                  const isCritical = (status || "").toLowerCase() === "critical";
-                  if (trend === "up") return isCritical ? "#FF5C5C" : "#00C187";
-                  if (trend === "down") return isCritical ? "#FF5C5C" : "#00C187";
-                  return "#FFA500";
-                };
+                  const getChartColor = (trend, status) => {
+                    const isCritical =
+                      (status || "").toLowerCase() === "critical";
+                    if (trend === "up")
+                      return isCritical ? "#FF5C5C" : "#00C187";
+                    if (trend === "down")
+                      return isCritical ? "#FF5C5C" : "#00C187";
+                    return "#FFA500";
+                  };
 
-                // Build SVG polyline from all_points
-                const buildChartPath = (points) => {
-                  if (!points || points.length === 0) return { line: "", area: "", dots: [] };
-                  const W = 300, H = 160;
-                  const values = points.map(p => Number(p.value));
-                  const minV = Math.min(...values);
-                  const maxV = Math.max(...values);
-                  const range = maxV - minV;
+                  // Build SVG polyline from all_points
+                  const buildChartPath = (points) => {
+                    if (!points || points.length === 0)
+                      return { line: "", area: "", dots: [] };
+                    const W = 300,
+                      H = 160;
+                    const values = points.map((p) => Number(p.value));
+                    const minV = Math.min(...values);
+                    const maxV = Math.max(...values);
+                    const range = maxV - minV;
 
-                  // Define vertical drawing area with padding to keep points away from edges
-                  const topPadding = 40;
-                  const bottomPadding = 40;
-                  const usableHeight = H - topPadding - bottomPadding;
+                    // Define vertical drawing area with padding to keep points away from edges
+                    const topPadding = 40;
+                    const bottomPadding = 40;
+                    const usableHeight = H - topPadding - bottomPadding;
 
-                  const coords = points.map((p, i) => {
-                    const x = points.length === 1 ? W / 2 : (i / (points.length - 1)) * W;
-                    let y;
-                    if (range === 0) {
-                      // Center the point vertically if there's no variation or only one point
-                      y = H / 2;
-                    } else {
-                      // Map values into the usable height, inverting so higher values have lower y
-                      y = (H - bottomPadding) - ((Number(p.value) - minV) / range) * usableHeight;
-                    }
-                    return { x, y, ...p };
-                  });
-                  const lineD = coords.map((c, i) => `${i === 0 ? "M" : "L"} ${c.x.toFixed(1)} ${c.y.toFixed(1)}`).join(" ");
-                  const areaD = lineD + ` L ${coords[coords.length - 1].x.toFixed(1)} ${H} L ${coords[0].x.toFixed(1)} ${H} Z`;
-                  return { line: lineD, area: areaD, dots: coords };
-                };
+                    const coords = points.map((p, i) => {
+                      const x =
+                        points.length === 1
+                          ? W / 2
+                          : (i / (points.length - 1)) * W;
+                      let y;
+                      if (range === 0) {
+                        // Center the point vertically if there's no variation or only one point
+                        y = H / 2;
+                      } else {
+                        // Map values into the usable height, inverting so higher values have lower y
+                        y =
+                          H -
+                          bottomPadding -
+                          ((Number(p.value) - minV) / range) * usableHeight;
+                      }
+                      return { x, y, ...p };
+                    });
+                    const lineD = coords
+                      .map(
+                        (c, i) =>
+                          `${i === 0 ? "M" : "L"} ${c.x.toFixed(1)} ${c.y.toFixed(1)}`,
+                      )
+                      .join(" ");
+                    const areaD =
+                      lineD +
+                      ` L ${coords[coords.length - 1].x.toFixed(1)} ${H} L ${coords[0].x.toFixed(1)} ${H} Z`;
+                    return { line: lineD, area: areaD, dots: coords };
+                  };
 
-                return (
-                  <>
+                  return (
+                    <>
+                      {/* Chart Grid */}
+                      <div className="chart-grid">
+                        {comparativeData.map((test, testIdx) => {
+                          const comp = test.comparison || {};
+                          const trend = comp.trend || "stable";
+                          const status = comp.status || "";
+                          const isCritical =
+                            status.toLowerCase() === "critical";
+                          const tStyle = getTrendStyle(trend, status);
+                          const chartColor = getChartColor(trend, status);
+                          const points = Array.isArray(test.all_points)
+                            ? test.all_points
+                            : [];
+                          const { line, area, dots } = buildChartPath(points);
+                          const firstValue =
+                            points.length > 0 ? points[0].value : "N/A";
+                          const currentValue =
+                            comp.current_value != null
+                              ? comp.current_value
+                              : "N/A";
+                          const changePercent = comp.change_percentage;
+                          const noPrevious =
+                            comp.previous_value === "No previous" ||
+                            comp.previous_value == null;
+                          const gradId = `ca-grad-${testIdx}`;
 
-
-                    {/* Chart Grid */}
-                    <div className="chart-grid">
-                      {comparativeData.map((test, testIdx) => {
-                        const comp = test.comparison || {};
-                        const trend = comp.trend || "stable";
-                        const status = comp.status || "";
-                        const isCritical = status.toLowerCase() === "critical";
-                        const tStyle = getTrendStyle(trend, status);
-                        const chartColor = getChartColor(trend, status);
-                        const points = Array.isArray(test.all_points) ? test.all_points : [];
-                        const { line, area, dots } = buildChartPath(points);
-                        const firstValue = points.length > 0 ? points[0].value : "N/A";
-                        const currentValue = comp.current_value != null ? comp.current_value : "N/A";
-                        const changePercent = comp.change_percentage;
-                        const noPrevious = comp.previous_value === "No previous" || comp.previous_value == null;
-                        const gradId = `ca-grad-${testIdx}`;
-
-                        return (
-                          <div
-                            key={testIdx}
-                            className="chart-card"
-                            style={{
-                              transition: "all 0.5s ease-in-out",
-                              position: "relative",
-                            }}
-                          >
-
-
-                            {/* Card Header */}
-                            <div className="chart-header">
-                              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", flex: 1, minWidth: 0 }}>
-                                <h3 className="chart-title" style={{ margin: 0 }}>{test.test_name}</h3>
-                              </div>
-                              {!noPrevious && (
-                                <span
-                                  className="chart-trend"
-                                  style={{ background: tStyle.bg, color: tStyle.color, flexShrink: 0, marginLeft: "8px", transition: "all 0.5s ease-in-out" }}
+                          return (
+                            <div
+                              key={testIdx}
+                              className="chart-card"
+                              style={{
+                                transition: "all 0.5s ease-in-out",
+                                position: "relative",
+                              }}
+                            >
+                              {/* Card Header */}
+                              <div className="chart-header">
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                    flexWrap: "wrap",
+                                    flex: 1,
+                                    minWidth: 0,
+                                  }}
                                 >
-                                  {tStyle.arrow} {Math.abs(changePercent ?? 0).toFixed(1)}%
-                                </span>
-                              )}
-                            </div>
+                                  <h3
+                                    className="chart-title"
+                                    style={{ margin: 0 }}
+                                  >
+                                    {test.test_name}
+                                  </h3>
+                                </div>
+                                {!noPrevious && (
+                                  <span
+                                    className="chart-trend"
+                                    style={{
+                                      background: tStyle.bg,
+                                      color: tStyle.color,
+                                      flexShrink: 0,
+                                      marginLeft: "8px",
+                                      transition: "all 0.5s ease-in-out",
+                                    }}
+                                  >
+                                    {tStyle.arrow}{" "}
+                                    {Math.abs(changePercent ?? 0).toFixed(1)}%
+                                  </span>
+                                )}
+                              </div>
 
-                            {/* SVG Chart */}
-                            <div className="mini-chart" style={{ position: "relative" }}>
-                              <svg
-                                className="chart-canvas"
-                                viewBox="0 0 300 160"
-                                style={{ overflow: "visible" }}
-                                onMouseLeave={() => setChartTooltip(prev => ({ ...prev, visible: false }))}
+                              {/* SVG Chart */}
+                              <div
+                                className="mini-chart"
+                                style={{ position: "relative" }}
                               >
-                                <defs>
-                                  <linearGradient id={gradId} x1="0%" y1="0%" x2="0%" y2="100%">
-                                    <stop offset="0%" style={{ stopColor: chartColor, stopOpacity: 0.12 }} />
-                                    <stop offset="100%" style={{ stopColor: chartColor, stopOpacity: 0 }} />
-                                  </linearGradient>
-                                </defs>
-                                {points.length > 1 && (
-                                  <>
-                                    <path d={area} fill={`url(#${gradId})`} style={{ transition: "all 0.5s ease" }} />
-                                    <path d={line} stroke={chartColor} strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "all 0.5s ease" }} />
-                                  </>
-                                )}
-                                {points.length === 1 && (
-                                  <line x1="0" y1="80" x2="300" y2="80" stroke={chartColor} strokeWidth="2" strokeDasharray="6 4" opacity="0.4" />
-                                )}
-                                {dots.map((dot, di) => (
-                                  <g key={di}>
-                                    <circle
-                                      cx={dot.x}
-                                      cy={dot.y}
-                                      r="6"
-                                      fill="transparent"
-                                      style={{ cursor: "pointer" }}
-                                      onMouseEnter={(e) => {
-                                        const svg = e.currentTarget.closest("svg");
-                                        const svgRect = svg.getBoundingClientRect();
-                                        setChartTooltip({
-                                          visible: true,
-                                          x: dot.x * (svgRect.width / 300),
-                                          y: dot.y * (svgRect.height / 160),
-                                          date: dot.date || "",
-                                          status: dot.status || "",
-                                          value: `${dot.value} ${test.unit || ""}`,
-                                          testIdx,
-                                          pointIdx: di,
-                                        });
-                                      }}
+                                <svg
+                                  className="chart-canvas"
+                                  viewBox="0 0 300 160"
+                                  style={{ overflow: "visible" }}
+                                  onMouseLeave={() =>
+                                    setChartTooltip((prev) => ({
+                                      ...prev,
+                                      visible: false,
+                                    }))
+                                  }
+                                >
+                                  <defs>
+                                    <linearGradient
+                                      id={gradId}
+                                      x1="0%"
+                                      y1="0%"
+                                      x2="0%"
+                                      y2="100%"
+                                    >
+                                      <stop
+                                        offset="0%"
+                                        style={{
+                                          stopColor: chartColor,
+                                          stopOpacity: 0.12,
+                                        }}
+                                      />
+                                      <stop
+                                        offset="100%"
+                                        style={{
+                                          stopColor: chartColor,
+                                          stopOpacity: 0,
+                                        }}
+                                      />
+                                    </linearGradient>
+                                  </defs>
+                                  {points.length > 1 && (
+                                    <>
+                                      <path
+                                        d={area}
+                                        fill={`url(#${gradId})`}
+                                        style={{ transition: "all 0.5s ease" }}
+                                      />
+                                      <path
+                                        d={line}
+                                        stroke={chartColor}
+                                        strokeWidth="2.5"
+                                        fill="none"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        style={{ transition: "all 0.5s ease" }}
+                                      />
+                                    </>
+                                  )}
+                                  {points.length === 1 && (
+                                    <line
+                                      x1="0"
+                                      y1="80"
+                                      x2="300"
+                                      y2="80"
+                                      stroke={chartColor}
+                                      strokeWidth="2"
+                                      strokeDasharray="6 4"
+                                      opacity="0.4"
                                     />
-                                    <circle
-                                      cx={dot.x}
-                                      cy={dot.y}
-                                      r={chartTooltip.visible && chartTooltip.testIdx === testIdx && chartTooltip.pointIdx === di ? "6" : "4"}
-                                      fill={chartColor}
-                                      stroke="white"
-                                      strokeWidth="1.5"
-                                      style={{ pointerEvents: "none" }}
-                                    />
-                                  </g>
-                                ))}
-                              </svg>
+                                  )}
+                                  {dots.map((dot, di) => (
+                                    <g key={di}>
+                                      <circle
+                                        cx={dot.x}
+                                        cy={dot.y}
+                                        r="6"
+                                        fill="transparent"
+                                        style={{ cursor: "pointer" }}
+                                        onMouseEnter={(e) => {
+                                          const svg =
+                                            e.currentTarget.closest("svg");
+                                          const svgRect =
+                                            svg.getBoundingClientRect();
+                                          setChartTooltip({
+                                            visible: true,
+                                            x: dot.x * (svgRect.width / 300),
+                                            y: dot.y * (svgRect.height / 160),
+                                            date: dot.date || "",
+                                            status: dot.status || "",
+                                            value: `${dot.value} ${test.unit || ""}`,
+                                            testIdx,
+                                            pointIdx: di,
+                                          });
+                                        }}
+                                      />
+                                      <circle
+                                        cx={dot.x}
+                                        cy={dot.y}
+                                        r={
+                                          chartTooltip.visible &&
+                                          chartTooltip.testIdx === testIdx &&
+                                          chartTooltip.pointIdx === di
+                                            ? "6"
+                                            : "4"
+                                        }
+                                        fill={chartColor}
+                                        stroke="white"
+                                        strokeWidth="1.5"
+                                        style={{ pointerEvents: "none" }}
+                                      />
+                                    </g>
+                                  ))}
+                                </svg>
 
-                              {/* Tooltip */}
-                              {chartTooltip.visible && chartTooltip.testIdx === testIdx && (
-                                <div style={{
-                                  position: "absolute",
-                                  left: `${chartTooltip.x}px`,
-                                  top: chartTooltip.y < 80 ? `${chartTooltip.y + 15}px` : `${chartTooltip.y - 85}px`,
-                                  transform: "translateX(-50%)",
-                                  background: "rgba(255, 255, 255, 0.96)",
-                                  backdropFilter: "blur(8px)",
-                                  border: "1px solid rgba(42, 102, 255, 0.15)",
-                                  color: "#0E1A34",
-                                  padding: "10px 14px",
-                                  borderRadius: "12px",
-                                  fontSize: "12px",
-                                  fontWeight: 500,
-                                  pointerEvents: "none",
-                                  zIndex: 100,
-                                  whiteSpace: "nowrap",
-                                  boxShadow: "0 8px 24px rgba(14, 26, 52, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04)",
-                                  transition: "all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)",
-                                }}>
-                                  <div style={{ fontWeight: 800, fontSize: "14px", marginBottom: "2px", color: "#0E1A34" }}>{chartTooltip.value}</div>
-                                  {chartTooltip.date && <div style={{ color: "#8A94A6", fontSize: "11px", fontWeight: 600 }}>{chartTooltip.date}</div>}
-                                  {chartTooltip.status && (
-                                    <div style={{
-                                      marginTop: "6px",
-                                      fontSize: "10px",
-                                      fontWeight: 800,
-                                      textTransform: "uppercase",
-                                      letterSpacing: "0.5px",
-                                      color: chartTooltip.status.toLowerCase() === "critical" ? "#FF5C5C" : "#00C187",
-                                    }}>
-                                      {chartTooltip.status}
+                                {/* Tooltip */}
+                                {chartTooltip.visible &&
+                                  chartTooltip.testIdx === testIdx && (
+                                    <div
+                                      style={{
+                                        position: "absolute",
+                                        left: `${chartTooltip.x}px`,
+                                        top:
+                                          chartTooltip.y < 80
+                                            ? `${chartTooltip.y + 15}px`
+                                            : `${chartTooltip.y - 85}px`,
+                                        transform: "translateX(-50%)",
+                                        background: "rgba(255, 255, 255, 0.96)",
+                                        backdropFilter: "blur(8px)",
+                                        border:
+                                          "1px solid rgba(42, 102, 255, 0.15)",
+                                        color: "#0E1A34",
+                                        padding: "10px 14px",
+                                        borderRadius: "12px",
+                                        fontSize: "12px",
+                                        fontWeight: 500,
+                                        pointerEvents: "none",
+                                        zIndex: 100,
+                                        whiteSpace: "nowrap",
+                                        boxShadow:
+                                          "0 8px 24px rgba(14, 26, 52, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04)",
+                                        transition:
+                                          "all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)",
+                                      }}
+                                    >
+                                      <div
+                                        style={{
+                                          fontWeight: 800,
+                                          fontSize: "14px",
+                                          marginBottom: "2px",
+                                          color: "#0E1A34",
+                                        }}
+                                      >
+                                        {chartTooltip.value}
+                                      </div>
+                                      {chartTooltip.date && (
+                                        <div
+                                          style={{
+                                            color: "#8A94A6",
+                                            fontSize: "11px",
+                                            fontWeight: 600,
+                                          }}
+                                        >
+                                          {chartTooltip.date}
+                                        </div>
+                                      )}
+                                      {chartTooltip.status && (
+                                        <div
+                                          style={{
+                                            marginTop: "6px",
+                                            fontSize: "10px",
+                                            fontWeight: 800,
+                                            textTransform: "uppercase",
+                                            letterSpacing: "0.5px",
+                                            color:
+                                              chartTooltip.status.toLowerCase() ===
+                                              "critical"
+                                                ? "#FF5C5C"
+                                                : "#00C187",
+                                          }}
+                                        >
+                                          {chartTooltip.status}
+                                        </div>
+                                      )}
+                                      {/* tooltip arrow */}
+                                      <div
+                                        style={{
+                                          position: "absolute",
+                                          ...(chartTooltip.y < 80
+                                            ? { top: "-6px" }
+                                            : { bottom: "-6px" }),
+                                          left: "50%",
+                                          transform: "translateX(-50%)",
+                                          width: 0,
+                                          height: 0,
+                                          borderLeft: "6px solid transparent",
+                                          borderRight: "6px solid transparent",
+                                          ...(chartTooltip.y < 80
+                                            ? {
+                                                borderBottom:
+                                                  "6px solid rgba(255, 255, 255, 0.96)",
+                                              }
+                                            : {
+                                                borderTop:
+                                                  "6px solid rgba(255, 255, 255, 0.96)",
+                                              }),
+                                        }}
+                                      />
                                     </div>
                                   )}
-                                  {/* tooltip arrow */}
-                                  <div style={{
-                                    position: "absolute",
-                                    ...(chartTooltip.y < 80 ? { top: "-6px" } : { bottom: "-6px" }),
-                                    left: "50%",
-                                    transform: "translateX(-50%)",
-                                    width: 0,
-                                    height: 0,
-                                    borderLeft: "6px solid transparent",
-                                    borderRight: "6px solid transparent",
-                                    ...(chartTooltip.y < 80
-                                      ? { borderBottom: "6px solid rgba(255, 255, 255, 0.96)" }
-                                      : { borderTop: "6px solid rgba(255, 255, 255, 0.96)" }
-                                    ),
-                                  }} />
-                                </div>
-                              )}
-                            </div>
+                              </div>
 
-                            {/* Footer Stats */}
-                            <div className="chart-stats">
-                              <div className="stat-col">
-                                <div className="stat-label">Initial</div>
-                                <div className="stat-value">{firstValue} {test.unit || ""}</div>
-                              </div>
-                              <div className="stat-col">
-                                <div className="stat-label">Current</div>
-                                <div className="stat-value" style={{ color: chartColor }}>{currentValue} {test.unit || ""}</div>
-                              </div>
-                              <div className="stat-col">
-                                <div className="stat-label">Change</div>
-                                <div className="stat-value" style={{ color: noPrevious ? "#8A94A6" : chartColor, transition: "all 0.5s ease-in-out" }}>
-                                  {noPrevious
-                                    ? "N/A"
-                                    : `${(changePercent ?? 0) >= 0 ? "+" : ""}${(changePercent ?? 0).toFixed(1)}%`
-                                  }
+                              {/* Footer Stats */}
+                              <div className="chart-stats">
+                                <div className="stat-col">
+                                  <div className="stat-label">Initial</div>
+                                  <div className="stat-value">
+                                    {firstValue} {test.unit || ""}
+                                  </div>
+                                </div>
+                                <div className="stat-col">
+                                  <div className="stat-label">Current</div>
+                                  <div
+                                    className="stat-value"
+                                    style={{ color: chartColor }}
+                                  >
+                                    {currentValue} {test.unit || ""}
+                                  </div>
+                                </div>
+                                <div className="stat-col">
+                                  <div className="stat-label">Change</div>
+                                  <div
+                                    className="stat-value"
+                                    style={{
+                                      color: noPrevious
+                                        ? "#8A94A6"
+                                        : chartColor,
+                                      transition: "all 0.5s ease-in-out",
+                                    }}
+                                  >
+                                    {noPrevious
+                                      ? "N/A"
+                                      : `${(changePercent ?? 0) >= 0 ? "+" : ""}${(changePercent ?? 0).toFixed(1)}%`}
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </>
-                );
-              })()}
-
+                          );
+                        })}
+                      </div>
+                    </>
+                  );
+                })()}
             </div>
           </div>
 
-
-
           {/* Decision Support Tab */}
           <div
-            className={`tab-content ${activeTab === "decision" ? "active" : ""
-              }`}
+            className={`tab-content ${
+              activeTab === "decision" ? "active" : ""
+            }`}
             id="decision"
           >
             <div className="card">
@@ -3492,75 +4668,219 @@ const PatientProfile = () => {
               </h2>
 
               {/* Priority: sub-loading/generating → locked → ds-loading → error → empty → data */}
-              {isSubLoading || decisionSupportLoading || isGeneratingDecisionSupport ? (
+              {isSubLoading ||
+              decisionSupportLoading ||
+              isGeneratingDecisionSupport ? (
                 <div className="likelihood-stack">
                   {/* Card 1 */}
-                  <div className="preview-shimmer" style={{ pointerEvents: "none", width: "100%" }}>
+                  <div
+                    className="preview-shimmer"
+                    style={{ pointerEvents: "none", width: "100%" }}
+                  >
                     <div className="likelihood-card high">
                       <div className="likelihood-header">
                         <div>
-                          <div style={{ fontSize: "11px", color: "#FF5C5C", marginBottom: "3px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>HIGH LIKELIHOOD</div>
-                          <div className="likelihood-title">Sjogren's Syndrome</div>
+                          <div
+                            style={{
+                              fontSize: "11px",
+                              color: "#FF5C5C",
+                              marginBottom: "3px",
+                              fontWeight: 600,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.5px",
+                            }}
+                          >
+                            HIGH LIKELIHOOD
+                          </div>
+                          <div className="likelihood-title">
+                            Sjogren's Syndrome
+                          </div>
                         </div>
-                        <div className="confidence" style={{ color: "#FF5C5C", flexShrink: 0, marginLeft: "16px" }}>82%</div>
+                        <div
+                          className="confidence"
+                          style={{
+                            color: "#FF5C5C",
+                            flexShrink: 0,
+                            marginLeft: "16px",
+                          }}
+                        >
+                          82%
+                        </div>
                       </div>
-                      <div className="reasoning"><strong>Clinical Reasoning:</strong> Patient presentation aligns strongly with typical autoimmune markers and symptomatic progression.</div>
+                      <div className="reasoning">
+                        <strong>Clinical Reasoning:</strong> Patient
+                        presentation aligns strongly with typical autoimmune
+                        markers and symptomatic progression.
+                      </div>
                     </div>
                   </div>
 
                   {/* Card 2 */}
-                  <div className="preview-shimmer" style={{ pointerEvents: "none", width: "100%" }}>
+                  <div
+                    className="preview-shimmer"
+                    style={{ pointerEvents: "none", width: "100%" }}
+                  >
                     <div className="likelihood-card medium">
                       <div className="likelihood-header">
                         <div>
-                          <div style={{ fontSize: "11px", color: "#FFA500", marginBottom: "3px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>POSSIBLE</div>
-                          <div className="likelihood-title">Rheumatoid Arthritis</div>
+                          <div
+                            style={{
+                              fontSize: "11px",
+                              color: "#FFA500",
+                              marginBottom: "3px",
+                              fontWeight: 600,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.5px",
+                            }}
+                          >
+                            POSSIBLE
+                          </div>
+                          <div className="likelihood-title">
+                            Rheumatoid Arthritis
+                          </div>
                         </div>
-                        <div className="confidence" style={{ color: "#FFA500", flexShrink: 0, marginLeft: "16px" }}>74%</div>
+                        <div
+                          className="confidence"
+                          style={{
+                            color: "#FFA500",
+                            flexShrink: 0,
+                            marginLeft: "16px",
+                          }}
+                        >
+                          74%
+                        </div>
                       </div>
-                      <div className="reasoning"><strong>Clinical Reasoning:</strong> Secondary indicators and joint inflammation markers suggest an alternative presentation pathway.</div>
+                      <div className="reasoning">
+                        <strong>Clinical Reasoning:</strong> Secondary
+                        indicators and joint inflammation markers suggest an
+                        alternative presentation pathway.
+                      </div>
                     </div>
                   </div>
 
                   {/* Card 3 */}
-                  <div className="preview-shimmer" style={{ pointerEvents: "none", width: "100%" }}>
+                  <div
+                    className="preview-shimmer"
+                    style={{ pointerEvents: "none", width: "100%" }}
+                  >
                     <div className="likelihood-card low">
                       <div className="likelihood-header">
                         <div>
-                          <div style={{ fontSize: "11px", color: "#8A94A6", marginBottom: "3px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>LOW LIKELIHOOD</div>
-                          <div className="likelihood-title">Systemic Lupus Erythematosus (SLE)</div>
+                          <div
+                            style={{
+                              fontSize: "11px",
+                              color: "#8A94A6",
+                              marginBottom: "3px",
+                              fontWeight: 600,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.5px",
+                            }}
+                          >
+                            LOW LIKELIHOOD
+                          </div>
+                          <div className="likelihood-title">
+                            Systemic Lupus Erythematosus (SLE)
+                          </div>
                         </div>
-                        <div className="confidence" style={{ color: "#8A94A6", flexShrink: 0, marginLeft: "16px" }}>36%</div>
+                        <div
+                          className="confidence"
+                          style={{
+                            color: "#8A94A6",
+                            flexShrink: 0,
+                            marginLeft: "16px",
+                          }}
+                        >
+                          36%
+                        </div>
                       </div>
-                      <div className="reasoning"><strong>Clinical Reasoning:</strong> Baseline ANA titers and lack of systemic involvement decrease diagnostic probability.</div>
+                      <div className="reasoning">
+                        <strong>Clinical Reasoning:</strong> Baseline ANA titers
+                        and lack of systemic involvement decrease diagnostic
+                        probability.
+                      </div>
                     </div>
                   </div>
 
                   {/* Card 4 */}
-                  <div className="preview-shimmer" style={{ pointerEvents: "none", width: "100%" }}>
+                  <div
+                    className="preview-shimmer"
+                    style={{ pointerEvents: "none", width: "100%" }}
+                  >
                     <div className="likelihood-card high">
                       <div className="likelihood-header">
                         <div>
-                          <div style={{ fontSize: "11px", color: "#FF5C5C", marginBottom: "3px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>HIGH LIKELIHOOD</div>
-                          <div className="likelihood-title">B-Cell Lymphoma</div>
+                          <div
+                            style={{
+                              fontSize: "11px",
+                              color: "#FF5C5C",
+                              marginBottom: "3px",
+                              fontWeight: 600,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.5px",
+                            }}
+                          >
+                            HIGH LIKELIHOOD
+                          </div>
+                          <div className="likelihood-title">
+                            B-Cell Lymphoma
+                          </div>
                         </div>
-                        <div className="confidence" style={{ color: "#FF5C5C", flexShrink: 0, marginLeft: "16px" }}>12%</div>
+                        <div
+                          className="confidence"
+                          style={{
+                            color: "#FF5C5C",
+                            flexShrink: 0,
+                            marginLeft: "16px",
+                          }}
+                        >
+                          12%
+                        </div>
                       </div>
-                      <div className="reasoning"><strong>Clinical Reasoning:</strong> Lymphadenopathy and persistent night sweats flag consideration for thorough hematological review.</div>
+                      <div className="reasoning">
+                        <strong>Clinical Reasoning:</strong> Lymphadenopathy and
+                        persistent night sweats flag consideration for thorough
+                        hematological review.
+                      </div>
                     </div>
                   </div>
 
                   {/* Card 5 */}
-                  <div className="preview-shimmer" style={{ pointerEvents: "none", width: "100%" }}>
+                  <div
+                    className="preview-shimmer"
+                    style={{ pointerEvents: "none", width: "100%" }}
+                  >
                     <div className="likelihood-card low">
                       <div className="likelihood-header">
                         <div>
-                          <div style={{ fontSize: "11px", color: "#8A94A6", marginBottom: "3px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>LOW LIKELIHOOD</div>
+                          <div
+                            style={{
+                              fontSize: "11px",
+                              color: "#8A94A6",
+                              marginBottom: "3px",
+                              fontWeight: 600,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.5px",
+                            }}
+                          >
+                            LOW LIKELIHOOD
+                          </div>
                           <div className="likelihood-title">Sarcoidosis</div>
                         </div>
-                        <div className="confidence" style={{ color: "#8A94A6", flexShrink: 0, marginLeft: "16px" }}>8%</div>
+                        <div
+                          className="confidence"
+                          style={{
+                            color: "#8A94A6",
+                            flexShrink: 0,
+                            marginLeft: "16px",
+                          }}
+                        >
+                          8%
+                        </div>
                       </div>
-                      <div className="reasoning"><strong>Clinical Reasoning:</strong> Low correlation with current clinical presentation and pulmonary workup.</div>
+                      <div className="reasoning">
+                        <strong>Clinical Reasoning:</strong> Low correlation
+                        with current clinical presentation and pulmonary workup.
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -3572,185 +4892,332 @@ const PatientProfile = () => {
                       <div className="likelihood-card high">
                         <div className="likelihood-header">
                           <div>
-                            <div style={{ fontSize: "11px", color: "#FF5C5C", marginBottom: "3px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>HIGH LIKELIHOOD</div>
-                            <div className="likelihood-title">Differential Consideration A</div>
+                            <div
+                              style={{
+                                fontSize: "11px",
+                                color: "#FF5C5C",
+                                marginBottom: "3px",
+                                fontWeight: 600,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.5px",
+                              }}
+                            >
+                              HIGH LIKELIHOOD
+                            </div>
+                            <div className="likelihood-title">
+                              Differential Consideration A
+                            </div>
                           </div>
-                          <div className="confidence" style={{ color: "#FF5C5C", flexShrink: 0, marginLeft: "16px" }}>87%</div>
+                          <div
+                            className="confidence"
+                            style={{
+                              color: "#FF5C5C",
+                              flexShrink: 0,
+                              marginLeft: "16px",
+                            }}
+                          >
+                            87%
+                          </div>
                         </div>
-                        <div className="reasoning"><strong>Clinical Reasoning:</strong> Based on lab results, imaging, and patient history patterns.</div>
+                        <div className="reasoning">
+                          <strong>Clinical Reasoning:</strong> Based on lab
+                          results, imaging, and patient history patterns.
+                        </div>
                       </div>
                       <div className="likelihood-card medium">
                         <div className="likelihood-header">
                           <div>
-                            <div style={{ fontSize: "11px", color: "#FFA500", marginBottom: "3px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>MODERATE LIKELIHOOD</div>
-                            <div className="likelihood-title">Differential Consideration B</div>
+                            <div
+                              style={{
+                                fontSize: "11px",
+                                color: "#FFA500",
+                                marginBottom: "3px",
+                                fontWeight: 600,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.5px",
+                              }}
+                            >
+                              MODERATE LIKELIHOOD
+                            </div>
+                            <div className="likelihood-title">
+                              Differential Consideration B
+                            </div>
                           </div>
-                          <div className="confidence" style={{ color: "#FFA500", flexShrink: 0, marginLeft: "16px" }}>54%</div>
+                          <div
+                            className="confidence"
+                            style={{
+                              color: "#FFA500",
+                              flexShrink: 0,
+                              marginLeft: "16px",
+                            }}
+                          >
+                            54%
+                          </div>
                         </div>
-                        <div className="reasoning"><strong>Clinical Reasoning:</strong> Secondary indicators suggest an alternative presentation pathway.</div>
+                        <div className="reasoning">
+                          <strong>Clinical Reasoning:</strong> Secondary
+                          indicators suggest an alternative presentation
+                          pathway.
+                        </div>
                       </div>
                       <div className="likelihood-card low">
                         <div className="likelihood-header">
                           <div>
-                            <div style={{ fontSize: "11px", color: "#8A94A6", marginBottom: "3px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>LOW LIKELIHOOD</div>
-                            <div className="likelihood-title">Differential Consideration C</div>
+                            <div
+                              style={{
+                                fontSize: "11px",
+                                color: "#8A94A6",
+                                marginBottom: "3px",
+                                fontWeight: 600,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.5px",
+                              }}
+                            >
+                              LOW LIKELIHOOD
+                            </div>
+                            <div className="likelihood-title">
+                              Differential Consideration C
+                            </div>
                           </div>
-                          <div className="confidence" style={{ color: "#8A94A6", flexShrink: 0, marginLeft: "16px" }}>21%</div>
+                          <div
+                            className="confidence"
+                            style={{
+                              color: "#8A94A6",
+                              flexShrink: 0,
+                              marginLeft: "16px",
+                            }}
+                          >
+                            21%
+                          </div>
                         </div>
-                        <div className="reasoning"><strong>Clinical Reasoning:</strong> Low correlation with current clinical presentation and workup.</div>
+                        <div className="reasoning">
+                          <strong>Clinical Reasoning:</strong> Low correlation
+                          with current clinical presentation and workup.
+                        </div>
                       </div>
                     </div>
                   </div>
                   <LockedFeatureOverlay
                     title="Unlock Smarter Clinical Decisions"
                     description="Get AI-powered differential insights to support faster and more accurate diagnoses."
-                    primaryLabel={planNameLower === "basic" ? "Upgrade to Pro" : "Upgrade to Premium"}
-                    onPrimary={() => initiateUpgrade(planNameLower === "basic" ? "Pro" : "Premium", 'recurring', 'decision')}
-                    secondaryLabel={planNameLower === "basic" ? "Upgrade to Premium" : "Use Pay-Per-Use"}
-                    onSecondary={() => planNameLower === "basic" ? initiateUpgrade("Premium", 'recurring', 'decision') : initiateUpgrade("Pay-Per-Use", 'ppu', 'decision')}
-                    tertiaryLabel={planNameLower === "basic" ? "Use Pay-Per-Use" : null}
-                    onTertiary={planNameLower === "basic" ? () => initiateUpgrade("Pay-Per-Use", 'ppu', 'decision') : null}
+                    primaryLabel={
+                      planNameLower === "basic"
+                        ? "Upgrade to Pro"
+                        : "Upgrade to Premium"
+                    }
+                    onPrimary={() =>
+                      initiateUpgrade(
+                        planNameLower === "basic" ? "Pro" : "Premium",
+                        "recurring",
+                        "decision",
+                      )
+                    }
+                    secondaryLabel={
+                      planNameLower === "basic"
+                        ? "Upgrade to Premium"
+                        : "Use Pay-Per-Use"
+                    }
+                    onSecondary={() =>
+                      planNameLower === "basic"
+                        ? initiateUpgrade("Premium", "recurring", "decision")
+                        : initiateUpgrade("Pay-Per-Use", "ppu", "decision")
+                    }
+                    tertiaryLabel={
+                      planNameLower === "basic" ? "Use Pay-Per-Use" : null
+                    }
+                    onTertiary={
+                      planNameLower === "basic"
+                        ? () =>
+                            initiateUpgrade("Pay-Per-Use", "ppu", "decision")
+                        : null
+                    }
                   />
                 </div>
               ) : (
                 <>
                   {/* ── Error state ── (only reached when data exists but fetch failed) */}
-                  {!shouldShowLockedDecisionSupport && !decisionSupportLoading && decisionSupportError && (
-                    <div
-                      style={{
-                        textAlign: "center",
-                        padding: "48px 24px",
-                        color: decisionSupportError === "401" ? "#FF5C5C" : "#8A94A6",
-                      }}
-                    >
-                      <svg
-                        width="48"
-                        height="48"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        style={{ marginBottom: "16px", opacity: 0.6 }}
+                  {!shouldShowLockedDecisionSupport &&
+                    !decisionSupportLoading &&
+                    decisionSupportError && (
+                      <div
+                        style={{
+                          textAlign: "center",
+                          padding: "48px 24px",
+                          color:
+                            decisionSupportError === "401"
+                              ? "#FF5C5C"
+                              : "#8A94A6",
+                        }}
                       >
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="12" y1="8" x2="12" y2="12" />
-                        <line x1="12" y1="16" x2="12.01" y2="16" />
-                      </svg>
-                      <p style={{ fontSize: "15px", fontWeight: 600, marginBottom: "8px" }}>
-                        {decisionSupportError === "401"
-                          ? "Session Expired"
-                          : "Unable to Load Decision Support"}
-                      </p>
-                      <p style={{ fontSize: "13px", opacity: 0.75, marginBottom: "20px" }}>
-                        {decisionSupportError === "401"
-                          ? "Your session has expired. Please log in again to continue."
-                          : decisionSupportError}
-                      </p>
-                      {decisionSupportError === "401" ? (
-                        <button
-                          className="btn btn-primary"
-                          onClick={() => navigate("/login")}
+                        <svg
+                          width="48"
+                          height="48"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          style={{ marginBottom: "16px", opacity: 0.6 }}
                         >
-                          Go to Login
-                        </button>
-                      ) : (
-                        <button
-                          className="btn btn-secondary"
-                          onClick={fetchDecisionSupport}
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="12" y1="8" x2="12" y2="12" />
+                          <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        <p
+                          style={{
+                            fontSize: "15px",
+                            fontWeight: 600,
+                            marginBottom: "8px",
+                          }}
                         >
-                          Retry
-                        </button>
-                      )}
-                    </div>
-                  )}
+                          {decisionSupportError === "401"
+                            ? "Session Expired"
+                            : "Unable to Load Decision Support"}
+                        </p>
+                        <p
+                          style={{
+                            fontSize: "13px",
+                            opacity: 0.75,
+                            marginBottom: "20px",
+                          }}
+                        >
+                          {decisionSupportError === "401"
+                            ? "Your session has expired. Please log in again to continue."
+                            : decisionSupportError}
+                        </p>
+                        {decisionSupportError === "401" ? (
+                          <button
+                            className="btn btn-primary"
+                            onClick={() => navigate("/login")}
+                          >
+                            Go to Login
+                          </button>
+                        ) : (
+                          <button
+                            className="btn btn-secondary"
+                            onClick={fetchDecisionSupport}
+                          >
+                            Retry
+                          </button>
+                        )}
+                      </div>
+                    )}
 
                   {/* ── Empty state ── (only reached if data is STILL empty despite retry, but we shifted to locked UI above, so this acts as final fallback) */}
-                  {!shouldShowLockedDecisionSupport && !(canAccessDecisionSupportNow && hasTriggeredDecisionSupportGeneration.current) && !decisionSupportLoading && !decisionSupportError && Array.isArray(decisionSupport) && decisionSupport.length === 0 && decisionSupportLoadedFor === patientId && (
-                    <div
-                      style={{
-                        textAlign: "center",
-                        padding: "48px 24px",
-                        color: "#8A94A6",
-                      }}
-                    >
-                      <svg
-                        width="48"
-                        height="48"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        style={{ marginBottom: "16px", opacity: 0.5 }}
+                  {!shouldShowLockedDecisionSupport &&
+                    !(
+                      canAccessDecisionSupportNow &&
+                      hasTriggeredDecisionSupportGeneration.current
+                    ) &&
+                    !decisionSupportLoading &&
+                    !decisionSupportError &&
+                    Array.isArray(decisionSupport) &&
+                    decisionSupport.length === 0 &&
+                    decisionSupportLoadedFor === patientId && (
+                      <div
+                        style={{
+                          textAlign: "center",
+                          padding: "48px 24px",
+                          color: "#8A94A6",
+                        }}
                       >
-                        <path d="M9 11l3 3L22 4" />
-                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-                      </svg>
-                      <p style={{ fontSize: "15px", fontWeight: 600, marginBottom: "6px" }}>
-                        No decision support available yet.
-                      </p>
-                      <p style={{ fontSize: "13px", opacity: 0.7 }}>
-                        Decision support data will appear here once reports are processed.
-                      </p>
-                    </div>
-                  )}
+                        <svg
+                          width="48"
+                          height="48"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          style={{ marginBottom: "16px", opacity: 0.5 }}
+                        >
+                          <path d="M9 11l3 3L22 4" />
+                          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                        </svg>
+                        <p
+                          style={{
+                            fontSize: "15px",
+                            fontWeight: 600,
+                            marginBottom: "6px",
+                          }}
+                        >
+                          No decision support available yet.
+                        </p>
+                        <p style={{ fontSize: "13px", opacity: 0.7 }}>
+                          Decision support data will appear here once reports
+                          are processed.
+                        </p>
+                      </div>
+                    )}
 
                   {/* ── Data state ── */}
-                  {!decisionSupportLoading && !decisionSupportError && Array.isArray(decisionSupport) && decisionSupport.length > 0 && (
-                    <div className="likelihood-stack">
-                      {decisionSupport.map((item) => {
-                        const statusUpper = (item.status || "").toUpperCase();
-                        const isHigh = statusUpper.includes("HIGH");
-                        const isLow = statusUpper.includes("LOW");
-                        const statusColor = isHigh ? "#FF5C5C" : isLow ? "#8A94A6" : "#FFA500";
-                        const cardClass = isHigh ? "high" : isLow ? "low" : "medium";
+                  {!decisionSupportLoading &&
+                    !decisionSupportError &&
+                    Array.isArray(decisionSupport) &&
+                    decisionSupport.length > 0 && (
+                      <div className="likelihood-stack">
+                        {decisionSupport.map((item) => {
+                          const statusUpper = (item.status || "").toUpperCase();
+                          const isHigh = statusUpper.includes("HIGH");
+                          const isLow = statusUpper.includes("LOW");
+                          const statusColor = isHigh
+                            ? "#FF5C5C"
+                            : isLow
+                              ? "#8A94A6"
+                              : "#FFA500";
+                          const cardClass = isHigh
+                            ? "high"
+                            : isLow
+                              ? "low"
+                              : "medium";
 
-                        return (
-                          <div
-                            key={item.id}
-                            className={`likelihood-card ${cardClass} ${expandedLikelihoods[item.id] ? "expanded" : ""}`}
-                            onClick={() => toggleLikelihood(item.id)}
-                            style={{ cursor: "pointer" }}
-                          >
-                            <div className="likelihood-header">
-                              <div>
+                          return (
+                            <div
+                              key={item.id}
+                              className={`likelihood-card ${cardClass} ${expandedLikelihoods[item.id] ? "expanded" : ""}`}
+                              onClick={() => toggleLikelihood(item.id)}
+                              style={{ cursor: "pointer" }}
+                            >
+                              <div className="likelihood-header">
+                                <div>
+                                  <div
+                                    style={{
+                                      fontSize: "11px",
+                                      color: statusColor,
+                                      marginBottom: "3px",
+                                      fontWeight: 600,
+                                      textTransform: "uppercase",
+                                      letterSpacing: "0.5px",
+                                    }}
+                                  >
+                                    {item.status}
+                                  </div>
+                                  <div className="likelihood-title">
+                                    {item.condition}
+                                  </div>
+                                </div>
                                 <div
+                                  className="confidence"
                                   style={{
-                                    fontSize: "11px",
                                     color: statusColor,
-                                    marginBottom: "3px",
-                                    fontWeight: 600,
-                                    textTransform: "uppercase",
-                                    letterSpacing: "0.5px",
+                                    flexShrink: 0,
+                                    marginLeft: "16px",
                                   }}
                                 >
-                                  {item.status}
+                                  {item.probability}
                                 </div>
-                                <div className="likelihood-title">{item.condition}</div>
                               </div>
-                              <div
-                                className="confidence"
-                                style={{
-                                  color: statusColor,
-                                  flexShrink: 0,
-                                  marginLeft: "16px",
-                                }}
-                              >
-                                {item.probability}
+                              <div className="reasoning">
+                                <strong>Clinical Reasoning:</strong>{" "}
+                                {item.clinical_reasoning}
                               </div>
                             </div>
-                            <div className="reasoning">
-                              <strong>Clinical Reasoning:</strong>{" "}
-                              {item.clinical_reasoning}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                          );
+                        })}
+                      </div>
+                    )}
                 </>
               )}
             </div>
@@ -3790,34 +5257,56 @@ const PatientProfile = () => {
 
               {/* Loading dummy preview */}
               {activitiesLoading && activities.length === 0 && (
-                <div className="preview-shimmer" style={{ display: 'block', width: '100%', pointerEvents: 'none' }}>
+                <div
+                  className="preview-shimmer"
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    pointerEvents: "none",
+                  }}
+                >
                   <div className="activity-timeline">
                     <div className="activity-item">
-                      <div className="activity-text">Dr. Tareq Ahmed deleted Medication: 'Panadol'</div>
+                      <div className="activity-text">
+                        Dr. Tareq Ahmed deleted Medication: 'Panadol'
+                      </div>
                       <div className="activity-time">Just now</div>
                     </div>
                     <div className="activity-item">
-                      <div className="activity-text">Dr. Tareq Ahmed deleted Medication: 'Augmentin'</div>
+                      <div className="activity-text">
+                        Dr. Tareq Ahmed deleted Medication: 'Augmentin'
+                      </div>
                       <div className="activity-time">5 mins ago</div>
                     </div>
                     <div className="activity-item">
-                      <div className="activity-text">Dr. Tareq Ahmed deleted Task: 'CBC'</div>
+                      <div className="activity-text">
+                        Dr. Tareq Ahmed deleted Task: 'CBC'
+                      </div>
                       <div className="activity-time">1 hour ago</div>
                     </div>
                     <div className="activity-item">
-                      <div className="activity-text">Dr. System updated is_completed to ''</div>
+                      <div className="activity-text">
+                        Dr. System updated is_completed to ''
+                      </div>
                       <div className="activity-time">2 hours ago</div>
                     </div>
                     <div className="activity-item">
-                      <div className="activity-text">Dr. Tareq Ahmed updated next visit date to 'Wed, April 22, 2026'</div>
+                      <div className="activity-text">
+                        Dr. Tareq Ahmed updated next visit date to 'Wed, April
+                        22, 2026'
+                      </div>
                       <div className="activity-time">1 day ago</div>
                     </div>
                     <div className="activity-item">
-                      <div className="activity-text">Dr. Tareq Ahmed created Task: 'MRI 3'</div>
+                      <div className="activity-text">
+                        Dr. Tareq Ahmed created Task: 'MRI 3'
+                      </div>
                       <div className="activity-time">2 days ago</div>
                     </div>
                     <div className="activity-item">
-                      <div className="activity-text">Dr. Tareq Ahmed created Visit on Apr 15, 2026</div>
+                      <div className="activity-text">
+                        Dr. Tareq Ahmed created Visit on Apr 15, 2026
+                      </div>
                       <div className="activity-time">2 days ago</div>
                     </div>
                   </div>
@@ -3826,21 +5315,36 @@ const PatientProfile = () => {
 
               {/* Error */}
               {!activitiesLoading && activitiesError && (
-                <p style={{ color: "#FF5C5C", fontSize: "14px" }}>{activitiesError}</p>
+                <p style={{ color: "#FF5C5C", fontSize: "14px" }}>
+                  {activitiesError}
+                </p>
               )}
 
               {/* Empty */}
-              {!activitiesLoading && !activitiesError && activitiesLoadedFor === patientId && activities.length === 0 && (
-                <p style={{ color: "#8A94A6", fontSize: "14px" }}>No activity yet.</p>
-              )}
+              {!activitiesLoading &&
+                !activitiesError &&
+                activitiesLoadedFor === patientId &&
+                activities.length === 0 && (
+                  <p style={{ color: "#8A94A6", fontSize: "14px" }}>
+                    No activity yet.
+                  </p>
+                )}
 
               {/* Data */}
               {!activitiesError && activities.length > 0 && (
-                <div className="activity-timeline" style={{ opacity: activitiesLoading ? 0.6 : 1, transition: "opacity 0.2s" }}>
+                <div
+                  className="activity-timeline"
+                  style={{
+                    opacity: activitiesLoading ? 0.6 : 1,
+                    transition: "opacity 0.2s",
+                  }}
+                >
                   {activities.map((activity) => (
                     <div className="activity-item" key={activity.id}>
                       <div className="activity-text">{activity.message}</div>
-                      <div className="activity-time">{activity.time_ago || activity.created_at}</div>
+                      <div className="activity-time">
+                        {activity.time_ago || activity.created_at}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -3890,8 +5394,25 @@ const PatientProfile = () => {
         </div>
         <div className="chat-messages" id="chatMessages">
           {isSubLoading ? (
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flex: 1, minHeight: "120px" }}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2A66FF" strokeWidth="3" strokeLinecap="round" style={{ animation: "spin 1s linear infinite" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                flex: 1,
+                minHeight: "120px",
+              }}
+            >
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#2A66FF"
+                strokeWidth="3"
+                strokeLinecap="round"
+                style={{ animation: "spin 1s linear infinite" }}
+              >
                 <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
               </svg>
             </div>
@@ -3899,18 +5420,28 @@ const PatientProfile = () => {
             <>
               {/* Blurred dummy chat background */}
               <div className="lf-chat-dummy" aria-hidden="true">
-                <div className="message ai">Hello! How can I assist you today?</div>
-                <div className="message user">What are the latest lab findings?</div>
-                <div className="message ai">Based on the patient file, the key findings include...</div>
+                <div className="message ai">
+                  Hello! How can I assist you today?
+                </div>
+                <div className="message user">
+                  What are the latest lab findings?
+                </div>
+                <div className="message ai">
+                  Based on the patient file, the key findings include...
+                </div>
               </div>
               <LockedFeatureOverlay
                 compact
                 title="Meet Your DiagnoBot"
                 description="Ask anything about your patient and get instant, source-based answers."
                 primaryLabel="Upgrade to Premium"
-                onPrimary={() => initiateUpgrade("Premium", 'recurring', 'chatbot')}
+                onPrimary={() =>
+                  initiateUpgrade("Premium", "recurring", "chatbot")
+                }
                 secondaryLabel="Or use Pay-Per-Use"
-                onSecondary={() => initiateUpgrade("Pay-Per-Use", 'ppu', 'chatbot')}
+                onSecondary={() =>
+                  initiateUpgrade("Pay-Per-Use", "ppu", "chatbot")
+                }
               />
             </>
           ) : (
@@ -3925,7 +5456,9 @@ const PatientProfile = () => {
               ))}
               {isChatSending && !isChatPreparing && (
                 <div className="message ai chat-typing">
-                  <span /><span /><span />
+                  <span />
+                  <span />
+                  <span />
                 </div>
               )}
               <div ref={messagesEndRef} />
@@ -3939,20 +5472,28 @@ const PatientProfile = () => {
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             onKeyPress={handleChatEnter}
-            disabled={shouldShowLockedChatbot || isChatSending || isChatPreparing}
+            disabled={
+              shouldShowLockedChatbot || isChatSending || isChatPreparing
+            }
           />
           <button
             className="btn btn-primary"
             onClick={sendMessage}
-            disabled={shouldShowLockedChatbot || isChatSending || isChatPreparing}
+            disabled={
+              shouldShowLockedChatbot || isChatSending || isChatPreparing
+            }
           >
-            {isChatPreparing ? "Preparing..." : isChatSending ? "Sending..." : "Send"}
+            {isChatPreparing
+              ? "Preparing..."
+              : isChatSending
+                ? "Sending..."
+                : "Send"}
           </button>
         </div>
       </div>
       <EvidencePanel
         isOpen={evidencePanel.open}
-        onClose={() => setEvidencePanel(p => ({ ...p, open: false }))}
+        onClose={() => setEvidencePanel((p) => ({ ...p, open: false }))}
         sourceFile={sourceFile}
         selectedAlert={evidencePanel.selectedAlert}
       />
