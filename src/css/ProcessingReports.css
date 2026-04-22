@@ -1,6 +1,12 @@
+/* ================================================================
+   ProcessingReports.css
+   Scoped entirely to .processing-reports-page — zero global leakage.
+   ================================================================ */
+
+/* ── Page shell ─────────────────────────────────────────────── */
 .processing-reports-page {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: linear-gradient(135deg, #F8FAFF 0%, #F0F4FF 100%);
+    background: linear-gradient(150deg, #F5F8FF 0%, #EBF0FF 100%);
     color: #3A4560;
     overflow: hidden;
     min-height: 100vh;
@@ -17,29 +23,27 @@
     box-sizing: border-box;
 }
 
+/* ── Ambient background blobs ───────────────────────────────── */
 .processing-reports-page .background-pattern {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     background:
-        radial-gradient(circle at 15% 25%, rgba(42, 102, 255, 0.05) 0%, transparent 50%),
-        radial-gradient(circle at 85% 75%, rgba(0, 193, 135, 0.05) 0%, transparent 50%);
+        radial-gradient(ellipse at 15% 18%, rgba(42, 102, 255, 0.09) 0%, transparent 52%),
+        radial-gradient(ellipse at 85% 82%, rgba(42, 102, 255, 0.06) 0%, transparent 48%);
     pointer-events: none;
     z-index: 0;
 }
 
+/* ── Expanding ripple rings ──────────────────────────────────── */
 .processing-reports-page .ai-waves {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 600px;
-    height: 600px;
+    width: 640px;
+    height: 640px;
     pointer-events: none;
     z-index: 0;
-    opacity: 0.6;
 }
 
 .processing-reports-page .wave {
@@ -49,182 +53,280 @@
     transform: translate(-50%, -50%);
     border: 1px solid rgba(42, 102, 255, 0.08);
     border-radius: 50%;
-    animation: pr-waveExpand 3s ease-out infinite;
+    animation: pr-waveExpand 5s ease-out infinite;
 }
 
-.processing-reports-page .wave:nth-child(1) {
-    width: 200px;
-    height: 200px;
-    animation-delay: 0s;
-}
-
-.processing-reports-page .wave:nth-child(2) {
-    width: 200px;
-    height: 200px;
-    animation-delay: 1s;
-}
-
-.processing-reports-page .wave:nth-child(3) {
-    width: 200px;
-    height: 200px;
-    animation-delay: 2s;
-}
+.processing-reports-page .wave:nth-child(1) { width: 200px; height: 200px; animation-delay: 0s;   }
+.processing-reports-page .wave:nth-child(2) { width: 200px; height: 200px; animation-delay: 1.6s; }
+.processing-reports-page .wave:nth-child(3) { width: 200px; height: 200px; animation-delay: 3.2s; }
 
 @keyframes pr-waveExpand {
-    0% {
-        width: 200px;
-        height: 200px;
-        opacity: 0.6;
-    }
-    100% {
-        width: 600px;
-        height: 600px;
-        opacity: 0;
-    }
+    0%   { width: 200px; height: 200px; opacity: 0.75; }
+    100% { width: 640px; height: 640px; opacity: 0;    }
 }
 
+/* ── Floating ambient particles ─────────────────────────────── */
+.processing-reports-page .pr-particles {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.processing-reports-page .pr-particle {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(42, 102, 255, 0.18);
+    animation: pr-float linear infinite;
+}
+
+.processing-reports-page .pr-particle:nth-child(1) { left: 12%;  bottom: -8px; width: 4px; height: 4px; animation-duration: 9s;  animation-delay: 0s;   }
+.processing-reports-page .pr-particle:nth-child(2) { left: 28%;  bottom: -8px; width: 3px; height: 3px; animation-duration: 12s; animation-delay: 2s;   background: rgba(42,102,255,0.12); }
+.processing-reports-page .pr-particle:nth-child(3) { left: 55%;  bottom: -8px; width: 5px; height: 5px; animation-duration: 10s; animation-delay: 1s;   }
+.processing-reports-page .pr-particle:nth-child(4) { left: 72%;  bottom: -8px; width: 3px; height: 3px; animation-duration: 14s; animation-delay: 3.5s; background: rgba(42,102,255,0.10); }
+.processing-reports-page .pr-particle:nth-child(5) { left: 83%;  bottom: -8px; width: 4px; height: 4px; animation-duration: 11s; animation-delay: 0.5s; }
+.processing-reports-page .pr-particle:nth-child(6) { left: 40%;  bottom: -8px; width: 3px; height: 3px; animation-duration: 13s; animation-delay: 4s;   background: rgba(42,102,255,0.14); }
+
+@keyframes pr-float {
+    0%   { transform: translateY(0)       scale(1);   opacity: 0;   }
+    10%  { opacity: 1; }
+    90%  { opacity: 0.6; }
+    100% { transform: translateY(-100vh) scale(0.5); opacity: 0;   }
+}
+
+/* ── Content container ──────────────────────────────────────── */
 .processing-reports-page .loading-container {
     position: relative;
     z-index: 10;
     text-align: center;
-    animation: pr-fadeIn 0.6s ease;
+    animation: pr-fadeIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+    padding: 24px 24px 28px;
+    max-width: 580px;
+    width: 100%;
 }
 
 @keyframes pr-fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0);    }
 }
 
-.processing-reports-page .loading-logo {
-    width: 140px;
-    height: 140px;
-    margin: 0 auto 32px;
-    background: linear-gradient(135deg, #2A66FF, #467DFF);
-    border-radius: 24px;
+/* ─────────────────────────────────────────────────────────────
+   Hourglass scene
+   ─────────────────────────────────────────────────────────────*/
+.processing-reports-page .hourglass-scene {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow:
-        0 8px 24px rgba(42, 102, 255, 0.25),
-        0 0 0 12px rgba(42, 102, 255, 0.08);
-    animation: pr-pulse 2s ease-in-out infinite;
+    margin: 0 auto 28px;
+    width: 210px;
+    height: 210px;
 }
 
-.processing-reports-page .loading-logo svg {
-    width: 70px;
-    height: 70px;
-    stroke: white;
-    fill: none;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+/* Soft radial glow disc */
+.processing-reports-page .hourglass-glow {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(
+        circle at center,
+        rgba(42, 102, 255, 0.15) 0%,
+        rgba(42, 102, 255, 0.05) 50%,
+        transparent 72%
+    );
+    animation: pr-glow-breathe 4s ease-in-out infinite;
+    pointer-events: none;
 }
 
-@keyframes pr-pulse {
-    0%, 100% {
-        transform: scale(1);
-        box-shadow:
-            0 8px 24px rgba(42, 102, 255, 0.25),
-            0 0 0 12px rgba(42, 102, 255, 0.08);
-    }
-    50% {
-        transform: scale(1.05);
-        box-shadow:
-            0 12px 32px rgba(42, 102, 255, 0.35),
-            0 0 0 16px rgba(42, 102, 255, 0.12);
-    }
+@keyframes pr-glow-breathe {
+    0%, 100% { transform: scale(1);    opacity: 0.7; }
+    50%       { transform: scale(1.10); opacity: 1;   }
 }
 
+/* Faint dashed orbit ring */
+.processing-reports-page .hourglass-ring {
+    position: absolute;
+    inset: 8px;
+    border-radius: 50%;
+    border: 1.5px dashed rgba(42, 102, 255, 0.14);
+    animation: pr-ring-spin 22s linear infinite reverse;
+    pointer-events: none;
+}
+
+@keyframes pr-ring-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   THE SINGLE ROTATING SVG — hourglass + sand as one unit
+   ─────────────────────────────────────────────────────────────
+   This single SVG element contains both the glass frame (caps,
+   frame, sand rects, stream — all inside this one element.
+   Rotating it rotates everything as one unit.
+   Sand is double-clipped (chamber shape + level mask) via SMIL.
+
+   Width 152px, height 190px  (viewBox 80×100, scale 1.9×)
+   Rotation period: 8s — matches SMIL sand cycle exactly.
+   ─────────────────────────────────────────────────────────────*/
+.processing-reports-page .hourglass-svg {
+    position: absolute;
+    width: 152px;
+    height: 190px;
+    display: block;
+    filter:
+        drop-shadow(0 0 18px rgba(42, 102, 255, 0.28))
+        drop-shadow(0 4px 14px rgba(42, 102, 255, 0.16));
+    animation: pr-hg-rotate 8s linear infinite;
+    transform-origin: center center;
+}
+
+@keyframes pr-hg-rotate {
+    from { transform: rotate(-42deg);   }
+    to   { transform: rotate(318deg); }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SAND STREAM — angle-gated, source-sand-presence enforced
+   ─────────────────────────────────────────────────────────────
+   Pour window: -42deg to +36deg relative to each source
+   chamber's 12-o'clock (upright) position.
+
+   Phase A  (A source)
+     Starts exactly at -42deg (cycle 0%) and pours until +36deg (cycle 21.6%).
+     The animation is explicitly seeded to start at this -42deg frame.
+     Window: 0% to 21.6%
+
+   Phase B  (B source)
+     B is upright at 180deg. -42deg relative to B is 138deg.
+     Phase B pour starts at 138deg (cycle 50%) and ends at 216deg (cycle 71.6%).
+     Window: 50% to 71.6%
+   ─────────────────────────────────────────────────────────────*/
+
+/* Falling stream -- CSS opacity only; geometry is static SVG */
+.processing-reports-page .pr-sand-stream-rect {
+    animation: pr-stream-anim 8s linear infinite;
+}
+
+@keyframes pr-stream-anim {
+    /* Phase A pour: CSS -42deg to +36deg (0% to 21.6%) */
+    0%    { opacity: 0.65; }
+    17.6% { opacity: 0.65; }
+    19.6% { opacity: 0.55; }
+    21.0% { opacity: 0.22; }
+    21.6% { opacity: 0;    }   /* exits pour window (+36deg) */
+
+    49%   { opacity: 0;    }
+
+    /* Phase B pour: CSS 138deg to 216deg (50% to 71.6%) */
+    50%   { opacity: 0.65; }
+    67.6% { opacity: 0.65; }
+    69.6% { opacity: 0.55; }
+    71.0% { opacity: 0.22; }
+    71.6% { opacity: 0;    }
+
+    99%   { opacity: 0;    }
+    100%  { opacity: 0.65; }
+}
+
+
+/* ── Typography ─────────────────────────────────────────────── */
 .processing-reports-page .loading-title {
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 700;
     color: #0E1A34;
-    margin-bottom: 12px;
-    letter-spacing: -0.5px;
+    margin: 0 0 8px;
+    letter-spacing: -0.4px;
+    line-height: 1.2;
 }
 
 .processing-reports-page .loading-subtitle {
-    font-size: 16px;
+    font-size: 15px;
     color: #8A94A6;
-    font-weight: 500;
-    margin-bottom: 48px;
+    font-weight: 400;
+    margin: 0 0 24px;
+    line-height: 1.55;
+    animation: pr-subtitle-breathe 4s ease-in-out infinite;
 }
 
-.processing-reports-page .spinner-container {
-    position: relative;
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 32px;
+@keyframes pr-subtitle-breathe {
+    0%, 100% { opacity: 0.7; }
+    50%       { opacity: 1;   }
 }
 
-.processing-reports-page .spinner {
-    width: 80px;
-    height: 80px;
-    border: 4px solid #E6EAF2;
-    border-top-color: #2A66FF;
-    border-radius: 50%;
-    animation: pr-spin 1s linear infinite;
-}
-
-@keyframes pr-spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
+/* ── Progress bar ───────────────────────────────────────────── */
 .processing-reports-page .progress-container {
     width: 300px;
-    height: 6px;
-    background: #E6EAF2;
+    height: 5px;
+    background: #DDE3F0;
     border-radius: 10px;
     overflow: hidden;
-    margin: 0 auto 24px;
+    margin: 0 auto 14px;
 }
 
 .processing-reports-page .progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, #2A66FF, #467DFF);
+    background: linear-gradient(90deg, #2A66FF 0%, #6A9DFF 100%);
     border-radius: 10px;
-    animation: pr-progress 2s ease-in-out forwards;
-    box-shadow: 0 0 10px rgba(42, 102, 255, 0.4);
+    box-shadow: 0 0 8px rgba(42, 102, 255, 0.38);
+    transition: width 1s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-@keyframes pr-progress {
-    from {
-        width: 0%;
-    }
-    to {
-        width: 100%;
-    }
-}
-
+/* ── Pulsing status label ───────────────────────────────────── */
 .processing-reports-page .status-message {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     color: #2A66FF;
-    animation: pr-fadeInOut 3s ease-in-out infinite;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    animation: pr-fadeInOut 2.6s ease-in-out infinite;
 }
 
 @keyframes pr-fadeInOut {
-    0%, 100% {
-        opacity: 0.4;
-    }
-    50% {
-        opacity: 1;
-    }
+    0%, 100% { opacity: 0.32; }
+    50%       { opacity: 1;   }
 }
 
+/* ── Rotating Insights ────────────────────────────────────────── */
+.processing-reports-page .pr-insight-container {
+    width: 380px;
+    max-width: 90vw;
+    margin: 6px auto 0;
+    min-height: 44px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.processing-reports-page .pr-insight-text {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #4A5568;
+    line-height: 1.5;
+    margin: 0;
+    transition: opacity 0.3s ease-in-out;
+    text-align: center;
+    /* 2-line clamp */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.processing-reports-page .pr-insight-text.pr-fade-in {
+    opacity: 1;
+}
+
+.processing-reports-page .pr-insight-text.pr-fade-out {
+    opacity: 0;
+}
+
+/* ── Step checklist ─────────────────────────────────────────── */
 .processing-reports-page .loading-steps {
-    margin-top: 40px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 9px;
     align-items: center;
 }
 
@@ -233,44 +335,38 @@
     align-items: center;
     gap: 12px;
     padding: 12px 24px;
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     border-radius: 12px;
-    border: 1px solid rgba(230, 234, 242, 0.6);
+    border: 1px solid rgba(210, 220, 242, 0.75);
+    box-shadow: 0 1px 5px rgba(42, 102, 255, 0.06);
     opacity: 0;
-    animation: pr-stepFadeIn 0.5s ease forwards;
-    min-width: 280px;
+    animation: pr-stepFadeIn 0.45s ease forwards;
+    width: 300px;
 }
 
-.processing-reports-page .loading-step:nth-child(1) {
-    animation-delay: 0.3s;
-}
-
-.processing-reports-page .loading-step:nth-child(2) {
-    animation-delay: 0.6s;
-}
-
-.processing-reports-page .loading-step:nth-child(3) {
-    animation-delay: 0.9s;
-}
+.processing-reports-page .loading-step:nth-child(1) { animation-delay: 0.2s;  }
+.processing-reports-page .loading-step:nth-child(2) { animation-delay: 0.45s; }
+.processing-reports-page .loading-step:nth-child(3) { animation-delay: 0.7s;  }
 
 @keyframes pr-stepFadeIn {
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; transform: translateY(7px); }
+    to   { opacity: 1; transform: translateY(0);   }
 }
 
 .processing-reports-page .step-icon {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .processing-reports-page .step-icon svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     stroke: #00C187;
     fill: none;
     stroke-width: 2.5;
@@ -279,40 +375,125 @@
 }
 
 .processing-reports-page .step-text {
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 13.5px;
+    font-weight: 500;
     color: #3A4560;
+    flex: 1;
+    text-align: left;
 }
 
 .processing-reports-page .step-spinner {
-    margin-left: auto;
-    width: 16px;
-    height: 16px;
-    border: 2px solid #E6EAF2;
+    width: 14px;
+    height: 14px;
+    border: 2px solid #DDE3F0;
     border-top-color: #2A66FF;
     border-radius: 50%;
-    animation: pr-spin 0.8s linear infinite;
+    animation: pr-step-spin 0.75s linear infinite;
 }
 
+@keyframes pr-step-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Stop Processing button ─────────────────────────────────── */
+.processing-reports-page .pr-stop-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 20px auto 0;
+    width: 300px;
+    padding: 12px 24px;
+    background: rgba(254, 242, 242, 0.78);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1.5px solid rgba(252, 165, 165, 0.45);
+    border-radius: 12px;
+    color: #DC2626;
+    font-size: 13.5px;
+    font-weight: 600;
+    font-family: inherit;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    box-shadow: 0 1px 5px rgba(220, 38, 38, 0.04);
+    transition:
+        color 0.2s ease,
+        border-color 0.2s ease,
+        background 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.15s ease;
+}
+
+.processing-reports-page .pr-stop-btn svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+}
+
+.processing-reports-page .pr-stop-btn svg path {
+    stroke: #DC2626;
+}
+
+.processing-reports-page .pr-stop-btn:hover {
+    color: #991B1B;
+    border-color: rgba(248, 113, 113, 0.55);
+    background: rgba(254, 226, 226, 0.85);
+    box-shadow: 0 2px 10px rgba(220, 38, 38, 0.12);
+}
+
+.processing-reports-page .pr-stop-btn:hover svg path {
+    stroke: #991B1B;
+}
+
+.processing-reports-page .pr-stop-btn:active {
+    transform: scale(0.975);
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 768px) {
-    .processing-reports-page .loading-logo {
-        width: 120px;
-        height: 120px;
+    .processing-reports-page .hourglass-scene {
+        width: 185px;
+        height: 185px;
+    }
+
+    .processing-reports-page .hourglass-svg {
+        width: 118px;
+        height: 148px;
     }
 
     .processing-reports-page .loading-title {
-        font-size: 24px;
+        font-size: 22px;
     }
 
     .processing-reports-page .loading-subtitle {
         font-size: 14px;
     }
 
-    .processing-reports-page .progress-container {
-        width: 240px;
+    .processing-reports-page .progress-container,
+    .processing-reports-page .loading-step,
+    .processing-reports-page .pr-stop-btn {
+        width: 260px;
+    }
+}
+
+@media (max-width: 420px) {
+    .processing-reports-page .hourglass-scene {
+        width: 155px;
+        height: 155px;
     }
 
-    .processing-reports-page .loading-step {
-        min-width: 240px;
+    .processing-reports-page .hourglass-svg {
+        width: 96px;
+        height: 120px;
+    }
+
+    .processing-reports-page .loading-step,
+    .processing-reports-page .pr-stop-btn {
+        width: 230px;
+        padding: 10px 16px;
+    }
+
+    .processing-reports-page .progress-container {
+        width: 230px;
     }
 }

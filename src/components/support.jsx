@@ -244,7 +244,7 @@ function Support() {
             <div className="title">
               <h1>Help & Support</h1>
               <p className="page-header-subtitle">
-                We're here to help . typical response time under 24 hours
+                We're here to help. typical response time under 24 hours
               </p>
             </div>
           </div>
@@ -363,7 +363,7 @@ function Support() {
                   <span className="chevron">▼</span>
                 </div>
                 <div className={`faq-answer ${activeFAQ === 5 ? "show" : ""}`}>
-                  Navigate to subscriptions > available plans tab. From there, you can switch between the Basic, Pro, or Premium plans, or opt for the Pay-per-use model based on your clinic's volume.
+                  Navigate to subscriptions then available plans tab. From there, you can switch between the Basic, Pro, or Premium plans, or opt for the Pay-per-use model based on your clinic's volume.
                 </div>
               </div>
 

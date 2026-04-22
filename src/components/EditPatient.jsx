@@ -619,7 +619,7 @@ const EditPatient = () => {
           setShowProcessingScreen(false);
           setIsProcessing(false);
           setFieldErrors({ _general: msg || "AI analysis failed. Please try again." });
-          goToStep(3); // return to upload step
+          goToStep(1); // Return to the beginning of the form on failure
         }}
       />
     );

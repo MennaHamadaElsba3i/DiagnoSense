@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSidebar } from "./SidebarContext";
 import { useSubscription } from "./SubscriptionContext";
@@ -52,7 +52,7 @@ function Subscription() {
   // Tracks if transactions have been loaded at least once for the billing tab
   const transactionsFetchedRef = useRef(false);
 
-  const fetchTransactions = useCallback(async () => {
+  const fetchTransactions = async () => {
     // ── Cache check ──
     const cached = getCache("subscription_transactions");
     if (cached) {
@@ -71,7 +71,7 @@ function Subscription() {
       // credits are managed globally via context — no local state needed
     }
     setIsLoadingHistory(false);
-  }, [getCache, setCache]);
+  };
 
   // (Transaction load moved below activeTab declaration to avoid ReferenceError)
 
@@ -123,30 +123,18 @@ function Subscription() {
         console.log(
           "[Subscription] Stripe success message received from popup.",
         );
-
-        // 1. Toast first — fetchAndToastLatest hits the notifications endpoint
-        //    and renders the popup with real backend content as fast as possible.
-        //    Fire without await so it runs in parallel with everything below.
-        fetchAndToastLatest();
-
-        // 2. Refresh credits + subscription data (runs in parallel with #1)
         refreshSubscription();
-
-        // 3. Force-refresh transactions for Billing & History.
-        //    Clear the cache entry so fetchTransactions() bypasses its guard,
-        //    then call it immediately. This is scoped to this one handler —
-        //    transactions remain lazy everywhere else in the app.
-        setCache("subscription_transactions", null);
-        transactionsFetchedRef.current = false;
-        fetchTransactions();
-
-        // 4. Notify any other components that subscription state changed
+        // fetchAndToastLatest: fetches real backend notification, shows it as
+        // the toast popup, and refreshes the unread count in one go.
+        fetchAndToastLatest();
+        // Invalidate transactions cache so billing tab re-fetches on next open
         window.dispatchEvent(new CustomEvent("subscriptionChanged"));
+        transactionsFetchedRef.current = false;
       }
     };
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [refreshSubscription, fetchAndToastLatest, setCache, fetchTransactions]);
+  }, [refreshSubscription, fetchAndToastLatest]);
 
   // ── Real-time Refresh when notification arrives ────────────────────────────
   useEffect(() => {

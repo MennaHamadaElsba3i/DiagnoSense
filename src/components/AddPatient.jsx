@@ -16,6 +16,7 @@ import LogoutConfirmation from "../components/ConfirmationModal.jsx";
 import { getCookie } from "./cookieUtils";
 import { useNotifications } from "./NotificationsContext";
 import { getDoctorInitials } from './Dashboard';
+import { useTranscription } from "../hooks/useTranscription";
 
 
 const AddPatient = () => {
@@ -60,6 +61,15 @@ const AddPatient = () => {
   const { credits, isCreditsLoading, refreshCredits } = useSubscription();
 
   const [fieldErrors, setFieldErrors] = useState({});
+
+  const { isRecording, isConnecting, toggleRecording } = useTranscription(
+    useCallback((text) => {
+      setFormData(prev => ({
+        ...prev,
+        ChiefComplaint: prev.ChiefComplaint + text
+      }));
+    }, [])
+  );
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -442,8 +452,8 @@ const AddPatient = () => {
 
   if (showProcessingScreen) {
     return (
-      <ProcessingReports 
-        patientId={pollingInfo.patientId} 
+      <ProcessingReports
+        patientId={pollingInfo.patientId}
         token={pollingInfo.token}
         onSuccess={(data) => {
           navigate(`/patient-profile/${pollingInfo.patientId}`, {
@@ -454,7 +464,13 @@ const AddPatient = () => {
           setShowProcessingScreen(false);
           setIsProcessing(false);
           setFieldErrors({ _general: msg || "AI analysis failed. Please try again." });
-          setCurrentStep(3); // Ensure user is on the final step for retry
+          setCurrentStep(1); // Ensure user goes back to the beginning on failure
+        }}
+        onStop={() => {
+          // User manually stopped — return them to the Upload Reports step
+          setShowProcessingScreen(false);
+          setIsProcessing(false);
+          setCurrentStep(3);
         }}
       />
     );
@@ -751,7 +767,50 @@ const AddPatient = () => {
 
               <div className="form-group">
                 <label className="form-label">Chief Complaint</label>
-                <textarea className="form-textarea" id="ChiefComplaint" placeholder="Describe the main problem the patient is experiencing..." value={formData.ChiefComplaint} onChange={handleInputChange}></textarea>
+                <div className="chief-complaint-wrapper">
+                  <textarea className="form-textarea chief-complaint-textarea" id="ChiefComplaint" placeholder="Describe the main problem the patient is experiencing..." value={formData.ChiefComplaint} onChange={handleInputChange}></textarea>
+                  
+                  {isRecording && (
+                    <div className="voice-visualization">
+                      <span className="voice-bar" style={{ backgroundColor: '#2A66FF' }}></span>
+                      <span className="voice-bar" style={{ backgroundColor: '#2A66FF' }}></span>
+                      <span className="voice-bar" style={{ backgroundColor: '#2A66FF' }}></span>
+                      <span className="voice-bar" style={{ backgroundColor: '#2A66FF' }}></span>
+                    </div>
+                  )}
+
+                  <button 
+                    type="button" 
+                    className={`mic-button ${isRecording ? 'recording' : ''} ${isConnecting ? 'connecting' : ''}`}
+                    onClick={toggleRecording}
+                    title={isRecording ? "Stop Recording" : isConnecting ? "Connecting..." : "Start Voice Input"}
+                    disabled={isConnecting}
+                  >
+                    {isConnecting ? (
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="spin-icon">
+                        <line x1="12" y1="2" x2="12" y2="6"></line>
+                        <line x1="12" y1="18" x2="12" y2="22"></line>
+                        <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                        <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                        <line x1="2" y1="12" x2="6" y2="12"></line>
+                        <line x1="18" y1="12" x2="22" y2="12"></line>
+                        <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                        <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                      </svg>
+                    ) : isRecording ? (
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="6" y="6" width="12" height="12" rx="2" ry="2"></rect>
+                      </svg>
+                    ) : (
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2A66FF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
 
               <div className="wizard-actions">

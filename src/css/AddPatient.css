@@ -1001,3 +1001,97 @@
              margin-left: 3px;
              font-style: italic;
         }
+
+        /* Voice Integration Styles */
+        .chief-complaint-wrapper {
+             position: relative;
+             width: 100%;
+        }
+
+        .chief-complaint-textarea {
+             padding-bottom: 50px !important; /* Make room for the mic button */
+        }
+
+        .mic-button {
+             position: absolute;
+             bottom: 14px;
+             right: 14px;
+             width: 38px;
+             height: 38px;
+             background-color: transparent;
+             border: none;
+             color: #2A66FF;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             cursor: pointer;
+             transition: all 0.2s ease;
+             box-shadow: none;
+             z-index: 2;
+             outline: none;
+             padding: 0;
+        }
+
+        .mic-button:hover {
+             background-color: transparent;
+             color: #2A66FF;
+             transform: scale(1.1);
+        }
+
+        .mic-button.recording {
+             background-color: transparent;
+             color: #FF5C5C;
+             animation: pulseMicIcon 1.5s infinite;
+        }
+
+        @keyframes pulseMicIcon {
+             0% {
+                  opacity: 1;
+                  transform: scale(1);
+             }
+             50% {
+                  opacity: 0.6;
+                  transform: scale(1.15);
+             }
+             100% {
+                  opacity: 1;
+                  transform: scale(1);
+             }
+        }
+
+        .voice-visualization {
+             position: absolute;
+             bottom: 14px;
+             right: 64px; /* Next to the mic button */
+             height: 38px;
+             display: flex;
+             align-items: center;
+             gap: 4px;
+             z-index: 2;
+        }
+
+        .voice-bar {
+             width: 4px;
+             background-color: #2A66FF;
+             border-radius: 2px;
+             animation: soundWave 1.2s ease-in-out infinite alternate;
+        }
+
+        .voice-bar:nth-child(1) { height: 12px; animation-delay: 0.1s; }
+        .voice-bar:nth-child(2) { height: 24px; animation-delay: 0.3s; }
+        .voice-bar:nth-child(3) { height: 16px; animation-delay: 0.5s; }
+        .voice-bar:nth-child(4) { height: 20px; animation-delay: 0.2s; }
+
+        @keyframes soundWave {
+             0% { height: 6px; }
+             100% { height: 28px; }
+        }
+
+        .spin-icon {
+             animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+             from { transform: rotate(0deg); }
+             to { transform: rotate(360deg); }
+        }

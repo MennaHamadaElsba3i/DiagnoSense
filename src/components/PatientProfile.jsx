@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
+import React, { useState, useEffect, useRef, useLayoutEffect, useCallback } from "react";
 import Swal from "sweetalert2";
 import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import { getDoctorInitials } from './Dashboard';
@@ -24,6 +24,7 @@ import {
 import echo from "./echo";
 import { getJsonCookie } from "./cookieUtils";
 import EvidencePanel from "../components/EvidencePanel.jsx";
+import { useTranscription } from "../hooks/useTranscription";
 
 import logo from "../assets/Logo_Diagnoo.png";
 import stethoscope from "../assets/Stethoscope.png";
@@ -62,7 +63,7 @@ const PatientProfile = () => {
   } = useSubscription();
 
   const { isSidebarCollapsed, toggleSidebar } = useSidebar();
-  const { unreadCount, openNotifications, refreshNotifications: refreshNotificationsCtx, fetchAndToastLatest } = useNotifications();
+  const { unreadCount, openNotifications, refreshNotifications: refreshNotificationsCtx } = useNotifications();
 
   const navigate = useNavigate();
   const { patientId } = useParams();
@@ -141,7 +142,7 @@ const PatientProfile = () => {
     }
   });
   const [isStatusUpdating, setIsStatusUpdating] = useState(false);
-  
+
   // ── Sniper-Static Header Logic ──
   const headerRef = useRef(null);
   const contentLayerRef = useRef(null);
@@ -520,10 +521,8 @@ const PatientProfile = () => {
       if (event.origin !== window.location.origin) return;
       if (event.data?.type === 'STRIPE_SUCCESS') {
         console.log("[PatientProfile] Stripe success received.");
-        // 1. Show toast with real backend notification content first
-        fetchAndToastLatest();
-        // 2. Refresh credits + subscription data in parallel
         refreshSubscriptionCtx();
+        refreshCreditsCtx();
         if (pendingFeatureToOpen === 'decision') fetchDecisionSupport();
         // Chatbot state handles itself via shouldShowLockedChatbot
         setIsUpgrading(false);
@@ -532,7 +531,7 @@ const PatientProfile = () => {
     };
     window.addEventListener('message', handleStripeMessage);
     return () => window.removeEventListener('message', handleStripeMessage);
-  }, [refreshSubscriptionCtx, fetchAndToastLatest, pendingFeatureToOpen]);
+  }, [refreshSubscriptionCtx, refreshCreditsCtx, pendingFeatureToOpen]);
 
   const initiateUpgrade = (planName, targetType, feature) => {
     let target = null;
@@ -577,11 +576,9 @@ const PatientProfile = () => {
           window.open(paymentUrl, "stripe_checkout", "width=600,height=700");
           // loading remains true until stripe message or manual close
         } else {
-          // Direct success (no Stripe redirect) — refresh everything immediately
           await refreshSubscriptionCtx();
-          // fetchAndToastLatest: fetch real backend notification, show toast,
-          // and refresh unread count in one shot.
-          fetchAndToastLatest();
+          await refreshCreditsCtx();
+          refreshNotificationsCtx?.();
 
           if (pendingFeatureToOpen === 'decision') {
             await fetchDecisionSupport();
@@ -611,6 +608,21 @@ const PatientProfile = () => {
   const [newNotes, setNewNotes] = useState({ high: [], medium: [], low: [] });
   const [newNoteTexts, setNewNoteTexts] = useState({});
 
+  const [recordingNoteId, setRecordingNoteId] = useState(null);
+
+  const { isRecording, isConnecting, toggleRecording, stopRecording } = useTranscription(
+    useCallback((text) => {
+      if (recordingNoteId === "diagnobot") {
+        setChatInput((prev) => prev + text);
+      } else if (recordingNoteId) {
+        setNewNoteTexts((prev) => ({
+          ...prev,
+          [recordingNoteId]: (prev[recordingNoteId] || "") + text,
+        }));
+      }
+    }, [recordingNoteId])
+  );
+
   const addNewNote = (priority) => {
     const id = `new-${priority}-${Date.now()}`;
     setNewNotes((prev) => ({
@@ -624,6 +636,10 @@ const PatientProfile = () => {
   };
 
   const saveNewNote = async (priority, id) => {
+    if (recordingNoteId === id) {
+      stopRecording();
+      setRecordingNoteId(null);
+    }
     const insight = (newNoteTexts[id] || "").trim();
     if (!insight || savingNoteId === id) return; // empty-text guard + prevent double submit
     setSavingNoteId(id);
@@ -666,6 +682,10 @@ const PatientProfile = () => {
   };
 
   const cancelNewNote = (priority, id) => {
+    if (recordingNoteId === id) {
+      stopRecording();
+      setRecordingNoteId(null);
+    }
     setNewNotes((prev) => ({
       ...prev,
       [priority]: prev[priority].filter((n) => n.id !== id),
@@ -2227,21 +2247,23 @@ const PatientProfile = () => {
                           </>
                         ) : (
                           <>
-                            <textarea
-                              className="pp-note-edit-textarea"
-                              value={newNoteTexts[note.id] || ""}
-                              onChange={(e) =>
-                                setNewNoteTexts((prev) => ({
-                                  ...prev,
-                                  [note.id]: e.target.value,
-                                }))
-                              }
-                              autoFocus
-                              placeholder="Type your note here..."
-                            />
+                            <div style={{ position: 'relative' }}>
+                              <textarea
+                                className="pp-note-edit-textarea"
+                                value={newNoteTexts[note.id] || ""}
+                                onChange={(e) =>
+                                  setNewNoteTexts((prev) => ({
+                                    ...prev,
+                                    [note.id]: e.target.value,
+                                  }))
+                                }
+                                autoFocus
+                                placeholder="Type your note here..."
+                              />
+                            </div>
                             <div className="pp-edit-footer-row">
                               <div className="note-footer">
-                                <div className="note-meta-stack">
+                                <div className="note-meta-stack" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                   <span className="note-date">
                                     {new Date().toLocaleDateString("en-US", {
                                       month: "short",
@@ -2249,6 +2271,51 @@ const PatientProfile = () => {
                                       year: "numeric",
                                     })}
                                   </span>
+                                  <button
+                                    className={`pp-record-btn ${isRecording && recordingNoteId === note.id ? 'recording' : ''}`}
+                                    onClick={() => {
+                                      if (isRecording && recordingNoteId !== note.id) {
+                                        stopRecording();
+                                      }
+                                      setRecordingNoteId(note.id);
+                                      toggleRecording();
+                                    }}
+                                    disabled={isConnecting && recordingNoteId !== note.id}
+                                  >
+                                    {isConnecting && recordingNoteId === note.id ? (
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="spin-icon">
+                                        <line x1="12" y1="2" x2="12" y2="6"></line>
+                                        <line x1="12" y1="18" x2="12" y2="22"></line>
+                                        <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                                        <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                                        <line x1="2" y1="12" x2="6" y2="12"></line>
+                                        <line x1="18" y1="12" x2="22" y2="12"></line>
+                                        <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                                        <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                                      </svg>
+                                    ) : isRecording && recordingNoteId === note.id ? (
+                                      <span style={{ width: '10px', height: '10px', backgroundColor: '#FF5C5C', borderRadius: '2px', display: 'inline-block', animation: 'pulseMicIcon 1.5s infinite', flexShrink: 0 }}></span>
+                                    ) : (
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                                      </svg>
+                                    )}
+                                    {isConnecting && recordingNoteId === note.id ? (
+                                      <span>Connecting...</span>
+                                    ) : isRecording && recordingNoteId === note.id ? (
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', height: '14px' }}>
+                                        <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.1s' }}></span>
+                                        <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.3s' }}></span>
+                                        <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.5s' }}></span>
+                                        <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.2s' }}></span>
+                                      </div>
+                                    ) : (
+                                      <span>Record</span>
+                                    )}
+                                  </button>
                                 </div>
                               </div>
                               <div className="pp-note-save-row">
@@ -2566,27 +2633,76 @@ const PatientProfile = () => {
                           </>
                         ) : (
                           <>
-                            <textarea
-                              className="pp-note-edit-textarea"
-                              value={newNoteTexts[note.id] || ""}
-                              onChange={(e) =>
-                                setNewNoteTexts((prev) => ({
-                                  ...prev,
-                                  [note.id]: e.target.value,
-                                }))
-                              }
-                              autoFocus
-                              placeholder="Type your note here..."
-                            />
+                            <div style={{ position: 'relative' }}>
+                              <textarea
+                                className="pp-note-edit-textarea"
+                                value={newNoteTexts[note.id] || ""}
+                                onChange={(e) =>
+                                  setNewNoteTexts((prev) => ({
+                                    ...prev,
+                                    [note.id]: e.target.value,
+                                  }))
+                                }
+                                autoFocus
+                                placeholder="Type your note here..."
+                              />
+                            </div>
                             <div className="pp-edit-footer-row">
                               <div className="note-footer">
-                                <span className="note-date">
-                                  {new Date().toLocaleDateString("en-US", {
-                                    month: "short",
-                                    day: "numeric",
-                                    year: "numeric",
-                                  })}
-                                </span>
+                                <div className="note-meta-stack" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                  <span className="note-date">
+                                    {new Date().toLocaleDateString("en-US", {
+                                      month: "short",
+                                      day: "numeric",
+                                      year: "numeric",
+                                    })}
+                                  </span>
+                                  <button
+                                    className={`pp-record-btn ${isRecording && recordingNoteId === note.id ? 'recording' : ''}`}
+                                    onClick={() => {
+                                      if (isRecording && recordingNoteId !== note.id) {
+                                        stopRecording();
+                                      }
+                                      setRecordingNoteId(note.id);
+                                      toggleRecording();
+                                    }}
+                                    disabled={isConnecting && recordingNoteId !== note.id}
+                                  >
+                                    {isConnecting && recordingNoteId === note.id ? (
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="spin-icon">
+                                        <line x1="12" y1="2" x2="12" y2="6"></line>
+                                        <line x1="12" y1="18" x2="12" y2="22"></line>
+                                        <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                                        <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                                        <line x1="2" y1="12" x2="6" y2="12"></line>
+                                        <line x1="18" y1="12" x2="22" y2="12"></line>
+                                        <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                                        <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                                      </svg>
+                                    ) : isRecording && recordingNoteId === note.id ? (
+                                      <span style={{ width: '10px', height: '10px', backgroundColor: '#FF5C5C', borderRadius: '2px', display: 'inline-block', animation: 'pulseMicIcon 1.5s infinite', flexShrink: 0 }}></span>
+                                    ) : (
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                                      </svg>
+                                    )}
+                                    {isConnecting && recordingNoteId === note.id ? (
+                                      <span>Connecting...</span>
+                                    ) : isRecording && recordingNoteId === note.id ? (
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', height: '14px' }}>
+                                        <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.1s' }}></span>
+                                        <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.3s' }}></span>
+                                        <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.5s' }}></span>
+                                        <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.2s' }}></span>
+                                      </div>
+                                    ) : (
+                                      <span>Record</span>
+                                    )}
+                                  </button>
+                                </div>
                               </div>
                               <div className="pp-note-save-row">
                                 <button
@@ -2877,27 +2993,76 @@ const PatientProfile = () => {
                           </>
                         ) : (
                           <>
-                            <textarea
-                              className="pp-note-edit-textarea"
-                              value={newNoteTexts[note.id] || ""}
-                              onChange={(e) =>
-                                setNewNoteTexts((prev) => ({
-                                  ...prev,
-                                  [note.id]: e.target.value,
-                                }))
-                              }
-                              autoFocus
-                              placeholder="Type your note here..."
-                            />
+                            <div style={{ position: 'relative' }}>
+                              <textarea
+                                className="pp-note-edit-textarea"
+                                value={newNoteTexts[note.id] || ""}
+                                onChange={(e) =>
+                                  setNewNoteTexts((prev) => ({
+                                    ...prev,
+                                    [note.id]: e.target.value,
+                                  }))
+                                }
+                                autoFocus
+                                placeholder="Type your note here..."
+                              />
+                            </div>
                             <div className="pp-edit-footer-row">
                               <div className="note-footer">
-                                <span className="note-date">
-                                  {new Date().toLocaleDateString("en-US", {
-                                    month: "short",
-                                    day: "numeric",
-                                    year: "numeric",
-                                  })}
-                                </span>
+                                <div className="note-meta-stack" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                  <span className="note-date">
+                                    {new Date().toLocaleDateString("en-US", {
+                                      month: "short",
+                                      day: "numeric",
+                                      year: "numeric",
+                                    })}
+                                  </span>
+                                  <button
+                                    className={`pp-record-btn ${isRecording && recordingNoteId === note.id ? 'recording' : ''}`}
+                                    onClick={() => {
+                                      if (isRecording && recordingNoteId !== note.id) {
+                                        stopRecording();
+                                      }
+                                      setRecordingNoteId(note.id);
+                                      toggleRecording();
+                                    }}
+                                    disabled={isConnecting && recordingNoteId !== note.id}
+                                  >
+                                    {isConnecting && recordingNoteId === note.id ? (
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="spin-icon">
+                                        <line x1="12" y1="2" x2="12" y2="6"></line>
+                                        <line x1="12" y1="18" x2="12" y2="22"></line>
+                                        <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                                        <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                                        <line x1="2" y1="12" x2="6" y2="12"></line>
+                                        <line x1="18" y1="12" x2="22" y2="12"></line>
+                                        <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                                        <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                                      </svg>
+                                    ) : isRecording && recordingNoteId === note.id ? (
+                                      <span style={{ width: '10px', height: '10px', backgroundColor: '#FF5C5C', borderRadius: '2px', display: 'inline-block', animation: 'pulseMicIcon 1.5s infinite', flexShrink: 0 }}></span>
+                                    ) : (
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                                      </svg>
+                                    )}
+                                    {isConnecting && recordingNoteId === note.id ? (
+                                      <span>Connecting...</span>
+                                    ) : isRecording && recordingNoteId === note.id ? (
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', height: '14px' }}>
+                                        <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.1s' }}></span>
+                                        <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.3s' }}></span>
+                                        <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.5s' }}></span>
+                                        <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.2s' }}></span>
+                                      </div>
+                                    ) : (
+                                      <span>Record</span>
+                                    )}
+                                  </button>
+                                </div>
                               </div>
                               <div className="pp-note-save-row">
                                 <button
@@ -3932,7 +4097,7 @@ const PatientProfile = () => {
             </>
           )}
         </div>
-        <div className="chat-input">
+        <div className="chat-input" style={{ alignItems: 'center' }}>
           <input
             type="text"
             placeholder="Ask me anything..."
@@ -3941,13 +4106,83 @@ const PatientProfile = () => {
             onKeyPress={handleChatEnter}
             disabled={shouldShowLockedChatbot || isChatSending || isChatPreparing}
           />
-          <button
-            className="btn btn-primary"
-            onClick={sendMessage}
-            disabled={shouldShowLockedChatbot || isChatSending || isChatPreparing}
-          >
-            {isChatPreparing ? "Preparing..." : isChatSending ? "Sending..." : "Send"}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button
+              className="chat-mic-btn"
+              disabled={shouldShowLockedChatbot || isChatSending || isChatPreparing || (isConnecting && recordingNoteId !== 'diagnobot')}
+              onClick={() => {
+                if (isRecording && recordingNoteId !== "diagnobot") {
+                  stopRecording();
+                }
+                setRecordingNoteId("diagnobot");
+                toggleRecording();
+              }}
+              style={{
+                background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                color: isRecording && recordingNoteId === 'diagnobot' ? '#FF5C5C' : '#2A66FF',
+                transition: 'color 0.2s', borderRadius: '50%',
+                animation: isRecording && recordingNoteId === 'diagnobot' ? 'pulseMicIcon 1.5s infinite' : 'none'
+              }}
+              title={isRecording && recordingNoteId === 'diagnobot' ? "Stop Recording" : "Voice Input"}
+            >
+              {isConnecting && recordingNoteId === 'diagnobot' ? (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="spin-icon">
+                  <line x1="12" y1="2" x2="12" y2="6"></line>
+                  <line x1="12" y1="18" x2="12" y2="22"></line>
+                  <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                  <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                  <line x1="2" y1="12" x2="6" y2="12"></line>
+                  <line x1="18" y1="12" x2="22" y2="12"></line>
+                  <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                  <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                </svg>
+              ) : isRecording && recordingNoteId === 'diagnobot' ? (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="6" y="6" width="12" height="12" rx="2" ry="2"></rect>
+                </svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                  <line x1="12" y1="19" x2="12" y2="23"></line>
+                  <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+              )}
+            </button>
+            <button
+              className="chat-send-btn"
+              onClick={sendMessage}
+              disabled={shouldShowLockedChatbot || isChatSending || isChatPreparing || !chatInput.trim()}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: '36px', height: '36px', borderRadius: '50%', border: 'none',
+                background: (!chatInput.trim() || shouldShowLockedChatbot || isChatSending || isChatPreparing) ? '#E6EAF2' : '#2A66FF',
+                color: (!chatInput.trim() || shouldShowLockedChatbot || isChatSending || isChatPreparing) ? '#A0AABF' : 'white',
+                cursor: (!chatInput.trim() || shouldShowLockedChatbot || isChatSending || isChatPreparing) ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s ease', padding: 0
+              }}
+              title="Send Message"
+            >
+              {isChatPreparing || isChatSending ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="spin-icon">
+                  <line x1="12" y1="2" x2="12" y2="6"></line>
+                  <line x1="12" y1="18" x2="12" y2="22"></line>
+                  <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                  <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                  <line x1="2" y1="12" x2="6" y2="12"></line>
+                  <line x1="18" y1="12" x2="22" y2="12"></line>
+                  <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                  <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="19" x2="12" y2="5"></line>
+                  <polyline points="5 12 12 5 19 12"></polyline>
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
       </div>
       <EvidencePanel
