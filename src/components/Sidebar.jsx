@@ -24,11 +24,11 @@ export default function Sidebar({ activePage }) {
   return (
     <>
       <aside className={`sidebar${isSidebarCollapsed ? " collapsed" : ""}`}>
-        <div className="sidebar-header">
-          <div className="sidebar-logo">
+        <div className="sidebar-header" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 20px' }}>
+          <div className="sidebar-logo" style={{ width: '100%', height: '42px', margin: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '1 1 auto' }}>
             {/* Expanded State: Full Logo */}
-            <div className="logo-expanded-container">
-              <img className="logo-expanded" src={logo} alt="DiagnoSense" />
+            <div className="logo-expanded-container" style={{ position: 'static', left: 'auto', transform: 'none', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img className="logo-expanded" src={logo} alt="DiagnoSense" style={{ display: 'block', width: '120px', height: '42px', objectFit: 'contain', margin: '0 auto 0 calc(50% - 70px)', flexShrink: 0 }} />
             </div>
 
             {/* Collapsed State: Stethoscope Icon + Hover Expand Button */}
@@ -49,6 +49,7 @@ export default function Sidebar({ activePage }) {
             onClick={toggleSidebar}
             aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)' }}
           >
             <img
               src={isSidebarCollapsed ? openIcon : closeIcon}

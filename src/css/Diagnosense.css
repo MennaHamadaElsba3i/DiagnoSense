@@ -340,6 +340,40 @@
           animation: fadeInRight 1s ease-out;
      }
 
+     /* Reduce button size — both buttons */
+     .start,
+     .btn-secondary {
+          padding: 0.85rem 2rem;
+          /* reduced from 1.1rem 2.5rem */
+          font-size: 0.95rem;
+          /* reduced from 1.05rem */
+          text-align: center;
+          /* ensure text is centered */
+          display: inline-flex;
+          /* flex for proper centering */
+          align-items: center;
+          justify-content: center;
+     }
+
+     /* Mobile: full width but centered text */
+     @media (max-width: 768px) {
+          .hero-actions {
+               flex-direction: column;
+               align-items: stretch;
+               /* buttons fill width */
+               gap: 0.75rem;
+          }
+
+          .start,
+          .btn-secondary {
+               width: 100%;
+               text-align: center;
+               justify-content: center;
+               padding: 0.8rem 1.5rem;
+               /* slightly more compact on mobile */
+          }
+     }
+
      @keyframes fadeInRight {
           from {
                opacity: 0;
@@ -899,6 +933,26 @@
                transform: scale(0.9);
           }
 
+          .cards-stack {
+               height: auto;
+               /* remove fixed height */
+               display: flex;
+               flex-direction: column;
+               align-items: center;
+               gap: 1.5rem;
+               padding: 1rem 0;
+          }
+
+           .patient-card-3d {
+    position: relative !important;   
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;     
+    opacity: 1 !important;           
+    width: 100%;
+    max-width: 400px;            
+  }
+
           .stats-grid {
                grid-template-columns: repeat(2, 1fr);
           }
@@ -915,6 +969,8 @@
           .contact-info {
                padding-right: 0;
           }
+
+          
      }
 
      @media (max-width: 768px) {
@@ -950,7 +1006,7 @@
 
           .patient-card-3d:nth-child(2),
           .patient-card-3d:nth-child(3) {
-               display: none;
+               display: block !important;
           }
 
           .stats-section,
@@ -977,6 +1033,15 @@
           }
      }
 
+     @media (max-width: 768px) {
+  .patient-card-3d {
+    max-width: 100%;
+  }
+
+  .preview-section {
+    perspective: none;          /* perspective has no effect in flat layout */
+  }
+}
      .stats-section,
      .features-section {
           max-width: 1400px;
@@ -1277,4 +1342,111 @@
           }
      }
 
-  
+     /* ── Sidebar overlay (dark background) ── */
+     .sidebar-overlay {
+          display: none;
+          position: fixed;
+          inset: 0;
+          /* covers entire screen */
+          background: rgba(0, 0, 0, 0.35);
+          z-index: 998;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+     }
+
+     .sidebar-overlay.active {
+          display: block;
+          opacity: 1;
+     }
+
+     /* ── Right sidebar panel ── */
+     .mobile-sidebar {
+          position: fixed;
+          top: 0;
+          right: 0;
+          width: 280px;
+          height: 100vh;
+          background: #ffffff;
+          z-index: 999;
+          padding: 2rem 1.5rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+          box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
+          transform: translateX(100%);
+          /* hidden off-screen to the right */
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+     }
+
+     .mobile-sidebar.open {
+          transform: translateX(0);
+          /* slides in */
+     }
+
+     .sidebar-close-btn {
+          align-self: flex-end;
+          background: none;
+          border: none;
+          cursor: pointer;
+          color: #64748b;
+          padding: 0.25rem;
+          margin-bottom: 1rem;
+          transition: color 0.2s;
+     }
+
+     .sidebar-close-btn:hover {
+          color: #2563eb;
+     }
+
+     .sidebar-logo {
+          margin-bottom: 1.75rem;
+          flex:0;
+          height:0%
+     }
+
+     /* Sidebar nav links */
+     .sidebar-links {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+          flex: 1;
+     }
+
+     .sidebar-links li a {
+          display: block;
+          padding: 0.875rem 1rem;
+          font-size: 1rem;
+          font-weight: 500;
+          color: #1e293b;
+          text-decoration: none;
+          border-radius: 10px;
+          transition: background 0.2s, color 0.2s;
+     }
+
+     .sidebar-links li a:hover {
+          background: #eff6ff;
+          color: #2563eb;
+     }
+
+     /* CTA button at bottom of sidebar */
+     .sidebar-cta {
+          display: block;
+          text-align: center;
+          margin-top: 1.5rem;
+          padding: 0.9rem;
+          border-radius: 50px;
+          font-weight: 700;
+          font-size: 0.95rem;
+     }
+
+     /* Only show hamburger + sidebar on mobile */
+     @media (min-width: 901px) {
+
+          .mobile-sidebar,
+          .sidebar-overlay {
+               display: none !important;
+          }
+     }
