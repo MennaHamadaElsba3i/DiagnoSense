@@ -17,7 +17,7 @@ import { getCookie } from "./cookieUtils";
 import { useNotifications } from "./NotificationsContext";
 import { getDoctorInitials } from './Dashboard';
 import { useTranscription } from "../hooks/useTranscription";
-
+import { getDirection, getTextAlign } from "../utils/textUtils";
 
 const AddPatient = () => {
   const navigate = useNavigate();
@@ -569,6 +569,8 @@ const AddPatient = () => {
                     placeholder="Enter patient's full name"
                     value={formData.fullName}
                     onChange={handleInputChange}
+                    dir={getDirection(formData.fullName)}
+                    style={{ textAlign: getTextAlign(formData.fullName) }}
                   />
                   {fieldErrors.fullName && (
                     <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>{fieldErrors.fullName}</div>
@@ -743,7 +745,7 @@ const AddPatient = () => {
               {hasSurgeries && (
                 <div className="form-group" id="surgeryDetails">
                   <label className="form-label required">Please specify surgeries <span className="provided-hint">Provided</span></label>
-                  <textarea className={`form-textarea${fieldErrors.surgeryText ? " target-error" : ""}`} id="surgeryText" placeholder="List previous surgeries and approximate dates..." value={formData.surgeryText} onChange={handleInputChange}></textarea>
+                  <textarea className={`form-textarea${fieldErrors.surgeryText ? " target-error" : ""}`} id="surgeryText" placeholder="List previous surgeries and approximate dates..." value={formData.surgeryText} onChange={handleInputChange} dir={getDirection(formData.surgeryText)} style={{ textAlign: getTextAlign(formData.surgeryText) }}></textarea>
                   {fieldErrors.surgeryText && (
                     <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>{fieldErrors.surgeryText}</div>
                   )}
@@ -752,23 +754,23 @@ const AddPatient = () => {
 
               <div className="form-group">
                 <label className="form-label">Regular Medications</label>
-                <textarea className="form-textarea" id="medications" placeholder="List any medications the patient takes regularly..." value={formData.medications} onChange={handleInputChange}></textarea>
+                <textarea className="form-textarea" id="medications" placeholder="List any medications the patient takes regularly..." value={formData.medications} onChange={handleInputChange} dir={getDirection(formData.medications)} style={{ textAlign: getTextAlign(formData.medications) }}></textarea>
               </div>
 
               <div className="form-group">
                 <label className="form-label">Known Allergies</label>
-                <textarea className="form-textarea" id="allergies" placeholder="List any known drug or food allergies..." value={formData.allergies} onChange={handleInputChange}></textarea>
+                <textarea className="form-textarea" id="allergies" placeholder="List any known drug or food allergies..." value={formData.allergies} onChange={handleInputChange} dir={getDirection(formData.allergies)} style={{ textAlign: getTextAlign(formData.allergies) }}></textarea>
               </div>
 
               <div className="form-group">
                 <label className="form-label">Family Medical History</label>
-                <textarea className="form-textarea" id="familyHistory" placeholder="Note any relevant family history (e.g., diabetes in parents, heart disease in siblings)..." value={formData.familyHistory} onChange={handleInputChange}></textarea>
+                <textarea className="form-textarea" id="familyHistory" placeholder="Note any relevant family history (e.g., diabetes in parents, heart disease in siblings)..." value={formData.familyHistory} onChange={handleInputChange} dir={getDirection(formData.familyHistory)} style={{ textAlign: getTextAlign(formData.familyHistory) }}></textarea>
               </div>
 
               <div className="form-group">
                 <label className="form-label">Chief Complaint</label>
                 <div className="chief-complaint-wrapper">
-                  <textarea className="form-textarea chief-complaint-textarea" id="ChiefComplaint" placeholder="Describe the main problem the patient is experiencing..." value={formData.ChiefComplaint} onChange={handleInputChange}></textarea>
+                  <textarea className="form-textarea chief-complaint-textarea" id="ChiefComplaint" placeholder="Describe the main problem the patient is experiencing..." value={formData.ChiefComplaint} onChange={handleInputChange} dir={getDirection(formData.ChiefComplaint)} style={{ textAlign: getTextAlign(formData.ChiefComplaint) }}></textarea>
                   
                   {isRecording && (
                     <div className="voice-visualization">

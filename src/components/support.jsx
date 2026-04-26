@@ -8,6 +8,7 @@ import LogoutConfirmation from "./ConfirmationModal.jsx";
 import { useNotifications } from "./NotificationsContext";
 import { sendSupportAPI } from "./mockAPI";
 import { getJsonCookie } from "./cookieUtils";
+import { getDirection, getTextAlign } from "../utils/textUtils";
 import "../css/support.css";
 import { getDoctorInitials } from "./Dashboard";
 
@@ -431,6 +432,8 @@ function Support() {
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
                     placeholder="Your name"
+                    dir={getDirection(formName)}
+                    style={{ textAlign: getTextAlign(formName) }}
                   />
                 </div>
 
@@ -545,6 +548,8 @@ function Support() {
                     }}
                     required
                     placeholder="Describe your issue..."
+                    dir={getDirection(message)}
+                    style={{ textAlign: getTextAlign(message) }}
                   ></textarea>
                 </div>
 

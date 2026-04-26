@@ -350,6 +350,7 @@ export default function DiagnoSense() {
                   id="name"
                   name="name"
                   placeholder="Your full name"
+                  dir="auto"
                   required
                 />
               </div>
@@ -369,6 +370,7 @@ export default function DiagnoSense() {
                   id="message"
                   name="message"
                   placeholder="Tell us how we can help you..."
+                  dir="auto"
                   required
                 ></textarea>
               </div>

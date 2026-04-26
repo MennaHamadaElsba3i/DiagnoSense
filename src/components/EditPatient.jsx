@@ -14,6 +14,7 @@ import { getCookie } from "./cookieUtils";
 import { useNotifications } from "./NotificationsContext";
 import { getDoctorInitials } from './Dashboard';
 import ProcessingReports from "./ProcessingReports";
+import { getDirection, getTextAlign } from "../utils/textUtils";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -732,6 +733,8 @@ const EditPatient = () => {
                     placeholder="Enter patient's full name"
                     value={formData.fullName}
                     onChange={handleInputChange}
+                    dir={getDirection(formData.fullName)}
+                    style={{ textAlign: getTextAlign(formData.fullName) }}
                   />
                   {fieldErrors.fullName && <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>{fieldErrors.fullName}</div>}
                 </div>
@@ -892,6 +895,8 @@ const EditPatient = () => {
                     placeholder="List previous surgeries and approximate dates..."
                     value={formData.surgeryText}
                     onChange={handleInputChange}
+                    dir={getDirection(formData.surgeryText)}
+                    style={{ textAlign: getTextAlign(formData.surgeryText) }}
                   ></textarea>
                   {fieldErrors.surgeryText && <div style={{ color: "#EF4444", fontSize: "12px", marginTop: "4px" }}>{fieldErrors.surgeryText}</div>}
                 </div>
@@ -899,22 +904,22 @@ const EditPatient = () => {
 
               <div className="form-group">
                 <label className="form-label">Regular Medications</label>
-                <textarea className="form-textarea" id="medications" placeholder="List any medications the patient takes regularly..." value={formData.medications} onChange={handleInputChange}></textarea>
+                <textarea className="form-textarea" id="medications" placeholder="List any medications the patient takes regularly..." value={formData.medications} onChange={handleInputChange} dir={getDirection(formData.medications)} style={{ textAlign: getTextAlign(formData.medications) }}></textarea>
               </div>
 
               <div className="form-group">
                 <label className="form-label">Known Allergies</label>
-                <textarea className="form-textarea" id="allergies" placeholder="List any known drug or food allergies..." value={formData.allergies} onChange={handleInputChange}></textarea>
+                <textarea className="form-textarea" id="allergies" placeholder="List any known drug or food allergies..." value={formData.allergies} onChange={handleInputChange} dir={getDirection(formData.allergies)} style={{ textAlign: getTextAlign(formData.allergies) }}></textarea>
               </div>
 
               <div className="form-group">
                 <label className="form-label">Family Medical History</label>
-                <textarea className="form-textarea" id="familyHistory" placeholder="Note any relevant family history..." value={formData.familyHistory} onChange={handleInputChange}></textarea>
+                <textarea className="form-textarea" id="familyHistory" placeholder="Note any relevant family history..." value={formData.familyHistory} onChange={handleInputChange} dir={getDirection(formData.familyHistory)} style={{ textAlign: getTextAlign(formData.familyHistory) }}></textarea>
               </div>
 
               <div className="form-group">
                 <label className="form-label">Chief Complaint</label>
-                <textarea className="form-textarea" id="ChiefComplaint" placeholder="Describe the main problem the patient is experiencing..." value={formData.ChiefComplaint} onChange={handleInputChange}></textarea>
+                <textarea className="form-textarea" id="ChiefComplaint" placeholder="Describe the main problem the patient is experiencing..." value={formData.ChiefComplaint} onChange={handleInputChange} dir={getDirection(formData.ChiefComplaint)} style={{ textAlign: getTextAlign(formData.ChiefComplaint) }}></textarea>
               </div>
 
               <div className="wizard-actions">
