@@ -842,6 +842,139 @@
 }
 
 
+/* ══ RESPONSIVE OVERRIDES ══ */
+
+@media (max-width: 1024px) {
+  .subscription-page .plans-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .subscription-page .bottom-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .subscription-page .current-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  .subscription-page .banner-right {
+    text-align: left;
+    width: 100%;
+    border-top: 1px solid var(--border);
+    padding-top: 15px;
+  }
+
+  .subscription-page .tabs {
+    width: 100%;
+    overflow-x: auto;
+    display: flex;
+    justify-content: flex-start;
+    -webkit-overflow-scrolling: touch;
+    padding: 6px;
+    SCROLLBAR-WIDTH: NONE;
+  }
+  
+  .subscription-page .tab-btn {
+    flex: 0 0 auto;
+  }
+
+  .subscription-page .amts-top {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .subscription-page .amts-bot {
+    grid-template-columns: 1fr; 
+  }
+
+  .subscription-page .btn-charge {
+    width: 100%;
+  }
+
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 10px;
+  }
+
+  .subscription-page table {
+    min-width: 600px; 
+  }
+
+  .subscription-page .ent-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .subscription-page .btn-solid {
+    width: 100%;
+    margin-top: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .subscription-title {
+    font-size: 24px;
+  }
+
+  .subscription-page .u-big {
+    font-size: 32px;
+  }
+
+  .subscription-page .u-foot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .subscription-page .credits-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  .subscription-page .btn-topup {
+    width: 100%;
+  }
+}
+
+
+.subscription-page .h-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+  .subscription-page .h-header {
+    flex-direction: column;      
+    align-items: flex-start;     
+    gap: 12px;                   
+  }
+
+  .subscription-page .f-btns {
+    width: 100%;                 
+    justify-content: flex-start; 
+    flex-wrap: wrap;             
+  }
+  
+  
+  .subscription-page .f-btn {
+    flex: 1;
+    text-align: center;
+  }
+ 
+}
+
+
 /* ══════════════════════════════════════════════════════════
    DARK MODE OVERRIDES — Subscription page
    ══════════════════════════════════════════════════════════ */

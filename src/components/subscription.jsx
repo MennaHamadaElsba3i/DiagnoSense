@@ -26,8 +26,12 @@ function Subscription() {
   const searchParams = new URLSearchParams(location.search);
   const { isSidebarCollapsed, toggleSidebar } = useSidebar();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const { unreadCount, openNotifications, refreshNotifications, fetchAndToastLatest } =
-    useNotifications();
+  const {
+    unreadCount,
+    openNotifications,
+    refreshNotifications,
+    fetchAndToastLatest,
+  } = useNotifications();
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const avatarMenuRef = useRef(null);
   const {
@@ -209,15 +213,13 @@ function Subscription() {
     } else if (isSubscription) {
       if (subscriptionData?.plan_id) {
         backendPlanId = subscriptionData.plan_id;
-      }
-      else if (subscriptionData?.plan_name && plans.length > 0) {
+      } else if (subscriptionData?.plan_name && plans.length > 0) {
         const found = plans.find(
           (p) =>
             p.name.toLowerCase() === subscriptionData.plan_name.toLowerCase(),
         );
         backendPlanId = found ? found.id : subscriptionData.plan_name;
-      }
-      else {
+      } else {
         backendPlanId = subscriptionData.plan_name;
       }
     }
@@ -634,14 +636,51 @@ function Subscription() {
                 {isPlansLoading ? (
                   Array.from({ length: 3 }).map((_, i) => {
                     const dummyPlans = [
-                      { name: "Basic", price: "4,000", period: "per month*", features: ["Up to 100 summaries", "Basic Analytics", "Standard Support"] },
-                      { name: "Pro", price: "9,000", period: "per month*", features: ["Up to 500 summaries", "Advanced ML Models", "Priority Queue"] },
-                      { name: "Premium", price: "18,000", period: "per month*", features: ["Unlimited summaries", "Enterprise Tools", "24/7 Priority Support"] }
+                      {
+                        name: "Basic",
+                        price: "4,000",
+                        period: "per month*",
+                        features: [
+                          "Up to 100 summaries",
+                          "Basic Analytics",
+                          "Standard Support",
+                        ],
+                      },
+                      {
+                        name: "Pro",
+                        price: "9,000",
+                        period: "per month*",
+                        features: [
+                          "Up to 500 summaries",
+                          "Advanced ML Models",
+                          "Priority Queue",
+                        ],
+                      },
+                      {
+                        name: "Premium",
+                        price: "18,000",
+                        period: "per month*",
+                        features: [
+                          "Unlimited summaries",
+                          "Enterprise Tools",
+                          "24/7 Priority Support",
+                        ],
+                      },
                     ];
                     const p = dummyPlans[i];
                     return (
-                      <div key={i} className="preview-shimmer" style={{ pointerEvents: 'none', borderRadius: '13px', width: '100%', display: 'block', height: '100%' }}>
-                        <div className="plan-card" style={{ height: '100%' }}>
+                      <div
+                        key={i}
+                        className="preview-shimmer"
+                        style={{
+                          pointerEvents: "none",
+                          borderRadius: "13px",
+                          width: "100%",
+                          display: "block",
+                          height: "100%",
+                        }}
+                      >
+                        <div className="plan-card" style={{ height: "100%" }}>
                           <div className="plan-name">{p.name}</div>
                           <span className="plan-price">E£ {p.price}</span>
                           <div className="plan-period">{p.period}</div>
@@ -654,7 +693,12 @@ function Subscription() {
                               </div>
                             ))}
                           </div>
-                          <button className="btn-plan" style={{ cursor: 'not-allowed' }}>Get Started</button>
+                          <button
+                            className="btn-plan"
+                            style={{ cursor: "not-allowed" }}
+                          >
+                            Get Started
+                          </button>
                         </div>
                       </div>
                     );
@@ -690,7 +734,7 @@ function Subscription() {
                       (selectedPlanId &&
                         plan.name &&
                         String(selectedPlanId).toLowerCase() ===
-                        String(plan.name).toLowerCase());
+                          String(plan.name).toLowerCase());
                     return (
                       <div
                         className={`plan-card ${isCurrent ? "popular border-2 border-blue-500" : ""}`}
@@ -753,8 +797,19 @@ function Subscription() {
               <div className="bottom-grid">
                 {isPlansLoading ? (
                   <>
-                    <div className="preview-shimmer" style={{ pointerEvents: 'none', borderRadius: '13px', width: '100%', display: 'block' }}>
-                      <div className="ppu-card" style={{ pointerEvents: 'none' }}>
+                    <div
+                      className="preview-shimmer"
+                      style={{
+                        pointerEvents: "none",
+                        borderRadius: "13px",
+                        width: "100%",
+                        display: "block",
+                      }}
+                    >
+                      <div
+                        className="ppu-card"
+                        style={{ pointerEvents: "none" }}
+                      >
                         <div>
                           <div className="ppu-lbl">Pay-per-use</div>
                           <div className="ppu-sub">Most popular plan</div>
@@ -765,27 +820,55 @@ function Subscription() {
                         <div className="ppu-right">
                           <div className="feat">
                             <span className="feat-ck">✓</span>
-                            <span style={{ fontSize: "12px" }}>All features</span>
+                            <span style={{ fontSize: "12px" }}>
+                              All features
+                            </span>
                           </div>
-                          <button className="btn-solid" style={{ cursor: 'not-allowed' }}>Get Started</button>
+                          <button
+                            className="btn-solid"
+                            style={{ cursor: "not-allowed" }}
+                          >
+                            Get Started
+                          </button>
                         </div>
                       </div>
                     </div>
-                    <div className="preview-shimmer" style={{ pointerEvents: 'none', borderRadius: '13px', width: '100%', display: 'block' }}>
-                      <div className="ent-card" style={{ pointerEvents: 'none' }}>
+                    <div
+                      className="preview-shimmer"
+                      style={{
+                        pointerEvents: "none",
+                        borderRadius: "13px",
+                        width: "100%",
+                        display: "block",
+                      }}
+                    >
+                      <div
+                        className="ent-card"
+                        style={{ pointerEvents: "none" }}
+                      >
                         <div className="ent-name">Enterprise</div>
                         <div className="ent-inner">
                           <div className="ent-feats">
                             <div className="feat">
                               <span className="feat-ck">✓</span>
-                              <span className="feat-t">Annual per-doctor license with yearly calculation and volume discount</span>
+                              <span className="feat-t">
+                                Annual per-doctor license with yearly
+                                calculation and volume discount
+                              </span>
                             </div>
                             <div className="feat">
                               <span className="feat-ck">✓</span>
-                              <span className="feat-t">One-time setup and implementation fee</span>
+                              <span className="feat-t">
+                                One-time setup and implementation fee
+                              </span>
                             </div>
                           </div>
-                          <button className="btn-solid" style={{ cursor: 'not-allowed' }}>Get Started</button>
+                          <button
+                            className="btn-solid"
+                            style={{ cursor: "not-allowed" }}
+                          >
+                            Get Started
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -820,7 +903,7 @@ function Subscription() {
                           style={{
                             cursor:
                               subscribingPlanId === "Pay-per-use" ||
-                                selectedPlanId === "Pay-per-use"
+                              selectedPlanId === "Pay-per-use"
                                 ? "not-allowed"
                                 : "pointer",
                             whiteSpace: "nowrap",
@@ -841,8 +924,8 @@ function Subscription() {
                           <div className="feat">
                             <span className="feat-ck">✓</span>
                             <span className="feat-t">
-                              Annual per-doctor license with yearly calculation and
-                              volume discount
+                              Annual per-doctor license with yearly calculation
+                              and volume discount
                             </span>
                           </div>
                           <div className="feat">
@@ -854,8 +937,8 @@ function Subscription() {
                           <div className="feat">
                             <span className="feat-ck">✓</span>
                             <span className="feat-t">
-                              Payment includes discounted annual fee plus setup at
-                              contract start.
+                              Payment includes discounted annual fee plus setup
+                              at contract start.
                             </span>
                           </div>
                         </div>
@@ -1058,47 +1141,49 @@ function Subscription() {
                     </button>
                   </div>
                 </div>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Description</th>
-                      <th>Amount</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {transactions.length > 0 ? (
-                      transactions.map((tx) => (
-                        <tr key={tx.id}>
-                          <td className="td-d">{tx.date}</td>
-                          <td className="td-desc">{tx.description}</td>
-                          <td className="td-amt">E£ {tx.amount}</td>
-                          <td>
-                            <span
-                              className={
-                                tx.status === "completed" ? "paid" : "pending"
-                              }
-                            >
-                              {tx.status}
-                            </span>
+                <div className="table-responsive">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {transactions.length > 0 ? (
+                        transactions.map((tx) => (
+                          <tr key={tx.id}>
+                            <td className="td-d">{tx.date}</td>
+                            <td className="td-desc">{tx.description}</td>
+                            <td className="td-amt">E£ {tx.amount}</td>
+                            <td>
+                              <span
+                                className={
+                                  tx.status === "completed" ? "paid" : "pending"
+                                }
+                              >
+                                {tx.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td
+                            colSpan="5"
+                            style={{ textAlign: "center", padding: "20px" }}
+                          >
+                            {isLoadingHistory
+                              ? "Loading history..."
+                              : "No transactions found."}
                           </td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td
-                          colSpan="5"
-                          style={{ textAlign: "center", padding: "20px" }}
-                        >
-                          {isLoadingHistory
-                            ? "Loading history..."
-                            : "No transactions found."}
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
