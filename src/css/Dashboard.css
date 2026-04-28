@@ -2401,6 +2401,11 @@ body {
      }
 }
 
+@media (max-width: 900px) {
+  #dsn-main .dsn-charts-row {
+    grid-template-columns: 1fr;
+  }
+}
 @media (max-width: 700px) {
      #dsn-main {
           padding: 16px;
@@ -2427,15 +2432,272 @@ body {
      }
 }
 
-.dsn-donut-segment:hover {
-     stroke-width: 26;
-     opacity: 0.8;
+@media (max-width: 600px) {
+  #dsn-main .dsn-greeting h1 {
+    font-size: 16px;          
+    line-height: 1.4;
+    word-break: break-word;   
+  }
+
+  #dsn-main .dsn-greeting p {
+    font-size: 12px;
+  }
+
+  #dsn-main .dsn-top-wrapper {
+    padding: 16px 14px 12px;  
+  }
 }
+
+@media (max-width: 480px) {
+  #dsn-main .dsn-greeting h1 {
+    font-size: 14px;
+  }
+}
+
+
+@media (max-width: 1100px) {
+  #dsn-main .dsn-stats-grid {
+    grid-template-columns: repeat(2, 1fr); 
+  }
+}
+
+@media (max-width: 540px) {
+  #dsn-main .dsn-stats-grid {
+    grid-template-columns: 1fr;         
+    gap: 10px;
+  }
+}
+
+
+@media (max-width: 540px) {
+  #dsn-main .dsn-growth-grid {
+    grid-template-columns: repeat(2, 1fr);  
+    gap: 8px;
+  }
+
+  #dsn-main .dsn-growth-val {
+    font-size: 12px;
+  }
+
+  #dsn-main .dsn-growth-sub {
+    font-size: 10px;
+  }
+}
+
+
+
+@media (max-width: 700px) {
+  #dsn-main .dsn-active-card {
+    grid-template-columns: 1fr;     
+    gap: 16px;
+    padding: 18px 16px;
+  }
+
+  #dsn-main .dsn-active-actions {
+    min-width: unset;              
+    width: 100%;
+    flex-direction: row;            
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  #dsn-main .dsn-btn-attended,
+  #dsn-main .dsn-btn-view {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  #dsn-main .dsn-segmented-nav {
+    width: 100%;
+  }
+}
+
+
+@media (max-width: 540px) {
+  #dsn-main .dsn-mini-card {
+    padding: 10px 12px;
+    gap: 8px;
+    flex-wrap: wrap;              
+  }
+
+  #dsn-main .dsn-mini-info {
+    flex: 1 1 120px;              
+    min-width: 0;
+  }
+
+  #dsn-main .dsn-mini-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  #dsn-main .dsn-mini-view-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  #dsn-main .dsn-queue-num {
+    display: none;
+  }
+}
+
+@media (max-width: 500px) {
+  #dsn-main .dsn-donut-wrap {
+    flex-direction: column;         
+    align-items: center;
+    gap: 16px;
+  }
+
+  #dsn-main .dsn-legend-list {
+    width: 100%;
+  }
+}
+
+
+.credits-text-short {
+  display: none;                  
+}
+
+@media (max-width: 600px) {
+  .credits-text-full {
+    display: none;               
+  }
+  .credits-text-short {
+    display: inline;            
+  }
+
+  .credits-badge {
+    padding: 7px 10px;         
+  }
+
+  .navbar-right {
+    gap: 6px;
+  }
+}
+
+@media (max-width: 430px) {
+  #dsn-main {
+    padding: 12px 10px;           
+  }
+
+  #dsn-main .dsn-top-wrapper {
+    padding: 14px 12px 10px;     
+  }
+
+  #dsn-main .dsn-chart-card {
+    padding: 16px 14px;          
+  }
+}
+
+@media (max-width: 430px) {
+  #dsn-main .dsn-donut-svg {
+    width: 110px;
+    height: 110px;
+  }
+
+  #dsn-main .dsn-donut-wrap {
+    gap: 12px;                    
+  }
+
+  #dsn-main .dsn-legend-label {
+    font-size: 12px;
+  }
+
+  #dsn-main .dsn-legend-pct {
+    font-size: 12px;
+  }
+
+  #dsn-main .dsn-legend-row {
+    padding: 7px 8px;
+  }
+}
+
+#dsn-main .dsn-section-title {
+  white-space: nowrap;            
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;                  
+}
+
+@media (max-width: 430px) {
+  #dsn-main .dsn-section-header {
+    gap: 8px;                     
+    align-items: center;        
+  }
+
+  #dsn-main .dsn-section-title {
+    font-size: 13px;            
+  }
+
+  #dsn-main .dsn-queue-count {
+    flex-shrink: 0;               
+    white-space: nowrap;
+  }
+}
+
+#dsn-main .dsn-mini-info {
+  flex: 1;
+  min-width: 0;                 
+  overflow: hidden;
+}
+
+#dsn-main .dsn-mini-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;       
+}
+
+#dsn-main .dsn-mini-sub {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#dsn-main .dsn-mini-badge {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+#dsn-main .dsn-mini-view-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+@media (max-width: 500px) {
+  #dsn-main .dsn-mini-card {
+    gap: 8px;                     
+    padding: 10px 12px;
+  }
+
+  #dsn-main .dsn-mini-name {
+    font-size: 12.5px;
+  }
+
+  #dsn-main .dsn-mini-sub {
+    font-size: 10.5px;
+  }
+
+  #dsn-main .dsn-mini-badge {
+    font-size: 10px;
+    padding: 2px 7px;
+  }
+
+  #dsn-main .dsn-mini-view-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  #dsn-main .dsn-queue-num {
+    display: none;
+  }
+}
+
+
+
+
 
 
 .dsn-custom-tooltip {
      background: rgba(26, 29, 46, 0.95);
-     /* لون غامق شيك */
      color: white;
      padding: 8px 12px;
      border-radius: 8px;
