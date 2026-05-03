@@ -225,117 +225,113 @@ const PatientCard = ({
               alignItems: "flex-start",
             }}
           >
-            <h3 ref={nameRef} title={patient.name}>
+            <div className="disc">
+                <h3 ref={nameRef} title={patient.name}>
               {patient.name}
             </h3>
-
-            <button
-              className="patient-card-delete-btn edit-action-btn"
-              aria-label="Edit patient"
-              title="Edit patient"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/edit-patient/${patient.id}`);
-              }}
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-              </svg>
-            </button>
-          </div>
-
-          <div
-            className="patient-meta-row"
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginTop: isTwoLines ? "2px" : "4px",
-            }}
-          >
-            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-              <p className="patient-meta" style={{ margin: 0 }}>
-                Age: {patient.age}
-              </p>
               <div
-                className="status-badge-wrapper"
-                style={{ position: "relative" }}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
+                className="patient-meta-row"
               >
-                <span
-                  className={`status-badge ${patient.statusType || patient.status}`}
-                  style={{ transition: "all 0.3s ease", cursor: "pointer" }}
-                >
-                  {patient.statusLabel}
-                </span>
+               
+                  <p className="patient-meta" style={{ margin: 0 }}>
+                    Age: {patient.age}
+                  </p>
+                  <div
+                    className="status-badge-wrapper"
+                    style={{ position: "relative" }}
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <span
+                      className={`status-badge ${patient.statusType || patient.status}`}
+                      style={{ transition: "all 0.3s ease", cursor: "pointer" }}
+                    >
+                      {patient.statusLabel}
+                    </span>
 
-                <div
-                  className={`status-quick-switch ${isStatusHovered ? "visible" : ""}`}
-                >
-                  {STATUS_OPTIONS.filter(
-                    (s) =>
-                      s.id !==
-                      (normalizedStatus === "under-review"
-                        ? "under review"
-                        : normalizedStatus),
-                  ).map((opt, idx) => {
-                    return (
-                      <button
-                        key={opt.id}
-                        className={`status-circle status-${opt.id.replace(/\s+/g, "-")}`}
-                        data-tooltip={opt.label}
-                        onClick={(e) => handleQuickStatusChange(e, opt.id)}
-                        style={{
-                          background: opt.color,
-                        }}
-                      />
-                    );
-                  })}
-                </div>
+                    <div
+                      className={`status-quick-switch ${isStatusHovered ? "visible" : ""}`}
+                    >
+                      {STATUS_OPTIONS.filter(
+                        (s) =>
+                          s.id !==
+                          (normalizedStatus === "under-review"
+                            ? "under review"
+                            : normalizedStatus),
+                      ).map((opt, idx) => {
+                        return (
+                          <button
+                            key={opt.id}
+                            className={`status-circle status-${opt.id.replace(/\s+/g, "-")}`}
+                            data-tooltip={opt.label}
+                            onClick={(e) => handleQuickStatusChange(e, opt.id)}
+                            style={{
+                              background: opt.color,
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
               </div>
             </div>
 
-            <button
-              className="patient-card-delete-btn"
-              aria-label="Delete patient"
-              title="Delete patient"
-              style={{ margin: 0 }}
-              onClick={(e) => {
-                e.stopPropagation();
-                setPatientToDelete(patient);
-                setIsDeleteModalOpen(true);
-                setDeleteError("");
-              }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+            <div className="icons">
+              {" "}
+              <button
+                className="patient-card-delete-btn edit-action-btn"
+                aria-label="Edit patient"
+                title="Edit patient"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/edit-patient/${patient.id}`);
+                }}
               >
-                <path d="M3 6h18" />
-                <path d="M8 6V4h8v2" />
-                <path d="M19 6l-1 14H6L5 6" />
-                <path d="M10 11v6" />
-                <path d="M14 11v6" />
-              </svg>
-            </button>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button
+                className="patient-card-delete-btn"
+                aria-label="Delete patient"
+                title="Delete patient"
+                style={{ margin: 0 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPatientToDelete(patient);
+                  setIsDeleteModalOpen(true);
+                  setDeleteError("");
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4h8v2" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                  <path d="M10 11v6" />
+                  <path d="M14 11v6" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1184,17 +1180,38 @@ const PatientList = () => {
           {loading ? (
             Array.from({ length: 8 }).map((_, i) => {
               const types = [
-                { status: "critical", type: "critical", label: "🔴 Critical", style: { borderLeftColor: "#FF5C5C", background: "#FFECEC" } },
-                { status: "stable", type: "stable", label: "🟢 Stable", style: { borderLeftColor: "#00C187", background: "#F4FDF8" } },
-                { status: "under-review", type: "warning", label: "🟡 Under Review", style: { borderLeftColor: "#FFA500", background: "#FFF4E6" } },
+                {
+                  status: "critical",
+                  type: "critical",
+                  label: "🔴 Critical",
+                  style: { borderLeftColor: "#FF5C5C", background: "#FFECEC" },
+                },
+                {
+                  status: "stable",
+                  type: "stable",
+                  label: "🟢 Stable",
+                  style: { borderLeftColor: "#00C187", background: "#F4FDF8" },
+                },
+                {
+                  status: "under-review",
+                  type: "warning",
+                  label: "🟡 Under Review",
+                  style: { borderLeftColor: "#FFA500", background: "#FFF4E6" },
+                },
               ];
               const type = types[i % 3];
               const names = [
-                "Fatma Ahmed Ali", "Mohamed Sayed", "Aisha Mahmoud", "Youssef Ibrahim",
-                "Mona Tarek", "Khaled Yassin", "Nour Hassan", "Sara Othman"
+                "Fatma Ahmed Ali",
+                "Mohamed Sayed",
+                "Aisha Mahmoud",
+                "Youssef Ibrahim",
+                "Mona Tarek",
+                "Khaled Yassin",
+                "Nour Hassan",
+                "Sara Othman",
               ];
               const initials = ["FA", "MS", "AM", "YI", "MT", "KY", "NH", "SO"];
-              
+
               const dummyPatient = {
                 id: `dummy-${i}`,
                 initials: initials[i],
@@ -1203,15 +1220,26 @@ const PatientList = () => {
                 status: type.status,
                 statusLabel: type.label,
                 statusType: type.type,
-                aiInsight: "Based on recent laboratory results and patient history, condition points to typical symptomatic patterns requiring baseline monitoring.",
+                aiInsight:
+                  "Based on recent laboratory results and patient history, condition points to typical symptomatic patterns requiring baseline monitoring.",
                 lastVisit: "May 10, 2026",
                 nextAppointment: "Jun 14, 2026",
                 insightStyle: type.style,
               };
 
               return (
-                <div key={i} className="preview-shimmer" style={{ width: '100%', height: '100%', pointerEvents: 'none', borderRadius: '16px', display: 'block' }}>
-                  <PatientCard 
+                <div
+                  key={i}
+                  className="preview-shimmer"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    pointerEvents: "none",
+                    borderRadius: "16px",
+                    display: "block",
+                  }}
+                >
+                  <PatientCard
                     patient={dummyPatient}
                     index={null}
                     cardRef={null}

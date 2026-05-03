@@ -90,7 +90,7 @@ body .decision-support-card .card-cta-btn {
 @media (max-width: 768px) {
   body .top-navbar {
     height: 60px;
-    padding: 0 16px;
+    padding: 0 40px;
   }
 
   body .search-container {
@@ -113,6 +113,11 @@ body .decision-support-card .card-cta-btn {
 
 @media (max-width: 480px) {
 
+    body .top-navbar {
+    height: 60px;
+    padding: 0 50px;
+  }
+  
   body .main-content,
   body .content-layer {
     padding: 16px;

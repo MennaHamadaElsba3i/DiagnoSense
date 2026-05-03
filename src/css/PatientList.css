@@ -689,6 +689,7 @@ body {
     min-height: 72px;
 }
 
+
 /* Natural centered alignment for 1-line name against the 57px avatar */
 .patient-info.name-single-line {
     margin-top: 6.5px;
@@ -749,6 +750,7 @@ body {
 
 .patient-meta-row {
     display: flex;
+    /* justify-content: center; */
     align-items: center;
     flex-wrap: nowrap;
     gap: 12px;
@@ -1052,6 +1054,12 @@ body {
     .modal-footer {
         flex-direction: column;
     }
+    .disc .patient-meta-row {
+        flex-direction: column-reverse;
+        align-items: flex-start;
+    }
+    
+
 }
 
 /* ── Patient card action row ───────────────────────────────────────────── */
@@ -1194,6 +1202,7 @@ button.patient-card-delete-btn.edit-action-btn:hover {
 }
 
 
+
 /* ══════════════════════════════════════════════════════════
    DARK MODE OVERRIDES — Patient List page
    ══════════════════════════════════════════════════════════ */
@@ -1289,4 +1298,4 @@ button.patient-card-delete-btn.edit-action-btn:hover {
 [data-theme="dark"] .ai-summary-btn:hover {
   background: #2A66FF;
   color: #FFFFFF;
-}
+}
