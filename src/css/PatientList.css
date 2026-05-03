@@ -1057,11 +1057,25 @@ body {
     .disc .patient-meta-row {
         flex-direction: column-reverse;
         align-items: flex-start;
+        margin-top: 13px;
     }
     
 
 }
-
+@media (min-width: 767px) {
+    .patient-meta-row {
+        flex-direction: column-reverse;
+        align-items: flex-start;
+    }
+    
+}
+@media (min-width: 1255px) {
+    .patient-meta-row {
+        flex-direction: row;
+        align-items: center;
+    }
+    
+}
 /* ── Patient card action row ───────────────────────────────────────────── */
 .patient-actions {
     display: flex;
