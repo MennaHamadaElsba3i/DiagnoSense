@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "./ThemeContext";
 import { diagnoSenseLightLogo, diagnoSenseDarkLogo } from "../assets";
+import { getCookie } from "./cookieUtils";
 import "../css/Diagnosense.css";
 
 export default function LandingNav() {
@@ -11,6 +12,17 @@ export default function LandingNav() {
   const closeMenu = () => setMenuOpen(false);
 
   const logo = isDark ? diagnoSenseDarkLogo : diagnoSenseLightLogo;
+
+  const handleGetStarted = (e) => {
+    e.preventDefault();
+    closeMenu();
+    const token = getCookie("user_token");
+    if (token) {
+      navigate("/dashboard");
+    } else {
+      navigate("/login");
+    }
+  };
 
   return (
     <>
@@ -31,7 +43,7 @@ export default function LandingNav() {
 
         {/* Desktop button */}
         <div className="btn-nav-wrapper">
-          <a href="/login" className="btn-nav">Get Started</a>
+          <a href="#" className="btn-nav" onClick={handleGetStarted}>Get Started</a>
         </div>
 
         {/* Hamburger */}
@@ -75,7 +87,7 @@ export default function LandingNav() {
           <li><a href="/#contact"    onClick={closeMenu}>Contact</a></li>
         </ul>
 
-        <a href="/login" className="btn-nav sidebar-cta" onClick={closeMenu}>
+        <a href="#" className="btn-nav sidebar-cta" onClick={handleGetStarted}>
           Get Started
         </a>
       </div>

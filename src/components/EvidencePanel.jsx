@@ -11,6 +11,7 @@ import '@react-pdf-viewer/core/lib/styles/index.css';
 import * as pdfjsLib from "pdfjs-dist";
 
 const workerUrl = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
 const fetchPdfAsBlob = async (url) => {
   const token = getCookie("user_token");
@@ -31,7 +32,7 @@ const fetchPdfAsBlob = async (url) => {
     method: "GET",
     headers: {
       Accept: "application/pdf, application/octet-stream, */*",
-      "ngrok-skip-browser-warning": "true",
+      ...(apiBase.includes("ngrok") && { "ngrok-skip-browser-warning": "true" }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
   });
@@ -384,7 +385,7 @@ function buildPageLocalCandidates(pageNormText, viewerWords) {
 function EvidencePanelInternal({
   isOpen,
   onClose,
-  sourceFile,
+  ocrFiles = [],
   selectedAlert,
 }) {
   const pageNavigationPluginInstance = pageNavigationPlugin();
@@ -394,6 +395,9 @@ function EvidencePanelInternal({
   const [errorMsg, setErrorMsg] = useState("");
   const [blobUrl, setBlobUrl] = useState(null);
   const [searchStatus, setSearchStatus] = useState("");
+  const [activeFileIndex, setActiveFileIndex] = useState(0);
+  
+  const fileBlobsRef = useRef({});
 
   const viewerContainerRef = useRef(null);
   const jumpTargetRef = useRef(null);
@@ -411,21 +415,33 @@ function EvidencePanelInternal({
   const winnerPageIndexRef = useRef(-1);
 
   const rawEvidence = selectedAlert?.evidence;
-  const alertTitle = selectedAlert?.title || selectedAlert?.is_manual || "Evidence";
+  const alertTitle = selectedAlert?.title || selectedAlert?.is_ai_generated || "Evidence";
 
   const primaryEvidenceText = useMemo(() => {
-    if (!rawEvidence) return "";
     let target = "";
-    if (Array.isArray(rawEvidence)) {
-      const validStr = rawEvidence.find(
-        (item) => typeof item === "string" && item.trim()
-      );
-      target = validStr || "";
-    } else if (typeof rawEvidence === "string") {
-      target = rawEvidence;
+    if (rawEvidence) {
+      if (Array.isArray(rawEvidence)) {
+        const validStr = rawEvidence.find(
+          (item) => typeof item === "string" && item.trim()
+        );
+        target = validStr || "";
+      } else if (typeof rawEvidence === "string") {
+        target = rawEvidence;
+      }
     }
-    return target.trim();
-  }, [rawEvidence]);
+    
+    if (target.trim()) return target.trim();
+
+    if (selectedAlert?.insight && typeof selectedAlert.insight === "string") {
+      return selectedAlert.insight.trim();
+    }
+
+    if (selectedAlert?.title && typeof selectedAlert.title === "string") {
+      return selectedAlert.title.trim();
+    }
+
+    return "";
+  }, [rawEvidence, selectedAlert]);
 
   // Cleanup on panel close
   useEffect(() => {
@@ -449,30 +465,118 @@ function EvidencePanelInternal({
     }
   }, [isOpen, blobUrl]);
 
-  // Load PDF Blob
+  // Load PDF Blob and scan
   useEffect(() => {
-    if (!isOpen || !sourceFile) return;
+    if (!isOpen || !ocrFiles || ocrFiles.length === 0) return;
 
     let cancelled = false;
-    const init = async () => {
-      try {
-        setStatus("loading");
-        setSearchStatus("");
-        jumpTargetRef.current = null;
-        const localUrl = await fetchPdfAsBlob(sourceFile);
-        if (cancelled) return;
-        setBlobUrl(localUrl);
-        setStatus("success");
-      } catch (err) {
-        if (cancelled) return;
-        setStatus("error");
-        setErrorMsg("Could not load the PDF source.");
+    
+    const scanAndLoad = async () => {
+      setStatus("loading");
+      setSearchStatus("Scanning documents for evidence...");
+      jumpTargetRef.current = null;
+      setHasJumpTarget(false);
+      setBlobUrl(null);
+      
+      // On new alert, clear cache so we don't hold too many blobs
+      fileBlobsRef.current = {};
+      
+      const viewerWords = primaryEvidenceText ? normForMatch(primaryEvidenceText).split(" ").filter((w) => w.length > 0) : [];
+      
+      let bestFileIndex = 0;
+      let bestScore = -1;
+      let bestLocalUrl = null;
+
+      for (let i = 0; i < ocrFiles.length; i++) {
+         if (cancelled) return;
+         setSearchStatus(`Scanning document ${i + 1} of ${ocrFiles.length}...`);
+         
+         try {
+            const localUrl = await fetchPdfAsBlob(ocrFiles[i]);
+            fileBlobsRef.current[i] = localUrl;
+            
+            if (cancelled) return;
+            
+            if (viewerWords.length > 0) {
+                const loadingTask = pdfjsLib.getDocument(localUrl);
+                const doc = await loadingTask.promise;
+                
+                const numPages = doc.numPages;
+                const pageNormTexts = [];
+                for (let p = 1; p <= numPages; p++) {
+                   const page = await doc.getPage(p);
+                   const textContent = await page.getTextContent();
+                   const raw = textContent.items.map((item) => item.str).join(" ");
+                   pageNormTexts.push(normForMatch(typeof raw === "string" ? raw : ""));
+                }
+                
+                const { winnerScore } = resolveWinnerPage(pageNormTexts, viewerWords);
+                
+                if (winnerScore > bestScore) {
+                   bestScore = winnerScore;
+                   bestFileIndex = i;
+                   bestLocalUrl = localUrl;
+                }
+                
+                if (winnerScore >= 60) {
+                   break; // strong match, stop searching
+                }
+            } else {
+                bestFileIndex = 0;
+                bestLocalUrl = localUrl;
+                break;
+            }
+         } catch (err) {
+            console.error(`Error scanning file ${i}:`, err);
+         }
+      }
+      
+      if (cancelled) return;
+      
+      if (bestLocalUrl) {
+         setBlobUrl(bestLocalUrl);
+         setActiveFileIndex(bestFileIndex);
+         setStatus("success");
+         setSearchStatus(bestScore > 0 ? "Displaying matched document..." : "Evidence text was not found in the OCR files.");
+      } else if (fileBlobsRef.current[0]) {
+         setBlobUrl(fileBlobsRef.current[0]);
+         setActiveFileIndex(0);
+         setStatus("success");
+         setSearchStatus("Evidence text was not found in the OCR files.");
+      } else {
+         setStatus("error");
+         setErrorMsg("Could not load any OCR files.");
       }
     };
-    init();
-
+    
+    scanAndLoad();
+    
     return () => { cancelled = true; };
-  }, [isOpen, sourceFile]);
+  }, [isOpen, selectedAlert?.id, ocrFiles]);
+
+  const changeFile = async (idx) => {
+      if (idx < 0 || idx >= ocrFiles.length) return;
+      setActiveFileIndex(idx);
+      jumpTargetRef.current = null;
+      setHasJumpTarget(false);
+      
+      if (fileBlobsRef.current[idx]) {
+          setBlobUrl(fileBlobsRef.current[idx]);
+          setSearchStatus(`Document ${idx + 1}...`);
+      } else {
+          setStatus("loading");
+          setSearchStatus(`Loading document ${idx + 1}...`);
+          try {
+              const localUrl = await fetchPdfAsBlob(ocrFiles[idx]);
+              fileBlobsRef.current[idx] = localUrl;
+              setBlobUrl(localUrl);
+              setStatus("success");
+          } catch (e) {
+              setStatus("error");
+              setErrorMsg(`Could not load document ${idx + 1}.`);
+          }
+      }
+  };
 
   // Jump to Evidence handler
   const handleJumpToEvidence = useCallback(() => {
@@ -881,8 +985,31 @@ function EvidencePanelInternal({
               <i className="bi bi-x-lg" />
             </button>
           </div>
-          <div className="evidence-title-row">
+          <div className="evidence-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div className="evidence-title">{alertTitle || "Document Review"}</div>
+            {ocrFiles && ocrFiles.length > 1 && (
+              <div className="ep-file-nav">
+                <button 
+                  className="ep-file-nav-btn" 
+                  onClick={() => changeFile(activeFileIndex - 1)} 
+                  disabled={activeFileIndex === 0}
+                  title="Previous File"
+                >
+                  <i className="bi bi-chevron-left" />
+                </button>
+                <span className="ep-file-nav-text">
+                  {activeFileIndex + 1} / {ocrFiles.length}
+                </span>
+                <button 
+                  className="ep-file-nav-btn" 
+                  onClick={() => changeFile(activeFileIndex + 1)} 
+                  disabled={activeFileIndex === ocrFiles.length - 1}
+                  title="Next File"
+                >
+                  <i className="bi bi-chevron-right" />
+                </button>
+              </div>
+            )}
           </div>
           <div className="evidence-quote-box">
             <span className="evidence-quote-label">Target Text</span>

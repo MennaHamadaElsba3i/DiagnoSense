@@ -53,7 +53,8 @@ export const useTranscription = (onTranscriptChunk) => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current = stream;
 
-      const ws = new WebSocket('wss://unallegedly-wrinkly-claribel.ngrok-free.dev/ws/transcribe');
+      const wsUrl = import.meta.env.VITE_AI_WEBSOCKET_URL || 'ws://localhost:8000/ws/transcribe';
+      const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {

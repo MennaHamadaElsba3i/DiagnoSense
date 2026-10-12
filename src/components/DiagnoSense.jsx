@@ -1,12 +1,23 @@
 import "../css/Diagnosense.css";
 import { useNavigate } from "react-router-dom";
 import LandingNav from "./LandingNav";
+import { getCookie } from "./cookieUtils";
 
 export default function DiagnoSense() {
   const navigate = useNavigate();
+  const handleStart = (e) => {
+    e.preventDefault();
+    const token = getCookie("user_token");
+    if (token) {
+      navigate("/dashboard");
+    } else {
+      navigate("/login");
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    navigate("/login");
+    navigate("/login"); // Leaving contact form handler as is, just navigating to login or maybe dashboard? Let's use handleStart
   };
 
   return (
@@ -34,10 +45,7 @@ export default function DiagnoSense() {
           <div className="hero-actions">
             <a
               href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                navigate("/login");
-              }}
+              onClick={handleStart}
               className="start"
             >
               Start Your Free Trial

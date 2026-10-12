@@ -12,6 +12,7 @@ export default function ConfirmModal({
   cancelText = "Cancel",
   variant = "danger",
   icon,
+  isLoading = false,
 }) {
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -35,13 +36,17 @@ export default function ConfirmModal({
           <h2 className="cm-title">{title}</h2>
         </div>
         <p className="cm-desc">{description}</p>
-        <div className="cm-footer">
-          <button className="cm-btn-cancel" onClick={onClose}>
-            {cancelText}
-          </button>
-          <button className={`cm-btn-confirm cm-btn-${variant}`} onClick={onConfirm}>
-            {confirmText}
-          </button>
+        <div className="cm-footer" style={!cancelText ? { justifyContent: "center" } : (!confirmText ? { justifyContent: "flex-start" } : undefined)}>
+          {cancelText && (
+            <button className="cm-btn-cancel" onClick={onClose} disabled={isLoading}>
+              {cancelText}
+            </button>
+          )}
+          {confirmText && (
+            <button className={`cm-btn-confirm cm-btn-${variant}`} onClick={onConfirm} disabled={isLoading} style={!cancelText ? { width: "100%" } : undefined}>
+              {isLoading ? "Processing..." : confirmText}
+            </button>
+          )}
         </div>
       </div>
     </div>,

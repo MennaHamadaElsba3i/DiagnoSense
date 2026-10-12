@@ -2,7 +2,7 @@
 // const API_BASE_URL = 'https://toothlike-intermetatarsal-avah.ngrok-free.dev';
 // const API_BASE_URL = 'https://unpersecuted-vanitied-jayson.ngrok-free.dev';
 // const API_BASE_URL = 'https://unallegedly-wrinkly-claribel.ngrok-free.dev';
-const API_BASE_URL = 'http://127.0.0.1:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
 
 import { getCookie, setCookie, deleteCookie, setJsonCookie } from './cookieUtils';
 
@@ -17,35 +17,43 @@ const apiCall = async (endpoint, options = {}) => {
     return inflightRequests.get(key);
   }
 
+  const { skipAuthClear, ...fetchOptions } = options;
+
   const executeCall = async () => {
     try {
-      const token = getCookie('user_token');
+      const token =
+        getCookie("user_token") ||
+        localStorage.getItem("user_token");
+
+      const isFormData = fetchOptions.body instanceof FormData;
 
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...fetchOptions,
         headers: {
-          'Content-Type': 'application/json',
+          ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
           'Accept': 'application/json',
-          'ngrok-skip-browser-warning': 'true',
-
+          ...(API_BASE_URL.includes('ngrok') && { 'ngrok-skip-browser-warning': 'true' }),
           ...(token && { 'Authorization': `Bearer ${token}` }),
-          ...options.headers,
+          ...fetchOptions.headers,
         },
-        ...options,
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        if (response.status === 401) {
+        if (response.status === 401 && !skipAuthClear) {
           deleteCookie('user_token');
           deleteCookie('user');
           deleteCookie('isAuthenticated');
+          window.location.href = '/login';
         }
 
         return {
           success: false,
+          status: response.status,
           message: data.message || 'Something went wrong',
           errors: data.errors || null,
+          data: data.data || null,
         };
       }
 
@@ -54,7 +62,7 @@ const apiCall = async (endpoint, options = {}) => {
       console.error('API Error:', error);
       return {
         success: false,
-        message: 'Network error. Please check your connection.',
+        message: 'Something went wrong. Please check your network connection..',
       };
     }
   };
@@ -63,7 +71,6 @@ const apiCall = async (endpoint, options = {}) => {
   if (key) {
     inflightRequests.set(key, promise);
     promise.finally(() => {
-      // Remove from map once the request lands, allowing natural refresh
       inflightRequests.delete(key);
     });
   }
@@ -71,88 +78,73 @@ const apiCall = async (endpoint, options = {}) => {
   return promise;
 };
 
-// export const registerAPI = async (userData) => {
-//   const result = await apiCall('/api/register/doctor', {
-//     method: 'POST',
-//     body: JSON.stringify({
-//       name: userData.name,
-//       email: userData.email,
-//       phone: userData.phone,
-//       password: userData.password,
-//       password_confirmation: userData.password_confirmation,
-//     }),
-//   });
 
-//   if (result.success && result.data && result.data.token) {
-//     setCookie('user_token', result.data.token, 7);
-//     setJsonCookie('user', result.data.user, 7);
-//     setCookie('isAuthenticated', 'true', 7);
-//   }
-
-//   return result;
-// };
 export const registerAPI = async (userData) => {
   const payload = {
     name: userData.name,
+    contact: userData.contact,
     password: userData.password,
     password_confirmation: userData.password_confirmation,
+    specialization: userData.specialization,
   };
 
-  if (userData.email && userData.email.trim() !== "") {
-    payload.email = userData.email;
-  }
-
-  if (userData.phone && userData.phone.trim() !== "") {
-    payload.phone = userData.phone;
-  }
-
-  const result = await apiCall('/api/register/doctor', {
+  const result = await apiCall('/api/v1/auth/register', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
 
-  if (result.success && result.data && result.data.token) {
-    setCookie('user_token', result.data.token, 7);
-    setJsonCookie('user', result.data.user, 7);
+  const token = result?.token || result?.data?.token;
+  const user = result?.data?.user || result?.user || result?.data;
+
+  if (result.success && token) {
+    setCookie('user_token', token, 7);
+    if (user) setJsonCookie('user', user, 7);
     setCookie('isAuthenticated', 'true', 7);
   }
 
   return result;
 };
 
-export const loginAPI = async (identity, password) => {
-  const result = await apiCall('/api/login/doctor', {
+export const loginAPI = async (contact, password, type = "doctor") => {
+  const result = await apiCall(`/api/v1/auth/login/${type}`, {
     method: 'POST',
-    body: JSON.stringify({ identity, password }),
+    body: JSON.stringify({ contact, password }),
+    skipAuthClear: true,
   });
 
-  if (result.success && result.data && result.data.token) {
-    setCookie('user_token', result.data.token, 7);
-    setJsonCookie('user', result.data.user, 7);
+  const token = result?.token || result?.data?.token;
+  const user = result?.data?.user || result?.user || result?.data;
+
+  if (result.success && token) {
+    setCookie('user_token', token, 7);
+    if (user) setJsonCookie('user', user, 7);
     setCookie('isAuthenticated', 'true', 7);
 
-    // ── Flush entire page cache so this user never sees a previous user's cached data ──
     window.dispatchEvent(new CustomEvent("authChanged"));
   }
 
   return result;
 };
 
-export const logoutAPI = async () => {
+export const logoutAPI = async (type = "doctor") => {
   const token = getCookie('user_token');
 
   if (!token) {
+    deleteCookie('user_token');
+    deleteCookie('user');
+    deleteCookie('isAuthenticated');
     return {
-      success: false,
-      message: 'No token found',
+      success: true,
+      message: 'Logged out successfully (no token found)',
     };
   }
 
-  const result = await apiCall('/api/logout/doctor', {
+  const result = await apiCall(`/api/v1/auth/logout/${type}`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
     },
+    body: JSON.stringify({ token }),
   });
 
   if (result.success) {
@@ -165,36 +157,65 @@ export const logoutAPI = async () => {
 };
 
 
-export const forgetPasswordAPI = async (identity) => {
-  return await apiCall('/api/forget-password/doctor', {
+export const forgetPasswordAPI = async (contact) => {
+  return await apiCall('/api/v1/auth/forget-password/doctor', {
     method: 'POST',
-    body: JSON.stringify({ identity }),
+    body: JSON.stringify({ contact }),
   });
 };
 
-export const verifyOTPForResetAPI = async (identity, otp) => {
-  return await apiCall('/api/verify-otp/doctor', {
+export const verifyOTPForResetAPI = async (contact, otp) => {
+  return await apiCall('/api/v1/auth/verify-otp/doctor', {
     method: 'POST',
-    body: JSON.stringify({ identity, otp }),
+    body: JSON.stringify({ contact, otp }),
   });
 };
 
 export const resetPasswordAPI = async (reset_token, password, password_confirmation) => {
-  return await apiCall('/api/reset-password/doctor', {
-    method: 'POST',
-    body: JSON.stringify({
-      reset_token,
-      password,
-      password_confirmation,
-    }),
-  });
+  try {
+    const params = new URLSearchParams();
+    params.append('password', password);
+    params.append('password_confirmation', password_confirmation);
+
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/reset-password/doctor`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
+        ...(API_BASE_URL.includes('ngrok') && { 'ngrok-skip-browser-warning': 'true' }),
+        'Authorization': `Bearer ${reset_token}`,
+      },
+      body: params.toString(),
+    });
+
+    const data = await response.json();
+    console.log('[resetPasswordAPI] status:', response.status);
+    console.log('[resetPasswordAPI] response data:', data);
+
+    if (!response.ok) {
+      return {
+        success: false,
+        message: data.message || 'Something went wrong',
+        errors: data.data || data.errors || null,
+      };
+    }
+
+    return data;
+
+  } catch (error) {
+    console.error('[resetPasswordAPI] network error:', error);
+    return {
+      success: false,
+      message: 'Something went wrong. Please check your network connection..',
+    };
+  }
 };
 
-const FRONTEND_CALLBACK_URL = 'http://localhost:5173/auth/google/callback';
+const FRONTEND_CALLBACK_URL = `${window.location.origin}/auth/google/callback`;
 
 export const getGoogleRedirectAPI = async () => {
   return await apiCall(
-    `/api/google/redirect?redirect_uri=${encodeURIComponent(FRONTEND_CALLBACK_URL)}`,
+    `/api/v1/auth/google/redirect`,
     { method: 'GET' }
   );
 };
@@ -205,7 +226,6 @@ export const googleCallbackAPI = async (code) => {
     { method: 'GET' }
   );
 
-  // Backend returns: { success: true, data: { user: {...} }, token: "..." }
   const token = result?.token || result?.data?.token;
   const user = result?.data?.user || result?.data;
 
@@ -215,10 +235,8 @@ export const googleCallbackAPI = async (code) => {
     if (user) {
       setJsonCookie('user', user, 7);
     }
-    // Also mirror to localStorage for axios-based callers
-    localStorage.setItem('user_token', token);
+    // window.dispatchEvent(new CustomEvent("authChanged"));
 
-    // ── Flush entire page cache so this user never sees a previous user's cached data ──
     window.dispatchEvent(new CustomEvent("authChanged"));
   }
 
@@ -236,7 +254,6 @@ export const googleLoginAPI = async (googleToken) => {
     setJsonCookie('user', result.data.user, 7);
     setCookie('isAuthenticated', 'true', 7);
 
-    // ── Flush entire page cache so this user never sees a previous user's cached data ──
     window.dispatchEvent(new CustomEvent("authChanged"));
   }
 
@@ -244,18 +261,22 @@ export const googleLoginAPI = async (googleToken) => {
 };
 
 export const verifyOTPAPI = async (identity, otp) => {
-  return await apiCall('/api/verify-email/doctor', {
+
+
+  return await apiCall('/api/v1/auth/verify-contact', {
     method: 'POST',
-    body: JSON.stringify({
-      identity: identity,
-      otp: otp
-    }),
+    body: JSON.stringify({ otp }),
+    skipAuthClear: true,
+
   });
 };
 
 export const resendOTPAPI = async () => {
-  return await apiCall('/api/resend-otp/doctor', {
+
+  return await apiCall('/api/v1/auth/resend-otp', {
     method: 'GET',
+    skipAuthClear: true,
+
   });
 };
 
@@ -279,6 +300,7 @@ export const analyzeReportAPI = async (formData) => {
         deleteCookie('user_token');
         deleteCookie('user');
         deleteCookie('isAuthenticated');
+        window.location.href = '/login';
       }
 
       return {
@@ -293,7 +315,7 @@ export const analyzeReportAPI = async (formData) => {
     console.error('API Error:', error);
     return {
       success: false,
-      message: 'Network error. Please check your connection.',
+      message: 'Something went wrong. Please check your network connection..',
     };
   }
 };
@@ -307,7 +329,7 @@ export const getPatientAnalysisAPI = async (patientId) => {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Accept': 'application/json',
-        'ngrok-skip-browser-warning': 'true'
+        ...(API_BASE_URL.includes('ngrok') && { 'ngrok-skip-browser-warning': 'true' })
       },
     });
 
@@ -322,7 +344,7 @@ export const getPatientAnalysisAPI = async (patientId) => {
     const contentType = response.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
       const text = await response.text();
-      console.error("Non-JSON response received:", text); // هيطبعلك الـ HTML في الكونسول عشان تشوفه
+      console.error("Non-JSON response received:", text);
       return {
         success: false,
         message: 'Server returned an unexpected format (HTML). Check console.',
@@ -336,6 +358,7 @@ export const getPatientAnalysisAPI = async (patientId) => {
         deleteCookie('user_token');
         deleteCookie('user');
         deleteCookie('isAuthenticated');
+        window.location.href = '/login';
       }
 
       return {
@@ -354,37 +377,71 @@ export const getPatientAnalysisAPI = async (patientId) => {
     console.error('API Error:', error);
     return {
       success: false,
-      message: 'Network error. Please check your connection.',
+      message: 'Something went wrong. Please check your network connection..',
     };
   }
 };
 
-export const getPatientsByStatusAPI = async (status, page = 1) => {
-  const encodedType = encodeURIComponent(status);
-  const urlUsed = `/api/patients/status/${encodedType}?page=${page}`;
-  console.log("[status-filter] finalUrl:", urlUsed);
-  return await apiCall(urlUsed, {
-    method: 'GET',
-  });
+export const getPatientsAPI = async ({ status, search, page } = {}) => {
+  const params = new URLSearchParams();
+
+  if (status && status !== 'all') {
+    params.append('status', status);
+  }
+
+  if (search && search.trim()) {
+    params.append('search', search.trim());
+  }
+
+  if (page && page > 1) {
+    params.append('page', page);
+  }
+
+
+  const queryString = params.toString();
+  const endpoint = queryString
+    ? `/api/v1/patients?${queryString}`
+    : `/api/v1/patients`;
+
+  console.log("[getPatientsAPI] requesting:", endpoint);
+  return await apiCall(endpoint, { method: 'GET' });
 };
 
-export const getPatientsAPI = async (page = 1, perPage = 9) => {
-  const urlUsed = `/api/patients?page=${page}&per_page=${perPage}`;
-  console.log("API URL", urlUsed);
-  return await apiCall(urlUsed, {
-    method: 'GET',
-  });
+export const extractPatientsPayload = (response) => {
+  const patients =
+    response?.data?.data ||
+    response?.data?.patients ||
+    response?.patients ||
+    (Array.isArray(response?.data) ? response.data : null) ||
+    (Array.isArray(response) ? response : null) ||
+    [];
+
+  const meta =
+    response?.data?.meta ||
+    response?.meta ||
+    null;
+
+  const links =
+    response?.data?.links ||
+    response?.links ||
+    null;
+
+  return {
+    patients: Array.isArray(patients) ? patients : [],
+    meta,
+    links
+  };
 };
 
 export const addPatientAPI = async (formData) => {
   const token = getCookie('user_token');
   try {
-    const response = await fetch(`${API_BASE_URL}/api/patients`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/patients`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Accept': 'application/json',
-        'ngrok-skip-browser-warning': 'true',
+        ...(API_BASE_URL.includes('ngrok') && { 'ngrok-skip-browser-warning': 'true' }),
       },
       body: formData,
     });
@@ -396,21 +453,23 @@ export const addPatientAPI = async (formData) => {
         deleteCookie('user_token');
         deleteCookie('user');
         deleteCookie('isAuthenticated');
+        window.location.href = '/login';
       }
       return {
         success: false,
         message: data.message || 'Something went wrong',
-        errors: data.errors || null,
+        errors: data.errors || data.data || null,
+        status: response.status,
       };
     }
 
-    const patientId = data?.data?.id ?? data?.patient_id ?? null;
+    const patientId = data?.data?.patient_id ?? data?.data?.id ?? data?.patient_id ?? null;
     if (patientId) {
       localStorage.setItem('current_patient_id', patientId);
     }
 
-    console.log("raw API data:", data); // add this
-    console.log("extracted patientId:", patientId); // add this
+    console.log("raw API data:", data);
+    console.log("extracted patientId:", patientId);
 
     return {
       success: true,
@@ -424,58 +483,27 @@ export const addPatientAPI = async (formData) => {
     console.error('Error message:', error.message);
     return {
       success: false,
-      message: 'Network error. Please check your connection.',
+      message: 'Something went wrong. Please check your network connection..',
     };
   }
 };
-// Change this if backend expects a different query key (e.g. "query", "search", "name")
-const SEARCH_QUERY_KEY = "search";
 
-export const searchPatientsAPI = async (page = 1, term = "") => {
-  const trimmed = term.trim();
-  const url = `/api/search?page=${page}&${SEARCH_QUERY_KEY}=${encodeURIComponent(trimmed)}`;
-  console.log("[search] requesting", { page, term: trimmed, url });
-  const res = await apiCall(url, { method: 'GET' });
-  console.log("[search] response", { meta: res?.meta || res?.data?.meta, len: (res?.data?.length ?? res?.data?.data?.length ?? "?") });
-  return res;
-};
-
-export const getPatientKeyInfoAPI = async (patientId, token) => {
-  // If no token provided, use apiCall which auto-reads token from cookies
-  if (!token) {
-    return await apiCall(`/api/patients/${patientId}/key-info`, { method: 'GET' });
-  }
-  // Token explicitly provided (e.g. ProcessingReports polling)
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/patients/${patientId}/key-info`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json',
-        'ngrok-skip-browser-warning': 'true',
-      },
-    });
-    console.log("key-info status:", response.status);
-    const data = await response.json();
-    return data; 
-  } catch (err) {
-    console.error("getPatientKeyInfoAPI catch:", err);
-    return { success: false, message: "Network error" };
-  }
+export const getPatientKeyInfoAPI = async (patientId) => {
+  return await apiCall(`/api/v1/patients/${patientId}/key-points`, { method: 'GET' });
 };
 export const getPatientOverviewAPI = async (patientId) => {
-  return await apiCall(`/api/patients/${patientId}/overview`, { method: 'GET' });
+  return await apiCall(`/api/v1/patients/${patientId}/overview`, { method: 'GET' });
 };
 
 export const addPatientKeyInfoNoteAPI = async (patientId, { insight, priority }) => {
-  return await apiCall(`/api/patients/${patientId}/key-info`, {
+  return await apiCall(`/api/v1/patients/${patientId}/key-points`, {
     method: 'POST',
     body: JSON.stringify({ insight, priority }),
   });
 };
 
 export const patchKeyPointAPI = async (keyPointId, { insight }) => {
-  return await apiCall(`/api/key-points/${keyPointId}`, {
+  return await apiCall(`/api/v1/key-points/${keyPointId}`, {
     method: 'PATCH',
     body: JSON.stringify({ insight }),
   });
@@ -484,7 +512,7 @@ export const deleteKeyPointAPI = async (keyPointId) => {
   const token = getCookie('user_token');
   console.log('[deleteKeyPoint] sending request — keyPointId:', keyPointId, '| token:', token);
 
-  const result = await apiCall(`/api/key-points/${keyPointId}`, {
+  const result = await apiCall(`/api/v1/key-points/${keyPointId}`, {
     method: 'DELETE',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -496,166 +524,170 @@ export const deleteKeyPointAPI = async (keyPointId) => {
 };
 
 /**
- * PATCH /api/patients/{patientId}/status
+ 
  * @param {number|string} patientId
  * @param {"stable"|"critical"|"under review"} status  — must match backend exactly
  */
 export const updatePatientStatusAPI = async (patientId, status) => {
-  return await apiCall(`/api/patients/${patientId}/status`, {
+  return await apiCall(`/api/v1/patients/${patientId}/status`, {
     method: 'PATCH',
     body: JSON.stringify({ status }),
   });
 };
 
-/**
- * GET /api/patients/{patientId}/decision-support
- * Returns decision support data for a given patient.
- * Token is injected automatically by apiCall (reads user_token cookie).
- * 401 handling (cookie cleanup) is also done inside apiCall.
- */
+
 export const getDecisionSupportAPI = async (patientId) => {
-  return await apiCall(`/api/patients/${patientId}/decision-support`, {
+  return await apiCall(`/api/v1/patients/${patientId}/decision-support`, {
     method: 'GET',
   });
 };
 
 /**
- * GET /api/patients/{patientId}/activities
- * Returns activity history for a given patient.
- * Token is injected automatically by apiCall (reads user_token cookie).
- * 401 handling (cookie cleanup) is also done inside apiCall.
+ * POST /api/v1/patients/{patientId}/re-analyze
+ * Triggers AI re-analysis for Decision Support on patients created under a
+ * Basic plan that lacked Decision Support at analysis time.
+ * Called only after a successful upgrade / pay-per-use for the 'decision' feature.
+ *
+ * @param {number|string} patientId
  */
-export const getPatientActivitiesAPI = async (patientId) => {
-  return await apiCall(`/api/patients/${patientId}/activities`, {
+export const reAnalyzePatientDecisionSupportAPI = async (patientId) => {
+  return await apiCall(`/api/v1/patients/${patientId}/re-analyze`, {
+    method: 'POST',
+  });
+};
+
+
+export const getPatientActivitiesAPI = async (patientId, page = 1) => {
+  return await apiCall(`/api/v1/patients/${patientId}/activities?page=${page}&limit=10`, {
     method: 'GET',
   });
 };
 
-/**
- * GET /api/patients/{patientId}/comparative-analysis
- * Returns comparative analysis data (test trends across visits) for a given patient.
- * Token is injected automatically by apiCall (reads user_token cookie).
- */
+
 export const getComparativeAnalysisAPI = async (patientId) => {
-  return await apiCall(`/api/patients/${patientId}/comparative-analysis`, {
+  return await apiCall(`/api/v1/patients/${patientId}/comparative-analysis`, {
     method: 'GET',
   });
 };
 
 /**
- * POST /api/visits
- * Sent as application/x-www-form-urlencoded (not JSON) — backend requirement.
+ * POST /api/v1/patients/{patientId}/visits
+ * Creates a new patient visit session.
+ * Content-Type: application/json
+ *
  * @param {object} params
  * @param {number|string} params.patient_id
  * @param {boolean}       params.has_next_visit
- * @param {string}        [params.next_visit_date]  - "YYYY-MM-DD", required when has_next_visit=true
+ * @param {string}        [params.next_visit_date]  — required when has_next_visit is true
  * @param {"save"|"next"} params.action
  */
 export const createVisitAPI = async ({ patient_id, has_next_visit, next_visit_date, action }) => {
-  const token = getCookie('user_token');
-
-  const params = new URLSearchParams();
-  params.append('patient_id', patient_id);
-  params.append('has_next_visit', has_next_visit ? '1' : '0');
-  if (next_visit_date) params.append('next_visit_date', next_visit_date);
-  params.append('action', action);
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/visits`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json',
-        'ngrok-skip-browser-warning': 'true',
-        ...(token && { 'Authorization': `Bearer ${token}` }),
-      },
-      body: params.toString(),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        deleteCookie('user_token');
-        deleteCookie('user');
-        deleteCookie('isAuthenticated');
-      }
-      return {
-        success: false,
-        message: data.message || 'Something went wrong',
-        errors: data.errors || null,
-      };
-    }
-
-    return data;
-  } catch (error) {
-    console.error('API Error:', error);
-    return {
-      success: false,
-      message: 'Network error. Please check your connection.',
-    };
+  const body = {
+    has_next_visit: !!has_next_visit,
+    action,
+  };
+  if (has_next_visit && next_visit_date) {
+    body.next_visit_date = next_visit_date;
   }
+
+  return await apiCall(`/api/v1/patients/${patient_id}/visits`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
 };
 
 /**
- * POST /api/visits/{visitId}/items
- * Creates a task or medication under a specific visit.
- * Content-Type: application/json
+ * GET /api/v1/visits/{visitId}/edit
+ * Returns the editable data for an existing visit (includes next_visit_date).
  *
- * @param {number|string} visitId  - ID returned from POST /api/visits (response.data.id)
- * @param {object} payload
- * @param {"save"|"save_and_create_another"} payload.action
- * @param {"task"|"medication"} payload.type
- *
- * If type="task":   payload.title (required), payload.description, payload.notes, payload.Due_date
- * If type="medication": payload.name, payload.dosage, payload.frequency (all required), payload.duration, payload.notes
+ * @param {number|string} visitId
  */
-export const createVisitItem = async (visitId, payload) => {
-  return await apiCall(`/api/visits/${visitId}/items`, {
+export const getVisitEditAPI = async (visitId) => {
+  return await apiCall(`/api/v1/visits/${visitId}/edit`, { method: 'GET' });
+};
+
+/**
+ * PATCH /api/v1/visits/{visitId}
+ * Updates the next visit date of an existing patient visit session.
+ *
+ * @param {number|string} visitId
+ * @param {object} payload - e.g. { next_visit_date: "2026-06-04 17:30:00" }
+ */
+export const updatePatientVisitDateAPI = async (visitId, payload) => {
+  return await apiCall(`/api/v1/visits/${visitId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+};
+
+/**
+ * POST /api/v1/visits/{visitId}/medications
+ * Adds a medication entry to a specific visit.
+ *
+ * @param {number|string} visitId
+ * @param {object} payload
+ * @param {string} payload.name         — required
+ * @param {string} payload.dosage       — required
+ * @param {string} payload.frequency    — required
+ * @param {string} [payload.duration]   — optional
+ * @param {string} [payload.next_visit_date] — optional
+ * @param {"save"|"save_and_create_another"} payload.action — required
+ */
+export const createVisitMedication = async (visitId, payload) => {
+  return await apiCall(`/api/v1/visits/${visitId}/medications`, {
     method: 'POST',
     body: JSON.stringify(payload),
   });
 };
 
 /**
- * GET /api/patients/{patientId}/items
- * Returns all tasks, medications, and next_visit_date for a patient.
- * Token is injected automatically by apiCall (reads user_token cookie).
- * Response shape: { success: true, data: { tasks: [], medications: [], next_visit_date: string|null } }
+ * POST /api/v1/visits/{visitId}/tasks
+ * Adds a care task entry to a specific visit.
+ *
+ * @param {number|string} visitId
+ * @param {object} payload
+ * @param {string} payload.title        — required
+ * @param {string} [payload.description] — optional
+ * @param {string} [payload.notes]      — optional
+ * @param {string} [payload.next_visit_date] — optional
+ * @param {"save"|"save_and_create_another"} payload.action — required
+ */
+export const createVisitTask = async (visitId, payload) => {
+  return await apiCall(`/api/v1/visits/${visitId}/tasks`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+};
+
+/**
+ * GET /api/v1/patients/{patientId}/visits
+ * Returns visit history with tasks, medications, and latest next visit date.
  */
 export const getPatientVisitItems = async (patientId) => {
-  return await apiCall(`/api/patients/${patientId}/items`, { method: 'GET' });
+  return await apiCall(`/api/v1/patients/${patientId}/visits`, { method: 'GET' });
 };
 
 /**
- * DELETE /api/patients/{patientId}/medications/{medicationId}
- * Deletes a single medication for a patient.
- * Success: { success: true, message: "Medication deleted successfully" }
+ * DELETE /api/v1/medications/{medicationId}
+ * Deletes a single medication entry.
  */
-export const deletePatientMedication = async (patientId, medicationId) => {
-  return await apiCall(`/api/patients/${patientId}/medications/${medicationId}`, {
+export const deletePatientMedication = async (medicationId) => {
+  return await apiCall(`/api/v1/medications/${medicationId}`, {
     method: 'DELETE',
   });
 };
 
 /**
- * DELETE /api/patients/{patientId}/tasks/{taskId}
- * Deletes a single task for a patient.
- * Success: { success: true, message: "Task deleted successfully" }
+ * DELETE /api/v1/tasks/{taskId}
+ * Deletes a single care task entry.
  */
-export const deletePatientTask = async (patientId, taskId) => {
-  return await apiCall(`/api/patients/${patientId}/tasks/${taskId}`, {
+export const deletePatientTask = async (taskId) => {
+  return await apiCall(`/api/v1/tasks/${taskId}`, {
     method: 'DELETE',
   });
 };
 
-/**
- * GET /api/visits?patient_id={patientId}
- * Fetches the patient's most recent / upcoming visit that has a next_visit_date.
- * Returns { next_visit_date, id, status } or null if unavailable.
- *
- * Gracefully handles 404/405 (no dedicated GET endpoint) by returning null.
- */
+
 export const getPatientNextVisitAPI = async (patientId) => {
   const token = getCookie('user_token');
 
@@ -664,17 +696,18 @@ export const getPatientNextVisitAPI = async (patientId) => {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'ngrok-skip-browser-warning': 'true',
+        ...(API_BASE_URL.includes('ngrok') && { 'ngrok-skip-browser-warning': 'true' }),
         ...(token && { 'Authorization': `Bearer ${token}` }),
       },
     });
 
-    // Endpoint might not support GET — fail silently
+
     if (!response.ok) {
       if (response.status === 401) {
         deleteCookie('user_token');
         deleteCookie('user');
         deleteCookie('isAuthenticated');
+        window.location.href = '/login';
       }
       console.warn('[getPatientNextVisit] endpoint returned', response.status, '— no GET visits support');
       return null;
@@ -683,23 +716,23 @@ export const getPatientNextVisitAPI = async (patientId) => {
     const data = await response.json();
     console.log('[getPatientNextVisit] raw response', data);
 
-    // Shape 1: { success: true, data: [ { next_visit_date, id, status }, ... ] }
+
     if (data?.success && Array.isArray(data?.data)) {
-      // Find the most recent visit that has a next_visit_date
+
       const visits = data.data;
       const withDate = visits.filter((v) => v.next_visit_date);
       if (!withDate.length) return null;
-      // Sort descending by id (or created_at) and take the most recent
+
       withDate.sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
       return withDate[0];
     }
 
-    // Shape 2: { success: true, data: { next_visit_date, ... } }
+
     if (data?.success && data?.data?.next_visit_date) {
       return data.data;
     }
 
-    // Shape 3: flat object { next_visit_date, ... }
+
     if (data?.next_visit_date) {
       return data;
     }
@@ -710,30 +743,24 @@ export const getPatientNextVisitAPI = async (patientId) => {
     return null;
   }
 };
-/**
- * DELETE /api/patients/{patientId}
- * Deletes a single patient.
- * Success: { success: true, message: "Patient deleted successfully" }
- */
+
 export const deletePatientAPI = async (patientId) => {
-  return await apiCall(`/api/patients/${patientId}`, {
+  return await apiCall(`/api/v1/patients/${patientId}`, {
     method: 'DELETE',
   });
 };
 
-/**
- * GET /api/patients/{patientId}
- * Fetches full patient data for the edit form (personal info, medical history, existing files).
- */
+
+
 export const getPatientForEditAPI = async (patientId) => {
   const token = getCookie('user_token');
   try {
-    const response = await fetch(`${API_BASE_URL}/api/patients/${patientId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/patients/${patientId}/edit`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Accept': 'application/json',
-        'ngrok-skip-browser-warning': 'true',
+        ...(API_BASE_URL.includes('ngrok') && { 'ngrok-skip-browser-warning': 'true' }),
       },
     });
 
@@ -744,9 +771,11 @@ export const getPatientForEditAPI = async (patientId) => {
         deleteCookie('user_token');
         deleteCookie('user');
         deleteCookie('isAuthenticated');
+        window.location.href = '/login';
       }
       return {
         success: false,
+        status: response.status,
         message: data.message || 'Something went wrong',
         errors: data.errors || null,
       };
@@ -755,25 +784,25 @@ export const getPatientForEditAPI = async (patientId) => {
     return { success: true, data: data.data ?? data };
   } catch (error) {
     console.error('[getPatientForEdit] API Error:', error);
-    return { success: false, message: 'Network error. Please check your connection.' };
+    return { success: false, message: 'Something went wrong. Please check your network connection..' };
   }
 };
 
 /**
- * PUT /api/patients/{patientId}
- * Updates patient data. Sent as multipart/form-data so files can be included.
+
+* Updates patient data. Sent as multipart/form-data so files can be included.
  * @param {number|string} patientId
  * @param {FormData} formData  — built by EditPatient before submitting
  */
 export const updatePatientAPI = async (patientId, formData) => {
   const token = getCookie('user_token');
   try {
-    const response = await fetch(`${API_BASE_URL}/api/patients/${patientId}`, {
-      method: 'POST', // Laravel tunnels PUT via _method spoofing; keep POST here
+    const response = await fetch(`${API_BASE_URL}/api/v1/patients/${patientId}`, {
+      method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Accept': 'application/json',
-        'ngrok-skip-browser-warning': 'true',
+        ...(API_BASE_URL.includes('ngrok') && { 'ngrok-skip-browser-warning': 'true' }),
       },
       body: formData,
     });
@@ -785,18 +814,21 @@ export const updatePatientAPI = async (patientId, formData) => {
         deleteCookie('user_token');
         deleteCookie('user');
         deleteCookie('isAuthenticated');
+        window.location.href = '/login';
       }
       return {
         success: false,
+        status: response.status,
         message: data.message || 'Something went wrong',
-        errors: data.errors || null,
+        errors: data.errors || data.data || null,
+        data: data.data || null,
       };
     }
 
     return { success: true, message: data.message, data };
   } catch (error) {
     console.error('[updatePatient] API Error:', error);
-    return { success: false, message: 'Network error. Please check your connection.' };
+    return { success: false, message: 'Something went wrong. Please check your network connection..' };
   }
 };
 
@@ -809,7 +841,7 @@ export const chargeWalletAPI = async (balance) => {
   const success_url = `${window.location.origin}/close-popup.html`;
   const cancel_url = `${window.location.origin}/close-popup.html`;
 
-  return await apiCall('/api/wallet/charge', {
+  return await apiCall('/api/v1/wallets/charge', {
     method: 'POST',
     body: JSON.stringify({ balance, success_url, cancel_url }),
   });
@@ -820,8 +852,8 @@ export const chargeWalletAPI = async (balance) => {
  * GET /api/transactions
  * Fetches the wallet transaction history.
  */
-export const getTransactionsAPI = async () => {
-  return await apiCall('/api/transactions', {
+export const getTransactionsAPI = async (page = 1) => {
+  return await apiCall(`/api/v1/wallets/transactions?page=${page}`, {
     method: 'GET',
   });
 };
@@ -831,7 +863,7 @@ export const getTransactionsAPI = async () => {
  * Returns available subscription plans.
  */
 export const getSubscriptionPlansAPI = async () => {
-  return await apiCall('/api/subscription/plans', {
+  return await apiCall('/api/v1/subscriptions/plans', {
     method: 'GET',
   });
 };
@@ -840,23 +872,35 @@ export const getSubscriptionPlansAPI = async () => {
  * POST /api/subscription/subscribe
  * Subscribes user to a specific plan.
  */
-export const subscribeToPlanAPI = async (plan_id) => {
-  return await apiCall('/api/subscription/subscribe', {
+export const subscribeToPlanAPI = async (planId) => {
+  const result = await apiCall(`/api/v1/subscriptions/${planId}/subscribe`, {
     method: 'POST',
-    body: JSON.stringify({ plan_id }),
+    body: JSON.stringify({ planId }),
   });
+  if (!result.success && result.status === 403) {
+    const error = new Error(result.message);
+    error.response = { status: 403, data: { message: result.message } };
+    throw error;
+  }
+  return result;
 };
 
 export const cancelSubscriptionAPI = async () => {
-  return await apiCall('/api/subscription/cancel', {
+  return await apiCall('/api/v1/subscriptions/cancel', {
     method: 'POST',
   });
 };
 
 export const subscribeToPayPerUseAPI = async () => {
-  return await apiCall('/api/subscription/pay-per-use', {
+  const result = await apiCall('/api/v1/subscriptions/pay-per-use', {
     method: 'POST',
   });
+  if (!result.success && result.status === 403) {
+    const error = new Error(result.message);
+    error.response = { status: 403, data: { message: result.message } };
+    throw error;
+  }
+  return result;
 };
 
 /**
@@ -864,86 +908,88 @@ export const subscribeToPayPerUseAPI = async () => {
  * Returns current billing mode, wallet balance, usage, and plan details.
  */
 export const getCurrentSubscriptionAPI = async () => {
-  return await apiCall('/api/subscription/current', {
+  return await apiCall('/api/v1/subscriptions/current', {
     method: 'GET',
   });
 };
 
-// ── Notifications ────────────────────────────────────────────────────────────
+
 
 /**
- * GET /api/notifications
+ * GET /api/v1/notifications
  * Fetches paginated notifications (cursor-based).
  * @param {string|null} cursor — the next-page cursor returned by the API
  */
 export const getNotificationsAPI = async (cursor) => {
   const url = cursor
-    ? `/api/notifications?cursor=${encodeURIComponent(cursor)}`
-    : '/api/notifications';
+    ? `/api/v1/notifications?cursor=${encodeURIComponent(cursor)}`
+    : '/api/v1/notifications';
   return await apiCall(url, { method: 'GET' });
 };
 
 /**
- * GET /api/notifications/unread-count
+ * GET /api/v1/notifications/unread-count
  * Returns the number of unread notifications.
  */
 export const getUnreadNotificationsCountAPI = async () => {
-  return await apiCall('/api/notifications/unread-count', { method: 'GET' });
+  return await apiCall('/api/v1/notifications/unread-count', { method: 'GET' });
 };
 
 /**
- * PATCH /api/notifications/{id}/read
+ * PATCH /api/v1/notifications/{notification}/read
  * Marks a single notification as read.
  */
 export const markNotificationAsReadAPI = async (id) => {
-  return await apiCall(`/api/notifications/${id}/read`, { method: 'PATCH' });
+  return await apiCall(`/api/v1/notifications/${id}/read`, {
+    method: 'PATCH',
+  });
 };
 
 /**
- * POST /api/notifications/mark-all-read
+ * PATCH /api/v1/notifications/read-all
  * Marks all notifications as read.
  */
 export const markAllNotificationsAsReadAPI = async () => {
-  return await apiCall('/api/notifications/mark-all-read', { method: 'POST' });
+  return await apiCall('/api/v1/notifications/read-all', { method: 'PATCH' });
 };
 
 /**
- * DELETE /api/notifications/clear-all
+ * DELETE /api/v1/notifications/clear-all
  * Clears all notifications.
  */
 export const clearAllNotificationsAPI = async () => {
-  return await apiCall('/api/notifications/clear-all', { method: 'DELETE' });
+  return await apiCall('/api/v1/notifications/clear-all', { method: 'DELETE' });
 };
 
 
 
 export const getDashboardWidgets = async () => {
-  return await apiCall('/api/dashboard/summary', {
+  return await apiCall('/api/v1/dashboard/summary', {
     method: 'GET',
   });
 };
 
 export const getDashboardStatusDistribution = async () => {
-  return await apiCall('/api/dashboard/status-distribution', {
+  return await apiCall('/api/v1/dashboard/status-distribution', {
     method: 'GET',
   });
 }
 
 export const getTopfiveDiseases = async () => {
-  return await apiCall('/api/dashboard/top-diseases', {
+  return await apiCall('/api/v1/dashboard/top-diseases', {
     method: 'GET',
   });
 }
 
 export const getTodayVisitsAPI = async () => {
-  return await apiCall('/api/dashboard/today-visits', {
+  return await apiCall('/api/v1/dashboard/today-visits', {
     method: 'GET',
   });
 };
 
 
-export const markPatientAttendedAPI = async (patientId) => {
-  return await apiCall(`/api/dashboard/${patientId}/attend`, {
+export const markVisitAttendedAPI = async (visitId) => {
+  return await apiCall(`/api/v1/visits/${visitId}/attend`, {
     method: 'PATCH',
   });
 };
@@ -955,7 +1001,7 @@ export const markPatientAttendedAPI = async (patientId) => {
  * @param {string} question - The doctor's typed question
  */
 export const sendChatbotMessageAPI = async (patientId, question) =>
-  apiCall(`/api/chatbot/${patientId}`, {
+  apiCall(`/api/v1/patients/${patientId}/chatbot/ask`, {
     method: 'POST',
     body: JSON.stringify({ question }),
   });
@@ -963,76 +1009,58 @@ export const sendChatbotMessageAPI = async (patientId, question) =>
 
 
 export const sendSupportAPI = async ({ category, urgency, message, name, attachment }) => {
-  const token = getCookie('user_token');
-
   const formData = new FormData();
   formData.append('category', category);
   formData.append('urgency', urgency);
   formData.append('message', message);
-  if (name && name.trim()) formData.append('name', name.trim());
-  if (attachment) formData.append('attachment', attachment);
 
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/support`, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'ngrok-skip-browser-warning': 'true',
-        ...(token && { 'Authorization': `Bearer ${token}` }),
-      },
-      body: formData,
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        deleteCookie('user_token');
-        deleteCookie('user');
-        deleteCookie('isAuthenticated');
-      }
-      return {
-        success: false,
-        message: data.message || 'Something went wrong',
-        errors: data.errors || null,
-      };
-    }
-
-    return data; 
-  } catch (error) {
-    console.error('[sendSupport] API Error:', error);
-    return {
-      success: false,
-      message: 'Network error. Please check your connection.',
-    };
+  if (name && name.trim()) {
+    formData.append('name', name.trim());
   }
+
+  if (attachment) {
+    formData.append('attachment', attachment);
+  }
+
+  return await apiCall('/api/v1/support', {
+    method: 'POST',
+    body: formData,
+  });
 };
 
 
-export const getDoctorProfileAPI = async (doctorId) => {
-  return await apiCall(`/api/doctors/${doctorId}`, {
+export const getDoctorProfileAPI = async () => {
+  return await apiCall(`/api/v1/doctors/profile/edit`, {
     method: 'GET',
   });
 };
 
 
 export const updateDoctorProfileAPI = async (doctorId, { name, specialization }) => {
-  return await apiCall(`/api/doctors/${doctorId}`, {
-    method: 'PUT',
+  return await apiCall(`/api/v1/doctors/profile`, {
+    method: 'PATCH',
     body: JSON.stringify({ name, specialization }),
   });
 };
 
 export const changePasswordAPI = async (current_password, new_password, new_password_confirmation) => {
-  return await apiCall('/api/change-password', {
+  const params = new URLSearchParams();
+  params.append('current_password', current_password);
+  params.append('new_password', new_password);
+  params.append('new_password_confirmation', new_password_confirmation);
+
+  return await apiCall('/api/v1/doctors/change-password', {
     method: 'PATCH',
-    body: JSON.stringify({ current_password, new_password, new_password_confirmation }),
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: params.toString(),
   });
 };
 
 
-export const deleteDoctorAccountAPI = async (doctorId, password, password_confirmation) => {
-  return await apiCall(`/api/doctors/${doctorId}`, {
+export const deleteDoctorAccountAPI = async (password, password_confirmation) => {
+  return await apiCall(`/api/v1/doctors/profile`, {
     method: 'DELETE',
     body: JSON.stringify({ password, password_confirmation }),
   });

@@ -37,6 +37,7 @@ function Subscription() {
   const {
     subscriptionData,
     isSubLoading,
+    backendMessage,
     refreshSubscription,
     credits,
     isCreditsLoading,
@@ -48,34 +49,47 @@ function Subscription() {
     subscriptionData?.wallet_balance != null
       ? subscriptionData.wallet_balance.toLocaleString()
       : "—";
-  const isPayPerUse = subscriptionData?.billing_mode === "pay_per_use";
+  const isPayPerUse =
+    subscriptionData?.billing_mode === "pay_per_use" ||
+    subscriptionData?.billing_mode === "pay-per-use";
   const isSubscription = subscriptionData?.billing_mode === "subscription";
+  const [activeTab, setActiveTab] = useState(
+    searchParams.get("tab") || location.state?.tab || "plans",
+  );
   const [transactions, setTransactions] = useState([]);
+  const [txCurrentPage, setTxCurrentPage] = useState(1);
+  const [txLastPage, setTxLastPage] = useState(1);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isCancelledLocally, setIsCancelledLocally] = useState(false);
-  // Tracks if transactions have been loaded at least once for the billing tab
-  const transactionsFetchedRef = useRef(false);
+  const fetchTransactions = React.useCallback(
+    async (pageNumber = 1, force = false) => {
+      const cacheKey = `subscription_transactions_page_${pageNumber}`;
+      if (!force) {
+        const cached = getCache(cacheKey);
+        if (cached) {
+          setTransactions(cached.data);
+          setTxCurrentPage(cached.meta?.current_page || 1);
+          setTxLastPage(cached.meta?.last_page || 1);
+          setIsLoadingHistory(false);
+          return;
+        }
+      }
 
-  const fetchTransactions = async () => {
-    // ── Cache check ──
-    const cached = getCache("subscription_transactions");
-    if (cached) {
-      setTransactions(cached);
+      setIsLoadingHistory(true);
+      const result = await getTransactionsAPI(pageNumber);
+      console.log("--- Transactions API Full Response ---", result);
+      if (result.success && result.data && result.data.transactions) {
+        const txData = result.data.transactions.data || [];
+        const txMeta = result.data.transactions.meta || {};
+        setTransactions(txData);
+        setTxCurrentPage(txMeta.current_page || 1);
+        setTxLastPage(txMeta.last_page || 1);
+        setCache(cacheKey, { data: txData, meta: txMeta });
+      }
       setIsLoadingHistory(false);
-      return;
-    }
-
-    setIsLoadingHistory(true);
-    const result = await getTransactionsAPI();
-    console.log("--- Transactions API Full Response ---", result);
-    if (result.success && result.data) {
-      setTransactions(result.data.transactions);
-      // ── Store to cache ──
-      setCache("subscription_transactions", result.data.transactions);
-      // credits are managed globally via context — no local state needed
-    }
-    setIsLoadingHistory(false);
-  };
+    },
+    [getCache, setCache],
+  );
 
   // (Transaction load moved below activeTab declaration to avoid ReferenceError)
 
@@ -102,10 +116,6 @@ function Subscription() {
   const openLogoutModal = () => setIsLogoutModalOpen(true);
   const closeLogoutModal = () => setIsLogoutModalOpen(false);
 
-  // ── Robust Closure Fallback ────────────────────────────────────────────────
-  // Stripe redirects back to this page inside the popup after payment.
-  // We post STRIPE_SUCCESS to the opener so the parent window can refresh
-  // credits, unread count, and toast — then close the popup.
   useEffect(() => {
     if (window.name === "stripe_checkout" && window.opener) {
       console.log(
@@ -123,22 +133,22 @@ function Subscription() {
   useEffect(() => {
     const handleMessage = (event) => {
       if (event.origin !== window.location.origin) return;
-      if (event.data?.type === "STRIPE_SUCCESS") {
+      if (event.data?.type === "STRIPE_SUCCESS" || event.data?.type === "PAYMENT_SUCCESS") {
         console.log(
-          "[Subscription] Stripe success message received from popup.",
+          "[Subscription] Payment success message received from popup.",
         );
         refreshSubscription();
+        refreshCredits();
         // fetchAndToastLatest: fetches real backend notification, shows it as
         // the toast popup, and refreshes the unread count in one go.
         fetchAndToastLatest();
         // Invalidate transactions cache so billing tab re-fetches on next open
         window.dispatchEvent(new CustomEvent("subscriptionChanged"));
-        transactionsFetchedRef.current = false;
       }
     };
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [refreshSubscription, fetchAndToastLatest]);
+  }, [refreshSubscription, refreshCredits, fetchAndToastLatest]);
 
   // ── Real-time Refresh when notification arrives ────────────────────────────
   useEffect(() => {
@@ -150,26 +160,26 @@ function Subscription() {
       refreshCredits();
       // Invalidate transactions cache so billing tab re-fetches on next open
       window.dispatchEvent(new CustomEvent("subscriptionChanged"));
-      transactionsFetchedRef.current = false;
+      if (activeTab === "billing") {
+        fetchTransactions(txCurrentPage, true);
+      }
     }
     prevUnreadCount.current = unreadCount;
-  }, [unreadCount, refreshSubscription, refreshCredits]);
+  }, [
+    unreadCount,
+    refreshSubscription,
+    refreshCredits,
+    activeTab,
+    fetchTransactions,
+    txCurrentPage,
+  ]);
 
-  const [activeTab, setActiveTab] = useState(
-    searchParams.get("tab") || location.state?.tab || "plans",
-  );
-
-  // ── Lazy: fetch transactions only when user opens Billing & History tab ──
+  // ── Fetch transactions only when user opens Billing & History tab ──
   useEffect(() => {
-    if (activeTab !== "billing") return;
-    // Invalidate stale ref so re-entering the tab after a mutation re-fetches
-    if (!getCache("subscription_transactions")) {
-      transactionsFetchedRef.current = false;
+    if (activeTab === "billing") {
+      fetchTransactions(txCurrentPage, false);
     }
-    if (transactionsFetchedRef.current) return;
-    transactionsFetchedRef.current = true;
-    fetchTransactions();
-  }, [activeTab, getCache]);
+  }, [activeTab, txCurrentPage, fetchTransactions]);
 
   useEffect(() => {
     if (location.state?.tab) {
@@ -180,12 +190,20 @@ function Subscription() {
   const [selectedAmt, setSelectedAmt] = useState(null);
   const [isCharged, setIsCharged] = useState(false);
   const [chargeHint, setChargeHint] = useState("");
-  const [historyFilter, setHistoryFilter] = useState("30days");
 
   const [plans, setPlans] = useState([]);
   const [isPlansLoading, setIsPlansLoading] = useState(true);
   const [plansError, setPlansError] = useState(null);
-  const [selectedPlanId, setSelectedPlanId] = useState(null);
+  const [selectedPlanId, setSelectedPlanId] = useState(() => {
+    return localStorage.getItem("selectedPlanId") || null;
+  });
+  useEffect(() => {
+    if (selectedPlanId != null) {
+      localStorage.setItem("selectedPlanId", selectedPlanId);
+    } else {
+      localStorage.removeItem("selectedPlanId");
+    }
+  }, [selectedPlanId]);
 
   useEffect(() => {
     if (isSubLoading) return;
@@ -226,6 +244,8 @@ function Subscription() {
 
     if (backendPlanId != null) {
       setSelectedPlanId(backendPlanId);
+    } else if (!hasActivePlan) {
+      setSelectedPlanId(null);
     }
   }, [
     isSubLoading,
@@ -241,6 +261,40 @@ function Subscription() {
     useState(false);
   const [pendingPlan, setPendingPlan] = useState(null);
   const [subscribingPlanId, setSubscribingPlanId] = useState(null);
+
+  // Toast notification state
+  const [toast, setToast] = useState({
+    isOpen: false,
+    message: "",
+    isSuccess: false,
+  });
+  const toastTimerRef = useRef(null);
+
+  // Read More modal state
+  const [readMoreModal, setReadMoreModal] = useState({
+    isOpen: false,
+    message: "",
+  });
+
+  const TOAST_TRUNCATE_LENGTH = 100;
+
+  const showToast = (message, isSuccess) => {
+    // Clear any existing timer so stacked calls reset the countdown
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+
+    setToast({ isOpen: true, message, isSuccess });
+
+    toastTimerRef.current = setTimeout(() => {
+      setToast({ isOpen: false, message: "", isSuccess: false });
+    }, 10000);
+  };
+
+  const closeToast = () => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast({ isOpen: false, message: "", isSuccess: false });
+  };
+
+  // Rename all showResultModal calls to showToast — done in Steps 2 & 3 below
 
   useEffect(() => {
     let isMounted = true;
@@ -265,7 +319,7 @@ function Subscription() {
         // ── Cache the plans ──
         setCache("subscription_plans", result.data);
       } else {
-        setPlansError(result.message || "Failed to load plans");
+        setPlansError(result.message);
       }
     };
 
@@ -290,12 +344,14 @@ function Subscription() {
     if (apiResult.success) {
       setIsCancelledLocally(true);
       setSelectedPlanId(null);
-      refreshSubscription();
-      refreshCredits();
-      // Invalidate transactions cache so billing tab re-fetches on next open
+      localStorage.removeItem("selectedPlanId");
+      await refreshSubscription();
+      await refreshCredits();
       window.dispatchEvent(new CustomEvent("subscriptionChanged"));
-      transactionsFetchedRef.current = false;
-      fetchAndToastLatest();
+      if (activeTab === "billing") {
+        fetchTransactions(txCurrentPage, true);
+      }
+      refreshNotifications(); // only refresh count — no toast
     }
   };
 
@@ -315,45 +371,72 @@ function Subscription() {
 
     setIsPlanConfirmModalOpen(false);
 
-    if (plan === "Pay-per-use") {
-      setSubscribingPlanId("Pay-per-use");
+    try {
+      if (plan === "Pay-per-use") {
+        setSubscribingPlanId("Pay-per-use");
 
-      const result = await subscribeToPayPerUseAPI();
+        const result = await subscribeToPayPerUseAPI();
+
+        setSubscribingPlanId(null);
+        setPendingPlan(null);
+        if (!result.success) {
+          showToast(result.message, false);
+        }
+
+        if (result.success) {
+          setIsCancelledLocally(false);
+          setSelectedPlanId("Pay-per-use");
+          setTimeout(() => {
+            refreshSubscription();
+            refreshCredits();
+          }, 1500);
+          window.dispatchEvent(new CustomEvent("subscriptionChanged"));
+          if (activeTab === "billing") {
+            fetchTransactions(txCurrentPage, true);
+          }
+          fetchAndToastLatest();
+        }
+        return;
+      }
+
+      const planId = plan?.id || plan;
+
+      setSubscribingPlanId(planId);
+
+      const result = await subscribeToPlanAPI(planId);
 
       setSubscribingPlanId(null);
       setPendingPlan(null);
 
+
+      if (!result.success) {
+        showToast(result.message, false);
+      }
+
       if (result.success) {
         setIsCancelledLocally(false);
-        setSelectedPlanId("Pay-per-use");
-        refreshSubscription();
-        refreshCredits();
-        // Invalidate transactions cache so billing tab re-fetches on next open
+        setSelectedPlanId(planId);
+        setTimeout(() => {
+          refreshSubscription();
+          refreshCredits();
+        }, 1500);
         window.dispatchEvent(new CustomEvent("subscriptionChanged"));
-        transactionsFetchedRef.current = false;
+        if (activeTab === "billing") {
+          fetchTransactions(txCurrentPage, true);
+        }
         fetchAndToastLatest();
       }
-      return;
-    }
-
-    const planId = plan?.id || plan;
-
-    setSubscribingPlanId(planId);
-
-    const result = await subscribeToPlanAPI(planId);
-
-    setSubscribingPlanId(null);
-    setPendingPlan(null);
-
-    if (result.success) {
-      setIsCancelledLocally(false);
-      setSelectedPlanId(planId);
-      refreshSubscription();
-      refreshCredits();
-      // Invalidate transactions cache so billing tab re-fetches on next open
-      window.dispatchEvent(new CustomEvent("subscriptionChanged"));
-      transactionsFetchedRef.current = false;
-      fetchAndToastLatest();
+    } catch (error) {
+      console.error("[Upgrade] error:", error);
+      setSubscribingPlanId(null);
+      setPendingPlan(null);
+      
+      if (error.response && error.response.status === 403) {
+        const backendMessage = error.response.data?.message || error.message;
+        showToast(backendMessage, false);
+      } else {
+        showToast("An error occurred during subscription", false);
+      }
     }
   };
 
@@ -372,14 +455,9 @@ function Subscription() {
     setChargeHint("");
   };
 
-  const doCharge = async () => {
+const doCharge = async () => {
     const val = parseFloat(chargeAmt);
-    if (!val || val < 50) {
-      Swal.fire({
-        icon: "warning",
-        title: "Minimum Amount",
-        text: "The minimum charge amount is 50.",
-      });
+    if (!val || val <= 0) {
       return;
     }
 
@@ -391,7 +469,14 @@ function Subscription() {
     console.log("Charge result:", result);
     setIsCharged(false);
 
-    if (!result.success) {
+      if (!result.success) {
+      const backendError =
+        result.data?.balance?.[0] ||
+        result.errors?.balance?.[0] ||
+        result.errors?.message?.[0] ||
+        result.message ||
+        "Failed to initiate wallet charge.";
+      showToast(backendError, false);
       return;
     }
 
@@ -405,9 +490,42 @@ function Subscription() {
           result.data.url));
 
     if (paymentUrl) {
-      window.open(paymentUrl, "stripe_checkout", "width=600,height=700");
-      // Invalidate transaction cache so it re-fetches after wallet top-up
+      const popup = window.open(
+        paymentUrl,
+        "stripe_checkout",
+        "width=600,height=700",
+      );
+
+      // Clear cache immediately
       window.dispatchEvent(new CustomEvent("subscriptionChanged"));
+
+      // Poll to detect when the payment popup is closed by the user or redirects to success
+      const popupTimer = setInterval(() => {
+        try {
+          if (popup && !popup.closed && popup.location && popup.location.href && popup.location.href.includes('status=success')) {
+            popup.close();
+          }
+        } catch (error) {
+          // Ignore cross-origin domain block errors while on Paymob
+        }
+
+        if (!popup || popup.closed || popup.closed === undefined) {
+          clearInterval(popupTimer);
+          console.log(
+            "[Subscription] Payment popup closed. Refreshing data...",
+          );
+
+          refreshSubscription();
+          refreshCredits();
+
+          if (activeTab === "billing") {
+            fetchTransactions(txCurrentPage, true);
+          }
+
+          // Show backend notification exactly as used after subscribe actions
+          fetchAndToastLatest();
+        }
+      }, 500);
     }
 
     setChargeAmt("");
@@ -415,6 +533,11 @@ function Subscription() {
     setChargeHint("");
   };
   const dlInv = (date) => window.alert(`Downloading invoice for ${date}...`);
+
+  const PAGINATION_GROUP_SIZE = 10;
+  const currentGroup = Math.floor((txCurrentPage - 1) / PAGINATION_GROUP_SIZE);
+  const startPage = currentGroup * PAGINATION_GROUP_SIZE + 1;
+  const endPage = Math.min(startPage + PAGINATION_GROUP_SIZE - 1, txLastPage);
 
   return (
     <>
@@ -485,6 +608,129 @@ function Subscription() {
           </svg>
         }
       />
+      {/* ── Toast Notification ── */}
+      {toast.isOpen && (
+        <div
+          onClick={() =>
+            setReadMoreModal({ isOpen: true, message: toast.message })
+          }
+          style={{
+            position: "fixed",
+            top: "80px",
+            right: "24px",
+            zIndex: 99999,
+            minWidth: "300px",
+            maxWidth: "350px",
+            background: "var(--card-bg, #ffffff)",
+            borderRadius: "12px",
+            border: "1px solid var(--border-color, #e5e7eb)",
+            padding: "16px",
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "8px",
+            animation:
+              "0.3s ease-out 0s 1 normal forwards running slideInRight",
+            boxShadow:
+              "rgba(0, 0, 0, 0.1) 0px 10px 25px -5px, rgba(0, 0, 0, 0.1) 0px 8px 10px -6px",
+            cursor: "pointer",
+          }}
+        >
+          {/* Icon */}
+          <div
+            style={{
+              flexShrink: 0,
+              width: "32px",
+              height: "32px",
+              borderRadius: "50%",
+              background: toast.isSuccess
+                ? "rgba(34,197,94,0.1)"
+                : "rgba(239,68,68,0.1)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "15px",
+              marginTop: "1px",
+            }}
+          >
+            {toast.isSuccess ? "✓" : "✕"}
+          </div>
+
+          {/* Text */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: "0.82rem",
+                fontWeight: 600,
+                color: "var(--text-primary, #111)",
+                marginBottom: "3px",
+                letterSpacing: "0.01em",
+              }}
+            >
+              {toast.isSuccess ? "Success" : "Failed"}
+            </div>
+            <div
+              style={{
+                fontSize: "0.82rem",
+                color: "var(--text-secondary, #6b7280)",
+                lineHeight: 1.45,
+                wordBreak: "break-word",
+              }}
+            >
+              {toast.message.length > TOAST_TRUNCATE_LENGTH
+                ? toast.message.slice(0, TOAST_TRUNCATE_LENGTH).trimEnd() + "…"
+                : toast.message}
+            </div>
+          </div>
+
+          {/* Close button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              closeToast();
+            }}
+            style={{
+              flexShrink: 0,
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--text-secondary, #9ca3af)",
+              fontSize: "16px",
+              lineHeight: 1,
+              padding: "2px 4px",
+              borderRadius: "4px",
+              marginTop: "-1px",
+            }}
+            aria-label="Close notification"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* ── Read More Modal ── */}
+      <ConfirmModal
+        isOpen={readMoreModal.isOpen}
+        onClose={() => setReadMoreModal({ isOpen: false, message: "" })}
+        onConfirm={() => setReadMoreModal({ isOpen: false, message: "" })}
+        title="Message Details"
+        description={readMoreModal.message}
+        confirmText="Ok, got it"
+        variant="primary"
+        icon={
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        }
+      />
 
       <main className={`main-content${isSidebarCollapsed ? " collapsed" : ""}`}>
         <div className="subscription-page-header">
@@ -519,7 +765,7 @@ function Subscription() {
                       <div>
                         <div className="banner-plan-row">
                           <span className="banner-plan-name">
-                            {subscriptionData?.plan_name || "Unknown"} Plan
+                            {subscriptionData?.plan_name} Plan
                           </span>
                           <span className={badgeClass}>
                             <span className={dotClass}></span> {displayStatus}
@@ -603,7 +849,7 @@ function Subscription() {
                 <div
                   style={{ padding: "8px 0", color: "var(--text-secondary)" }}
                 >
-                  No active plan
+                  {backendMessage || "No active plan found. Please select a plan below to get started."}
                 </div>
               )}
             </div>
@@ -682,7 +928,7 @@ function Subscription() {
                       >
                         <div className="plan-card" style={{ height: "100%" }}>
                           <div className="plan-name">{p.name}</div>
-                          <span className="plan-price">E£ {p.price}</span>
+                          <span className="plan-price">EGP {p.price}</span>
                           <div className="plan-period">{p.period}</div>
                           <div className="plan-tagline"></div>
                           <div className="plan-feats">
@@ -745,7 +991,7 @@ function Subscription() {
                         )}
                         <div className="plan-name">{plan.name}</div>
                         <span className="plan-price">
-                          E£ {plan.price.toLocaleString()}
+                          EGP {plan.price.toLocaleString()}
                         </span>
                         <div className="plan-period">
                           per{" "}
@@ -810,11 +1056,11 @@ function Subscription() {
                         className="ppu-card"
                         style={{ pointerEvents: "none" }}
                       >
-                        <div>
+                        <div className="pay-title">
                           <div className="ppu-lbl">Pay-per-use</div>
                           <div className="ppu-sub">Most popular plan</div>
                           <div className="ppu-price">
-                            E£ 20 <em>/ file</em>
+                            EGP 20 <em>/ file</em>
                           </div>
                         </div>
                         <div className="ppu-right">
@@ -885,7 +1131,7 @@ function Subscription() {
                         <div className="ppu-lbl">Pay-per-use</div>
                         <div className="ppu-sub">Most popular plan</div>
                         <div className="ppu-price">
-                          E£ 20 <em>/ file</em>
+                          EGP 20 <em>/ file</em>
                         </div>
                       </div>
                       <div className="ppu-right">
@@ -1029,8 +1275,8 @@ function Subscription() {
                       "You are currently using the Pay-Per-Use plan."}
                   </div>
                   <div className="u-lbl">
-                    Each file costs E£ {subscriptionData?.price_per_file ?? 20}.
-                    Usage tracking is per-file.
+                    Each file costs EGP {subscriptionData?.price_per_file ?? 20}
+                    . Usage tracking is per-file.
                   </div>
                 </div>
               ) : (
@@ -1077,7 +1323,7 @@ function Subscription() {
                       className={`amt ${selectedAmt === amt ? "sel" : ""}`}
                       onClick={() => pickAmt(amt)}
                     >
-                      E£ {amt}
+                      EGP {amt}
                     </button>
                   ))}
                 </div>
@@ -1088,11 +1334,11 @@ function Subscription() {
                       className={`amt ${selectedAmt === amt ? "sel" : ""}`}
                       onClick={() => pickAmt(amt)}
                     >
-                      E£ {amt}
+                      EGP {amt}
                     </button>
                   ))}
                   <div className="inp-wrap">
-                    <span className="inp-pfx">E£</span>
+                    <span className="inp-pfx">EGP</span>
                     <input
                       type="number"
                       className="inp"
@@ -1120,26 +1366,6 @@ function Subscription() {
               <div className="b-card">
                 <div className="h-header">
                   <div className="h-title">Payment History</div>
-                  <div className="f-btns">
-                    <button
-                      className={`f-btn ${historyFilter === "30days" ? "act" : ""}`}
-                      onClick={() => setHistoryFilter("30days")}
-                    >
-                      Last 30 days
-                    </button>
-                    <button
-                      className={`f-btn ${historyFilter === "6months" ? "act" : ""}`}
-                      onClick={() => setHistoryFilter("6months")}
-                    >
-                      6 months
-                    </button>
-                    <button
-                      className={`f-btn ${historyFilter === "1year" ? "act" : ""}`}
-                      onClick={() => setHistoryFilter("1year")}
-                    >
-                      1 year
-                    </button>
-                  </div>
                 </div>
                 <div className="table-responsive">
                   <table>
@@ -1157,7 +1383,7 @@ function Subscription() {
                           <tr key={tx.id}>
                             <td className="td-d">{tx.date}</td>
                             <td className="td-desc">{tx.description}</td>
-                            <td className="td-amt">E£ {tx.amount}</td>
+                            <td className="td-amt">EGP {tx.amount}</td>
                             <td>
                               <span
                                 className={
@@ -1183,6 +1409,59 @@ function Subscription() {
                       )}
                     </tbody>
                   </table>
+                </div>
+
+                <div className="pagination" style={{ marginTop: "20px" }}>
+                  <button
+                    disabled={txCurrentPage <= 1 || transactions.length === 0}
+                    onClick={() => setTxCurrentPage((p) => Math.max(1, p - 1))}
+                    title="Previous Page"
+                  >
+                    ◂ Prev
+                  </button>
+
+                  {startPage > 1 && (
+                    <button
+                      onClick={() => setTxCurrentPage(startPage - 1)}
+                      title="Previous 10 Pages"
+                    >
+                      «
+                    </button>
+                  )}
+
+                  {Array.from(
+                    { length: endPage - startPage + 1 },
+                    (_, i) => startPage + i,
+                  ).map((page) => (
+                    <button
+                      key={page}
+                      className={txCurrentPage === page ? "active" : ""}
+                      onClick={() => setTxCurrentPage(page)}
+                    >
+                      {page}
+                    </button>
+                  ))}
+
+                  {endPage < txLastPage && (
+                    <button
+                      onClick={() => setTxCurrentPage(endPage + 1)}
+                      title="Next 10 Pages"
+                    >
+                      »
+                    </button>
+                  )}
+
+                  <button
+                    disabled={
+                      txCurrentPage >= txLastPage || transactions.length === 0
+                    }
+                    onClick={() =>
+                      setTxCurrentPage((p) => Math.min(txLastPage, p + 1))
+                    }
+                    title="Next Page"
+                  >
+                    Next ▸
+                  </button>
                 </div>
               </div>
             </div>

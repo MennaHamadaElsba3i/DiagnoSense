@@ -80,6 +80,7 @@ const echo = new Echo({
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          ...(apiBaseUrl.includes('ngrok') && { 'ngrok-skip-browser-warning': 'true' }),
           ...(token && { 'Authorization': `Bearer ${token}` }),
         },
         body: JSON.stringify({

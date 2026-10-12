@@ -15,7 +15,7 @@ import {
   getTopfiveDiseases,
   getTodayVisitsAPI,
   getPatientOverviewAPI,
-  markPatientAttendedAPI,
+  markVisitAttendedAPI,
 } from "./mockAPI.js";
 import { useTheme } from "./ThemeContext";
 
@@ -188,6 +188,7 @@ function QueueSection({ parentLoading }) {
 
       const mapped = (data.full_queue_list || []).map((p) => ({
         id: p.id,
+        patient_id: p.patient_id,
         name: p.name,
         age: p.age,
         gender: p.gender,
@@ -202,7 +203,8 @@ function QueueSection({ parentLoading }) {
         color: AVATAR_COLORS[p.id % AVATAR_COLORS.length],
       }));
 
-      const nowIdx = mapped.findIndex((p) => p.status_tag === "Now");
+      const currentAttendingId = data.current_attending?.id;
+      const nowIdx = currentAttendingId ? mapped.findIndex((p) => p.id === currentAttendingId) : mapped.findIndex((p) => p.status_tag === "Now");
       const resolvedIdx = nowIdx >= 0 ? nowIdx : 0;
       const label = data.remaining_count_label || "";
 
@@ -302,13 +304,13 @@ function QueueSection({ parentLoading }) {
   const handleMarkAttended = async () => {
     if (!activePatient?.id) return;
 
-    const patientId = activePatient.id;
+    const visitId = activePatient.id;
 
     const prevQueueList = queueList;
     const prevCurrentIdx = currentIdx;
     const prevRemainingLabel = remainingLabel;
 
-    const queueWithoutAttended = queueList.filter((p) => p.id !== patientId);
+    const queueWithoutAttended = queueList.filter((p) => p.id !== visitId);
 
     const queueAfterShift = queueWithoutAttended.map((p, i) => ({
       ...p,
@@ -332,7 +334,7 @@ function QueueSection({ parentLoading }) {
     window.dispatchEvent(new CustomEvent("attendedPatientOptimistic"));
 
     try {
-      const result = await markPatientAttendedAPI(patientId);
+      const result = await markVisitAttendedAPI(visitId);
 
       if (result?.success) {
         const refreshed = await getTodayVisitsAPI();
@@ -345,6 +347,7 @@ function QueueSection({ parentLoading }) {
 
           const remapped = (data.full_queue_list || []).map((p) => ({
             id: p.id,
+            patient_id: p.patient_id,
             name: p.name,
             age: p.age,
             gender: p.gender,
@@ -359,7 +362,8 @@ function QueueSection({ parentLoading }) {
             color: AVATAR_COLORS[p.id % AVATAR_COLORS.length],
           }));
 
-          const nowIdx = remapped.findIndex((p) => p.status_tag === "Now");
+          const currentAttendingId = data.current_attending?.id;
+          const nowIdx = currentAttendingId ? remapped.findIndex((p) => p.id === currentAttendingId) : remapped.findIndex((p) => p.status_tag === "Now");
           const resolvedIdx = nowIdx >= 0 ? nowIdx : 0;
           const freshLabel =
             data.remaining_count_label ||
@@ -569,7 +573,7 @@ function QueueSection({ parentLoading }) {
             </button>
             <button
               className="dsn-btn-view"
-              onClick={() => handleViewDetails(activePatient.id)}
+              onClick={() => handleViewDetails(activePatient.patient_id)}
             >
               <svg
                 viewBox="0 0 24 24"
@@ -620,6 +624,8 @@ function QueueSection({ parentLoading }) {
         {queueList.map((p, i) => (
           <div
             key={p.id}
+            onClick={() => setModalPatient(p)}
+            style={{ cursor: "pointer" }}
             className={`dsn-mini-card${p.status_tag === "Attended"
               ? " dsn-attended"
               : p.status_tag === "Skipped"
@@ -650,7 +656,10 @@ function QueueSection({ parentLoading }) {
             </span>
             <button
               className="dsn-mini-view-btn"
-              onClick={() => setModalPatient(p)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setModalPatient(p);
+              }}
             >
               View
             </button>
@@ -735,7 +744,7 @@ function QueueSection({ parentLoading }) {
                 className="dsn-modal-confirm"
                 onClick={() => {
                   setModalPatient(null);
-                  handleViewDetails(modalPatient.id);
+                  handleViewDetails(modalPatient.patient_id);
                 }}
               >
                 Open Full Report

@@ -632,6 +632,25 @@ body {
 }
 
 @media (max-width: 768px) {
+    /* ── Complete mobile layout reset for Patient Profile ── */
+    .content-layer,
+    .content-layer.collapsed {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .patient-profile-page {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+    }
+
     .patient-profile-page .pp-header {
         /* No negative margin hacks — sticky positioning handles placement */
         padding: 12px 20px !important;
@@ -663,6 +682,45 @@ body {
         width: auto;
         justify-content: flex-end;
         flex-shrink: 0;
+    }
+    .pp-edit-file-btn{
+        width: 100%;
+    }
+
+    /* ── Fluid text wrapping for Smart Summary & AI Insight ── */
+    .smart-summary,
+    .ai-insight,
+    .overview-layout,
+    .records-layout {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+    }
+
+    .smart-summary,
+    .ai-insight {
+        display: block !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: anywhere !important;
+    }
+
+    .smart-summary p,
+    .smart-summary span,
+    .smart-summary li,
+    .ai-insight p,
+    .ai-insight span,
+    .ai-insight li {
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: anywhere !important;
+    }
+
+    .overview-layout {
+        flex-direction: column !important;
+        padding: 0 !important;
     }
 }
 
@@ -923,11 +981,11 @@ body {
     width: 100%;
     box-sizing: border-box;
     gap: 16px;
-    margin-bottom: 24px;
-    background: white;
-    padding: 12px 24px;
-    border-radius: 15px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    margin-bottom: 0;
+    background: transparent;
+    padding: 0 8px;
+    border-radius: 0;
+    box-shadow: none;
     justify-content: space-between;
     align-items: center;
     flex-wrap: nowrap;
@@ -972,9 +1030,15 @@ body {
 .tab-nav-wrapper {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
     margin-bottom: 24px;
     position: relative;
+    background: white;
+    padding: 12px 16px;
+    border-radius: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    box-sizing: border-box;
+    width: 100%;
 }
 
 /* Override tab-nav — remove margin since wrapper handles it */
@@ -999,40 +1063,35 @@ body {
 }
 
 /* Scroll arrow buttons */
-.tab-scroll-btn {
+.pp-tab-scroll-btn {
     flex-shrink: 0;
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
-    /* prevents button from collapsing */
-    border-radius: 8px;
-    border: 1px solid #E6EAF2;
-    background: #ffffff;
-    /* ← explicit white background */
-    color: #3A4560;
-    /* ← explicit dark color for SVG inheritance */
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 10px;
+    border: 1px solid rgba(42, 102, 255, 0.18);
+    background: #F8FAFF;
+    color: #2A66FF;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
 }
 
-.tab-scroll-btn svg {
-    stroke: #3A4560;
-    /* ← explicit stroke so it's never white */
+.pp-tab-scroll-btn i {
+    font-size: 16px;
+    line-height: 1;
+    color: currentColor;
     display: block;
 }
 
-.tab-scroll-btn:hover {
-    background: #E9F0FF;
-    border-color: #2A66FF;
-    color: #2A66FF;
-}
-
-.tab-scroll-btn:hover svg {
-    stroke: #2A66FF;
+.pp-tab-scroll-btn:hover {
+    background: rgba(42, 102, 255, 0.12);
+    border-color: rgba(42, 102, 255, 0.3);
 }
 
 /* Content area layout and spacing */
@@ -2353,9 +2412,11 @@ button.pp-note-delete-btn:hover {
 .chatbot-panel {
     position: fixed;
     bottom: 28px;
-    right: 28px;
+    right: 24px; 
     width: 360px;
+    max-width: calc(100vw - 100px); 
     height: 560px;
+    max-height: calc(100vh - 120px);
     background: white;
     border-radius: 14px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
@@ -2441,7 +2502,7 @@ button.pp-note-delete-btn:hover {
     gap: 8px;
 }
 
-.chat-input input {
+.chat-input input, .chat-input textarea {
     flex: 1;
     padding: 10px;
     border: 1px solid #E6EAF2;
@@ -2450,8 +2511,25 @@ button.pp-note-delete-btn:hover {
     outline: none;
 }
 
-.chat-input input:focus {
+.chat-input input:focus, .chat-input textarea:focus {
     border-color: #2A66FF;
+}
+
+/* ══ RESPONSIVE CHATBOT OVERRIDES ══ */
+@media (max-width: 768px) {
+    .chatbot-trigger {
+        right: 16px; 
+        bottom: 16px;
+        width: 48px; 
+        height: 48px;
+    }
+
+    .chatbot-panel {
+        right: 16px;
+        bottom: 76px; 
+        width: calc(100vw - 32px); 
+        height: 500px; 
+    }
 }
 
 /* Modals */
@@ -2652,24 +2730,13 @@ button.pp-note-delete-btn:hover {
    PatientProfile-specific responsive adjustments only below. */
 @media (max-width: 1200px) {
     .patient-profile-page .pp-header {
-        padding: 14px 24px !important;
+        /* padding: 14px 24px !important; */
     }
 }
 
 @media (max-width: 968px) {
-    .sidebar {
-        transform: translateX(-100%);
-    }
-
-    .content-layer,
-    .content-layer.collapsed {
-        margin-left: 0 !important;
-    }
-
-    .top-navbar,
-    .top-navbar.collapsed {
-        left: 0 !important;
-    }
+    /* Sidebar is managed by JS toggle (>= 768px) or hidden by Sidebar.css (< 768px).
+       No forced translateX needed here. */
 
     .overview-layout,
     .records-layout {
@@ -2691,6 +2758,7 @@ button.pp-note-delete-btn:hover {
         bottom: 16px;
     }
 }
+
 
 @keyframes spin {
     from {
@@ -2722,7 +2790,7 @@ button.pp-note-delete-btn:hover {
 }
 
 /* ── Chatbot: disabled input while sending/preparing ── */
-.chat-input input:disabled {
+.chat-input input:disabled, .chat-input textarea:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
@@ -2777,11 +2845,52 @@ button.pp-note-delete-btn:hover {
 /* ═══════════════════════════════════════════════════════════
    Medications & Tasks
    ═══════════════════════════════════════════════════════════ */
+.medications-tasks-tab {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.med-task-header-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
+    width: 100%;
+}
+
+@media (max-width: 767px) {
+    .med-task-header-actions .med-task-next-visit-bar,
+    .med-task-header-actions .med-task-add-btn {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .med-task-header-actions .med-task-add-btn {
+        justify-content: center;
+    }
+}
+
+@media (min-width: 768px) {
+    .med-task-header-actions {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
 .med-task-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 20px;
     transition: opacity 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+    .med-task-grid {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
 .med-task-grid.loading-overlay {
@@ -2862,6 +2971,26 @@ button.pp-note-delete-btn:hover {
 .med-task-item-content {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.med-task-item-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.med-task-item-due {
+    flex-shrink: 0;
+}
+
+@media (max-width: 767px) {
+    .med-task-item-content {
+        flex-direction: column;
+        gap: 6px;
+    }
 }
 
 .med-task-item-title {
@@ -3015,11 +3144,66 @@ button.pp-note-delete-btn:hover {
     color: #2A66FF;
 }
 
+.med-task-choice-container {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.med-task-choice-btn {
+    padding: 12px 24px;
+    border-radius: 12px;
+    border: 1.5px solid #E6EAF2;
+    background: white;
+    font-size: 15px;
+    font-weight: 600;
+    color: #0E1A34;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex: 1;
+    max-width: 160px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.med-task-choice-btn:hover {
+    border-color: #2A66FF;
+    color: #2A66FF;
+}
+
 .med-task-form-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 16px;
     margin-bottom: 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+    .med-task-form-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.med-task-form-card {
+    position: relative;
+    padding: 16px 48px 40px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 767px) {
+    .med-task-form-card {
+        padding: 16px 16px 40px;
+    }
+}
+
+.medications-tasks-tab .form-input,
+.medications-tasks-tab textarea.form-input {
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .med-task-added-list-container {
@@ -3044,24 +3228,71 @@ button.pp-note-delete-btn:hover {
 }
 
 .med-task-added-item-mini {
-    padding: 10px 14px;
+    padding: 10px 12px;
     background: white;
     border-radius: 8px;
     border: 1px solid #E6EAF2;
-    font-size: 13px;
-    color: #0E1A34;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 10px;
+    min-width: 0;
 }
 
-.med-task-added-item-text {
+.med-task-added-item-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.med-task-added-item-icon.medication {
+    background: #F0FDF8;
+    color: #00C187;
+}
+
+.med-task-added-item-icon.task {
+    background: #E9F0FF;
+    color: #2A66FF;
+}
+
+.med-task-added-item-body {
     flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.med-task-added-item-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0E1A34;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.med-task-added-item-meta {
+    font-size: 11px;
+    color: #8A94A6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .med-task-added-item-check {
-    color: #00C187;
-    font-weight: 600;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #00C187;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 .med-task-form-footer {
@@ -3082,6 +3313,24 @@ button.pp-note-delete-btn:hover {
 .med-task-footer-button-group {
     display: flex;
     gap: 12px;
+}
+
+@media (max-width: 767px) {
+    .med-task-form-footer {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    .med-task-footer-button-group {
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+    }
+    .med-task-form-footer button,
+    .med-task-footer-button-group button {
+        width: 100%;
+        box-sizing: border-box;
+    }
 }
 
 .med-task-btn-secondary,
@@ -3152,6 +3401,17 @@ button.pp-note-delete-btn:hover {
     margin-top: 24px;
 }
 
+@media (max-width: 767px) {
+    .med-task-form-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .med-task-form-actions button {
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
+
 .med-task-saved-date-mini-card {
     margin-top: 16px;
 }
@@ -3178,6 +3438,7 @@ button.pp-note-delete-btn:hover {
 
 .step1-datepicker-input {
     width: 100%;
+    box-sizing: border-box;
     padding: 10px 14px;
     border: 1px solid #E6EAF2;
     border-radius: 8px;
@@ -3190,6 +3451,44 @@ button.pp-note-delete-btn:hover {
 .step1-datepicker-input:focus {
     border-color: #2A66FF;
     box-shadow: 0 0 0 3px rgba(42, 102, 255, 0.1);
+}
+
+/* ── Compact inline date picker (Medication/Task form Next Visit field) ── */
+.med-task-inline-date-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.med-task-inline-cal-icon {
+    position: absolute;
+    left: 11px;
+    color: #8A94A6;
+    pointer-events: none;
+    flex-shrink: 0;
+    z-index: 1;
+}
+
+.med-task-inline-date-input {
+    padding-left: 34px !important;
+    width: 100%;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.med-task-inline-date-input:focus {
+    border-color: #2A66FF !important;
+    box-shadow: 0 0 0 3px rgba(42, 102, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .med-task-inline-date-wrapper .med-task-inline-cal-icon {
+    color: var(--dm-text-muted);
+}
+
+[data-theme="dark"] .med-task-inline-date-input {
+    background: var(--dm-bg-surface) !important;
+    border-color: var(--dm-border-color) !important;
+    color: var(--dm-text-primary) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -3429,9 +3728,25 @@ button.pp-note-delete-btn:hover {
 }
 
 /* ── Tab nav ── */
-[data-theme="dark"] .content-layer .tab-nav {
+[data-theme="dark"] .tab-nav-wrapper {
     background: var(--dm-bg-card);
     box-shadow: var(--dm-shadow-card);
+}
+
+[data-theme="dark"] .content-layer .tab-nav {
+    background: transparent;
+    box-shadow: none;
+}
+
+[data-theme="dark"] .pp-tab-scroll-btn {
+    background: transparent;
+    border-color: var(--dm-border-color);
+    color: var(--dm-text-secondary);
+}
+
+[data-theme="dark"] .pp-tab-scroll-btn:hover {
+    background: var(--dm-hover-bg);
+    color: var(--dm-text-primary);
 }
 
 [data-theme="dark"] .tab-btn {
@@ -3575,13 +3890,13 @@ button.pp-note-delete-btn:hover {
     border-top-color: var(--dm-border-color);
 }
 
-[data-theme="dark"] .chat-input input {
+[data-theme="dark"] .chat-input input, [data-theme="dark"] .chat-input textarea {
     background: var(--dm-bg-input);
     border-color: var(--dm-border-color);
     color: var(--dm-text-primary);
 }
 
-[data-theme="dark"] .chat-input input:focus {
+[data-theme="dark"] .chat-input input:focus, [data-theme="dark"] .chat-input textarea:focus {
     border-color: rgba(42, 102, 255, 0.5);
 }
 
@@ -4029,10 +4344,27 @@ button.pp-note-delete-btn:hover {
 }
 
 /* Tab Bar Navigation */
-[data-theme="dark"] .content-layer .tab-nav {
+[data-theme="dark"] .tab-nav-wrapper {
     background: var(--dm-bg-card) !important;
     box-shadow: var(--dm-shadow-sm) !important;
     border: 1px solid var(--dm-border-color);
+}
+
+[data-theme="dark"] .content-layer .tab-nav {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none;
+}
+
+[data-theme="dark"] .pp-tab-scroll-btn {
+    background: transparent;
+    border-color: var(--dm-border-color);
+    color: var(--dm-text-secondary);
+}
+
+[data-theme="dark"] .pp-tab-scroll-btn:hover {
+    background: var(--dm-hover-bg);
+    color: var(--dm-text-primary);
 }
 
 [data-theme="dark"] .tab-btn {
@@ -4049,14 +4381,14 @@ button.pp-note-delete-btn:hover {
     color: #7ca3ff;
 }
 
-[data-theme="dark"] .tab-scroll-btn {
+[data-theme="dark"] .pp-tab-scroll-btn {
     background: var(--dm-bg-card) !important;
     border-color: var(--dm-border-color) !important;
     color: var(--dm-text-primary) !important;
 }
 
-[data-theme="dark"] .tab-scroll-btn svg {
-    stroke: var(--dm-text-primary) !important;
+[data-theme="dark"] .pp-tab-scroll-btn i {
+    color: var(--dm-text-primary) !important;
 }
 
 /* Card Surfaces & Containers */
@@ -4301,18 +4633,25 @@ button.pp-note-delete-btn:hover {
     color: var(--dm-text-secondary) !important;
 }
 
-/* Added list items for medications/tasks */
-[data-theme="dark"] .medications-tasks-tab .med-task-added-item-mini,
-[data-theme="dark"] .medications-tasks-tab .med-task-task-added-item {
+[data-theme="dark"] .medications-tasks-tab .med-task-added-item-mini {
     background: var(--dm-bg-darker) !important;
-    color: var(--dm-text-primary) !important;
     border-color: var(--dm-border-color) !important;
 }
 
-[data-theme="dark"] .medications-tasks-tab .med-task-added-item-text,
-[data-theme="dark"] .medications-tasks-tab .med-task-added-item-mini strong,
-[data-theme="dark"] .medications-tasks-tab .med-task-task-added-item strong {
+[data-theme="dark"] .medications-tasks-tab .med-task-added-item-name {
     color: var(--dm-text-primary) !important;
+}
+
+[data-theme="dark"] .medications-tasks-tab .med-task-added-item-meta {
+    color: var(--dm-text-muted) !important;
+}
+
+[data-theme="dark"] .medications-tasks-tab .med-task-added-item-icon.medication {
+    background: rgba(0, 193, 135, 0.12) !important;
+}
+
+[data-theme="dark"] .medications-tasks-tab .med-task-added-item-icon.task {
+    background: rgba(42, 102, 255, 0.12) !important;
 }
 
 /* Tasks vs Medications Type toggle */

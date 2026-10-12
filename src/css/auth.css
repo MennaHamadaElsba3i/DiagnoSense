@@ -142,16 +142,16 @@ body {
 }
 
 .main-container {
-     width: 100%;
-     max-width: 1100px;
-     display: grid;
-     grid-template-columns: 1fr 1fr;
-     border-radius: 16px;
-     overflow: hidden;
-     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-     position: relative;
-     z-index: 1;
-     height: fit-content;
+    width: 100%;
+    max-width: 950px; 
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    position: relative;
+    z-index: 1;
+    height: fit-content;
 }
 
 /* Left Section - Visual Area with Medical Icons */
@@ -162,7 +162,7 @@ body {
      flex-direction: column;
      align-items: center;
      justify-content: space-between;
-     padding: 35px 30px 0 30px;
+     padding: 30px 25px 0 25px;
      overflow: visible;
 }
 
@@ -319,7 +319,7 @@ body {
 }
 
 .logo img {
-     width: 230px;
+     width: 180px;
 }
 
 .welcome-text {
@@ -327,7 +327,7 @@ body {
 }
 
 .welcome-text h1 {
-     font-size: 28px;
+     font-size: 24px;
      font-weight: 700;
      color: #0E1A34;
      margin-bottom: 6px;
@@ -335,7 +335,7 @@ body {
 }
 
 .welcome-text p {
-     font-size: 15px;
+     font-size: 14px;
      font-weight: 400;
      color: #3A4560;
      line-height: 1.5;
@@ -355,14 +355,14 @@ body {
 
 
 .doctor-image {
-     position: relative;
-     z-index: 15;
-     width: 227px;
-     height: 461px;
-     object-fit: cover;
-     right: -33px;
-     animation: floatDoctor 4s ease-in-out infinite;
-     filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.15));
+    position: relative;
+    z-index: 15;
+    width: 180px; 
+    height: 366px; 
+    object-fit: cover;
+    right: -20px;
+    animation: floatDoctor 4s ease-in-out infinite;
+    filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.15));
 }
 
 
@@ -379,12 +379,12 @@ body {
 }
 
 .right-section {
-     background: #FFFFFF;
-     padding: 40px 40px;
-     display: flex;
-     flex-direction: column;
-     justify-content: center;
-     box-shadow: -4px 0 16px rgba(0, 0, 0, 0.04);
+    background: #FFFFFF;
+    padding: 35px 35px; 
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.04);
 }
 
 .form-wrapper {
@@ -394,29 +394,29 @@ body {
 }
 
 .tabs-container {
-     display: flex;
-     gap: 12px;
-     margin-bottom: 30px;
-     align-items: center;
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px; 
+    align-items: center;
 }
 
 .tab {
-     flex: 1;
-     height: 48px;
-     padding: 0 20px;
-     background: #F3F4F6;
-     border: none;
-     border-radius: 12px;
-     font-size: 16px;
-     font-weight: 600;
-     color: #9CA3AF;
-     cursor: pointer;
-     transition: all 0.3s ease;
-     font-family: 'Inter', sans-serif;
-     position: relative;
-     display: flex;
-     align-items: center;
-     justify-content: center;
+    flex: 1;
+    height: 42px; 
+    padding: 0 20px;
+    background: #F3F4F6;
+    border: none;
+    border-radius: 10px; 
+    font-size: 14px; 
+    font-weight: 600;
+    color: #9CA3AF;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Inter', sans-serif;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .tab.active {
@@ -468,15 +468,15 @@ body {
 }
 
 .form-header {
-     margin-bottom: 24px;
-     text-align: center;
+    margin-bottom: 20px; 
+    text-align: center;
 }
 
 .form-header h2 {
-     font-size: 24px;
-     font-weight: 700;
-     color: #0E1A34;
-     margin-bottom: 6px;
+    font-size: 22px; 
+    font-weight: 700;
+    color: #0E1A34;
+    margin-bottom: 4px;
 }
 
 .form-header p {
@@ -485,23 +485,24 @@ body {
 }
 
 .form-group {
-     margin-bottom: 18px;
-     transition: transform 0.2s ease;
+    margin-bottom: 16px; 
+    transition: transform 0.2s ease;
 }
 
 input[type="email"],
 input[type="password"],
-input[type="text"] {
-     width: 100%;
-     height: 44px;
-     padding: 10px 14px;
-     border: 1px solid #D1D5DB;
-     border-radius: 12px;
-     font-size: 14px;
-     color: #111827;
-     background: #FFFFFF;
-     transition: all 0.2s ease;
-     font-family: 'Inter', sans-serif;
+input[type="text"],
+input[type="tel"] {
+    width: 100%;
+    height: 42px; 
+    padding: 10px 14px;
+    border: 1px solid #D1D5DB;
+    border-radius: 10px;
+    font-size: 13px; 
+    color: #111827;
+    background: #FFFFFF;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
 }
 
 input::placeholder {
@@ -549,19 +550,19 @@ input:focus {
 }
 
 .btn-primary {
-     width: 100%;
-     height: 48px;
-     background: linear-gradient(135deg, #2563eb, #3b82f6);
-     color: #FFFFFF;
-     border: none;
-     border-radius: 12px;
-     font-size: 16px;
-     font-weight: 600;
-     cursor: pointer;
-     transition: all 0.3s ease;
-     font-family: 'Inter', sans-serif;
-     position: relative;
-     overflow: hidden;
+    width: 100%;
+    height: 44px; 
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px; 
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Inter', sans-serif;
+    position: relative;
+    overflow: hidden;
 }
 
 .btn-primary::before {
@@ -645,22 +646,22 @@ input:focus {
 }
 
 .social-btn {
-     flex: 1;
-     height: 48px;
-     padding: 0 20px;
-     border: 1px solid #D1D5DB;
-     border-radius: 12px;
-     background: #FFFFFF;
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     gap: 8px;
-     cursor: pointer;
-     transition: all 0.2s ease;
-     font-size: 16px;
-     color: #374151;
-     font-weight: 600;
-     font-family: 'Inter', sans-serif;
+    flex: 1;
+    height: 44px; 
+    padding: 0 20px;
+    border: 1px solid #D1D5DB;
+    border-radius: 10px;
+    background: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px; 
+    color: #374151;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
 }
 
 .social-btn:hover {
@@ -1398,4 +1399,4 @@ input:disabled {
      --auth-success-bg: rgba(16, 185, 129, 0.1);
 }
 
-
+

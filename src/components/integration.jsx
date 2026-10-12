@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import LandingNav from './LandingNav';
 import '../css/integration.css';
 
 function Integration() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [testStatus, setTestStatus] = useState('Run Test');
+  const [showEmailInput, setShowEmailInput] = useState(false);
+  const [email, setEmail] = useState('');
+  const [submitStatus, setSubmitStatus] = useState('idle');
+  const [submitMessage, setSubmitMessage] = useState('');
 
   const handleRunTest = () => {
     if (testStatus === 'Testing...' || testStatus === 'Test Successful ✓') return;
@@ -20,6 +25,42 @@ function Integration() {
     }, 1500);
   };
 
+  const handleEmailSubmit = async (e) => {
+    e.preventDefault();
+    if (!email) return;
+    setSubmitStatus('submitting');
+    try {
+      const formData = new FormData();
+      formData.append('name', 'EHR Trial Request');
+      formData.append('category', 'technical');
+      formData.append('urgency', 'low');
+      formData.append('message', `New free trial request from email: ${email}`);
+
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+      const response = await axios.post(`${baseUrl}/api/v1/support`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      const data = response.data;
+      if (data.success) {
+        setSubmitStatus('success');
+        setSubmitMessage(data.message || 'Support message submitted successfully we will get back to you shortly.');
+      } else {
+        setSubmitStatus('error');
+        setSubmitMessage(data.message || 'Failed to submit. Please try again.');
+      }
+    } catch (error) {
+      setSubmitStatus('error');
+      setSubmitMessage(error.response?.data?.message || 'An error occurred. Please try again later.');
+    }
+  };
+
+  const scrollToSection = () => {
+    const element = document.getElementById('how-it-works');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <>
       <LandingNav />
@@ -33,16 +74,41 @@ function Integration() {
               DiagnoSense integrates with existing hospital systems as a secure clinical intelligence layer.
             </p>
             <p className="intg-microcopy">No workflow disruption. No data migration required.</p>
-            <div className="intg-hero-actions">
-              <button className="intg-btn-primary" onClick={() => setIsAuthenticated(true)}>Start Your Free Trial</button>
-              <button className="intg-btn-secondary">See How It Works</button>
+            <div className="intg-hero-actions" style={{ minHeight: '120px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              {!showEmailInput && submitStatus !== 'success' ? (
+                <>
+                  <button className="intg-btn-primary" onClick={() => setShowEmailInput(true)}>Start Your Free Trial</button>
+                  <button className="intg-btn-secondary" onClick={scrollToSection}>See How It Works</button>
+                </>
+              ) : submitStatus === 'success' ? (
+                <div className="intg-success-message" style={{ color: 'var(--success-green)', fontWeight: 'bold', padding: '1rem', background: 'var(--bg-white)', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                  {submitMessage}
+                </div>
+              ) : (
+                <form onSubmit={handleEmailSubmit} className="intg-email-form" style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center', width: '100%', maxWidth: '400px' }}>
+                  <input 
+                    type="email" 
+                    placeholder="Enter your email so we can contact you" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    style={{ padding: '12px 16px', borderRadius: '8px', border: '1px solid #ccc', width: '100%', fontSize: '1rem' }}
+                  />
+                  <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+                    <button type="submit" className="intg-btn-primary" style={{ flex: 1 }} disabled={submitStatus === 'submitting'}>
+                      {submitStatus === 'submitting' ? 'Submitting...' : 'Submit Email'}
+                    </button>
+                    <button type="button" className="intg-btn-secondary" style={{ flex: 1 }} onClick={() => setShowEmailInput(false)}>Cancel</button>
+                  </div>
+                  {submitStatus === 'error' && <p style={{ color: 'red', margin: 0, fontSize: '0.9rem' }}>{submitMessage}</p>}
+                </form>
+              )}
             </div>
-            <p className="intg-hero-note">No credit card required • Try in minutes</p>
           </div>
         </section>
 
         {/* How Integration Works */}
-        <section style={{ background: 'var(--bg-white)' }}>
+        <section id="how-it-works" style={{ background: 'var(--bg-white)' }}>
           <div className="intg-container">
             <div className="intg-section-header">
               <h2>How Integration Works</h2>

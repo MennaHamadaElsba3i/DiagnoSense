@@ -215,6 +215,8 @@
     background: var(--dm-bg-subtle) !important;
     color: var(--dm-text-muted) !important;
     border-color: var(--dm-border-subtle) !important;
+    opacity: 0.7 !important; 
+    -webkit-text-fill-color: var(--dm-text-muted) !important;
 }
 
 .support-page .form-textarea {
@@ -688,6 +690,8 @@
   }
 }
 
+
+
 /* ══════════════════════════════════════════════════════════
    DARK MODE OVERRIDES — Support page
    ══════════════════════════════════════════════════════════ */
@@ -811,6 +815,7 @@
     border: 1px solid var(--dm-border-color);
     padding: 0 18px;
     box-sizing: border-box;
+    
 }
 
 .support-page .custom-select-trigger.placeholder {

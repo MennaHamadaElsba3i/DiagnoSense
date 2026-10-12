@@ -32,6 +32,9 @@
 .sidebar.collapsed .sidebar-header {
      padding: 0;
      justify-content: center;
+     align-items: center;
+     height: 78px;
+     overflow: visible;
 }
 
 .sidebar-logo {
@@ -46,7 +49,10 @@
 
 .sidebar.collapsed .sidebar-logo {
      justify-content: center;
-     width: 100%;
+     align-items: center;
+     width: 72px;
+     height: 78px;
+     overflow: visible;
 }
 
 .logo-expanded-container {
@@ -68,7 +74,8 @@
      margin: 0 auto 0 calc(50% - 70px);
 }
 
-.sidebar.collapsed .logo-expanded-container {
+.sidebar.collapsed .logo-expanded-container,
+.sidebar.collapsed .logo-expanded {
      display: none;
 }
 
@@ -83,7 +90,14 @@
 }
 
 .sidebar.collapsed .sidebar-logo-slot {
-     display: flex;
+     display: block;
+     position: absolute;
+     left: 50%;
+     top: 50%;
+     transform: translate(-50%, -58%);
+     width: 44px;
+     height: 44px;
+     overflow: visible;
 }
 
 /* Center both logo and expand button onto the same spot */
@@ -97,8 +111,8 @@
 }
 
 .sidebar-logo-slot .logo-collapsed {
-     width: 32px;
-     height: 32px;
+     width: 34px;
+     height: 34px;
      object-fit: contain;
      opacity: 1;
      visibility: visible;
@@ -122,9 +136,11 @@
      transition: all 0.25s ease;
 }
 
-.logo-expand-btn img {
-     width: 30px;
-     height: 30px;
+.logo-expand-btn img,
+.logo-expand-btn svg {
+     width: 18px;
+     height: 18px;
+     object-fit: contain;
 }
 
 /* Hover logic for swap and background matching */
@@ -288,7 +304,7 @@
 .nav-bottom {
      border-top: 1px solid rgba(230, 234, 242, 0.5);
      padding-top: 16px;
-     margin-top: 12px;
+     margin-top: auto;
 }
 
 .sidebar.collapsed .nav-bottom {
@@ -297,7 +313,7 @@
 
 /* Premium Decision Support Card */
 .decision-support-card {
-     background: linear-gradient(135deg, #2A66FF 0%, #467DFF 100%);
+     background: #2A66FF;
      border-radius: 16px;
      padding: 20px;
      margin: 0 0 12px 0;
@@ -313,10 +329,60 @@
      box-shadow: 0 8px 24px rgba(42, 102, 255, 0.35);
 }
 
+.card-header {
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+     width: 100%;
+     margin-bottom: 12px;
+     padding-bottom: 12px;
+     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+     flex-wrap: nowrap;
+}
+
+.card-header-left {
+     display: flex;
+     align-items: center;
+     gap: 8px;
+     flex-wrap: nowrap;
+     min-width: 0; 
+}
+
+
+
+.card-icon {
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     flex-shrink: 0;
+}
+
+.card-icon svg {
+     width: 20px;
+     height: 20px;
+     stroke: #ffffff;
+     fill: none;
+     stroke-width: 2;
+     stroke-linecap: round;
+     stroke-linejoin: round;
+}
+
 .decision-card-title {
      font-size: 15px;
      font-weight: 600;
      color: white;
+     white-space: nowrap;
+}
+
+.card-pro-badge {
+     background: #F59E0B;
+     color: #FFFFFF;
+     font-size: 11px;
+     font-weight: 700;
+     padding: 3px 8px;
+     border-radius: 100px;
+     letter-spacing: 0.5px;
+     flex-shrink: 0;
 }
 
 .card-subtitle {
@@ -340,10 +406,11 @@
      text-align: center;
 }
 
-
-/* ══════════════════════════════════════════════════════════
-   DARK MODE OVERRIDES — Sidebar
-   ══════════════════════════════════════════════════════════ */
+.card-cta-btn:hover {
+     background: rgba(255, 255, 255, 0.3);
+}
+`n`n/* ----------------------------------------------------------`n   DARK MODE OVERRIDES ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Sidebar
+   ---------------------------------------------------------- */
 
 [data-theme="dark"] .sidebar {
   background: var(--dm-bg-sidebar);
@@ -388,5 +455,432 @@
   filter: invert(1) brightness(200);
 }
 
-/* Decision Support card stays branded blue in dark mode — needs no override.
+/* Decision Support card stays branded blue in dark mode ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â needs no override.
    The card subtitle is white already; no change needed. */
+
+/* ----------------------------------------------------------
+   MOBILE OVERLAY & NAVIGATION OVERRIDES
+   ---------------------------------------------------------- */
+.mobile-burger-btn {
+     display: none;
+     background: transparent;
+     border: none;
+     cursor: pointer;
+     color: #3A4560;
+     padding: 8px;
+     margin-right: 12px;
+}
+
+[data-theme="dark"] .mobile-burger-btn {
+     color: var(--dm-text-primary, #f1f5f9);
+}
+
+.mobile-burger-btn svg {
+     stroke: currentColor !important;
+     fill: none !important;
+}
+
+.mobile-overlay-menu {
+     position: fixed;
+     inset: 0;
+     z-index: 99999;
+     background: #FFFFFF;
+     display: flex;
+     flex-direction: column;
+     transform: translateX(-100%);
+     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+     visibility: hidden;
+}
+
+.mobile-overlay-menu.open {
+     transform: translateX(0);
+     visibility: visible;
+}
+
+[data-theme="dark"] .mobile-overlay-menu {
+     background: var(--dm-bg-page, #0f172a);
+}
+
+.mobile-overlay-header {
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+     height: 72px;
+     padding: 0 20px;
+     border-bottom: 1px solid #e5e7eb;
+     background: #FFFFFF;
+     flex-shrink: 0;
+}
+
+[data-theme="dark"] .mobile-overlay-header {
+     background: var(--dm-bg-page, #0f172a);
+     border-bottom: 1px solid var(--dm-border-subtle, #334155);
+}
+
+.mobile-logo {
+     height: 34px;
+     object-fit: contain;
+}
+
+.mobile-close-btn {
+     background: rgba(230, 234, 242, 0.5);
+     border: none;
+     cursor: pointer;
+     color: #3A4560;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     padding: 8px;
+     border-radius: 50%;
+     transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .mobile-close-btn {
+     background: rgba(51, 65, 85, 0.5);
+     color: var(--dm-text-primary, #f1f5f9);
+}
+
+.mobile-close-btn:active {
+     transform: scale(0.95);
+}
+
+.mobile-nav-links {
+     display: flex;
+     flex-direction: column;
+     overflow-y: auto;
+     flex: 1;
+     width: 100%;
+}
+
+.mobile-overlay-menu .nav-main {
+     width: 100%;
+}
+
+.mobile-overlay-menu .nav-item {
+     display: flex;
+     width: 100%;
+     align-items: center;
+     justify-content: flex-start;
+     padding: 16px 24px;
+     box-sizing: border-box;
+     margin-bottom: 0;
+     border-radius: 0;
+     border-bottom: 1px solid #e5e7eb;
+     background: transparent;
+}
+
+.decision-support-card:hover {
+     transform: translateY(-3px);
+     box-shadow: 0 8px 24px rgba(42, 102, 255, 0.35);
+}
+
+
+.card-subtitle {
+     font-size: 13px;
+     color: rgba(255, 255, 255, 0.85);
+     margin-bottom: 14px;
+}
+
+.card-cta-btn {
+     background: rgba(255, 255, 255, 0.2);
+     backdrop-filter: blur(10px);
+     border: 1px solid rgba(255, 255, 255, 0.3);
+     color: white;
+     font-weight: 600;
+     font-size: 13px;
+     padding: 9px 18px;
+     border-radius: 10px;
+     cursor: pointer;
+     transition: all 0.3s ease;
+     width: 100%;
+     text-align: center;
+}
+
+
+/* ----------------------------------------------------------
+   DARK MODE OVERRIDES ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Sidebar
+   ---------------------------------------------------------- */
+
+[data-theme="dark"] .sidebar {
+  background: var(--dm-bg-sidebar);
+  border-right-color: var(--dm-border-subtle);
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .sidebar-header {
+  border-bottom-color: var(--dm-border-subtle);
+}
+
+[data-theme="dark"] .nav-section-title {
+  color: #64748b;
+}
+
+[data-theme="dark"] .nav-item {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .nav-item:hover {
+  background: rgba(42, 102, 255, 0.12);
+  color: #7ca3ff;
+}
+
+[data-theme="dark"] .nav-item.active {
+  background: linear-gradient(135deg, rgba(42, 102, 255, 0.2), rgba(70, 125, 255, 0.14));
+  color: #7ca3ff;
+  box-shadow: 0 2px 8px rgba(42, 102, 255, 0.2);
+}
+
+[data-theme="dark"] .nav-bottom {
+  border-top-color: var(--dm-border-subtle);
+}
+
+[data-theme="dark"] .logo-expand-btn:hover,
+[data-theme="dark"] .sidebar-toggle:hover {
+  background: rgba(42, 102, 255, 0.12);
+}
+
+[data-theme="dark"] .sidebar-toggle-icon,
+[data-theme="dark"] .logo-expand-btn img {
+  filter: invert(1) brightness(200);
+}
+
+/* Decision Support card stays branded blue in dark mode ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â needs no override.
+   The card subtitle is white already; no change needed. */
+
+/* ----------------------------------------------------------
+   MOBILE OVERLAY & NAVIGATION OVERRIDES
+   ---------------------------------------------------------- */
+.mobile-burger-btn {
+     display: none;
+     background: transparent;
+     border: none;
+     cursor: pointer;
+     color: #3A4560;
+     padding: 8px;
+     margin-right: 12px;
+}
+
+[data-theme="dark"] .mobile-burger-btn {
+     color: var(--dm-text-primary, #f1f5f9);
+}
+
+.mobile-burger-btn svg {
+     stroke: currentColor !important;
+     fill: none !important;
+}
+
+.dm-mobile-drawer-menu {
+     position: fixed;
+     inset: 0;
+     z-index: 99999;
+     background: #FFFFFF;
+     display: flex;
+     flex-direction: column;
+     transform: translateX(-100%);
+     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+     visibility: hidden;
+}
+
+.dm-mobile-drawer-menu.open {
+     transform: translateX(0);
+     visibility: visible;
+}
+
+[data-theme="dark"] .dm-mobile-drawer-menu {
+     background: var(--dm-bg-page, #0f172a);
+}
+
+.dm-mobile-header {
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+     height: 72px;
+     padding: 0 20px;
+     border-bottom: 1px solid #e5e7eb;
+     background: #FFFFFF;
+     flex-shrink: 0;
+}
+
+[data-theme="dark"] .dm-mobile-header {
+     background: var(--dm-bg-page, #0f172a);
+     border-bottom: 1px solid var(--dm-border-subtle, #334155);
+}
+
+.dm-mobile-logo {
+     height: 34px;
+     object-fit: contain;
+}
+
+.dm-mobile-close-btn {
+     background: rgba(230, 234, 242, 0.5);
+     border: none;
+     cursor: pointer;
+     color: #3A4560;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     padding: 8px;
+     border-radius: 50%;
+     transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .dm-mobile-close-btn {
+     background: rgba(51, 65, 85, 0.5);
+     color: var(--dm-text-primary, #f1f5f9);
+}
+
+.dm-mobile-close-btn:active {
+     transform: scale(0.95);
+}
+
+.dm-mobile-nav-list {
+     display: flex;
+     flex-direction: column;
+     overflow-y: auto;
+     flex: 1;
+     width: 100%;
+}
+
+.dm-mobile-nav-item {
+     display: flex;
+     width: 100%;
+     align-items: center;
+     justify-content: flex-start;
+     padding: 16px 24px;
+     box-sizing: border-box;
+     margin-bottom: 0;
+     border-radius: 0;
+     border-bottom: 1px solid #e5e7eb;
+     background: transparent;
+     color: #5A6580;
+     text-decoration: none;
+     font-weight: 500;
+     font-size: 14px;
+}
+
+.dm-mobile-nav-item:last-child {
+     border-bottom: none;
+}
+
+[data-theme="dark"] .dm-mobile-nav-item {
+     border-bottom: 1px solid var(--dm-border-subtle, #334155);
+     color: #94a3b8;
+}
+
+.dm-mobile-nav-icon {
+     margin-right: 16px;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     width: 20px;
+     height: 20px;
+}
+
+.dm-mobile-nav-icon svg {
+     width: 20px;
+     height: 20px;
+     stroke: currentColor;
+     fill: none;
+     stroke-width: 2;
+     stroke-linecap: round;
+     stroke-linejoin: round;
+}
+
+/* Force Text Visibility */
+.dm-mobile-link-text {
+     display: inline-block !important;
+     opacity: 1 !important;
+     visibility: visible !important;
+     width: auto !important;
+     pointer-events: auto !important;
+}
+
+.dm-mobile-nav-item.active {
+     box-shadow: none !important;
+     background: rgba(42, 102, 255, 0.04) !important;
+     color: #2A66FF;
+     font-weight: 600;
+}
+[data-theme="dark"] .dm-mobile-nav-item.active {
+     box-shadow: none !important;
+     background: rgba(42, 102, 255, 0.08) !important;
+     color: #7ca3ff;
+}
+
+/* Mobile Promo Card Overrides */
+.dm-mobile-promo-container {
+     margin-top: auto;
+     margin-bottom: 32px;
+     padding: 24px 24px 0 24px;
+     width: 100%;
+     box-sizing: border-box;
+     flex-shrink: 0;
+}
+
+.dm-mobile-decision-card {
+     padding: 18px 16px;
+     border-radius: 14px;
+     margin: 0;
+     width: 100%;
+     box-sizing: border-box;
+}
+
+.dm-mobile-decision-card 
+.decision-card-title {
+     font-size: 14px;
+}
+
+.dm-mobile-decision-card .card-subtitle {
+     font-size: 12px;
+     margin-bottom: 14px;
+}
+
+.dm-mobile-decision-card .card-cta-btn {
+     padding: 10px 16px;
+     font-size: 13px;
+     width: 100%;
+}
+
+.dm-mobile-decision-card .card-pro-badge {
+     padding: 3px 6px;
+     font-size: 9px;
+     transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+     /* 1. Hide Sidebar */
+     .sidebar {
+          display: none !important;
+     }
+     
+     /* 2. Show Hamburger Icon in Navbar */
+     .mobile-burger-btn {
+          display: flex !important;
+          align-items: center;
+          justify-content: center;
+     }
+     
+     /* 3. Adjust top navbar layout for burger icon */
+     .top-navbar {
+          left: 0 !important;
+          padding-left: 16px !important;
+          display: flex;
+          align-items: center;
+     }
+
+     /* Expand main content */
+     .main-content,
+     .content-layer {
+          margin-left: 0 !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          box-sizing: border-box !important;
+     }
+
+     .navbar-right {
+          flex: 1;
+          display: flex;
+          justify-content: flex-end;
+     }
+}
+

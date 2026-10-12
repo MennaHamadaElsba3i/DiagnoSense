@@ -25,17 +25,33 @@ const AuthPage = () => {
   );
 
   useEffect(() => {
+    // If this login page is running inside a popup spawned by our main app window
+    if (window.opener && !window.opener.closed) {
+      const timer = setTimeout(() => {
+        try {
+          window.opener.postMessage({ type: 'PAYMENT_SUCCESS' }, window.location.origin);
+        } catch (e) {
+          console.error("Cross-window signaling failed:", e);
+        }
+        window.close();
+      }, 600);
+
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  useEffect(() => {
     if (resetToken) {
       setCurrentView("reset-password");
     }
   }, [resetToken]);
 
   useEffect(() => {
-  if (location.state?.openForget) {
-    setCurrentView("forget");
-    window.history.replaceState({}, document.title);
-  }
-}, [location.state]);
+    if (location.state?.openForget) {
+      setCurrentView("forget");
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -89,7 +105,7 @@ const AuthPage = () => {
       case "forget-otp":
         return (
           <OTPVerification
-            identity={userIdentity}
+            contact={userIdentity}
             mode="forget_password"
             onVerifySuccess={(token) => {
               setResetToken(token);
@@ -108,7 +124,7 @@ const AuthPage = () => {
       case "otp":
         return (
           <OTPVerification
-            identity={userIdentity}
+            contact={userIdentity}
             mode="email_verification"
             onVerifySuccess={() => navigate("/dashboard")}
           />

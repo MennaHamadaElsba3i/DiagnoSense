@@ -11,6 +11,7 @@ const ResetPassword = ({ reset_token, onResetSuccess, onBackToForget }) => {
   const [successMessage, setSuccessMessage] = useState("");
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
 
+  console.log("ResetPassword Component - reset_token:", reset_token);
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -21,48 +22,42 @@ const ResetPassword = ({ reset_token, onResetSuccess, onBackToForget }) => {
     const result = await resetPasswordAPI(
       reset_token,
       password,
-      confirmPassword
+      confirmPassword,
     );
-
+    console.log("Submitting Reset Password with:", {
+      reset_token,
+      password,
+      confirmPassword,
+    });
+    console.log("Reset Password Result:", result);
     console.log(result.errors);
-    // if (result.success) {
-    //   setSuccessMessage(result.message);
-    //   setTimeout(() => {
-    //     onResetSuccess();
-    //   }, 2000);
-    // } else {
-    //   if (result.errors) {
-    //     if (result.errors.password) {
-    //       setPasswordErrors(result.errors.password);
-    //     }
-
-    //     const otherErrors = Object.keys(result.errors).filter(
-    //       (key) => key !== "otp" && key !== "password"
-    //     );
-    //     if (otherErrors.length > 0) {
-    //       setError(result.errors[otherErrors[0]][0]);
-    //     }
-    //   } else {
-    //     setError(result.message);
-    //   }
-    // }
     if (result.success) {
       setSuccessMessage(result.message);
       setTimeout(() => {
         onResetSuccess();
       }, 2000);
     } else {
-      if (result.errors?.password) {
-        setPasswordErrors(result.errors.password);
+      const allErrors = [];
+
+      if (result.errors && typeof result.errors === "object") {
+        Object.values(result.errors).forEach((fieldErrors) => {
+          if (Array.isArray(fieldErrors)) {
+            fieldErrors.forEach((msg) => allErrors.push(msg));
+          } else if (typeof fieldErrors === "string") {
+            allErrors.push(fieldErrors);
+          }
+        });
+      }
+
+      if (allErrors.length > 0) {
+        setPasswordErrors(allErrors);
       } else {
-        setError(result.message);
+        setError(result.message || "Something went wrong");
       }
     }
 
     setIsLoading(false);
   };
-
-
 
   return (
     <div className="tab-content active">
@@ -72,7 +67,6 @@ const ResetPassword = ({ reset_token, onResetSuccess, onBackToForget }) => {
       </div>
 
       <form onSubmit={handleSubmit}>
-
         <div className="form-group">
           <div className="password-input-wrapper">
             <input
@@ -242,8 +236,6 @@ const ResetPassword = ({ reset_token, onResetSuccess, onBackToForget }) => {
         >
           {isLoading ? "Resetting..." : "Reset Password"}
         </button>
-
-      
 
         <div style={{ textAlign: "center", marginTop: "10px" }}>
           <a

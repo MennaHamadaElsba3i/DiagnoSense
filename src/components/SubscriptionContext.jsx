@@ -1,5 +1,35 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import { getCurrentSubscriptionAPI } from "./mockAPI";
+
+const extractCredits = (response) => {
+  if (!response) return null;
+  const possibleValues = [
+    response?.data?.credits,
+    response?.data?.wallet_balance,
+    response?.data?.balance,
+    response?.data?.data?.credits,
+    response?.data?.data?.wallet_balance,
+    response?.data?.data?.balance,
+    response?.credits,
+    response?.wallet_balance,
+    response?.balance,
+  ];
+  for (const val of possibleValues) {
+    if (val != null) {
+      const parsed = typeof val === "string" ? parseFloat(val) : val;
+      if (!isNaN(parsed)) {
+        return parsed;
+      }
+    }
+  }
+  return null;
+};
 
 const SubscriptionContext = createContext(null);
 
@@ -8,33 +38,36 @@ export function SubscriptionProvider({ children }) {
   const [isSubLoading, setIsSubLoading] = useState(true);
   const [subError, setSubError] = useState(null);
 
-  // Credits are derived from subscriptionData — no separate API call needed
   const [credits, setCredits] = useState(null);
   const [isCreditsLoading, setIsCreditsLoading] = useState(true);
 
-  // ── Single fetch for both subscription data AND credits ───────────────────
-  // /api/subscription/current returns all the data we need for both.
-  // We call it once and split the result instead of making two separate requests.
   const fetchSubscription = useCallback(async () => {
     setIsSubLoading(true);
     setIsCreditsLoading(true);
     setSubError(null);
     try {
       const result = await getCurrentSubscriptionAPI();
-      if (result.success && result.data) {
+      console.log(
+        "[SubscriptionContext] raw API result:",
+        JSON.stringify(result),
+      );
+
+      const extractedCredits = extractCredits(result);
+      console.log("[SubscriptionContext] extractedCredits:", extractedCredits);
+      if (extractedCredits !== null) {
+        setCredits(extractedCredits);
+      }
+
+      if (result && result.success && result.data) {
         setSubscriptionData(result.data);
-        // Derive credits from the same response — no second request needed
-        const balance = result.data.balance ?? result.data.credits ?? 0;
-        setCredits(balance);
+        setSubError(null);
       } else {
         setSubscriptionData(null);
-        setCredits(null);
-        setSubError(result.message || "Failed to load subscription data");
+        setSubError(result?.message || null);
       }
     } catch (err) {
       console.error("[SubscriptionContext] fetch error:", err);
       setSubscriptionData(null);
-      setCredits(null);
       setSubError("Network error loading subscription data");
     }
     setIsSubLoading(false);
@@ -45,15 +78,19 @@ export function SubscriptionProvider({ children }) {
     fetchSubscription();
   }, [fetchSubscription]);
 
-  // refreshCredits re-uses the same combined fetch — avoids a separate call
   const refreshCredits = useCallback(async () => {
     try {
       const result = await getCurrentSubscriptionAPI();
-      if (result.success && result.data) {
-        const balance = result.data.balance ?? result.data.credits ?? 0;
-        setCredits(balance);
-        // Also keep subscriptionData fresh (same response, no extra cost)
+
+      const extractedCredits = extractCredits(result);
+      if (extractedCredits !== null) {
+        setCredits(extractedCredits);
+      }
+
+      if (result && result.success && result.data) {
         setSubscriptionData(result.data);
+      } else {
+        setSubscriptionData(null);
       }
     } catch (err) {
       console.error("[SubscriptionContext] refreshCredits error:", err);
@@ -66,6 +103,7 @@ export function SubscriptionProvider({ children }) {
         subscriptionData,
         isSubLoading,
         subError,
+        backendMessage: subError,
         refreshSubscription: fetchSubscription,
         // Credits
         credits,

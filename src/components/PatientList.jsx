@@ -12,8 +12,7 @@ import { getDoctorInitials } from "./Dashboard";
 import { usePageCache } from "./PageCacheContext";
 import {
   getPatientsAPI,
-  searchPatientsAPI,
-  getPatientsByStatusAPI,
+  extractPatientsPayload,
   deletePatientAPI,
   updatePatientStatusAPI,
 } from "./mockAPI";
@@ -163,20 +162,20 @@ const PatientCard = ({
     { id: "critical", color: "#FF5C5C", label: "Critical" },
   ];
 
-  const handleQuickStatusChange = async (e, newStatus) => {
+const handleQuickStatusChange = async (e, newStatus) => {
     e.stopPropagation();
     if (isUpdatingStatus) return;
     setIsUpdatingStatus(true);
 
-    // Optimistic UI dispatch directly triggers PatientList to re-render locally instantly
-    window.dispatchEvent(
-      new CustomEvent("patientStatusUpdated", {
-        detail: { patientId: patient.id, status: newStatus },
-      }),
-    );
-
     try {
-      await updatePatientStatusAPI(patient.id, newStatus);
+      const res = await updatePatientStatusAPI(patient.id, newStatus);
+      if (res && res.success !== false) {
+        window.dispatchEvent(
+          new CustomEvent("patientStatusUpdated", {
+            detail: { patientId: patient.id, status: newStatus },
+          }),
+        );
+      }
     } catch (err) {
       console.error("Failed to update status", err);
     } finally {
@@ -362,6 +361,15 @@ const PatientList = () => {
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const { unreadCount, openNotifications } = useNotifications();
   const [selectedInsight, setSelectedInsight] = useState(null);
@@ -416,6 +424,11 @@ const PatientList = () => {
   const gridRef = useRef(null);
   const cardRef = useRef(null);
 
+useEffect(() => {
+    // Always fetch fresh data when the patient list mounts
+    setPatientListDirty(true);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (!gridRef.current) return;
     const observer = new ResizeObserver(() => {
@@ -443,8 +456,16 @@ const PatientList = () => {
     return () => observer.disconnect();
   }, [patients.length]);
 
-  const fetchPatients = async (pageNumber) => {
-    const cacheKey = `patients_page_${pageNumber}`;
+  const loadPatients = async (pageNumber) => {
+    const STATUS_MAP = {
+      critical: "critical",
+      stable: "stable",
+      underReview: "under review",
+    };
+    const statusSlug = STATUS_MAP[activeFilter] || activeFilter;
+    const trimmed = debouncedSearchTerm.trim();
+
+    const cacheKey = `patients_filter_${statusSlug}_search_${trimmed}_page_${pageNumber}`;
     const isDirty = isPatientListDirty();
 
     // Only use cache if NOT dirty
@@ -461,11 +482,14 @@ const PatientList = () => {
 
     setLoading(true);
     setError(null);
-    console.log("[patients] fetching page", pageNumber);
+    console.log("[patients] fetching", { statusSlug, search: trimmed, page: pageNumber });
 
     try {
-      const res = await getPatientsAPI(pageNumber);
-      console.log("[patients] rawResponse", res);
+      const res = await getPatientsAPI({
+        status: statusSlug,
+        search: trimmed,
+        page: pageNumber,
+      });
 
       if (res.success === false) {
         console.log("[patients] error", res.message);
@@ -474,36 +498,12 @@ const PatientList = () => {
         return;
       }
 
-      let rawPatients = [];
-      let meta = {};
+      const { patients: rawPatients, meta } = extractPatientsPayload(res);
 
-      if (res?.meta) {
-        meta = res.meta;
-      } else if (res?.data?.meta) {
-        meta = res.data.meta;
-      } else if (res?.data?.data?.meta) {
-        meta = res.data.data.meta;
-      }
-
-      if (Array.isArray(res?.data)) {
-        rawPatients = res.data;
-      } else if (res?.data?.data && Array.isArray(res.data.data)) {
-        rawPatients = res.data.data;
-      } else if (
-        res?.data?.data?.patients &&
-        Array.isArray(res.data.data.patients)
-      ) {
-        rawPatients = res.data.data.patients;
-      } else if (Array.isArray(res)) {
-        rawPatients = res;
-      }
-
-      console.log(
-        "[patients] parsed meta",
+      console.log("[patients] parsed", {
         meta,
-        "listLen",
-        rawPatients?.length,
-      );
+        listLen: rawPatients?.length,
+      });
 
       const gradients = [
         "linear-gradient(135deg, #467DFF, #2A66FF)",
@@ -517,7 +517,7 @@ const PatientList = () => {
       ];
 
       const mappedPatients = rawPatients.map((p, index) => {
-        let status = p.status ? p.status.toLowerCase() : "stable";
+        let pStatus = p.status ? p.status.toLowerCase() : "stable";
         let statusLabel = "🟢 Stable";
         let statusType = "";
         let insightStyle = {
@@ -525,15 +525,16 @@ const PatientList = () => {
           background: "#F4FDF8",
         };
 
-        if (status === "critical") {
+        if (pStatus === "critical") {
           statusLabel = "🔴 Critical";
           insightStyle = { borderLeftColor: "#FF5C5C", background: "#FFECEC" };
         } else if (
-          status === "under review" ||
-          status === "underreview" ||
-          status === "warning"
+          pStatus === "under review" ||
+          pStatus === "underreview" ||
+          pStatus === "warning" ||
+          pStatus === "under_review"
         ) {
-          status = "underReview";
+          pStatus = "underReview";
           statusLabel = "🟡 Under Review";
           statusType = "warning";
           insightStyle = { borderLeftColor: "#FFA500", background: "#FFF4E6" };
@@ -548,12 +549,12 @@ const PatientList = () => {
         }
 
         return {
-          id: p.id || index,
+          id: p.patient_id ?? p.id ?? index,
           initials: p.initials || initials,
           name: p.name || "Unknown Patient",
           age: p.age || "N/A",
           condition: p.condition || p.disease || "Not specified",
-          status: status,
+          status: pStatus,
           statusLabel: statusLabel,
           statusType: statusType,
           aiInsight:
@@ -579,12 +580,6 @@ const PatientList = () => {
       setCurrentPage(resolvedPage);
       setLastPage(resolvedLastPage);
 
-      console.log("[patients] state", {
-        scheduledCurrentPage: resolvedPage,
-        scheduledLastPage: resolvedLastPage,
-        listLen: mappedPatients.length,
-      });
-
       // ── Cache the result ──
       setCache(cacheKey, {
         patients: mappedPatients,
@@ -600,315 +595,11 @@ const PatientList = () => {
     }
   };
 
-  // ── Search fetch (reuses same response parsing + patient mapping as fetchPatients) ──
-  const fetchSearch = async (pageNumber, term) => {
-    const cacheKey = `patients_search_${term}_${pageNumber}`;
-    const isDirty = isPatientListDirty();
-
-    if (!isDirty) {
-      const cached = getCache(cacheKey);
-      if (cached) {
-        setPatients(cached.patients);
-        setCurrentPage(cached.currentPage);
-        setLastPage(cached.lastPage);
-        setLoading(false);
-        return;
-      }
-    }
-
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await searchPatientsAPI(pageNumber, term);
-      if (res.success === false) {
-        setError(res.message || "Search failed");
-        setPatients([]);
-        setLastPage(1);
-        setLoading(false);
-        return;
-      }
-
-      let rawPatients = [];
-      let meta = {};
-      if (res?.meta) meta = res.meta;
-      else if (res?.data?.meta) meta = res.data.meta;
-      else if (res?.data?.data?.meta) meta = res.data.data.meta;
-
-      if (Array.isArray(res?.data)) rawPatients = res.data;
-      else if (res?.data?.data && Array.isArray(res.data.data))
-        rawPatients = res.data.data;
-      else if (Array.isArray(res)) rawPatients = res;
-
-      console.log("[search] parsed", {
-        meta,
-        rawLen: rawPatients.length,
-        firstItem: rawPatients[0],
-      });
-
-      const gradients = [
-        "linear-gradient(135deg, #467DFF, #2A66FF)",
-        "linear-gradient(135deg, #FF5C5C, #FF8A8A)",
-        "linear-gradient(135deg, #FFA500, #FFB84D)",
-        "linear-gradient(135deg, #00C187, #00E5A0)",
-        "linear-gradient(135deg, #9D5CFF, #B380FF)",
-        "linear-gradient(135deg, #2A66FF, #5A8BFF)",
-        "linear-gradient(135deg, #FF6B9D, #FF8FB3)",
-        "linear-gradient(135deg, #00C9A7, #00E5C0)",
-      ];
-      const mappedPatients = rawPatients.map((p, index) => {
-        let status = p.status ? p.status.toLowerCase() : "stable";
-        let statusLabel = "🟢 Stable";
-        let statusType = "";
-        let insightStyle = {
-          borderLeftColor: "#00C187",
-          background: "#F4FDF8",
-        };
-        if (status === "critical") {
-          statusLabel = "🔴 Critical";
-          insightStyle = { borderLeftColor: "#FF5C5C", background: "#FFECEC" };
-        } else if (
-          status === "under review" ||
-          status === "underreview" ||
-          status === "warning"
-        ) {
-          status = "underReview";
-          statusLabel = "🟡 Under Review";
-          statusType = "warning";
-          insightStyle = { borderLeftColor: "#FFA500", background: "#FFF4E6" };
-        }
-        const nameParts = p.name ? p.name.split(" ") : ["U", "N"];
-        let initials = "UN";
-        if (nameParts.length > 1 && nameParts[0] && nameParts[1])
-          initials = `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
-        else if (p.name && p.name.length >= 2)
-          initials = p.name.substring(0, 2).toUpperCase();
-        return {
-          id: p.id || index,
-          initials: p.initials || initials,
-          name: p.name || "Unknown Patient",
-          age: p.age || "N/A",
-          condition: p.condition || p.disease || "Not specified",
-          status,
-          statusLabel,
-          statusType,
-          aiInsight:
-            p.aiInsight || p.ai_insight || "No new insights available.",
-          lastVisit: p.lastVisit || p.last_visit || "N/A",
-          nextAppointment:
-            p.nextAppointment ||
-            p.next_appointment ||
-            p.next_visit_date ||
-            p.next_visit ||
-            p.next_appointment_date ||
-            p?.visit?.next_visit_date ||
-            "No appointment scheduled",
-          gradient: p.gradient || gradients[index % gradients.length],
-          insightStyle,
-        };
-      });
-
-      const resolvedPage = Number(meta?.current_page || pageNumber);
-      const resolvedLastPage = Number(meta?.last_page || 1);
-
-      setPatients(mappedPatients);
-      setCurrentPage(resolvedPage);
-      setLastPage(resolvedLastPage);
-      console.log("[search] state", {
-        currentPage: resolvedPage,
-        lastPage: resolvedLastPage,
-        listLen: mappedPatients.length,
-      });
-
-      // ── Cache the search result ──
-      setCache(cacheKey, {
-        patients: mappedPatients,
-        currentPage: resolvedPage,
-        lastPage: resolvedLastPage,
-      });
-
-      setLoading(false);
-    } catch (err) {
-      console.log("[search] error", err);
-      setError("An error occurred while searching.");
-      setLoading(false);
-    }
-  };
-
-  // ── Status fetch ──
-  const fetchByStatus = async (pageNumber, status) => {
-    const STATUS_MAP = {
-      critical: "critical",
-      stable: "stable",
-      underReview: "under review",
-    };
-    const statusSlug = STATUS_MAP[status] || status;
-
-    const cacheKey = `patients_status_${statusSlug}_${pageNumber}`;
-    const isDirty = isPatientListDirty();
-
-    if (!isDirty) {
-      const cached = getCache(cacheKey);
-      if (cached) {
-        setPatients(cached.patients);
-        setCurrentPage(cached.currentPage);
-        setLastPage(cached.lastPage);
-        setLoading(false);
-        return;
-      }
-    }
-
-    setLoading(true);
-    setError(null);
-
-    console.log("[status-filter] clicked:", status, "mapped:", statusSlug);
-
-    try {
-      const res = await getPatientsByStatusAPI(statusSlug, pageNumber);
-      if (res.success === false) {
-        setError(res.message || "Failed to load patients by status");
-        setPatients([]);
-        setLastPage(1);
-        setLoading(false);
-        return;
-      }
-
-      let rawPatients = [];
-      let meta = {};
-      if (res?.meta) meta = res.meta;
-      else if (res?.data?.meta) meta = res.data.meta;
-      else if (res?.data?.data?.meta) meta = res.data.data.meta;
-
-      if (Array.isArray(res?.data)) rawPatients = res.data;
-      else if (res?.data?.data && Array.isArray(res.data.data))
-        rawPatients = res.data.data;
-      else if (Array.isArray(res)) rawPatients = res;
-
-      console.log("[status-filter] response first:", rawPatients?.[0]);
-      console.log(`[status] parsed ${statusSlug}`, {
-        meta,
-        rawLen: rawPatients.length,
-      });
-
-      const gradients = [
-        "linear-gradient(135deg, #467DFF, #2A66FF)",
-        "linear-gradient(135deg, #FF5C5C, #FF8A8A)",
-        "linear-gradient(135deg, #FFA500, #FFB84D)",
-        "linear-gradient(135deg, #00C187, #00E5A0)",
-        "linear-gradient(135deg, #9D5CFF, #B380FF)",
-        "linear-gradient(135deg, #2A66FF, #5A8BFF)",
-        "linear-gradient(135deg, #FF6B9D, #FF8FB3)",
-        "linear-gradient(135deg, #00C9A7, #00E5C0)",
-      ];
-      const mappedPatients = rawPatients.map((p, index) => {
-        let pStatus = p.status ? p.status.toLowerCase() : "stable";
-        let statusLabel = "🟢 Stable";
-        let statusType = "";
-        let insightStyle = {
-          borderLeftColor: "#00C187",
-          background: "#F4FDF8",
-        };
-        if (pStatus === "critical") {
-          statusLabel = "🔴 Critical";
-          insightStyle = { borderLeftColor: "#FF5C5C", background: "#FFECEC" };
-        } else if (
-          pStatus === "under review" ||
-          pStatus === "underreview" ||
-          pStatus === "warning" ||
-          pStatus === "under_review"
-        ) {
-          pStatus = "underReview";
-          statusLabel = "🟡 Under Review";
-          statusType = "warning";
-          insightStyle = { borderLeftColor: "#FFA500", background: "#FFF4E6" };
-        }
-        const nameParts = p.name ? p.name.split(" ") : ["U", "N"];
-        let initials = "UN";
-        if (nameParts.length > 1 && nameParts[0] && nameParts[1])
-          initials = `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
-        else if (p.name && p.name.length >= 2)
-          initials = p.name.substring(0, 2).toUpperCase();
-        return {
-          id: p.id || index,
-          initials: p.initials || initials,
-          name: p.name || "Unknown Patient",
-          age: p.age || "N/A",
-          condition: p.condition || p.disease || "Not specified",
-          status: pStatus,
-          statusLabel,
-          statusType,
-          aiInsight:
-            p.aiInsight || p.ai_insight || "No new insights available.",
-          lastVisit: p.lastVisit || p.last_visit || "N/A",
-          nextAppointment:
-            p.nextAppointment ||
-            p.next_appointment ||
-            p.next_visit_date ||
-            p.next_visit ||
-            p.next_appointment_date ||
-            p?.visit?.next_visit_date ||
-            "No appointment scheduled",
-          gradient: p.gradient || gradients[index % gradients.length],
-          insightStyle,
-        };
-      });
-
-      const resolvedPage = Number(meta?.current_page || pageNumber);
-      const resolvedLastPage = Number(meta?.last_page || 1);
-
-      setPatients(mappedPatients);
-      setCurrentPage(resolvedPage);
-      setLastPage(resolvedLastPage);
-
-      // ── Cache the result ──
-      setCache(cacheKey, {
-        patients: mappedPatients,
-        currentPage: resolvedPage,
-        lastPage: resolvedLastPage,
-      });
-
-      setLoading(false);
-    } catch (err) {
-      console.log(`[status] error ${statusSlug}`, err);
-      setError("An error occurred while fetching patients by status.");
-      setLoading(false);
-    }
-  };
-
-  // ── Single unified effect: search vs status vs list mode ──
-  useEffect(() => {
-    const trimmed = searchTerm.trim();
-
-    let currentMode = "list";
-    if (trimmed) {
-      currentMode = "search";
-    } else if (activeFilter !== "all") {
-      currentMode = "status";
-    }
-
-    console.log(
-      "[PatientList] mode",
-      currentMode,
-      "filter",
-      activeFilter,
-      "page",
-      currentPage,
-    );
-
-    if (currentMode === "search") {
-      fetchSearch(currentPage, trimmed);
-    } else if (currentMode === "status") {
-      fetchByStatus(currentPage, activeFilter);
-    } else {
-      fetchPatients(currentPage);
-    }
-
-    // Clear dirty flag after triggering revalidation fetch
-    if (isPatientListDirty()) {
-      setPatientListDirty(false);
-    }
+useEffect(() => {
+    loadPatients(currentPage);
+    setPatientListDirty(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, searchTerm, activeFilter, isPatientListDirty, setPatientListDirty]);
-
+  }, [currentPage, debouncedSearchTerm, activeFilter]);
   // ── Sync status from PatientProfile updates ──
   useEffect(() => {
     const handleStatusSync = (e) => {
@@ -942,31 +633,34 @@ const PatientList = () => {
         ...meta,
       });
 
-      if (activeFilter !== "all") {
-        // Filter is active: we MUST invalidate and refetch because a status change
-        // likely moves the patient in/out of this specific filtered result set.
-        invalidatePatientListCache();
-        if (activeFilter === "critical") fetchByStatus(currentPage, "critical");
-        else if (activeFilter === "stable")
-          fetchByStatus(currentPage, "stable");
-        else if (activeFilter === "underReview")
-          fetchByStatus(currentPage, "underReview");
-      } else {
-        // No filter (All Patients): update the matching card in-place for immediate feedback
-        setPatients((prev) =>
-          prev.map((p) =>
-            String(p.id) === String(updatedId)
-              ? { ...p, status: displayStatus, ...meta }
-              : p,
-          ),
-        );
-      }
+      // Always invalidate all cached pages/filters so switching tabs never shows stale data
+      invalidatePatientListCache();
+      setPatientListDirty(true);
+
+      // Update the current view immediately (optimistic)
+      // Always update in-place immediately for instant visual feedback
+      setPatients((prev) =>
+        prev.map((p) =>
+          String(p.id) === String(updatedId)
+            ? { ...p, status: displayStatus, ...meta }
+            : p,
+        ),
+      );
+
+      // Always invalidate + refetch so switching tabs never shows stale data
+      invalidatePatientListCache();
+      loadPatients(currentPage);
+
+      // If a status filter is active, refetch because the patient may have moved out of it
+      // if (activeFilter !== "all") {
+      //   loadPatients(currentPage);
+      // }
     };
 
     window.addEventListener("patientStatusUpdated", handleStatusSync);
     return () =>
       window.removeEventListener("patientStatusUpdated", handleStatusSync);
-  }, [activeFilter, currentPage, updateCachedPatient, invalidatePatientListCache]);
+  }, [activeFilter, currentPage, updateCachedPatient]);
 
   // ── Sync next visit date from PatientProfile updates ──
   useEffect(() => {
@@ -1019,14 +713,7 @@ const PatientList = () => {
         window.dispatchEvent(new CustomEvent("patientListInvalidated"));
         window.dispatchEvent(new CustomEvent("dashboardInvalidated"));
 
-        const trimmed = searchTerm.trim();
-        if (trimmed) {
-          fetchSearch(currentPage, trimmed);
-        } else if (activeFilter !== "all") {
-          fetchByStatus(currentPage, activeFilter);
-        } else {
-          fetchPatients(currentPage);
-        }
+        loadPatients(currentPage);
         setIsDeleteModalOpen(false);
         setPatientToDelete(null);
       }

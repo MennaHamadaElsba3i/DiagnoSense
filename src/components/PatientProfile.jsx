@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useLayoutEffect, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+  useCallback,
+} from "react";
 import Swal from "sweetalert2";
 import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import { getDoctorInitials } from "./Dashboard";
@@ -11,6 +17,7 @@ import {
   deleteKeyPointAPI,
   updatePatientStatusAPI,
   getDecisionSupportAPI,
+  reAnalyzePatientDecisionSupportAPI,
   getPatientActivitiesAPI,
   getComparativeAnalysisAPI,
   sendChatbotMessageAPI,
@@ -28,6 +35,8 @@ import { useTranscription } from "../hooks/useTranscription";
 import { getDirection, getTextAlign } from "../utils/textUtils";
 
 import diagnobotImg from "../assets/DiagnoBot.png";
+import diagnobotCryingImg from "../assets/Diagnobot_Crying.png";
+import Unauthorized from "./Unauthorized";
 import { useSidebar } from "./SidebarContext";
 import { useSubscription } from "./SubscriptionContext";
 import Sidebar from "./Sidebar";
@@ -67,7 +76,12 @@ const PatientProfile = () => {
   } = useSubscription();
 
   const { isSidebarCollapsed, toggleSidebar } = useSidebar();
-  const { unreadCount, openNotifications, refreshNotifications: refreshNotificationsCtx } = useNotifications();
+  const {
+    unreadCount,
+    openNotifications,
+    refreshNotifications: refreshNotificationsCtx,
+    triggerToast,
+  } = useNotifications();
 
   const navigate = useNavigate();
   const { patientId } = useParams();
@@ -77,6 +91,8 @@ const PatientProfile = () => {
   const [overviewData, setOverviewData] = useState(null);
   const [overviewLoading, setOverviewLoading] = useState(true);
   const [overviewError, setOverviewError] = useState(null);
+  const [notFound, setNotFound] = useState(false);
+  const [isUnauthorized, setIsUnauthorized] = useState(false);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   // ── Evidence Panel state ──
   const [sourceFile, setSourceFile] = useState(null);
@@ -99,6 +115,8 @@ const PatientProfile = () => {
   const [activitiesLoading, setActivitiesLoading] = useState(false);
   const [activitiesError, setActivitiesError] = useState(null);
   const [activitiesLoadedFor, setActivitiesLoadedFor] = useState(null);
+  const [activitiesCurrentPage, setActivitiesCurrentPage] = useState(1);
+  const [activitiesLastPage, setActivitiesLastPage] = useState(1);
 
   // ── Comparative Analysis API state ──
   const [comparativeData, setComparativeData] = useState([]);
@@ -117,8 +135,14 @@ const PatientProfile = () => {
     pointIdx: -1,
   });
 
-  const [activeTab, setActiveTab] = useState("overview");
-  const [visitedTabs, setVisitedTabs] = useState({ overview: true });
+  // If Add Patient flow passes activeTab in navigation state, open that tab directly
+  const initialTab = location.state?.activeTab || "overview";
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const [visitedTabs, setVisitedTabs] = useState(
+    initialTab !== "overview"
+      ? { overview: true, [initialTab]: true }
+      : { overview: true },
+  );
 
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const avatarMenuRef = useRef(null);
@@ -152,6 +176,24 @@ const PatientProfile = () => {
   };
 
   useEffect(() => {
+    const el = tabNavRef.current;
+    if (!el) return;
+    const activeBtn = el.querySelector(".tab-btn.active");
+    if (activeBtn) {
+      const elRect = el.getBoundingClientRect();
+      const btnRect = activeBtn.getBoundingClientRect();
+      // Only scroll if the button is not fully visible
+      if (btnRect.left < elRect.left || btnRect.right > elRect.right) {
+        const scrollPos =
+          activeBtn.offsetLeft - el.clientWidth / 2 + activeBtn.clientWidth / 2;
+        el.scrollTo({ left: scrollPos, behavior: "smooth" });
+      }
+    }
+    // Always check buttons after a small delay to allow DOM to settle
+    setTimeout(checkScrollButtons, 300);
+  }, [activeTab]);
+
+  useEffect(() => {
     const handleClickOutside = (event) => {
       if (
         avatarMenuRef.current &&
@@ -178,6 +220,23 @@ const PatientProfile = () => {
   const [isChatSending, setIsChatSending] = useState(false);
   const [isChatPreparing, setIsChatPreparing] = useState(false);
   const chatChannelRef = useRef(null); // guard against duplicate realtime listeners
+  const isChatSendingRef = useRef(false);
+
+  useEffect(() => {
+    if (!isChatSending) {
+      isChatSendingRef.current = false;
+    }
+  }, [isChatSending]);
+
+  // Auto-scroll transcript container while recording
+  useEffect(() => {
+    const textarea = document.getElementById("chat-textarea");
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = chatInput ? `${Math.min(textarea.scrollHeight, 120)}px` : "auto";
+      textarea.scrollTop = textarea.scrollHeight;
+    }
+  }, [chatInput]);
 
   const [selectedStatus, setSelectedStatus] = useState(() => {
     try {
@@ -222,6 +281,10 @@ const PatientProfile = () => {
 
   // ── Key info fetched from backend (View Details path) ──
   const [keyInfo, setKeyInfo] = useState(null);
+  // OCR source files returned by the v1 key-info endpoint
+  const [keyInfoOcrFiles, setKeyInfoOcrFiles] = useState([]);
+  // Whether the backend is still processing documents
+  const [keyInfoStillProcessing, setKeyInfoStillProcessing] = useState(false);
 
   // keyInfo is the single source of truth for both flows.
   // In Add Patient flow it is seeded from navigation state then overwritten by the backend fetch.
@@ -236,7 +299,40 @@ const PatientProfile = () => {
   const mediumAlerts = effectiveKeyInfo.medium;
   const lowAlerts = effectiveKeyInfo.low;
 
-  const [chatMessages, setChatMessages] = useState([]);
+  const [chatMessages, setChatMessages] = useState(() => {
+    try {
+      if (patientId) {
+        const stored = sessionStorage.getItem(`DiagnoBot_chat_${patientId}`);
+        if (stored) return JSON.parse(stored);
+      }
+    } catch (e) {
+      console.error("Failed to load chat history", e);
+    }
+    return [];
+  });
+
+  // Load chat history if patientId changes
+  useEffect(() => {
+    if (patientId) {
+      try {
+        const stored = sessionStorage.getItem(`DiagnoBot_chat_${patientId}`);
+        if (stored) {
+          setChatMessages(JSON.parse(stored));
+        } else {
+          setChatMessages([]);
+        }
+      } catch (e) {
+        console.error("Failed to load chat history", e);
+      }
+    }
+  }, [patientId]);
+
+  // Save chat history on update
+  useEffect(() => {
+    if (patientId && chatMessages.length > 0) {
+      sessionStorage.setItem(`DiagnoBot_chat_${patientId}`, JSON.stringify(chatMessages));
+    }
+  }, [chatMessages, patientId]);
   const [analysisData, setAnalysisData] = useState(keyInfoData);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(true);
 
@@ -421,16 +517,63 @@ const PatientProfile = () => {
     }
     const fetchKeyInfo = async () => {
       setIsLoadingAnalysis(true);
-      const res = await getPatientKeyInfoAPI(patientId);
-      if (res && res.success !== false) {
-        const payload = res?.data ?? res;
-        setKeyInfo(payload);
-        // Extract source PDF URL for the Evidence Panel
-        const sf = payload?.source_file ?? res?.source_file ?? null;
-        if (sf) setSourceFile(sf);
+      try {
+        const res = await getPatientKeyInfoAPI(patientId);
+
+        // ── 401 / unauthenticated ──
+        const is401 =
+          res?.message?.toLowerCase().includes("unauthenticated") ||
+          res?.message?.includes("401");
+        if (is401) {
+          console.error("[keyInfo] unauthenticated:", res.message);
+          setIsLoadingAnalysis(false);
+          return;
+        }
+
+        // ── Explicit failure or missing data ──
+        if (!res || res.success === false || !res.data) {
+          console.error("[keyInfo] fetch failed:", res?.message);
+          setIsLoadingAnalysis(false);
+          return;
+        }
+
+        const data = res.data;
+
+        // ── still_processing ──
+        const stillProcessing = data.still_processing === true;
+        setKeyInfoStillProcessing(stillProcessing);
+        if (stillProcessing) {
+          console.log(
+            "[keyInfo] still_processing=true — showing partial data if available",
+          );
+        }
+
+        // ── OCR source files (used by Evidence Panel) ──
+        const ocrFiles = Array.isArray(data.ocr_files) ? data.ocr_files : [];
+        setKeyInfoOcrFiles(ocrFiles);
+        if (ocrFiles.length > 0) setSourceFile(ocrFiles[0]);
+
+        // ── Normalize key_points → { high, medium, low } ──
+        const normalizeAlerts = (arr) =>
+          Array.isArray(arr)
+            ? arr.map((kp) => ({
+                ...kp,
+                // Fallback to is_manual if backend is still sending old format, else use new is_ai_generated
+                is_ai_generated: kp.is_ai_generated ?? kp.is_manual ?? "",
+              }))
+            : [];
+
+        const rawKeyPoints = data.key_points ?? {};
+        const normalized = {
+          high: normalizeAlerts(rawKeyPoints.high),
+          medium: normalizeAlerts(rawKeyPoints.medium),
+          low: normalizeAlerts(rawKeyPoints.low),
+        };
+
+        setKeyInfo(normalized);
         setKeyInfoLoadedFor(patientId);
-      } else {
-        console.error("[keyInfo] fetch failed:", res?.message);
+      } catch (err) {
+        console.error("[keyInfo] unexpected error:", err);
       }
       setIsLoadingAnalysis(false);
     };
@@ -455,6 +598,13 @@ const PatientProfile = () => {
         if (res.success === false) {
           console.error("[overview] error", res.message);
           setOverviewError(res.message || "Failed to load patient overview");
+          const isNotFound = res.status === 404 || (res.message && res.message.toLowerCase().includes("not found"));
+          const isForbidden = res.status === 403 || res.status === 401 || (res.message && (res.message.toLowerCase().includes("unauthorized") || res.message.toLowerCase().includes("forbidden") || res.message.toLowerCase().includes("this action is unauthorized")));
+          if (isNotFound) {
+            setNotFound(true);
+          } else if (isForbidden) {
+            setIsUnauthorized(true);
+          }
         } else {
           // API shape: { success: true, data: [ {...patientObject...} ] }
           // Extract the first element of the array; fall back gracefully
@@ -516,14 +666,39 @@ const PatientProfile = () => {
         console.log("[PatientProfile] Stripe success received.");
         refreshSubscriptionCtx();
         refreshCreditsCtx();
-        if (pendingFeatureToOpen === 'decision') fetchDecisionSupport();
-        // Chatbot state handles itself via shouldShowLockedChatbot
+        if (pendingFeatureToOpen === "decision") {
+          // Stripe popup path: upgrade/pay-per-use confirmed via Stripe checkout.
+          // Trigger re-analysis for old patients that never had Decision Support.
+          triggerReAnalyzeAndPoll();
+        }
+        if (pendingFeatureToOpen === "chatbot") {
+          // Stripe popup path for DiagnoBot upgrade.
+          // Seed the welcome message so the chatbot opens and locked overlay
+          // disappears as soon as subscription context re-renders with the new plan.
+          triggerReAnalyzeAndPoll();
+          setIsChatOpen(true);
+          setChatMessages((prev) => {
+            if (prev.length > 0) return prev; // already seeded
+            const user =
+              typeof getJsonCookie === "function"
+                ? (getJsonCookie("user") ?? {})
+                : {};
+            const doctorName = user?.name || user?.user?.name || "Doctor";
+            return [
+              {
+                type: "ai",
+                text: `Hello Dr. ${doctorName}, DiagnoBot is now unlocked! How can I assist you today?`,
+              },
+            ];
+          });
+        }
         setIsUpgrading(false);
         setIsUpgradeConfirmOpen(false);
       }
     };
-    window.addEventListener('message', handleStripeMessage);
-    return () => window.removeEventListener('message', handleStripeMessage);
+    window.addEventListener("message", handleStripeMessage);
+    return () => window.removeEventListener("message", handleStripeMessage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshSubscriptionCtx, refreshCreditsCtx, pendingFeatureToOpen]);
 
   const initiateUpgrade = (planName, targetType, feature) => {
@@ -589,7 +764,37 @@ const PatientProfile = () => {
           refreshNotificationsCtx?.();
 
           if (pendingFeatureToOpen === "decision") {
-            await fetchDecisionSupport();
+            // No-Stripe-redirect path: upgrade/pay-per-use resolved immediately
+            // (e.g. wallet payment). Trigger re-analysis for old patients.
+            triggerReAnalyzeAndPoll();
+          }
+
+          if (pendingFeatureToOpen === "chatbot") {
+            // No-Stripe-redirect path for DiagnoBot (e.g. wallet / PPU).
+            // Subscription data has just been refreshed above, so canUseChatbotNow
+            // will be true on the next render. Seed the welcome message and open
+            // the chat panel so the user can start typing immediately.
+            triggerReAnalyzeAndPoll();
+            setIsChatOpen(true);
+            setChatMessages((prev) => {
+              if (prev.length > 0) return prev; // already seeded by toggleChat
+              const user =
+                typeof getJsonCookie === "function"
+                  ? (getJsonCookie("user") ?? {})
+                  : {};
+              const doctorName = user?.name || user?.user?.name || "Doctor";
+              const patientName =
+                overviewData?.name ??
+                overviewData?.patientName ??
+                overviewData?.full_name ??
+                "this patient";
+              return [
+                {
+                  type: "ai",
+                  text: `Hello Dr. ${doctorName}, DiagnoBot is now unlocked! How can I assist you with ${patientName}'s case today?`,
+                },
+              ];
+            });
           }
 
           setIsUpgradeConfirmOpen(false);
@@ -603,6 +808,14 @@ const PatientProfile = () => {
       console.error("[Upgrade] error:", err);
       setIsUpgradeConfirmOpen(false);
       setIsUpgrading(false);
+      
+      if (err.response && err.response.status === 403) {
+        const backendMessage = err.response.data?.message || err.message;
+        triggerToast({
+          title: "Subscription Failed",
+          message: backendMessage,
+        });
+      }
     }
   };
 
@@ -618,18 +831,24 @@ const PatientProfile = () => {
 
   const [recordingNoteId, setRecordingNoteId] = useState(null);
 
-  const { isRecording, isConnecting, toggleRecording, stopRecording } = useTranscription(
-    useCallback((text) => {
-      if (recordingNoteId === "diagnobot") {
-        setChatInput((prev) => prev + text);
-      } else if (recordingNoteId) {
-        setNewNoteTexts((prev) => ({
-          ...prev,
-          [recordingNoteId]: (prev[recordingNoteId] || "") + text,
-        }));
-      }
-    }, [recordingNoteId])
-  );
+  const { isRecording, isConnecting, toggleRecording, stopRecording } =
+    useTranscription(
+      useCallback(
+        (text) => {
+          if (recordingNoteId === "diagnobot") {
+            setChatInput((prev) => prev + text);
+          } else if (recordingNoteId === editingNoteId) {
+            setEditingNoteText((prev) => prev + text);
+          } else if (recordingNoteId) {
+            setNewNoteTexts((prev) => ({
+              ...prev,
+              [recordingNoteId]: (prev[recordingNoteId] || "") + text,
+            }));
+          }
+        },
+        [recordingNoteId, editingNoteId],
+      ),
+    );
 
   const addNewNote = (priority) => {
     const id = `new-${priority}-${Date.now()}`;
@@ -747,13 +966,18 @@ const PatientProfile = () => {
 
   const saveEditNote = async (id, newText) => {
     console.log("Saving note:", id, "with text:", newText);
+    
+    if (recordingNoteId === id) {
+      stopRecording();
+      setRecordingNoteId(null);
+    }
 
     // Detect if this is a backend-managed note (numeric id) vs a static/hardcoded note
     const isBackendNote =
       typeof id === "number" || (typeof id === "string" && /^\d+$/.test(id));
 
     if (isBackendNote) {
-      // ── PATCH /api/key-points/{id} ──
+      // ── PATCH /api/v1/key-points/{id} ──
       if (editSavingId === id) return; // prevent double submit
       setEditSavingId(id);
       try {
@@ -831,6 +1055,10 @@ const PatientProfile = () => {
   };
 
   const cancelEditNote = () => {
+    if (recordingNoteId === editingNoteId) {
+      stopRecording();
+      setRecordingNoteId(null);
+    }
     setEditingNoteId(null);
     setEditingNoteText("");
   };
@@ -843,7 +1071,7 @@ const PatientProfile = () => {
       alertObj?.title,
     );
     console.log("[ViewEvidence] Extracted evidence:", alertObj?.evidence);
-    console.log("[ViewEvidence] Source file to pass:", sourceFile);
+    console.log("[ViewEvidence] OCR files to pass:", keyInfoOcrFiles);
 
     setEvidencePanel({
       open: true,
@@ -859,15 +1087,85 @@ const PatientProfile = () => {
     }
   }, [chatMessages, isChatOpen]);
 
-  // ── Chatbot realtime cleanup on unmount ──
+
+
+  // ── Chatbot realtime subscription on mount & cleanup on unmount ──
   useEffect(() => {
+    const user = getJsonCookie("user");
+    const doctorId = user?.id || user?.user?.id;
+    
+    console.log("[DEBUG-ECHO] 1. useEffect mounted. doctorId:", doctorId);
+    
+    if (doctorId && patientId) {
+      const channelName = `chatbot-answer.${doctorId}.${patientId}`;
+      chatChannelRef.current = channelName;
+      
+      console.log('SUBSCRIBING TO CHANNEL =>', channelName);
+      
+      // Force cleanup before re-binding to prevent duplicate messages
+      echo.leave(channelName);
+      
+      echo.private(channelName)
+        .listenToAll((eventName, data) => {
+          console.log("[DEBUG-WILDCARD] Event received on channel:", eventName);
+          console.log("[DEBUG-WILDCARD] Data:", data);
+        })
+        .listen('.App\\Events\\Chatbot\\ChatbotAnswerReady', (payload) => {
+          console.log('CHATBOT SUCCESS', payload);
+          
+          const finalAnswer = payload?.answer || payload?.data?.answer;
+          
+          if (finalAnswer) {
+              // 1. Immediately wipe out the loading/preparing flags
+              setIsChatPreparing(false);
+              setIsChatSending(false);
+              
+              // 2. Append the message safely using the latest functional state slice
+              setChatMessages(prev => {
+                  // Remove any temporary "preparing" system messages if they exist by text or type filter
+                  const filteredMessages = prev.filter(msg => msg.text !== "I'm preparing this patient's data. Please wait a moment...");
+                  
+                  // Deduplicate check to completely prevent double rendering
+                  if (filteredMessages.some(msg => msg.text === finalAnswer)) {
+                      return filteredMessages;
+                  }
+                  
+                  return [...filteredMessages, { type: 'ai', text: finalAnswer }];
+              });
+          }
+        })
+        .listen('.App\\Events\\Chatbot\\ChatbotAnswerFailed', (payload) => {
+          console.log('CHATBOT FAILED', payload);
+          
+          const errorText = payload?.error || payload?.data?.error;
+          
+          if (errorText) {
+              // Immediately wipe out the loading/preparing flags
+              setIsChatPreparing(false);
+              setIsChatSending(false);
+              
+              setChatMessages(prev => {
+                  const filteredMessages = prev.filter(msg => msg.text !== "I'm preparing this patient's data. Please wait a moment...");
+                  
+                  if (filteredMessages.some(msg => msg.text === errorText)) {
+                      return filteredMessages;
+                  }
+                  
+                  return [...filteredMessages, { type: 'ai', text: errorText }];
+              });
+          }
+        });
+    }
+
     return () => {
-      if (chatChannelRef.current) {
-        echo.leave(chatChannelRef.current);
+      console.log("[DEBUG-ECHO] 4. Component unmounting. Running cleanup for doctorId:", doctorId, "patientId:", patientId);
+      if (doctorId && patientId) {
+        console.log(`[DEBUG-ECHO] 5. Calling echo.leave('chatbot-answer.${doctorId}.${patientId}');`);
+        echo.leave(`chatbot-answer.${doctorId}.${patientId}`);
         chatChannelRef.current = null;
       }
     };
-  }, []);
+  }, [patientId]);
 
   // ── Reset Decision Support when patient changes ──
   useEffect(() => {
@@ -881,6 +1179,8 @@ const PatientProfile = () => {
     setActivities([]);
     setActivitiesError(null);
     setActivitiesLoadedFor(null);
+    setActivitiesCurrentPage(1);
+    setActivitiesLastPage(1);
   }, [patientId]);
 
   // ── Reset Comparative Analysis when patient changes ──
@@ -895,164 +1195,141 @@ const PatientProfile = () => {
     useState(false);
   const hasTriggeredDecisionSupportGeneration = useRef(false);
 
-  const fetchDecisionSupport = async () => {
+  // ── Re-analysis (upgrade/pay-per-use path for old patients) ──
+  // Guard ref: prevents duplicate POST /re-analyze calls from React Strict Mode
+  // or rapid re-renders while a request is already in flight.
+  const reAnalyzeInFlightRef = useRef(false);
+
+  /**
+   * Called after a successful upgrade/pay-per-use for the 'decision' feature.
+   * POSTs /re-analyze once, then kicks off the existing polling loop via
+   * fetchDecisionSupport so the caller doesn't need to know the internals.
+   */
+  const triggerReAnalyzeAndPoll = async () => {
     if (!patientId) return;
+    if (reAnalyzeInFlightRef.current) {
+      console.log(
+        "[re-analyze] Request already in-flight — skipping duplicate call.",
+      );
+      return;
+    }
 
-    // Guard to prevent duplicate clicks while already loading/generating
-    if (isGeneratingDecisionSupport || decisionSupportLoading) return;
+    reAnalyzeInFlightRef.current = true;
+    console.log(
+      "[re-analyze] Triggering POST /re-analyze for patientId:",
+      patientId,
+    );
 
+    // Show the Decision Support section loader immediately
     setDecisionSupportLoading(true);
     setDecisionSupportError(null);
 
     try {
-      // 1) First call the normal Decision Support endpoint directly
-      let dsRes = await getDecisionSupportAPI(patientId);
+      const res = await reAnalyzePatientDecisionSupportAPI(patientId);
+      console.log("[re-analyze] POST response:", res);
 
+      // 401 — session expired
       const is401 =
-        dsRes?.message?.toLowerCase().includes("unauthenticated") ||
-        dsRes?.message?.includes("401");
+        res?.message?.toLowerCase().includes("unauthenticated") ||
+        res?.message?.includes("401");
       if (is401) {
-        setDecisionSupportError("401");
+        setDecisionSupportError(
+          res.message || "Session expired. Please log in again.",
+        );
         setDecisionSupportLoading(false);
         navigate("/login");
         return;
       }
 
-      let dataArr = Array.isArray(dsRes?.data) ? dsRes.data : [];
-
-      // If it returns real Decision Support data: show it normally, stop there.
-      if (dataArr.length > 0) {
-        setDecisionSupport(dataArr);
-        setDecisionSupportLoadedFor(patientId);
+      if (!res || res.success === false) {
+        // Backend returned a failure — show the message, keep the previous UI
+        const msg =
+          res?.message || "Failed to start Decision Support analysis.";
+        console.error("[re-analyze] Backend returned failure:", msg);
+        setDecisionSupportError(msg);
         setDecisionSupportLoading(false);
         return;
       }
 
-      // If this endpoint does NOT return data / no usable data:
-      // Assess eligibility for auto-generation using current plan
-      if (!canGenerateDecisionSupportNow) {
-        // Doctor is still on a plan that DOES NOT allow Decision Support => show locker promo UI
-        setDecisionSupport([]);
-        setDecisionSupportLoadedFor(patientId);
-        setDecisionSupportLoading(false);
-        return;
-      }
+      // POST succeeded — reset any stale loaded state so the poller runs fresh
+      setDecisionSupportLoadedFor(null);
 
-      // Current plan DOES allow it, but we have NO data! (Legacy Edge Case)
-      // Guard against double triggers
-      if (hasTriggeredDecisionSupportGeneration.current) {
-        setDecisionSupport([]);
-        setDecisionSupportLoadedFor(patientId);
-        setDecisionSupportLoading(false);
-        return;
-      }
+      // Hand off to the existing polling function which already handles
+      // still_processing loop, error states and final data rendering.
+      // Pass isReAnalyze=true so the loading-guard inside fetchDecisionSupport
+      // is skipped (we already set loading=true above).
+      await fetchDecisionSupport(true);
+    } catch (err) {
+      console.error("[re-analyze] Unexpected error:", err);
+      setDecisionSupportError("Failed to start Decision Support analysis.");
+      setDecisionSupportLoading(false);
+    } finally {
+      reAnalyzeInFlightRef.current = false;
+    }
+  };
 
-      // We are officially starting the regeneration flow
-      hasTriggeredDecisionSupportGeneration.current = true;
-      setIsGeneratingDecisionSupport(true);
+  const fetchDecisionSupport = async (isReAnalyze = false) => {
+    if (!patientId) return;
 
-      // 2) Call: GET /api/patients/{patientId} ("Get Pre-Filled Patient Data for Editing")
-      const fetchRes = await getPatientForEditAPI(patientId);
-      if (!fetchRes?.success)
-        throw new Error(
-          fetchRes?.message || "Failed to fetch patient data for generation",
-        );
+    // Skip the in-progress guard when called from re-analyze flow because
+    // triggerReAnalyzeAndPoll already set loading=true before delegating here.
+    if (!isReAnalyze && decisionSupportLoading) return;
 
-      const d = fetchRes.data;
-      const pi = d?.personal_info || {};
-      const mh = d?.medical_history || {};
+    setDecisionSupportLoading(true);
+    setDecisionSupportError(null);
 
-      // 3) Build the SAME payload used by Edit File / Save Changes
-      const apiFormData = new FormData();
-      apiFormData.append("_method", "PUT");
+    let attempts = 0;
+    const maxAttempts = 15;
 
-      apiFormData.append("name", pi.name || "");
-      if (pi.email) apiFormData.append("email", pi.email);
-      if (pi.phone) apiFormData.append("phone", pi.phone);
-      if (pi.age != null) apiFormData.append("age", pi.age);
-      if (pi.gender) apiFormData.append("gender", pi.gender);
-      if (pi.national_id) apiFormData.append("national_id", pi.national_id);
-
-      apiFormData.append("is_smoker", mh.is_smoker ? "1" : "0");
-      apiFormData.append(
-        "previous_surgeries",
-        mh.previous_surgeries ? "1" : "0",
-      );
-      if (mh.previous_surgeries) {
-        apiFormData.append(
-          "previous_surgeries_name",
-          mh.previous_surgeries_name || "",
-        );
-      }
-
-      if (
-        Array.isArray(mh.chronic_diseases) &&
-        mh.chronic_diseases.length > 0
-      ) {
-        mh.chronic_diseases.forEach((disease) => {
-          apiFormData.append("chronic_diseases[]", disease);
-        });
-      }
-
-      apiFormData.append("medications", mh.medications || "");
-      apiFormData.append("allergies", mh.allergies || "");
-      apiFormData.append("family_history", mh.family_history || "");
-      apiFormData.append("current_complaint", mh.current_complaint || "");
-
-      // Preserve existing AI outputs so backend doesn't wipe them
-      if (mh.ai_summary || d.ai_summary) {
-        apiFormData.append("ai_summary", mh.ai_summary || d.ai_summary);
-      }
-      if (mh.smart_summary || d.smart_summary) {
-        apiFormData.append(
-          "smart_summary",
-          mh.smart_summary || d.smart_summary,
-        );
-      }
-      if (mh.key_points || d.key_points) {
-        const kp = mh.key_points || d.key_points;
-        apiFormData.append(
-          "key_points",
-          typeof kp === "string" ? kp : JSON.stringify(kp),
-        );
-      }
-      if (mh.key_important_information || d.key_important_information) {
-        const ki = mh.key_important_information || d.key_important_information;
-        apiFormData.append(
-          "key_important_information",
-          typeof ki === "string" ? ki : JSON.stringify(ki),
-        );
-      }
-
-      // 4) Call: PUT /api/patients/{patientId} ("Update Patient Data")
-      await updatePatientAPI(patientId, apiFormData);
-
-      // 5) Poll /api/patients/{patientId}/decision-support until data appears (max ~40 seconds)
-      let finalDataArr = [];
-      let attempts = 0;
-      const maxAttempts = 10;
-
+    try {
       while (attempts < maxAttempts) {
         attempts++;
-        const retryRes = await getDecisionSupportAPI(patientId);
-        if (
-          retryRes &&
-          retryRes.success &&
-          Array.isArray(retryRes.data) &&
-          retryRes.data.length > 0
-        ) {
-          finalDataArr = retryRes.data;
-          break; // Data has successfully hydrated!
+        const dsRes = await getDecisionSupportAPI(patientId);
+
+        const is401 =
+          dsRes?.message?.toLowerCase().includes("unauthenticated") ||
+          dsRes?.message?.includes("401");
+        if (is401) {
+          setDecisionSupportError("401");
+          setDecisionSupportLoading(false);
+          navigate("/login");
+          return;
         }
-        // Wait 4 seconds before polling again
-        await new Promise((resolve) => setTimeout(resolve, 4000));
+
+        if (dsRes?.success === false) {
+          setDecisionSupportError(
+            dsRes?.message ||
+              "An error occurred while fetching decision support information.",
+          );
+          setDecisionSupportLoading(false);
+          return;
+        }
+
+        const stillProcessing = dsRes?.data?.still_processing === true;
+        const decisions = Array.isArray(dsRes?.data?.decisions)
+          ? dsRes.data.decisions
+          : [];
+
+        if (stillProcessing) {
+          // Wait 4 seconds before polling again
+          await new Promise((resolve) => setTimeout(resolve, 4000));
+          continue;
+        }
+
+        // Processing is complete
+        setDecisionSupport(decisions);
+        setDecisionSupportLoadedFor(patientId);
+        setDecisionSupportLoading(false);
+        return;
       }
 
-      setDecisionSupport(finalDataArr);
-      setDecisionSupportLoadedFor(patientId);
+      // If we exit loop without success
+      setDecisionSupportError("Timeout while waiting for decision support.");
     } catch (err) {
       console.error("[decision-support-flow] exception:", err);
-      setDecisionSupportError("Network error or generation failed.");
+      setDecisionSupportError(
+        "Something went wrong. Please check your network connection..",
+      );
     } finally {
       setIsGeneratingDecisionSupport(false);
       setDecisionSupportLoading(false);
@@ -1060,46 +1337,118 @@ const PatientProfile = () => {
   };
 
   // ── Fetch Activity Log from backend ──
-  const fetchActivities = async () => {
+  const fetchActivities = async (page = 1) => {
     if (!patientId) return;
     setActivitiesLoading(true);
     setActivitiesError(null);
     try {
-      const res = await getPatientActivitiesAPI(patientId);
+      const res = await getPatientActivitiesAPI(patientId, page);
       console.log("[activity-log] response:", res);
       if (res && res.success) {
-        setActivities(Array.isArray(res.data) ? res.data : []);
+        let items = [];
+        let meta = null;
+        if (res.data && res.data.data) {
+          items = Array.isArray(res.data.data) ? res.data.data : [];
+          meta = res.data.meta || res.meta || null;
+        } else {
+          items = Array.isArray(res.data) ? res.data : [];
+        }
+        setActivities(items);
         setActivitiesLoadedFor(patientId);
+
+        if (meta) {
+          setActivitiesCurrentPage(Number(meta.current_page || page));
+          setActivitiesLastPage(Number(meta.last_page || 1));
+        } else if (res.data && res.data.current_page) {
+          setActivitiesCurrentPage(Number(res.data.current_page));
+          setActivitiesLastPage(Number(res.data.last_page || 1));
+        } else {
+          setActivitiesCurrentPage(page);
+          setActivitiesLastPage(1);
+        }
       } else {
         setActivitiesError(res?.message || "Failed to load activity log.");
       }
     } catch (err) {
       console.error("[activity-log] exception:", err);
-      setActivitiesError("Network error. Please check your connection.");
+      setActivitiesError(
+        "Something went wrong. Please check your network connection..",
+      );
     } finally {
       setActivitiesLoading(false);
     }
   };
 
-  // ── Fetch Comparative Analysis from backend ──
   const fetchComparativeAnalysis = async () => {
     if (!patientId) return;
+    if (comparativeLoading) return;
+
     setComparativeLoading(true);
     setComparativeError(null);
+
+    let attempts = 0;
+    const maxAttempts = 15;
+
     try {
-      const res = await getComparativeAnalysisAPI(patientId);
-      console.log("[comparative-analysis] response:", res);
-      if (res && res.success) {
-        setComparativeData(Array.isArray(res.data) ? res.data : []);
+      while (attempts < maxAttempts) {
+        attempts++;
+        const res = await getComparativeAnalysisAPI(patientId);
+        console.log("[comparative-analysis] response:", res);
+
+        const is401 =
+          res?.message?.toLowerCase().includes("unauthenticated") ||
+          res?.message?.includes("401");
+        if (is401) {
+          setComparativeError("401");
+          setComparativeLoading(false);
+          navigate("/login");
+          return;
+        }
+
+        if (res?.success === false) {
+          setComparativeError(
+            res?.message ||
+              "An error occurred while fetching comparative analysis.",
+          );
+          setComparativeLoading(false);
+          return;
+        }
+
+        const stillProcessing = res?.data?.still_processing === true;
+        const analysis = Array.isArray(res?.data?.analysis)
+          ? res.data.analysis
+          : [];
+
+        if (stillProcessing) {
+          // Keep existing loading state true, wait 4 seconds before polling again
+          await new Promise((resolve) => setTimeout(resolve, 4000));
+          continue;
+        }
+
+        // If AI extraction failed but historical data is present, we just render the historical data.
+        // If analysis is empty, it will naturally render the existing empty state.
+
+        // "No historical data found response: data: null"
+        if (res?.data === null && res?.success === true) {
+          setComparativeData([]);
+          setComparativeLoadedFor(patientId);
+          setComparativeLoading(false);
+          return;
+        }
+
+        // Processing is complete
+        setComparativeData(analysis);
         setComparativeLoadedFor(patientId);
-      } else {
-        setComparativeError(
-          res?.message || "Failed to load comparative analysis.",
-        );
+        setComparativeLoading(false);
+        return;
       }
+
+      setComparativeError("Timeout while waiting for comparative analysis.");
     } catch (err) {
       console.error("[comparative-analysis] exception:", err);
-      setComparativeError("Network error. Please check your connection.");
+      setComparativeError(
+        "Something went wrong. Please check your network connection..",
+      );
     } finally {
       setComparativeLoading(false);
     }
@@ -1121,7 +1470,7 @@ const PatientProfile = () => {
       patientId &&
       activitiesLoadedFor !== patientId
     ) {
-      fetchActivities();
+      fetchActivities(activitiesCurrentPage);
     }
     if (
       tabId === "comparative" &&
@@ -1168,60 +1517,44 @@ const PatientProfile = () => {
           overviewData?.patient_name ||
           overviewData?.full_name ||
           "this patient";
-        setChatMessages([
-          {
-            type: "ai",
-            text: `Hello Dr. ${doctorName}, how can I assist you with ${patientName}'s case today?`,
-          },
-        ]);
+        setChatMessages((prevMsgs) => {
+          if (prevMsgs.length > 0) return prevMsgs;
+          return [
+            {
+              type: "ai",
+              text: `Hello Dr. ${doctorName}, how can I assist you with ${patientName}'s case today?`,
+            },
+          ];
+        });
       }
       return !prev;
     });
   };
 
   const handleChatEnter = (e) => {
-    if (e.key === "Enter") sendMessage();
-  };
-
-  const subscribeToChatbotChannel = () => {
-    if (chatChannelRef.current) return;
-    const user = getJsonCookie("user");
-    const doctorId = user?.id || user?.user?.id;
-    if (!doctorId) return;
-
-    const channelName = `chatbot-answer.${doctorId}`;
-    chatChannelRef.current = channelName;
-
-    echo.private(channelName).listen(".ChatbotAnswerReady", (payload) => {
-      const answer = payload?.answer || payload?.data || payload?.message || "";
-      const isFailed =
-        !answer ||
-        answer.toLowerCase().includes("fail") ||
-        answer.toLowerCase().includes("error");
-
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          type: "ai",
-          text: isFailed
-            ? "Sorry, I couldn't prepare the chatbot answer right now. Please try again."
-            : answer,
-        },
-      ]);
-      setIsChatPreparing(false);
-      setIsChatSending(false);
-      echo.leave(channelName);
-      chatChannelRef.current = null;
-    });
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
   };
 
   const sendMessage = async () => {
     const text = chatInput.trim();
-    if (!text || isChatSending || isChatPreparing) return;
+    if (!text || isChatSending || isChatPreparing || isChatSendingRef.current) return;
+
+    isChatSendingRef.current = true;
+
+    if (isRecording) {
+      stopRecording();
+      setRecordingNoteId(null);
+    }
 
     setChatMessages((prev) => [...prev, { type: "user", text }]);
     setChatInput("");
     setIsChatSending(true);
+
+    const textarea = document.getElementById("chat-textarea");
+    if (textarea) textarea.style.height = "auto";
 
     try {
       const res = await sendChatbotMessageAPI(patientId, text);
@@ -1234,10 +1567,12 @@ const PatientProfile = () => {
             text: "Sorry, something went wrong. Please try again.",
           },
         ]);
+        setIsChatSending(false);
         return;
       }
 
-      if (res.data === "Preparing patient data...") {
+      // Check for 202 Accepted (Processing in background)
+      if (res.status === 202 || res.data === "Preparing patient data..." || res.message === "Preparing patient data...") {
         setChatMessages((prev) => [
           ...prev,
           {
@@ -1247,14 +1582,18 @@ const PatientProfile = () => {
           },
         ]);
         setIsChatPreparing(true);
-        subscribeToChatbotChannel();
+        // Keep input locked; Reverb WebSocket listeners will unlock it upon completion.
         return;
       }
 
+      // Direct 200 OK synchronous fallback (Bypass socket waiting cycle)
+      const answerText = res.answer || res.data || res.message || "Done.";
       setChatMessages((prev) => [
         ...prev,
-        { type: "ai", text: res.data || res.message || "Done." },
+        { type: "ai", text: answerText },
       ]);
+      setIsChatSending(false);
+      setIsChatPreparing(false);
     } catch {
       setChatMessages((prev) => [
         ...prev,
@@ -1263,17 +1602,30 @@ const PatientProfile = () => {
           text: "Sorry, something went wrong. Please try again.",
         },
       ]);
-    } finally {
-      if (!isChatPreparing) setIsChatSending(false);
+      setIsChatSending(false);
     }
   };
 
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   // ── Plan-access & historical data helpers ──
-  const isPayPerUse = subscriptionData?.billing_mode === "pay_per_use";
+
+  // Normalize billing_mode to handle all backend variants:
+  //   "pay-per-use" (hyphen  — current backend format)
+  //   "pay_per_use" (underscore — older assumption)
+  //   "ppu"         (short form)
+  // Any casing is also accepted via .toLowerCase().
+  const _rawBillingMode = String(
+    subscriptionData?.billing_mode || "",
+  ).toLowerCase();
+  const _normalizedBillingMode = _rawBillingMode.replaceAll("_", "-");
+  const isPayPerUse =
+    _normalizedBillingMode === "pay-per-use" ||
+    _normalizedBillingMode === "ppu";
+
   const planNameLower = (subscriptionData?.plan_name || "").toLowerCase();
 
+  // Decision Support: available on Pro, Premium, or any Pay-Per-Use mode.
   const canGenerateDecisionSupportNow = Boolean(
     isPayPerUse || ["pro", "premium"].includes(planNameLower),
   );
@@ -1287,12 +1639,19 @@ const PatientProfile = () => {
   const shouldShowLockedDecisionSupport =
     !hasExistingDecisionSupportData && !canAccessDecisionSupportNow;
 
+  // DiagnoBot: available on Premium or any Pay-Per-Use mode.
+  // canUseChatbotNow derives from the normalized isPayPerUse above,
+  // so "pay-per-use", "pay_per_use", and "ppu" all unlock the chatbot.
   const canUseChatbotNow = Boolean(isPayPerUse || planNameLower === "premium");
   const hasExistingChatbotAccessOrData = Boolean(
     Array.isArray(chatMessages) && chatMessages.length > 1,
   );
+  // Show locked overlay only when the user genuinely cannot access DiagnoBot.
+  // If canUseChatbotNow is true (PPU or Premium), never show the lock.
   const shouldShowLockedChatbot =
-    !hasExistingChatbotAccessOrData && !canUseChatbotNow;
+    !canUseChatbotNow && !hasExistingChatbotAccessOrData;
+
+
 
   const openLogoutModal = () => setIsLogoutModalOpen(true);
   const closeLogoutModal = () => setIsLogoutModalOpen(false);
@@ -1471,14 +1830,16 @@ const PatientProfile = () => {
     const editButton =
       document.querySelector(".pp-edit-file-btn") ||
       Array.from(document.querySelectorAll("button")).find((btn) =>
-        (btn.textContent || "").toLowerCase().includes("edit")
+        (btn.textContent || "").toLowerCase().includes("edit"),
       );
 
     if (!sidebar || !contentLayer || !patientPage || !header) {
       return;
     }
 
-    const parents = [contentLayer, patientPage, header.parentElement].filter(Boolean);
+    const parents = [contentLayer, patientPage, header.parentElement].filter(
+      Boolean,
+    );
 
     const original = {
       header: {
@@ -1496,9 +1857,9 @@ const PatientProfile = () => {
       },
       edit: editButton
         ? {
-          whiteSpace: editButton.style.whiteSpace,
-          flexShrink: editButton.style.flexShrink,
-        }
+            whiteSpace: editButton.style.whiteSpace,
+            flexShrink: editButton.style.flexShrink,
+          }
         : null,
       parents: parents.map((el) => ({
         el,
@@ -1533,7 +1894,7 @@ const PatientProfile = () => {
         });
 
         header.style.position = "sticky";
-        header.style.top = "70px";
+        header.style.top = "60px";
         header.style.boxSizing = "border-box";
         header.style.transition = "none";
         header.style.overflow = "visible";
@@ -1566,7 +1927,11 @@ const PatientProfile = () => {
 
     window.addEventListener("resize", apply);
 
-    const transitionEvents = ["transitionstart", "transitionrun", "transitionend"];
+    const transitionEvents = [
+      "transitionstart",
+      "transitionrun",
+      "transitionend",
+    ];
     [sidebar, contentLayer, patientPage].forEach((el) => {
       transitionEvents.forEach((ev) => el.addEventListener(ev, apply));
     });
@@ -1588,17 +1953,42 @@ const PatientProfile = () => {
         editButton.style.whiteSpace = original.edit.whiteSpace;
         editButton.style.flexShrink = original.edit.flexShrink;
       }
-      original.parents.forEach(({ el, overflow, overflowX, overflowY, contain, clipPath }) => {
-        if (el) {
-          el.style.overflow = overflow;
-          el.style.overflowX = overflowX;
-          el.style.overflowY = overflowY;
-          el.style.contain = contain;
-          el.style.clipPath = clipPath;
-        }
-      });
+      original.parents.forEach(
+        ({ el, overflow, overflowX, overflowY, contain, clipPath }) => {
+          if (el) {
+            el.style.overflow = overflow;
+            el.style.overflowX = overflowX;
+            el.style.overflowY = overflowY;
+            el.style.contain = contain;
+            el.style.clipPath = clipPath;
+          }
+        },
+      );
     };
   }, [isSidebarCollapsed]);
+
+  if (isUnauthorized) {
+    return <Unauthorized />;
+  }
+
+  if (notFound) {
+    return (
+      <div className="pp-scope patient-profile-page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: '#f8fafc', textAlign: 'center' }}>
+        <img src={diagnobotCryingImg} alt="Patient Not Found" style={{ width: '350px', height: 'auto', marginBottom: '24px' }} />
+        <h1 style={{ color: '#0A1C40', fontSize: '28px', fontWeight: 'bold', marginBottom: '12px', fontFamily: 'Inter, sans-serif' }}>Patient Not Found</h1>
+        <p style={{ color: '#4E5A73', fontSize: '16px', marginBottom: '32px', maxWidth: '400px', lineHeight: '1.5', fontFamily: 'Inter, sans-serif' }}>
+          The patient profile you are looking for does not exist or has been removed.
+        </p>
+        <button 
+          className="pp-edit-file-btn"
+          style={{ padding: '12px 24px', fontSize: '15px' }}
+          onClick={() => navigate('/patients')}
+        >
+          Back to Patients List
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="pp-scope patient-profile-page">
@@ -1666,18 +2056,7 @@ const PatientProfile = () => {
         }
       />
 
-      <div
-        className={`content-layer ${isSidebarCollapsed ? "collapsed" : ""}`}
-
-
-
-
-
-
-
-
-
-      >
+      <div className={`content-layer ${isSidebarCollapsed ? "collapsed" : ""}`}>
         <header className="patient-header pp-header">
           <div className="patient-identity">
             <div className="patient-main-info">
@@ -1689,12 +2068,12 @@ const PatientProfile = () => {
                   ? "NH"
                   : overviewData?.patientName
                     ? overviewData.patientName
-                      .split(" ")
-                      .filter(Boolean)
-                      .slice(0, 2)
-                      .map((w) => w[0])
-                      .join("")
-                      .toUpperCase()
+                        .split(" ")
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map((w) => w[0])
+                        .join("")
+                        .toUpperCase()
                     : "NH"}
               </div>
               <div className="patient-details" style={{ marginBottom: "0px" }}>
@@ -1722,23 +2101,10 @@ const PatientProfile = () => {
             <div className="header-actions">
               <button
                 className="pp-edit-file-btn"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                 onClick={() => {
-                  navigate(`/edit-patient/${patientId}`);
+                  navigate(`/edit-patient/${patientId}`, {
+                    state: { patientData: overviewData },
+                  });
                 }}
               >
                 Edit File
@@ -1749,25 +2115,15 @@ const PatientProfile = () => {
 
         <div className="container">
           <div className="tab-nav-wrapper">
-            {/* {showBack && (
+            {showBack && (
               <button
-                className="tab-scroll-btn"
+                className="pp-tab-scroll-btn"
                 onClick={() => scrollTabs("back")}
+                aria-label="Scroll left"
               >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="15 18 9 12 15 6" />
-                </svg>
+                <i className="bi bi-chevron-left"></i>
               </button>
-            )} */}
+            )}
 
             <nav
               className="tab-nav"
@@ -1812,29 +2168,20 @@ const PatientProfile = () => {
               </button>
             </nav>
 
-            {/* {showNext && (
+            {showNext && (
               <button
-                className="tab-scroll-btn"
+                className="pp-tab-scroll-btn"
                 onClick={() => scrollTabs("next")}
+                aria-label="Scroll right"
               >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
+                <i className="bi bi-chevron-right"></i>
               </button>
-            )} */}
+            )}
           </div>
           <div
-            className={`tab-content ${activeTab === "overview" ? "active" : ""
-              }`}
+            className={`tab-content ${
+              activeTab === "overview" ? "active" : ""
+            }`}
             id="overview"
           >
             <div className="overview-layout">
@@ -2481,8 +2828,10 @@ const PatientProfile = () => {
                     highAlerts.map((alertObj) => {
                       const noteId = alertObj.id;
                       const alertInsight = alertObj.insight;
-                      const isManualNote = alertObj.is_manual === "Doctor Note";
-                      const alertTitle = alertObj.title || alertObj.is_manual;
+                      const isManualNote =
+                        alertObj.is_ai_generated === "Doctor Note";
+                      const alertTitle =
+                        alertObj.title || alertObj.is_ai_generated;
 
                       return (
                         <div className="note-item high-priority" key={noteId}>
@@ -2519,17 +2868,62 @@ const PatientProfile = () => {
                                 }
                                 autoFocus
                                 dir={getDirection(editingNoteText)}
-                                style={{ textAlign: getTextAlign(editingNoteText) }}
+                                style={{
+                                  textAlign: getTextAlign(editingNoteText),
+                                }}
                               />
                               <div className="pp-edit-footer-row">
                                 <div className="note-footer">
-                                  <div className="note-meta-stack">
+                                  <div className="note-meta-stack" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                                     <span className="note-date">
-                                      {!isManualNote && (
-                                        <>{alertObj.is_manual} · </>
-                                      )}
+                                      <>{alertObj.is_ai_generated} · </>
                                       {alertObj.date}
                                     </span>
+                                    <button
+                                      className={`pp-record-btn ${isRecording && recordingNoteId === noteId ? "recording" : ""}`}
+                                      onClick={() => {
+                                        if (isRecording && recordingNoteId !== noteId) {
+                                          stopRecording();
+                                        }
+                                        setRecordingNoteId(noteId);
+                                        toggleRecording();
+                                      }}
+                                      disabled={isConnecting && recordingNoteId !== noteId}
+                                    >
+                                      {isConnecting && recordingNoteId === noteId ? (
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="spin-icon">
+                                          <line x1="12" y1="2" x2="12" y2="6"></line>
+                                          <line x1="12" y1="18" x2="12" y2="22"></line>
+                                          <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                                          <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                                          <line x1="2" y1="12" x2="6" y2="12"></line>
+                                          <line x1="18" y1="12" x2="22" y2="12"></line>
+                                          <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                                          <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                                        </svg>
+                                      ) : isRecording && recordingNoteId === noteId ? (
+                                        <span style={{ width: "10px", height: "10px", backgroundColor: "#FF5C5C", borderRadius: "2px", display: "inline-block", animation: "pulseMicIcon 1.5s infinite", flexShrink: 0 }}></span>
+                                      ) : (
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                                          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                          <line x1="12" y1="19" x2="12" y2="23"></line>
+                                          <line x1="8" y1="23" x2="16" y2="23"></line>
+                                        </svg>
+                                      )}
+                                      {isConnecting && recordingNoteId === noteId ? (
+                                        <span>Connecting...</span>
+                                      ) : isRecording && recordingNoteId === noteId ? (
+                                        <div style={{ display: "flex", alignItems: "center", gap: "4px", height: "14px" }}>
+                                          <span className="voice-bar" style={{ width: "3px", backgroundColor: "#2A66FF", borderRadius: "2px", animation: "miniSoundWave 1.2s ease-in-out infinite alternate", animationDelay: "0.1s" }}></span>
+                                          <span className="voice-bar" style={{ width: "3px", backgroundColor: "#2A66FF", borderRadius: "2px", animation: "miniSoundWave 1.2s ease-in-out infinite alternate", animationDelay: "0.3s" }}></span>
+                                          <span className="voice-bar" style={{ width: "3px", backgroundColor: "#2A66FF", borderRadius: "2px", animation: "miniSoundWave 1.2s ease-in-out infinite alternate", animationDelay: "0.5s" }}></span>
+                                          <span className="voice-bar" style={{ width: "3px", backgroundColor: "#2A66FF", borderRadius: "2px", animation: "miniSoundWave 1.2s ease-in-out infinite alternate", animationDelay: "0.2s" }}></span>
+                                        </div>
+                                      ) : (
+                                        <span>Record</span>
+                                      )}
+                                    </button>
                                     {!isManualNote && (
                                       <button
                                         className="pp-evidence-icon-btn"
@@ -2596,9 +2990,7 @@ const PatientProfile = () => {
                             <div className="note-footer">
                               <div className="note-meta-stack">
                                 <span className="note-date">
-                                  {!isManualNote && (
-                                    <>{alertObj.is_manual} · </>
-                                  )}
+                                  <>{alertObj.is_ai_generated} · </>
                                   {alertObj.date}
                                 </span>
                                 {!isManualNote && (
@@ -2662,7 +3054,7 @@ const PatientProfile = () => {
                   {/* Doctor added notes */}
                   {newNotes.high.map((note) => (
                     <div className="note-item high-priority" key={note.id}>
-                      <div style={{ position: 'relative' }}>
+                      <div style={{ position: "relative" }}>
                         <textarea
                           className="pp-note-edit-textarea"
                           value={newNoteTexts[note.id] || ""}
@@ -2675,12 +3067,23 @@ const PatientProfile = () => {
                           autoFocus
                           placeholder="Type your note here..."
                           dir={getDirection(newNoteTexts[note.id] || "")}
-                          style={{ textAlign: getTextAlign(newNoteTexts[note.id] || "") }}
+                          style={{
+                            textAlign: getTextAlign(
+                              newNoteTexts[note.id] || "",
+                            ),
+                          }}
                         />
                       </div>
                       <div className="pp-edit-footer-row">
                         <div className="note-footer">
-                          <div className="note-meta-stack" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div
+                            className="note-meta-stack"
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "12px",
+                            }}
+                          >
                             <span className="note-date">
                               {new Date().toLocaleDateString("en-US", {
                                 month: "short",
@@ -2689,31 +3092,85 @@ const PatientProfile = () => {
                               })}
                             </span>
                             <button
-                              className={`pp-record-btn ${isRecording && recordingNoteId === note.id ? 'recording' : ''}`}
+                              className={`pp-record-btn ${isRecording && recordingNoteId === note.id ? "recording" : ""}`}
                               onClick={() => {
-                                if (isRecording && recordingNoteId !== note.id) {
+                                if (
+                                  isRecording &&
+                                  recordingNoteId !== note.id
+                                ) {
                                   stopRecording();
                                 }
                                 setRecordingNoteId(note.id);
                                 toggleRecording();
                               }}
-                              disabled={isConnecting && recordingNoteId !== note.id}
+                              disabled={
+                                isConnecting && recordingNoteId !== note.id
+                              }
                             >
                               {isConnecting && recordingNoteId === note.id ? (
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="spin-icon">
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="spin-icon"
+                                >
                                   <line x1="12" y1="2" x2="12" y2="6"></line>
                                   <line x1="12" y1="18" x2="12" y2="22"></line>
-                                  <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
-                                  <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                                  <line
+                                    x1="4.93"
+                                    y1="4.93"
+                                    x2="7.76"
+                                    y2="7.76"
+                                  ></line>
+                                  <line
+                                    x1="16.24"
+                                    y1="16.24"
+                                    x2="19.07"
+                                    y2="19.07"
+                                  ></line>
                                   <line x1="2" y1="12" x2="6" y2="12"></line>
                                   <line x1="18" y1="12" x2="22" y2="12"></line>
-                                  <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
-                                  <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                                  <line
+                                    x1="4.93"
+                                    y1="19.07"
+                                    x2="7.76"
+                                    y2="16.24"
+                                  ></line>
+                                  <line
+                                    x1="16.24"
+                                    y1="7.76"
+                                    x2="19.07"
+                                    y2="4.93"
+                                  ></line>
                                 </svg>
                               ) : isRecording && recordingNoteId === note.id ? (
-                                <span style={{ width: '10px', height: '10px', backgroundColor: '#FF5C5C', borderRadius: '2px', display: 'inline-block', animation: 'pulseMicIcon 1.5s infinite', flexShrink: 0 }}></span>
+                                <span
+                                  style={{
+                                    width: "10px",
+                                    height: "10px",
+                                    backgroundColor: "#FF5C5C",
+                                    borderRadius: "2px",
+                                    display: "inline-block",
+                                    animation: "pulseMicIcon 1.5s infinite",
+                                    flexShrink: 0,
+                                  }}
+                                ></span>
                               ) : (
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
                                   <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
                                   <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
                                   <line x1="12" y1="19" x2="12" y2="23"></line>
@@ -2723,11 +3180,58 @@ const PatientProfile = () => {
                               {isConnecting && recordingNoteId === note.id ? (
                                 <span>Connecting...</span>
                               ) : isRecording && recordingNoteId === note.id ? (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', height: '14px' }}>
-                                  <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.1s' }}></span>
-                                  <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.3s' }}></span>
-                                  <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.5s' }}></span>
-                                  <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.2s' }}></span>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "4px",
+                                    height: "14px",
+                                  }}
+                                >
+                                  <span
+                                    className="voice-bar"
+                                    style={{
+                                      width: "3px",
+                                      backgroundColor: "#2A66FF",
+                                      borderRadius: "2px",
+                                      animation:
+                                        "miniSoundWave 1.2s ease-in-out infinite alternate",
+                                      animationDelay: "0.1s",
+                                    }}
+                                  ></span>
+                                  <span
+                                    className="voice-bar"
+                                    style={{
+                                      width: "3px",
+                                      backgroundColor: "#2A66FF",
+                                      borderRadius: "2px",
+                                      animation:
+                                        "miniSoundWave 1.2s ease-in-out infinite alternate",
+                                      animationDelay: "0.3s",
+                                    }}
+                                  ></span>
+                                  <span
+                                    className="voice-bar"
+                                    style={{
+                                      width: "3px",
+                                      backgroundColor: "#2A66FF",
+                                      borderRadius: "2px",
+                                      animation:
+                                        "miniSoundWave 1.2s ease-in-out infinite alternate",
+                                      animationDelay: "0.5s",
+                                    }}
+                                  ></span>
+                                  <span
+                                    className="voice-bar"
+                                    style={{
+                                      width: "3px",
+                                      backgroundColor: "#2A66FF",
+                                      borderRadius: "2px",
+                                      animation:
+                                        "miniSoundWave 1.2s ease-in-out infinite alternate",
+                                      animationDelay: "0.2s",
+                                    }}
+                                  ></span>
                                 </div>
                               ) : (
                                 <span>Record</span>
@@ -2857,7 +3361,8 @@ const PatientProfile = () => {
                   ) : mediumAlerts?.length > 0 ? (
                     // عرض البيانات الحقيقية من السيرفر
                     mediumAlerts.map((alertObj) => {
-                      const isManualNote = alertObj.is_manual === "Doctor Note";
+                      const isManualNote =
+                        alertObj.is_ai_generated === "Doctor Note";
                       return (
                         <div
                           className="note-item medium-priority"
@@ -2896,17 +3401,62 @@ const PatientProfile = () => {
                                 }
                                 autoFocus
                                 dir={getDirection(editingNoteText)}
-                                style={{ textAlign: getTextAlign(editingNoteText) }}
+                                style={{
+                                  textAlign: getTextAlign(editingNoteText),
+                                }}
                               />
                               <div className="pp-edit-footer-row">
                                 <div className="note-footer">
-                                  <div className="note-meta-stack">
+                                  <div className="note-meta-stack" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                                     <span className="note-date">
-                                      {!isManualNote && (
-                                        <>{alertObj.is_manual} · </>
-                                      )}
+                                      <>{alertObj.is_ai_generated} · </>
                                       {alertObj.date}
                                     </span>
+                                    <button
+                                      className={`pp-record-btn ${isRecording && recordingNoteId === alertObj.id ? "recording" : ""}`}
+                                      onClick={() => {
+                                        if (isRecording && recordingNoteId !== alertObj.id) {
+                                          stopRecording();
+                                        }
+                                        setRecordingNoteId(alertObj.id);
+                                        toggleRecording();
+                                      }}
+                                      disabled={isConnecting && recordingNoteId !== alertObj.id}
+                                    >
+                                      {isConnecting && recordingNoteId === alertObj.id ? (
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="spin-icon">
+                                          <line x1="12" y1="2" x2="12" y2="6"></line>
+                                          <line x1="12" y1="18" x2="12" y2="22"></line>
+                                          <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                                          <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                                          <line x1="2" y1="12" x2="6" y2="12"></line>
+                                          <line x1="18" y1="12" x2="22" y2="12"></line>
+                                          <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                                          <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                                        </svg>
+                                      ) : isRecording && recordingNoteId === alertObj.id ? (
+                                        <span style={{ width: "10px", height: "10px", backgroundColor: "#FF5C5C", borderRadius: "2px", display: "inline-block", animation: "pulseMicIcon 1.5s infinite", flexShrink: 0 }}></span>
+                                      ) : (
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                                          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                          <line x1="12" y1="19" x2="12" y2="23"></line>
+                                          <line x1="8" y1="23" x2="16" y2="23"></line>
+                                        </svg>
+                                      )}
+                                      {isConnecting && recordingNoteId === alertObj.id ? (
+                                        <span>Connecting...</span>
+                                      ) : isRecording && recordingNoteId === alertObj.id ? (
+                                        <div style={{ display: "flex", alignItems: "center", gap: "4px", height: "14px" }}>
+                                          <span className="voice-bar" style={{ width: "3px", backgroundColor: "#2A66FF", borderRadius: "2px", animation: "miniSoundWave 1.2s ease-in-out infinite alternate", animationDelay: "0.1s" }}></span>
+                                          <span className="voice-bar" style={{ width: "3px", backgroundColor: "#2A66FF", borderRadius: "2px", animation: "miniSoundWave 1.2s ease-in-out infinite alternate", animationDelay: "0.3s" }}></span>
+                                          <span className="voice-bar" style={{ width: "3px", backgroundColor: "#2A66FF", borderRadius: "2px", animation: "miniSoundWave 1.2s ease-in-out infinite alternate", animationDelay: "0.5s" }}></span>
+                                          <span className="voice-bar" style={{ width: "3px", backgroundColor: "#2A66FF", borderRadius: "2px", animation: "miniSoundWave 1.2s ease-in-out infinite alternate", animationDelay: "0.2s" }}></span>
+                                        </div>
+                                      ) : (
+                                        <span>Record</span>
+                                      )}
+                                    </button>
                                     {!isManualNote && (
                                       <button
                                         className="pp-evidence-icon-btn"
@@ -2967,7 +3517,7 @@ const PatientProfile = () => {
                             <div className="note-text">
                               {!isManualNote && (
                                 <strong>
-                                  {alertObj.title || alertObj.is_manual}:
+                                  {alertObj.title || alertObj.is_ai_generated}:
                                 </strong>
                               )}{" "}
                               {alertObj.insight}
@@ -2977,9 +3527,7 @@ const PatientProfile = () => {
                             <div className="note-footer">
                               <div className="note-meta-stack">
                                 <span className="note-date">
-                                  {!isManualNote && (
-                                    <>{alertObj.is_manual} · </>
-                                  )}
+                                  <>{alertObj.is_ai_generated} · </>
                                   {alertObj.date}
                                 </span>
                                 {!isManualNote && (
@@ -3046,7 +3594,7 @@ const PatientProfile = () => {
                   {/* Doctor added notes */}
                   {newNotes.medium.map((note) => (
                     <div className="note-item medium-priority" key={note.id}>
-                      <div style={{ position: 'relative' }}>
+                      <div style={{ position: "relative" }}>
                         <textarea
                           className="pp-note-edit-textarea"
                           value={newNoteTexts[note.id] || ""}
@@ -3059,12 +3607,23 @@ const PatientProfile = () => {
                           autoFocus
                           placeholder="Type your note here..."
                           dir={getDirection(newNoteTexts[note.id] || "")}
-                          style={{ textAlign: getTextAlign(newNoteTexts[note.id] || "") }}
+                          style={{
+                            textAlign: getTextAlign(
+                              newNoteTexts[note.id] || "",
+                            ),
+                          }}
                         />
                       </div>
                       <div className="pp-edit-footer-row">
                         <div className="note-footer">
-                          <div className="note-meta-stack" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div
+                            className="note-meta-stack"
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "12px",
+                            }}
+                          >
                             <span className="note-date">
                               {new Date().toLocaleDateString("en-US", {
                                 month: "short",
@@ -3073,31 +3632,85 @@ const PatientProfile = () => {
                               })}
                             </span>
                             <button
-                              className={`pp-record-btn ${isRecording && recordingNoteId === note.id ? 'recording' : ''}`}
+                              className={`pp-record-btn ${isRecording && recordingNoteId === note.id ? "recording" : ""}`}
                               onClick={() => {
-                                if (isRecording && recordingNoteId !== note.id) {
+                                if (
+                                  isRecording &&
+                                  recordingNoteId !== note.id
+                                ) {
                                   stopRecording();
                                 }
                                 setRecordingNoteId(note.id);
                                 toggleRecording();
                               }}
-                              disabled={isConnecting && recordingNoteId !== note.id}
+                              disabled={
+                                isConnecting && recordingNoteId !== note.id
+                              }
                             >
                               {isConnecting && recordingNoteId === note.id ? (
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="spin-icon">
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="spin-icon"
+                                >
                                   <line x1="12" y1="2" x2="12" y2="6"></line>
                                   <line x1="12" y1="18" x2="12" y2="22"></line>
-                                  <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
-                                  <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                                  <line
+                                    x1="4.93"
+                                    y1="4.93"
+                                    x2="7.76"
+                                    y2="7.76"
+                                  ></line>
+                                  <line
+                                    x1="16.24"
+                                    y1="16.24"
+                                    x2="19.07"
+                                    y2="19.07"
+                                  ></line>
                                   <line x1="2" y1="12" x2="6" y2="12"></line>
                                   <line x1="18" y1="12" x2="22" y2="12"></line>
-                                  <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
-                                  <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                                  <line
+                                    x1="4.93"
+                                    y1="19.07"
+                                    x2="7.76"
+                                    y2="16.24"
+                                  ></line>
+                                  <line
+                                    x1="16.24"
+                                    y1="7.76"
+                                    x2="19.07"
+                                    y2="4.93"
+                                  ></line>
                                 </svg>
                               ) : isRecording && recordingNoteId === note.id ? (
-                                <span style={{ width: '10px', height: '10px', backgroundColor: '#FF5C5C', borderRadius: '2px', display: 'inline-block', animation: 'pulseMicIcon 1.5s infinite', flexShrink: 0 }}></span>
+                                <span
+                                  style={{
+                                    width: "10px",
+                                    height: "10px",
+                                    backgroundColor: "#FF5C5C",
+                                    borderRadius: "2px",
+                                    display: "inline-block",
+                                    animation: "pulseMicIcon 1.5s infinite",
+                                    flexShrink: 0,
+                                  }}
+                                ></span>
                               ) : (
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
                                   <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
                                   <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
                                   <line x1="12" y1="19" x2="12" y2="23"></line>
@@ -3107,11 +3720,58 @@ const PatientProfile = () => {
                               {isConnecting && recordingNoteId === note.id ? (
                                 <span>Connecting...</span>
                               ) : isRecording && recordingNoteId === note.id ? (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', height: '14px' }}>
-                                  <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.1s' }}></span>
-                                  <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.3s' }}></span>
-                                  <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.5s' }}></span>
-                                  <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.2s' }}></span>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "4px",
+                                    height: "14px",
+                                  }}
+                                >
+                                  <span
+                                    className="voice-bar"
+                                    style={{
+                                      width: "3px",
+                                      backgroundColor: "#2A66FF",
+                                      borderRadius: "2px",
+                                      animation:
+                                        "miniSoundWave 1.2s ease-in-out infinite alternate",
+                                      animationDelay: "0.1s",
+                                    }}
+                                  ></span>
+                                  <span
+                                    className="voice-bar"
+                                    style={{
+                                      width: "3px",
+                                      backgroundColor: "#2A66FF",
+                                      borderRadius: "2px",
+                                      animation:
+                                        "miniSoundWave 1.2s ease-in-out infinite alternate",
+                                      animationDelay: "0.3s",
+                                    }}
+                                  ></span>
+                                  <span
+                                    className="voice-bar"
+                                    style={{
+                                      width: "3px",
+                                      backgroundColor: "#2A66FF",
+                                      borderRadius: "2px",
+                                      animation:
+                                        "miniSoundWave 1.2s ease-in-out infinite alternate",
+                                      animationDelay: "0.5s",
+                                    }}
+                                  ></span>
+                                  <span
+                                    className="voice-bar"
+                                    style={{
+                                      width: "3px",
+                                      backgroundColor: "#2A66FF",
+                                      borderRadius: "2px",
+                                      animation:
+                                        "miniSoundWave 1.2s ease-in-out infinite alternate",
+                                      animationDelay: "0.2s",
+                                    }}
+                                  ></span>
                                 </div>
                               ) : (
                                 <span>Record</span>
@@ -3239,7 +3899,8 @@ const PatientProfile = () => {
                   ) : lowAlerts?.length > 0 ? (
                     // عرض بيانات السيرفر لـ Low Priority
                     lowAlerts.map((alertObj) => {
-                      const isManualNote = alertObj.is_manual === "Doctor Note";
+                      const isManualNote =
+                        alertObj.is_ai_generated === "Doctor Note";
                       return (
                         <div
                           className="note-item low-priority"
@@ -3279,14 +3940,61 @@ const PatientProfile = () => {
                                 }
                                 autoFocus
                                 dir={getDirection(editingNoteText)}
-                                style={{ textAlign: getTextAlign(editingNoteText) }}
+                                style={{
+                                  textAlign: getTextAlign(editingNoteText),
+                                }}
                               />
                               <div className="pp-edit-footer-row">
                                 <div className="note-footer">
-                                  <div className="note-meta-stack">
+                                  <div className="note-meta-stack" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                                     <span className="note-date">
                                       {alertObj.date}
                                     </span>
+                                    <button
+                                      className={`pp-record-btn ${isRecording && recordingNoteId === alertObj.id ? "recording" : ""}`}
+                                      onClick={() => {
+                                        if (isRecording && recordingNoteId !== alertObj.id) {
+                                          stopRecording();
+                                        }
+                                        setRecordingNoteId(alertObj.id);
+                                        toggleRecording();
+                                      }}
+                                      disabled={isConnecting && recordingNoteId !== alertObj.id}
+                                    >
+                                      {isConnecting && recordingNoteId === alertObj.id ? (
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="spin-icon">
+                                          <line x1="12" y1="2" x2="12" y2="6"></line>
+                                          <line x1="12" y1="18" x2="12" y2="22"></line>
+                                          <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                                          <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                                          <line x1="2" y1="12" x2="6" y2="12"></line>
+                                          <line x1="18" y1="12" x2="22" y2="12"></line>
+                                          <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                                          <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                                        </svg>
+                                      ) : isRecording && recordingNoteId === alertObj.id ? (
+                                        <span style={{ width: "10px", height: "10px", backgroundColor: "#FF5C5C", borderRadius: "2px", display: "inline-block", animation: "pulseMicIcon 1.5s infinite", flexShrink: 0 }}></span>
+                                      ) : (
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                                          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                          <line x1="12" y1="19" x2="12" y2="23"></line>
+                                          <line x1="8" y1="23" x2="16" y2="23"></line>
+                                        </svg>
+                                      )}
+                                      {isConnecting && recordingNoteId === alertObj.id ? (
+                                        <span>Connecting...</span>
+                                      ) : isRecording && recordingNoteId === alertObj.id ? (
+                                        <div style={{ display: "flex", alignItems: "center", gap: "4px", height: "14px" }}>
+                                          <span className="voice-bar" style={{ width: "3px", backgroundColor: "#2A66FF", borderRadius: "2px", animation: "miniSoundWave 1.2s ease-in-out infinite alternate", animationDelay: "0.1s" }}></span>
+                                          <span className="voice-bar" style={{ width: "3px", backgroundColor: "#2A66FF", borderRadius: "2px", animation: "miniSoundWave 1.2s ease-in-out infinite alternate", animationDelay: "0.3s" }}></span>
+                                          <span className="voice-bar" style={{ width: "3px", backgroundColor: "#2A66FF", borderRadius: "2px", animation: "miniSoundWave 1.2s ease-in-out infinite alternate", animationDelay: "0.5s" }}></span>
+                                          <span className="voice-bar" style={{ width: "3px", backgroundColor: "#2A66FF", borderRadius: "2px", animation: "miniSoundWave 1.2s ease-in-out infinite alternate", animationDelay: "0.2s" }}></span>
+                                        </div>
+                                      ) : (
+                                        <span>Record</span>
+                                      )}
+                                    </button>
                                   </div>
                                 </div>
                                 <div className="pp-note-save-row">
@@ -3388,7 +4096,7 @@ const PatientProfile = () => {
                   {/* Doctor added notes */}
                   {newNotes.low.map((note) => (
                     <div className="note-item low-priority" key={note.id}>
-                      <div style={{ position: 'relative' }}>
+                      <div style={{ position: "relative" }}>
                         <textarea
                           className="pp-note-edit-textarea"
                           value={newNoteTexts[note.id] || ""}
@@ -3401,12 +4109,23 @@ const PatientProfile = () => {
                           autoFocus
                           placeholder="Type your note here..."
                           dir={getDirection(newNoteTexts[note.id] || "")}
-                          style={{ textAlign: getTextAlign(newNoteTexts[note.id] || "") }}
+                          style={{
+                            textAlign: getTextAlign(
+                              newNoteTexts[note.id] || "",
+                            ),
+                          }}
                         />
                       </div>
                       <div className="pp-edit-footer-row">
                         <div className="note-footer">
-                          <div className="note-meta-stack" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div
+                            className="note-meta-stack"
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "12px",
+                            }}
+                          >
                             <span className="note-date">
                               {new Date().toLocaleDateString("en-US", {
                                 month: "short",
@@ -3415,31 +4134,85 @@ const PatientProfile = () => {
                               })}
                             </span>
                             <button
-                              className={`pp-record-btn ${isRecording && recordingNoteId === note.id ? 'recording' : ''}`}
+                              className={`pp-record-btn ${isRecording && recordingNoteId === note.id ? "recording" : ""}`}
                               onClick={() => {
-                                if (isRecording && recordingNoteId !== note.id) {
+                                if (
+                                  isRecording &&
+                                  recordingNoteId !== note.id
+                                ) {
                                   stopRecording();
                                 }
                                 setRecordingNoteId(note.id);
                                 toggleRecording();
                               }}
-                              disabled={isConnecting && recordingNoteId !== note.id}
+                              disabled={
+                                isConnecting && recordingNoteId !== note.id
+                              }
                             >
                               {isConnecting && recordingNoteId === note.id ? (
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="spin-icon">
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="spin-icon"
+                                >
                                   <line x1="12" y1="2" x2="12" y2="6"></line>
                                   <line x1="12" y1="18" x2="12" y2="22"></line>
-                                  <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
-                                  <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                                  <line
+                                    x1="4.93"
+                                    y1="4.93"
+                                    x2="7.76"
+                                    y2="7.76"
+                                  ></line>
+                                  <line
+                                    x1="16.24"
+                                    y1="16.24"
+                                    x2="19.07"
+                                    y2="19.07"
+                                  ></line>
                                   <line x1="2" y1="12" x2="6" y2="12"></line>
                                   <line x1="18" y1="12" x2="22" y2="12"></line>
-                                  <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
-                                  <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                                  <line
+                                    x1="4.93"
+                                    y1="19.07"
+                                    x2="7.76"
+                                    y2="16.24"
+                                  ></line>
+                                  <line
+                                    x1="16.24"
+                                    y1="7.76"
+                                    x2="19.07"
+                                    y2="4.93"
+                                  ></line>
                                 </svg>
                               ) : isRecording && recordingNoteId === note.id ? (
-                                <span style={{ width: '10px', height: '10px', backgroundColor: '#FF5C5C', borderRadius: '2px', display: 'inline-block', animation: 'pulseMicIcon 1.5s infinite', flexShrink: 0 }}></span>
+                                <span
+                                  style={{
+                                    width: "10px",
+                                    height: "10px",
+                                    backgroundColor: "#FF5C5C",
+                                    borderRadius: "2px",
+                                    display: "inline-block",
+                                    animation: "pulseMicIcon 1.5s infinite",
+                                    flexShrink: 0,
+                                  }}
+                                ></span>
                               ) : (
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
                                   <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
                                   <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
                                   <line x1="12" y1="19" x2="12" y2="23"></line>
@@ -3449,11 +4222,58 @@ const PatientProfile = () => {
                               {isConnecting && recordingNoteId === note.id ? (
                                 <span>Connecting...</span>
                               ) : isRecording && recordingNoteId === note.id ? (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', height: '14px' }}>
-                                  <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.1s' }}></span>
-                                  <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.3s' }}></span>
-                                  <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.5s' }}></span>
-                                  <span className="voice-bar" style={{ width: '3px', backgroundColor: '#2A66FF', borderRadius: '2px', animation: 'miniSoundWave 1.2s ease-in-out infinite alternate', animationDelay: '0.2s' }}></span>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "4px",
+                                    height: "14px",
+                                  }}
+                                >
+                                  <span
+                                    className="voice-bar"
+                                    style={{
+                                      width: "3px",
+                                      backgroundColor: "#2A66FF",
+                                      borderRadius: "2px",
+                                      animation:
+                                        "miniSoundWave 1.2s ease-in-out infinite alternate",
+                                      animationDelay: "0.1s",
+                                    }}
+                                  ></span>
+                                  <span
+                                    className="voice-bar"
+                                    style={{
+                                      width: "3px",
+                                      backgroundColor: "#2A66FF",
+                                      borderRadius: "2px",
+                                      animation:
+                                        "miniSoundWave 1.2s ease-in-out infinite alternate",
+                                      animationDelay: "0.3s",
+                                    }}
+                                  ></span>
+                                  <span
+                                    className="voice-bar"
+                                    style={{
+                                      width: "3px",
+                                      backgroundColor: "#2A66FF",
+                                      borderRadius: "2px",
+                                      animation:
+                                        "miniSoundWave 1.2s ease-in-out infinite alternate",
+                                      animationDelay: "0.5s",
+                                    }}
+                                  ></span>
+                                  <span
+                                    className="voice-bar"
+                                    style={{
+                                      width: "3px",
+                                      backgroundColor: "#2A66FF",
+                                      borderRadius: "2px",
+                                      animation:
+                                        "miniSoundWave 1.2s ease-in-out infinite alternate",
+                                      animationDelay: "0.2s",
+                                    }}
+                                  ></span>
                                 </div>
                               ) : (
                                 <span>Record</span>
@@ -3485,8 +4305,9 @@ const PatientProfile = () => {
           </div>
 
           <div
-            className={`tab-content ${activeTab === "comparative" ? "active" : ""
-              }`}
+            className={`tab-content ${
+              activeTab === "comparative" ? "active" : ""
+            }`}
             id="comparative"
           >
             <div className="card">
@@ -4268,30 +5089,79 @@ const PatientProfile = () => {
                 comparativeLoadedFor !== null &&
                 comparativeData.length === 0 && (
                   <div style={{ textAlign: "center", padding: "64px 24px" }}>
-                    <div style={{ fontSize: "48px", marginBottom: "16px" }}>
-                      📊
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        marginBottom: "20px",
+                      }}
+                    >
+                      <svg
+                        width="56"
+                        height="56"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#8A94A6"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        style={{ opacity: 0.6 }}
+                      >
+                        <line x1="3" y1="3" x2="3" y2="21" />
+                        <line x1="3" y1="21" x2="21" y2="21" />
+                        <polyline points="7 16 11 11 15 14 20 7" />
+                        <circle
+                          cx="20"
+                          cy="7"
+                          r="1.5"
+                          fill="#8A94A6"
+                          stroke="none"
+                        />
+                        <circle
+                          cx="15"
+                          cy="14"
+                          r="1.5"
+                          fill="#8A94A6"
+                          stroke="none"
+                        />
+                        <circle
+                          cx="11"
+                          cy="11"
+                          r="1.5"
+                          fill="#8A94A6"
+                          stroke="none"
+                        />
+                        <circle
+                          cx="7"
+                          cy="16"
+                          r="1.5"
+                          fill="#8A94A6"
+                          stroke="none"
+                        />
+                      </svg>
                     </div>
                     <h3
                       style={{
                         fontSize: "17px",
                         fontWeight: 700,
-                        color: "#0E1A34",
-                        marginBottom: "8px",
+                        color: "var(--dm-text-primary, #0E1A34)",
+                        marginBottom: "12px",
                       }}
                     >
-                      No Analysis Data Available
+                      No Comparative Analysis Data Available
                     </h3>
                     <p
                       style={{
                         fontSize: "14px",
-                        color: "#8A94A6",
-                        maxWidth: "380px",
+                        lineHeight: "1.5",
+                        color: "var(--dm-text-muted, #8A94A6)",
+                        maxWidth: "400px",
                         margin: "0 auto",
                       }}
                     >
-                      No comparative analysis data has been generated for this
-                      patient yet. Add lab reports across multiple visits to see
-                      trend charts here.
+                      Comparative analysis data has not been generated for this
+                      patient yet. Add lab reports across multiple visits to
+                      view trend charts and comparisons here.
                     </p>
                   </div>
                 )}
@@ -4578,8 +5448,8 @@ const PatientProfile = () => {
                                         cy={dot.y}
                                         r={
                                           chartTooltip.visible &&
-                                            chartTooltip.testIdx === testIdx &&
-                                            chartTooltip.pointIdx === di
+                                          chartTooltip.testIdx === testIdx &&
+                                          chartTooltip.pointIdx === di
                                             ? "6"
                                             : "4"
                                         }
@@ -4607,7 +5477,8 @@ const PatientProfile = () => {
                                         transform: "translateX(-50%)",
                                         background: "var(--dm-bg-card)",
                                         backdropFilter: "blur(8px)",
-                                        border: "1px solid var(--dm-border-color)",
+                                        border:
+                                          "1px solid var(--dm-border-color)",
                                         color: "var(--dm-text-primary)",
                                         padding: "10px 14px",
                                         borderRadius: "12px",
@@ -4652,7 +5523,7 @@ const PatientProfile = () => {
                                             letterSpacing: "0.5px",
                                             color:
                                               chartTooltip.status.toLowerCase() ===
-                                                "critical"
+                                              "critical"
                                                 ? "var(--status-critical-text)"
                                                 : "var(--status-stable-text)",
                                           }}
@@ -4675,13 +5546,13 @@ const PatientProfile = () => {
                                           borderRight: "6px solid transparent",
                                           ...(chartTooltip.y < 80
                                             ? {
-                                              borderBottom:
-                                                "6px solid var(--dm-bg-card)",
-                                            }
+                                                borderBottom:
+                                                  "6px solid var(--dm-bg-card)",
+                                              }
                                             : {
-                                              borderTop:
-                                                "6px solid var(--dm-bg-card)",
-                                            }),
+                                                borderTop:
+                                                  "6px solid var(--dm-bg-card)",
+                                              }),
                                         }}
                                       />
                                     </div>
@@ -4734,8 +5605,9 @@ const PatientProfile = () => {
 
           {/* Decision Support Tab */}
           <div
-            className={`tab-content ${activeTab === "decision" ? "active" : ""
-              }`}
+            className={`tab-content ${
+              activeTab === "decision" ? "active" : ""
+            }`}
             id="decision"
           >
             <div className="card">
@@ -4746,8 +5618,8 @@ const PatientProfile = () => {
 
               {/* Priority: sub-loading/generating → locked → ds-loading → error → empty → data */}
               {isSubLoading ||
-                decisionSupportLoading ||
-                isGeneratingDecisionSupport ? (
+              decisionSupportLoading ||
+              isGeneratingDecisionSupport ? (
                 <div className="likelihood-stack">
                   {/* Card 1 */}
                   <div
@@ -5105,7 +5977,7 @@ const PatientProfile = () => {
                     onTertiary={
                       planNameLower === "basic"
                         ? () =>
-                          initiateUpgrade("Pay-Per-Use", "ppu", "decision")
+                            initiateUpgrade("Pay-Per-Use", "ppu", "decision")
                         : null
                     }
                   />
@@ -5409,22 +6281,116 @@ const PatientProfile = () => {
 
               {/* Data */}
               {!activitiesError && activities.length > 0 && (
-                <div
-                  className="activity-timeline"
-                  style={{
-                    opacity: activitiesLoading ? 0.6 : 1,
-                    transition: "opacity 0.2s",
-                  }}
-                >
-                  {activities.map((activity) => (
-                    <div className="activity-item" key={activity.id}>
-                      <div className="activity-text">{activity.message}</div>
-                      <div className="activity-time">
-                        {activity.time_ago || activity.created_at}
+                <>
+                  <div
+                    className="activity-timeline"
+                    style={{
+                      opacity: activitiesLoading ? 0.6 : 1,
+                      transition: "opacity 0.2s",
+                    }}
+                  >
+                    {activities.map((activity) => (
+                      <div className="activity-item" key={activity.id}>
+                        <div className="activity-text">{activity.message}</div>
+                        <div className="activity-time">
+                          {activity.time_ago || activity.created_at}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+
+                  {(() => {
+                    const PAGINATION_GROUP_SIZE = 10;
+                    const currentGroup = Math.floor(
+                      (activitiesCurrentPage - 1) / PAGINATION_GROUP_SIZE,
+                    );
+                    const startPage = currentGroup * PAGINATION_GROUP_SIZE + 1;
+                    const endPage = Math.min(
+                      startPage + PAGINATION_GROUP_SIZE - 1,
+                      activitiesLastPage,
+                    );
+
+                    return (
+                      activitiesLastPage > 1 && (
+                        <div
+                          className="pagination"
+                          style={{
+                            marginTop: "24px",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <button
+                            disabled={
+                              activitiesCurrentPage <= 1 || activitiesLoading
+                            }
+                            onClick={() =>
+                              fetchActivities(
+                                Math.max(1, activitiesCurrentPage - 1),
+                              )
+                            }
+                            title="Previous Page"
+                          >
+                            ◂ Prev
+                          </button>
+
+                          {startPage > 1 && (
+                            <button
+                              disabled={activitiesLoading}
+                              onClick={() => fetchActivities(startPage - 1)}
+                              title="Previous 10 Pages"
+                            >
+                              «
+                            </button>
+                          )}
+
+                          {Array.from(
+                            { length: endPage - startPage + 1 },
+                            (_, i) => startPage + i,
+                          ).map((page) => (
+                            <button
+                              key={page}
+                              className={
+                                activitiesCurrentPage === page ? "active" : ""
+                              }
+                              disabled={activitiesLoading}
+                              onClick={() => fetchActivities(page)}
+                            >
+                              {page}
+                            </button>
+                          ))}
+
+                          {endPage < activitiesLastPage && (
+                            <button
+                              disabled={activitiesLoading}
+                              onClick={() => fetchActivities(endPage + 1)}
+                              title="Next 10 Pages"
+                            >
+                              »
+                            </button>
+                          )}
+
+                          <button
+                            disabled={
+                              activitiesCurrentPage >= activitiesLastPage ||
+                              activitiesLoading
+                            }
+                            onClick={() =>
+                              fetchActivities(
+                                Math.min(
+                                  activitiesLastPage,
+                                  activitiesCurrentPage + 1,
+                                ),
+                              )
+                            }
+                            title="Next Page"
+                          >
+                            Next ▸
+                          </button>
+                        </div>
+                      )
+                    );
+                  })()}
+                </>
               )}
             </div>
           </div>
@@ -5432,15 +6398,35 @@ const PatientProfile = () => {
       </div>
 
       {/* Chatbot Trigger */}
-      <div className="chatbot-trigger" onClick={toggleChat}>
+      <div
+        className="chatbot-trigger"
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleChat();
+        }}
+      >
         <div className="chatbot-tooltip">DiagnoBot</div>
         <img src={diagnobotImg} alt="DiagnoBot" className="chatbot-icon" />
       </div>
+
+      {/* Chatbot Overlay — closes panel when clicking outside */}
+      {isChatOpen && (
+        <div
+          onClick={toggleChat}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1000,
+            background: "transparent",
+          }}
+        />
+      )}
 
       {/* Chatbot Panel */}
       <div
         className={`chatbot-panel ${isChatOpen ? "active" : ""}`}
         id="chatPanel"
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="chat-header">
           <div>
@@ -5542,23 +6528,35 @@ const PatientProfile = () => {
             </>
           )}
         </div>
-        <div className="chat-input" style={{ alignItems: 'center' }}>
-          <input
-            type="text"
+        <div className="chat-input" style={{ alignItems: "center" }}>
+          <textarea
+            id="chat-textarea"
+            rows="1"
             placeholder="Ask me anything..."
             value={chatInput}
-            onChange={(e) => setChatInput(e.target.value)}
-            onKeyPress={handleChatEnter}
-            disabled={
-              shouldShowLockedChatbot || isChatSending || isChatPreparing
-            }
+            onChange={(e) => {
+              setChatInput(e.target.value);
+              e.target.style.height = "auto";
+              e.target.style.height = e.target.value ? `${Math.min(e.target.scrollHeight, 120)}px` : "auto";
+            }}
+            onKeyDown={handleChatEnter}
+            disabled={shouldShowLockedChatbot}
             dir={getDirection(chatInput)}
-            style={{ textAlign: getTextAlign(chatInput) }}
+            style={{ 
+              textAlign: getTextAlign(chatInput),
+              resize: "none",
+              overflowY: "auto",
+              fontFamily: "inherit",
+              lineHeight: "1.4"
+            }}
           />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <button
               className="chat-mic-btn"
-              disabled={shouldShowLockedChatbot || isChatSending || isChatPreparing || (isConnecting && recordingNoteId !== 'diagnobot')}
+              disabled={
+                shouldShowLockedChatbot ||
+                (isConnecting && recordingNoteId !== "diagnobot")
+              }
               onClick={() => {
                 if (isRecording && recordingNoteId !== "diagnobot") {
                   stopRecording();
@@ -5567,16 +6565,42 @@ const PatientProfile = () => {
                 toggleRecording();
               }}
               style={{
-                background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: isRecording && recordingNoteId === 'diagnobot' ? '#FF5C5C' : '#2A66FF',
-                transition: 'color 0.2s', borderRadius: '50%',
-                animation: isRecording && recordingNoteId === 'diagnobot' ? 'pulseMicIcon 1.5s infinite' : 'none'
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                padding: "6px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color:
+                  isRecording && recordingNoteId === "diagnobot"
+                    ? "#FF5C5C"
+                    : "#2A66FF",
+                transition: "color 0.2s",
+                borderRadius: "50%",
+                animation:
+                  isRecording && recordingNoteId === "diagnobot"
+                    ? "pulseMicIcon 1.5s infinite"
+                    : "none",
               }}
-              title={isRecording && recordingNoteId === 'diagnobot' ? "Stop Recording" : "Voice Input"}
+              title={
+                isRecording && recordingNoteId === "diagnobot"
+                  ? "Stop Recording"
+                  : "Voice Input"
+              }
             >
-              {isConnecting && recordingNoteId === 'diagnobot' ? (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="spin-icon">
+              {isConnecting && recordingNoteId === "diagnobot" ? (
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="spin-icon"
+                >
                   <line x1="12" y1="2" x2="12" y2="6"></line>
                   <line x1="12" y1="18" x2="12" y2="22"></line>
                   <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
@@ -5586,12 +6610,30 @@ const PatientProfile = () => {
                   <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
                   <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
                 </svg>
-              ) : isRecording && recordingNoteId === 'diagnobot' ? (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              ) : isRecording && recordingNoteId === "diagnobot" ? (
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <rect x="6" y="6" width="12" height="12" rx="2" ry="2"></rect>
                 </svg>
               ) : (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
                   <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
                   <line x1="12" y1="19" x2="12" y2="23"></line>
@@ -5602,19 +6644,58 @@ const PatientProfile = () => {
             <button
               className="chat-send-btn"
               onClick={sendMessage}
-              disabled={shouldShowLockedChatbot || isChatSending || isChatPreparing || !chatInput.trim()}
+              disabled={
+                shouldShowLockedChatbot ||
+                isChatSending ||
+                isChatPreparing ||
+                !chatInput.trim()
+              }
               style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                width: '36px', height: '36px', borderRadius: '50%', border: 'none',
-                background: (!chatInput.trim() || shouldShowLockedChatbot || isChatSending || isChatPreparing) ? '#E6EAF2' : '#2A66FF',
-                color: (!chatInput.trim() || shouldShowLockedChatbot || isChatSending || isChatPreparing) ? '#A0AABF' : 'white',
-                cursor: (!chatInput.trim() || shouldShowLockedChatbot || isChatSending || isChatPreparing) ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s ease', padding: 0
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "36px",
+                height: "36px",
+                borderRadius: "50%",
+                border: "none",
+                background:
+                  !chatInput.trim() ||
+                  shouldShowLockedChatbot ||
+                  isChatSending ||
+                  isChatPreparing
+                    ? "#E6EAF2"
+                    : "#2A66FF",
+                color:
+                  !chatInput.trim() ||
+                  shouldShowLockedChatbot ||
+                  isChatSending ||
+                  isChatPreparing
+                    ? "#A0AABF"
+                    : "white",
+                cursor:
+                  !chatInput.trim() ||
+                  shouldShowLockedChatbot ||
+                  isChatSending ||
+                  isChatPreparing
+                    ? "not-allowed"
+                    : "pointer",
+                transition: "all 0.2s ease",
+                padding: 0,
               }}
               title="Send Message"
             >
               {isChatPreparing || isChatSending ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="spin-icon">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="spin-icon"
+                >
                   <line x1="12" y1="2" x2="12" y2="6"></line>
                   <line x1="12" y1="18" x2="12" y2="22"></line>
                   <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
@@ -5625,7 +6706,16 @@ const PatientProfile = () => {
                   <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
                 </svg>
               ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <line x1="12" y1="19" x2="12" y2="5"></line>
                   <polyline points="5 12 12 5 19 12"></polyline>
                 </svg>
@@ -5637,7 +6727,7 @@ const PatientProfile = () => {
       <EvidencePanel
         isOpen={evidencePanel.open}
         onClose={() => setEvidencePanel((p) => ({ ...p, open: false }))}
-        sourceFile={sourceFile}
+        ocrFiles={keyInfoOcrFiles}
         selectedAlert={evidencePanel.selectedAlert}
       />
     </div>

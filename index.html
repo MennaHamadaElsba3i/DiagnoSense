@@ -5,6 +5,14 @@
     <link rel="icon" type="image/svg+xml" href="/Stethoscope.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DiagnoSense</title>
+    <script>
+      if (window.location.search.includes('status=success')) {
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage({ type: 'PAYMENT_SUCCESS' }, window.location.origin);
+        }
+        window.close();
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

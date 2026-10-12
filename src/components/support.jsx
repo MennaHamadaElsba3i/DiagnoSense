@@ -42,7 +42,8 @@ function Support() {
   const [isUrgencyOpen, setIsUrgencyOpen] = useState(false);
 
   const user = getUser();
-  const userIdentity = user?.email || user?.phone || "";
+  console.log('[Support] user:', user);
+  const userIdentity = user?.contact;
   const userInitials = getDoctorInitials();
 
   const savedDraft = (() => {
@@ -56,7 +57,7 @@ function Support() {
   const [formName, setFormName] = useState(user?.name ?? "");
 
   const [category, setCategory] = useState(savedDraft?.category ?? "");
-  const [urgency, setUrgency] = useState(savedDraft?.urgency ?? "Medium");
+  const [urgency, setUrgency] = useState(savedDraft?.urgency?.toLowerCase() ?? "medium");
   const [message, setMessage] = useState(savedDraft?.message ?? "");
   const [attachment, setAttachment] = useState(null);
   const [attachmentName, setAttachmentName] = useState("");
@@ -134,6 +135,10 @@ function Support() {
       setFormError("Please select a category.");
       return;
     }
+    if (!urgency) {
+      setFormError("Please select urgency level.");
+      return;
+    }
     if (!message.trim()) {
       setFormError("Please enter a message.");
       return;
@@ -143,8 +148,8 @@ function Support() {
 
     const result = await sendSupportAPI({
       name: formName,
-      category,
-      urgency,
+      category: category.toLowerCase(),
+      urgency: urgency.toLowerCase(),
       message,
       attachment,
     });
@@ -249,21 +254,7 @@ function Support() {
               </p>
             </div>
           </div>
-          <div
-            className="status-badge"
-            
-          >
-            <span
-              className="status-dot"
-              style={{
-                width: "8px",
-                height: "8px",
-                background: "var(--status-stable-text)",
-                borderRadius: "50%",
-              }}
-            ></span>
-            All Systems Operational
-          </div>
+
         </div>
 
         <div className="content-grid">
@@ -444,13 +435,15 @@ function Support() {
                     type="text"
                     className="form-input"
                     value={userIdentity}
+                    placeholder={userIdentity ? "" : "No contact info linked"}
                     disabled
                     readOnly
                     style={{
                       backgroundColor: "var(--dm-bg-subtle)",
                       color: "var(--dm-text-muted)",
                       cursor: "not-allowed",
-                      border: "1px solid var(--dm-border-subtle)"
+                      border: "1px solid var(--dm-border-subtle)",
+                      opacity: 0.7,
                     }}
                     title="Identity is locked to your account"
                   />
@@ -580,15 +573,6 @@ function Support() {
                       </span>
                     )}
                   </div>
-                  <p
-                    style={{
-                      fontSize: "11px",
-                      color: "var(--dm-text-muted)",
-                      marginTop: "4px",
-                    }}
-                  >
-                    Allowed: PDF, PNG, JPG · Max 10 MB
-                  </p>
                 </div>
 
                 {/* Success banner */}
@@ -632,7 +616,7 @@ function Support() {
                     <span>{formError}</span>
                   </div>
                 )}
-                <div className="form-actions">
+                <div className="form-actions" style={{ marginTop: "24px" }}>
                   <button
                     type="submit"
                     className={`btn btn-primary${isSubmitting ? " loading" : ""}`}
@@ -648,7 +632,7 @@ function Support() {
                       localStorage.removeItem(SUPPORT_DRAFT_KEY);
                       setFormName(user?.name ?? "");
                       setCategory("");
-                      setUrgency("Medium");
+                      setUrgency("medium");
                       setMessage("");
                       setAttachment(null);
                       setAttachmentName("");

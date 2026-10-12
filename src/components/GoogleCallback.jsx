@@ -1,18 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { setCookie } from "./cookieUtils";
+import { setCookie, setJsonCookie } from "./cookieUtils";
 
 /**
  * GoogleCallback
  *
  * Mounted at /auth/google/callback (unprotected route).
- * Backend now redirects here with ?token=... directly in the URL.
- *
- * Flow:
- *  1. Read `token` from the URL query string.
- *  2. If missing → show error and redirect to /login.
- *  3. Store token in cookie "user_token" (same key as normal login).
- *  4. Navigate to /dashboard.
+ * Backend now redirects here with token directly in the URL hash.
  */
 const GoogleCallback = () => {
   const navigate = useNavigate();
@@ -20,10 +14,25 @@ const GoogleCallback = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const token = searchParams.get("token");
+    // 1. Try to get token from URL hash (New Backend Behavior)
+    const hash = window.location.hash || "";
+    const hashParams = new URLSearchParams(hash.replace(/^#/, ""));
+    let token =
+      hashParams.get("token") ||
+      hashParams.get("access_token") ||
+      hashParams.get("user_token");
+
+    // 2. Fallback to search params (Backward Compatibility)
+    if (!token) {
+      token =
+        searchParams.get("token") ||
+        searchParams.get("access_token") ||
+        searchParams.get("user_token");
+    }
 
     if (!token) {
-      // No token in URL — send back to login.
+      // No token found — log details and send back to login.
+      console.error("Google callback token missing. hash:", window.location.hash, "search:", window.location.search);
       setError("Sign-in failed: no token received. Redirecting to login…");
       setTimeout(() => navigate("/login", { replace: true }), 2000);
       return;
@@ -33,7 +42,24 @@ const GoogleCallback = () => {
     setCookie("user_token", token, 7);
     setCookie("isAuthenticated", "true", 7);
 
-    // Navigate to dashboard — ProtectedRoute reads getCookie("user_token") which is now set
+    // If user data is returned in the hash/search params, save it
+    let userStr = hashParams.get("user") || searchParams.get("user");
+    if (userStr) {
+      try {
+        const userObj = JSON.parse(decodeURIComponent(userStr));
+        setJsonCookie("user", userObj, 7);
+      } catch (e) {
+        console.error("Failed to parse user data from URL:", e);
+      }
+    }
+
+    // Dispatch authChanged event like normal login
+    window.dispatchEvent(new CustomEvent("authChanged"));
+
+    // Clean the URL hash
+    window.history.replaceState(null, "", window.location.pathname);
+
+    // Navigate to dashboard
     navigate("/dashboard", { replace: true });
   }, [searchParams, navigate]);
 

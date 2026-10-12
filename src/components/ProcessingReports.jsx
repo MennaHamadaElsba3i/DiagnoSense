@@ -23,7 +23,6 @@ const INSIGHT_MESSAGES = [
 
 export default function ProcessingReports({
   patientId: propsPatientId,
-  token: propsToken,
   onSuccess,
   onFailure,
   onStop,
@@ -94,20 +93,145 @@ export default function ProcessingReports({
 
   useEffect(() => {
     const patientId = propsPatientId || state?.patientId;
-    const token = propsToken || state?.token;
 
-    if (!patientId || !token) {
-      console.warn('ProcessingReports: missing patientId or token', { patientId, token, state });
+    if (!patientId) {
+      console.warn('ProcessingReports: missing patientId', { patientId, state });
       return;
     }
 
-    pollingRef.current = setInterval(async () => {
-      const result = await getPatientKeyInfoAPI(patientId, token);
+    // Normalize so PatientProfile UI works for both flows
+    const normalizeAlerts = (arr) =>
+      Array.isArray(arr)
+        ? arr.map((kp) => ({
+            ...kp,
+            is_ai_generated: kp.is_ai_generated ?? kp.is_manual ?? '',
+          }))
+        : [];
 
-      if (result?.success && result?.data && !hasNavigated.current) {
+    // Safety guard — stop after ~5 minutes (75 attempts × 4s = 300s)
+    const MAX_ATTEMPTS = 75;
+    let attempts = 0;
+
+    // Keywords that indicate AI permanently failed — no point continuing
+    const isAiFailed = (msg) => {
+      if (!msg) return false;
+      const m = msg.toLowerCase();
+      return (
+        (m.includes('fail') && (m.includes('no information') || m.includes('no result') || m.includes('generate'))) ||
+        m.includes('analysis failed') ||
+        m.includes('ai failed') ||
+        m.includes('processing failed') ||
+        m.includes('failed to generate key points')
+      );
+    };
+
+    // Keywords that mean key points are ready (even if other AI parts are still running)
+    const isKeyPointsReady = (msg) => {
+      if (!msg) return false;
+      const m = msg.toLowerCase();
+      return (
+        m.includes('key points retrieved successfully')
+      );
+    };
+
+    pollingRef.current = setInterval(async () => {
+      if (hasNavigated.current) return;
+
+      attempts += 1;
+
+      // Max attempts guard — avoid infinite polling
+      if (attempts > MAX_ATTEMPTS) {
+        clearInterval(pollingRef.current);
+        clearInterval(messageIntervalRef.current);
+        if (onFailure) {
+          onFailure('AI analysis is taking longer than expected. Please try again later.');
+        } else {
+          navigate(-1, { state: { error: 'Polling timed out' } });
+        }
+        return;
+      }
+
+      let result;
+      try {
+        result = await getPatientKeyInfoAPI(patientId);
+      } catch (err) {
+        console.warn('[ProcessingReports] poll network error:', err);
+        return; // Network blip — keep polling
+      }
+
+      // ── 401 / Unauthenticated ──
+      const is401 =
+        result?.message?.toLowerCase().includes('unauthenticated') ||
+        result?.message?.includes('401');
+      if (is401) {
+        clearInterval(pollingRef.current);
+        clearInterval(messageIntervalRef.current);
+        if (onFailure) {
+          onFailure(result.message || 'Session expired. Please log in again.');
+        }
+        return;
+      }
+
+      // ── Permanent AI failure ──
+      if (isAiFailed(result?.message)) {
+        clearInterval(pollingRef.current);
+        clearInterval(messageIntervalRef.current);
+        if (onFailure) {
+          onFailure(result.message);
+        } else {
+          navigate(-1, { state: { error: result.message || 'AI Analysis failed' } });
+        }
+        return;
+      }
+
+      // ── Request failed or returned success as false ──
+      if (!result || result.success === false) {
+        clearInterval(pollingRef.current);
+        clearInterval(messageIntervalRef.current);
+        const errMsg = result?.message || 'AI analysis request failed.';
+        if (onFailure) {
+          onFailure(errMsg);
+        } else {
+          navigate(-1, { state: { error: errMsg } });
+        }
+        return;
+      }
+
+      // ── Check response data ──
+      const data = result?.data;
+      const keyPoints = data?.key_points;
+      const stillProcessing = data?.still_processing;
+      const msg = result?.message || '';
+
+      // Check if we have useful, non-empty key points
+      const hasUsefulKeyPoints =
+        keyPoints &&
+        (
+          (Array.isArray(keyPoints.high) && keyPoints.high.length > 0) ||
+          (Array.isArray(keyPoints.medium) && keyPoints.medium.length > 0) ||
+          (Array.isArray(keyPoints.low) && keyPoints.low.length > 0)
+        );
+
+      // Key points are ready when:
+      //   • message says "key points retrieved successfully" AND we have useful key points
+      //   • OR still_processing === false and we have useful key points
+      const keyPointsReady =
+        (isKeyPointsReady(msg) && hasUsefulKeyPoints) ||
+        (stillProcessing === false && hasUsefulKeyPoints);
+
+      if (keyPointsReady && !hasNavigated.current) {
         hasNavigated.current = true;
         clearInterval(pollingRef.current);
         clearInterval(messageIntervalRef.current);
+
+        // Build normalized payload matching PatientProfile's expected shape
+        const normalizedPayload = {
+          high:   normalizeAlerts(keyPoints.high),
+          medium: normalizeAlerts(keyPoints.medium),
+          low:    normalizeAlerts(keyPoints.low),
+          ocr_files:        Array.isArray(data.ocr_files) ? data.ocr_files : [],
+          still_processing: stillProcessing === true,
+        };
 
         // Visually complete the final steps before navigating
         setProgressWidth(100);
@@ -115,40 +239,56 @@ export default function ProcessingReports({
 
         setTimeout(() => {
           if (onSuccess) {
-            onSuccess(result.data);
+            onSuccess(normalizedPayload);
           } else {
             navigate(`/patient-profile/${patientId}`, {
-              state: { keyInfoData: result.data, patientId },
+              state: { keyInfoData: normalizedPayload, patientId },
             });
           }
         }, 700);
-      } else if (result?.success === false) {
-        if (result.message === 'AI analysis is processing now') {
-          // keep polling
-        } else if (result.message && result.message.toLowerCase().includes('processing')) {
-          // keep polling
-        } else if (
-          result.message &&
-          result.message.toLowerCase().includes('failed') &&
-          result.message.toLowerCase().includes('no information')
-        ) {
-          clearInterval(pollingRef.current);
-          clearInterval(messageIntervalRef.current);
-          if (onFailure) {
-            onFailure(result.message);
-          } else {
-            navigate(-1, { state: { error: result.message || 'AI Analysis failed' } });
-          }
-        } else {
-          clearInterval(pollingRef.current);
-          clearInterval(messageIntervalRef.current);
-          if (onFailure) {
-            onFailure(result.message);
-          } else {
-            navigate(-1, { state: { error: result.message || 'AI Analysis failed' } });
-          }
-        }
+        return;
       }
+
+      // ── Treat Key Info as failed if any of these are true:
+      //   • message contains "no key points found" or "no key points generated"
+      //   • still_processing is false (or not true) and there are no useful key points
+      //   • still_processing is false (or not true) and data/key_points is missing
+      const isNoKeyPointsMsg =
+        msg.toLowerCase().includes('no key points found') ||
+        msg.toLowerCase().includes('no key points generated');
+
+      const isAiAnalysisFailed =
+        isNoKeyPointsMsg ||
+        (stillProcessing !== true && !hasUsefulKeyPoints) ||
+        (stillProcessing !== true && (!data || !keyPoints));
+
+      if (isAiAnalysisFailed) {
+        clearInterval(pollingRef.current);
+        clearInterval(messageIntervalRef.current);
+
+        let failMsg = 'Patient was created, but AI analysis could not generate key information. Please make sure the AI server is running and try again.';
+        if (msg && msg !== 'Something went wrong' && !msg.toLowerCase().includes('failed')) {
+          failMsg = msg;
+        } else if (msg) {
+          failMsg = `Patient was created, but AI analysis failed: ${msg}. Please make sure the AI server is running and try again.`;
+        }
+
+        if (onFailure) {
+          onFailure(failMsg);
+        } else {
+          navigate(-1, { state: { error: failMsg } });
+        }
+        return;
+      }
+
+      // ── Still processing — keep polling ──
+      if (stillProcessing === true || msg.toLowerCase().includes('still running') || msg.toLowerCase().includes('in progress')) {
+        // continue
+        return;
+      }
+
+      // ── Unexpected / unrecognized response — keep polling up to max attempts ──
+      console.log('[ProcessingReports] unrecognized poll response, continuing:', result);
     }, 4000);
 
     return () => clearInterval(pollingRef.current);

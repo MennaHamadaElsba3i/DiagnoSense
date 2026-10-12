@@ -9,6 +9,25 @@ import {
 import echo from "./echo";
 import { getJsonCookie } from "./cookieUtils";
 
+const extractNextCursor = (result) => {
+  let cursor = result?.data?.meta?.next_cursor ?? 
+               result?.meta?.next_cursor ?? 
+               result?.data?.next_cursor;
+  if (cursor) return cursor;
+
+  const nextUrl = result?.data?.links?.next ?? result?.links?.next;
+  if (nextUrl) {
+    try {
+      const urlObj = new URL(nextUrl);
+      return urlObj.searchParams.get("cursor");
+    } catch (e) {
+      const match = nextUrl.match(/[?&]cursor=([^&]+)/);
+      if (match) return decodeURIComponent(match[1]);
+    }
+  }
+  return null;
+};
+
 const NotificationsContext = createContext(null);
 
 export function NotificationsProvider({ children }) {
@@ -76,7 +95,7 @@ export function NotificationsProvider({ children }) {
             const realtimeOnly = prev.filter((n) => !ids.has(n.id));
             return [...realtimeOnly, ...list];
           });
-          setNextCursor(result.data?.next_cursor ?? result.meta?.next_cursor ?? null);
+          setNextCursor(extractNextCursor(result));
         }
         notificationsLoadedRef.current = true;
       } catch (err) {
@@ -112,11 +131,24 @@ export function NotificationsProvider({ children }) {
           : (Array.isArray(notifResult.data) ? notifResult.data : notifResult.data?.data ?? []);
 
         setNotifications((prev) => {
+          const listMap = new Map(list.map(n => [n.id, n]));
           const prevIds = new Set(prev.map(n => n.id));
+          
           const onlyNew = list.filter(n => !prevIds.has(n.id));
-          return [...onlyNew, ...prev];
+          
+          // Update read status of existing notifications
+          const updatedPrev = prev.map(n => {
+            if (listMap.has(n.id)) {
+              return { ...n, is_read: listMap.get(n.id).is_read };
+            }
+            return n;
+          });
+          
+          return [...onlyNew, ...updatedPrev];
         });
-        setNextCursor(notifResult.data?.next_cursor ?? notifResult.meta?.next_cursor ?? null);
+        // Do NOT update nextCursor here, because we only fetched the first page
+        // and appending it to the top. If we updated it, we'd lose the cursor 
+        // pointing to the end of our currently loaded list.
       }
     } catch (err) {
       console.error("[NotificationsProvider] refresh error", err);
@@ -141,12 +173,25 @@ export function NotificationsProvider({ children }) {
       // 2. Merge into state (keep real-time items, replace any overlapping IDs)
       if (list.length > 0) {
         setNotifications((prev) => {
-          const ids = new Set(list.map((n) => n.id));
-          const realtimeOnly = prev.filter((n) => !ids.has(n.id));
-          return [...realtimeOnly, ...list];
+          const listMap = new Map(list.map(n => [n.id, n]));
+          const prevIds = new Set(prev.map(n => n.id));
+          
+          const onlyNew = list.filter(n => !prevIds.has(n.id));
+          
+          const updatedPrev = prev.map(n => {
+            if (listMap.has(n.id)) {
+              return { ...n, is_read: listMap.get(n.id).is_read };
+            }
+            return n;
+          });
+          
+          return [...onlyNew, ...updatedPrev];
         });
-        setNextCursor(notifResult.data?.next_cursor ?? notifResult.meta?.next_cursor ?? null);
-        notificationsLoadedRef.current = true;
+        
+        if (!notificationsLoadedRef.current) {
+          setNextCursor(extractNextCursor(notifResult));
+          notificationsLoadedRef.current = true;
+        }
       }
 
       // 3. Refresh unread count from server
@@ -314,7 +359,7 @@ export function NotificationsProvider({ children }) {
           const unique = newItems.filter((n) => !ids.has(n.id));
           return [...prev, ...unique];
         });
-        setNextCursor(result.data.next_cursor ?? result.meta?.next_cursor ?? null);
+        setNextCursor(extractNextCursor(result));
       }
     } catch (err) {
       console.error("[NotificationsProvider] loadMore error", err);
@@ -389,7 +434,8 @@ export function NotificationsProvider({ children }) {
           setLiveToast({
             id: safeId,
             title: notification.title || "Message",
-            message: notification.message || notification.body || ""
+            message: notification.message || notification.body || "",
+            isFrontendOnly: notification.isFrontendOnly || false
           });
           setTimeout(() => setLiveToast(null), 5000);
         }
@@ -415,11 +461,13 @@ export function NotificationsProvider({ children }) {
           flexDirection: "column",
           gap: "8px",
           animation: "slideInRight 0.3s ease-out forwards",
-          cursor: "pointer"
+          cursor: liveToast.isFrontendOnly ? "default" : "pointer"
         }}
           onClick={() => {
             setLiveToast(null);
-            openNotifications();
+            if (!liveToast.isFrontendOnly) {
+              openNotifications();
+            }
           }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <h4 style={{ margin: 0, fontSize: "14px", fontWeight: "600", color: "var(--text-primary, #111827)" }}>

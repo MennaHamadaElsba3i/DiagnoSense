@@ -23,8 +23,19 @@ export function SidebarProvider({ children }) {
     });
   }, []);
 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const toggleMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen((prev) => !prev);
+  }, []);
+
   return (
-    <SidebarContext.Provider value={{ isSidebarCollapsed, toggleSidebar }}>
+    <SidebarContext.Provider value={{ 
+      isSidebarCollapsed, 
+      toggleSidebar,
+      isMobileMenuOpen,
+      setIsMobileMenuOpen,
+      toggleMobileMenu
+    }}>
       {children}
     </SidebarContext.Provider>
   );
@@ -34,7 +45,13 @@ export function useSidebar() {
   const ctx = useContext(SidebarContext);
   if (!ctx) {
     // Graceful fallback: if used outside the provider (should not happen)
-    return { isSidebarCollapsed: false, toggleSidebar: () => { } };
+    return { 
+      isSidebarCollapsed: false, 
+      toggleSidebar: () => { },
+      isMobileMenuOpen: false,
+      setIsMobileMenuOpen: () => {},
+      toggleMobileMenu: () => {}
+    };
   }
   return ctx;
 }

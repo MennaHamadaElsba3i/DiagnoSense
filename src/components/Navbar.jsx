@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useTheme } from "./ThemeContext";
+import { useSidebar } from "./SidebarContext";
 
 const Navbar = ({
   isSidebarCollapsed,
@@ -11,10 +12,10 @@ const Navbar = ({
   openNotifications,
   setIsLogoutModalOpen,
 }) => {
-  const navigate = useNavigate();
   const avatarMenuRef = useRef(null);
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const { isDark, toggleTheme } = useTheme();
+  const { toggleMobileMenu } = useSidebar();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -34,24 +35,37 @@ const Navbar = ({
 
   return (
     <nav className={`top-navbar${isSidebarCollapsed ? " collapsed" : ""}`}>
+      <button 
+        className="mobile-burger-btn" 
+        onClick={toggleMobileMenu}
+        aria-label="Open mobile menu"
+      >
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+
       <div className="navbar-right">
-        <div
-          className="credits-badge"
-          onClick={() =>
-            navigate("/subscription", { state: { tab: "billing" } })
-          }
+        <Link
+          to="/subscription"
+          state={{ tab: "billing" }}
+          style={{ textDecoration: 'none', display: 'flex' }}
         >
-          <span className="credits-icon">
-            <svg viewBox="0 0 24 24">
-              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-              <line x1="1" y1="10" x2="23" y2="10"></line>
-            </svg>
-          </span>
-          <span>
-            Credits:{" "}
-            {isCreditsLoading ? "..." : (credits?.toLocaleString() ?? "0")}
-          </span>
-        </div>
+          <div className="credits-badge">
+            <span className="credits-icon">
+              <svg viewBox="0 0 24 24">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                <line x1="1" y1="10" x2="23" y2="10"></line>
+              </svg>
+            </span>
+            <span>
+              Credits:{" "}
+              {isCreditsLoading ? "..." : (credits?.toLocaleString() ?? "0")}
+            </span>
+          </div>
+        </Link>
 
         <button className="icon-btn" onClick={() => openNotifications()}>
           <svg viewBox="0 0 24 24">
@@ -72,13 +86,13 @@ const Navbar = ({
           </div>
           {isAvatarMenuOpen && (
             <div className="avatar-dropdown-menu">
-              <div className="dropdown-item" onClick={() => { setIsAvatarMenuOpen(false); navigate("/settings"); }}>
+              <Link to="/settings" className="dropdown-item" onClick={() => setIsAvatarMenuOpen(false)} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                   <circle cx="12" cy="7" r="4"></circle>
                 </svg>
                 Profile Settings
-              </div>
+              </Link>
 
               {/* ── Theme toggle pill ── */}
               <div className="dropdown-theme-row">

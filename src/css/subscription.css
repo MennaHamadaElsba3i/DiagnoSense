@@ -860,9 +860,17 @@
     grid-template-columns: 1fr;
     gap: 20px;
   }
+  .ppu-right {
+    margin-top: 16px;
+  }
+
+  .pay-title {
+    margin-top: 16px;
+  }
 }
 
 @media (max-width: 768px) {
+
   .subscription-page .current-banner {
     flex-direction: column;
     align-items: flex-start;
@@ -885,7 +893,7 @@
     padding: 6px;
     SCROLLBAR-WIDTH: NONE;
   }
-  
+
   .subscription-page .tab-btn {
     flex: 0 0 auto;
   }
@@ -895,7 +903,7 @@
   }
 
   .subscription-page .amts-bot {
-    grid-template-columns: 1fr; 
+    grid-template-columns: 1fr;
   }
 
   .subscription-page .btn-charge {
@@ -910,7 +918,7 @@
   }
 
   .subscription-page table {
-    min-width: 600px; 
+    min-width: 600px;
   }
 
   .subscription-page .ent-inner {
@@ -961,23 +969,23 @@
 
 @media (max-width: 768px) {
   .subscription-page .h-header {
-    flex-direction: column;      
-    align-items: flex-start;     
-    gap: 12px;                   
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
   }
 
   .subscription-page .f-btns {
-    width: 100%;                 
-    justify-content: flex-start; 
-    flex-wrap: wrap;             
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
-  
-  
+
+
   .subscription-page .f-btn {
     flex: 1;
     text-align: center;
   }
- 
+
 }
 
 
@@ -1159,4 +1167,34 @@
 /* ── Banner plan name ── */
 [data-theme="dark"] .subscription-page .banner-plan-name {
   color: #e2e8f0;
+}
+
+/* ── Current/Selected Plan Card in Dark Mode ── */
+[data-theme="dark"] .subscription-page .plan-card.popular {
+  border-color: #ffffff;
+  border-width: 2px;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .subscription-page .current-banner {
+  border-color: #ffffff;
+  border-width: 1px;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.08);
+}
+
+/* ── Current Plan Badge styling to match the white border ── */
+[data-theme="dark"] .subscription-page .badge-current {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

@@ -4,14 +4,32 @@ import { loginAPI, googleLoginAPI, getGoogleRedirectAPI } from "./mockAPI";
 import { setCookie, setJsonCookie } from "./cookieUtils";
 
 const EyeIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
     <circle cx="12" cy="12" r="3" />
   </svg>
 );
 
 const EyeOffIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
     <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
     <line x1="1" y1="1" x2="23" y2="23" />
@@ -21,47 +39,86 @@ const Login = ({ onForgotPassword }) => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState([]);
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const identity = e.target.identity.value;
+    const contact = e.target.identity.value;
     const password = e.target.password.value;
 
     setIsLoading(true);
-    setError("");
+    setError([]);
 
-    const result = await loginAPI(identity, password);
+    const result = await loginAPI(contact, password);
 
-    if (result.success) {
-      console.log(result.data);
-      setCookie("user_token", result.data.token, rememberMe);
-      setJsonCookie("user", result.data.user, rememberMe);
+    const token = result.token || result.data?.token;
+    const user = result.user || result.data?.user || result.data;
+
+    if (result.success && token) {
+      setCookie("user_token", token, rememberMe);
+      if (user) setJsonCookie("user", user, rememberMe);
       setCookie("isAuthenticated", "true", rememberMe);
 
-      localStorage.removeItem('doctor_name');
-      localStorage.removeItem('support_form_draft');
-      navigate("/dashboard");
+      localStorage.removeItem("doctor_name");
+      localStorage.removeItem("support_form_draft");
+      navigate("/dashboard", { replace: true });
     } else {
-      setError(result.message || "Login failed. Please try again.");
+      const validationData = result.data;
+      let messages = [];
+
+      if (validationData && typeof validationData === "object") {
+        messages = Object.values(validationData)
+          .flat()
+          .filter((msg) => typeof msg === "string");
+      }
+
+      if (messages.length === 0) {
+        messages = [result.message || "Login failed. Please try again."];
+      }
+
+      setError(messages);
+      setIsLoading(false); 
+      return; 
     }
     setIsLoading(false);
   };
 
   const handleGoogleLogin = async () => {
+    if (googleLoading) return;
+
     setGoogleLoading(true);
     setError("");
-    const result = await getGoogleRedirectAPI();
-    if (result.url) {
-      window.location.href = result.url;
-    } else {
-      setError(
-        result.message || "Failed to load Google login. Please try again.",
-      );
+    try {
+      const response = await getGoogleRedirectAPI();
+
+      const googleRedirectUrl =
+        response?.data?.url ||
+        response?.url ||
+        response?.redirect_url ||
+        response?.redirectUrl ||
+        response?.data?.redirect_url ||
+        response?.data?.redirectUrl ||
+        (typeof response === "string" ? response : null);
+
+      if (
+        googleRedirectUrl &&
+        typeof googleRedirectUrl === "string" &&
+        googleRedirectUrl.startsWith("http")
+      ) {
+        window.location.assign(googleRedirectUrl);
+        return;
+      }
+
+      console.error("Google redirect URL missing from response:", response);
+      setError("Google redirect URL was not returned by the server.");
+    } catch (err) {
+      console.error("Google login redirect failed:", err);
+      setError("Failed to start Google login. Please try again.");
+    } finally {
+      setGoogleLoading(false);
     }
-    setGoogleLoading(false);
   };
 
   return (
@@ -78,41 +135,49 @@ const Login = ({ onForgotPassword }) => {
             placeholder="Email or Phone number"
             name="identity"
             required
-            className={error ? "error" : ""}
+            className={error.length > 0 ? "error" : ""}
           />
         </div>
 
-   <div className="form-group" style={{ position: "relative" }}>
-  <input
-    type={showPassword ? "text" : "password"}
-    placeholder="Password"
-    name="password"
-    required
-    className={error ? "error" : ""}
-    style={{ paddingRight: "42px" }}
-  />
-  <button
-    type="button"
-    onClick={() => setShowPassword((prev) => !prev)}
-    style={{
-      position: "absolute",
-      right: "12px",
-      top: "50%",
-      transform: "translateY(-50%)",
-      background: "none",
-      border: "none",
-      cursor: "pointer",
-      padding: "0",
-      color: "#888",
-    }}
-    tabIndex={-1}
-    aria-label="Toggle password visibility"
-  >
-    {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-  </button>
-</div>
+        <div className="form-group" style={{ position: "relative" }}>
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            name="password"
+            required
+            className={error.length > 0 ? "error" : ""}
+            style={{ paddingRight: "42px" }}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            style={{
+              position: "absolute",
+              right: "12px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "0",
+              color: "#888",
+            }}
+            tabIndex={-1}
+            aria-label="Toggle password visibility"
+          >
+            {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+          </button>
+        </div>
 
-        {error && <div className="error-message">{error}</div>}
+        {error.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {error.map((msg, i) => (
+              <div key={i} className="error-message">
+                {msg}
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="form-options">
           <label className="remember-me">

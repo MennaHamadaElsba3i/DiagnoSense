@@ -13,7 +13,7 @@ import {
   changePasswordAPI,
   deleteDoctorAccountAPI,
 } from "./mockAPI";
-import { getJsonCookie } from "./cookieUtils";
+import { getJsonCookie, deleteCookie } from "./cookieUtils";
 import { usePageCache } from "./PageCacheContext";
 import "../css/Settingsmaincontent.css";
 
@@ -132,7 +132,7 @@ const Settings = () => {
           const profileData = {
             fullName: actualData.name || actualData.fullName || "",
             identity:
-              actualData.identity || actualData.email || actualData.phone || "",
+              actualData.contact || actualData.email || actualData.phone || "",
             specialty: rawSpecialty === "N/A" ? "" : rawSpecialty,
           };
 
@@ -192,7 +192,7 @@ const Settings = () => {
     } catch (err) {
       setProfileFeedback({
         type: "error",
-        message: "Network error. Please check your connection.",
+        message: "Something went wrong. Please check your network connection..",
       });
       setTimeout(() => setProfileFeedback({ type: "", message: "" }), 20000);
     } finally {
@@ -290,8 +290,18 @@ const Settings = () => {
           confirmPassword: "",
         });
         setPasswordStrength(0);
+
+        // Auto logout after successful password change
+        setTimeout(() => {
+          deleteCookie("user_token");
+          deleteCookie("user");
+          deleteCookie("isAuthenticated");
+          window.dispatchEvent(new CustomEvent("authChanged"));
+          navigate("/login");
+        }, 1500);
       } else {
-        const fieldErrors = res.errors ? Object.values(res.errors).flat() : [];
+        const errorObj = res.errors || (res.data && typeof res.data === 'object' ? res.data : null);
+        const fieldErrors = errorObj ? Object.values(errorObj).flat() : [];
         setPasswordFeedback({
           type: "error",
           messages: fieldErrors.length > 0 ? fieldErrors : null,
@@ -301,10 +311,11 @@ const Settings = () => {
               : null,
         });
       }
-    } catch {
+    } catch (err) {
+      console.error("[changePassword] unexpected error:", err);
       setPasswordFeedback({
         type: "error",
-        message: "Network error. Please check your connection.",
+        message: "Something went wrong. Please check your network connection..",
         messages: null,
       });
     } finally {
@@ -347,7 +358,6 @@ const Settings = () => {
 
     try {
       const res = await deleteDoctorAccountAPI(
-        doctorId,
         deleteForm.password,
         deleteForm.passwordConfirm,
       );
@@ -358,22 +368,26 @@ const Settings = () => {
           message: res.message || "Account deleted successfully.",
           messages: null,
         });
-        setDeleteCountdown(25);
+        setDeleteCountdown(10);
       } else {
-        const fieldErrors = res.errors ? Object.values(res.errors).flat() : [];
+        const errorObj = res.errors || res.data || null;
+        let fieldErrors = [];
+
+        if (errorObj && typeof errorObj === 'object') {
+          fieldErrors = Object.values(errorObj).flat();
+        }
+
         setDeleteFeedback({
           type: "error",
           messages: fieldErrors.length > 0 ? fieldErrors : null,
-          message:
-            fieldErrors.length === 0
-              ? res.message || "Failed to delete account."
-              : null,
+          message: fieldErrors.length === 0 ? (res.message || "Failed to delete account.") : null,
         });
       }
-    } catch {
+    } catch (err) {
+      console.error("[deleteAccount] unexpected error:", err);
       setDeleteFeedback({
         type: "error",
-        message: "Network error. Please check your connection.",
+        message: "Something went wrong. Please check your network connection..",
         messages: null,
       });
     } finally {
@@ -399,14 +413,14 @@ const Settings = () => {
 
       {/* ── Navbar ── */}
       <Navbar
-  isSidebarCollapsed={isSidebarCollapsed}
-  credits={credits}
-  isCreditsLoading={isCreditsLoading}
-  unreadCount={unreadCount}
-  getDoctorInitials={getDoctorInitials}
-  openNotifications={openNotifications}
-  setIsLogoutModalOpen={setIsLogoutModalOpen}
-/>
+        isSidebarCollapsed={isSidebarCollapsed}
+        credits={credits}
+        isCreditsLoading={isCreditsLoading}
+        unreadCount={unreadCount}
+        getDoctorInitials={getDoctorInitials}
+        openNotifications={openNotifications}
+        setIsLogoutModalOpen={setIsLogoutModalOpen}
+      />
 
       <LogoutConfirmation
         isOpen={isLogoutModalOpen}
@@ -516,11 +530,10 @@ const Settings = () => {
 
               {profileFeedback.message && (
                 <div
-                  className={`settings-page-profile-feedback ${
-                    profileFeedback.type === "success"
-                      ? "settings-page-profile-feedback--success"
-                      : "settings-page-profile-feedback--error"
-                  }`}
+                  className={`settings-page-profile-feedback ${profileFeedback.type === "success"
+                    ? "settings-page-profile-feedback--success"
+                    : "settings-page-profile-feedback--error"
+                    }`}
                 >
                   {profileFeedback.type === "success" ? "✓" : "✕"}{" "}
                   {profileFeedback.message}
@@ -591,6 +604,7 @@ const Settings = () => {
                     value={passwordForm.currentPassword}
                     onChange={handlePasswordChange}
                     placeholder="Enter current password"
+                    required
                   />
                   <button
                     className="settings-page-eye-btn"
@@ -639,6 +653,7 @@ const Settings = () => {
                     value={passwordForm.newPassword}
                     onChange={handlePasswordChange}
                     placeholder="Enter new password"
+                    required
                   />
                   <button
                     className="settings-page-eye-btn"
@@ -678,6 +693,7 @@ const Settings = () => {
                     value={passwordForm.confirmPassword}
                     onChange={handlePasswordChange}
                     placeholder="Confirm new password"
+                    required
                   />
                   <button
                     className="settings-page-eye-btn"
@@ -694,11 +710,10 @@ const Settings = () => {
 
               {(passwordFeedback.message || passwordFeedback.messages) && (
                 <div
-                  className={`settings-page-password-feedback ${
-                    passwordFeedback.type === "success"
-                      ? "settings-page-feedback--success"
-                      : "settings-page-feedback--error"
-                  }`}
+                  className={`settings-page-password-feedback ${passwordFeedback.type === "success"
+                    ? "settings-page-feedback--success"
+                    : "settings-page-feedback--error"
+                    }`}
                 >
                   {passwordFeedback.type === "success" ? (
                     <span>✓ {passwordFeedback.message}</span>
@@ -892,7 +907,7 @@ const Settings = () => {
                   deleteFeedback.type === "error" && (
                     <div className="settings-page-password-feedback settings-page-feedback--error">
                       {deleteFeedback.messages &&
-                      deleteFeedback.messages.length > 1 ? (
+                        deleteFeedback.messages.length > 1 ? (
                         <ul className="settings-page-feedback-list">
                           {deleteFeedback.messages.map((msg, i) => (
                             <li key={i}>✕ {msg}</li>

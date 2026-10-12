@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { forgetPasswordAPI } from "./mockAPI";
 
 const ForgetPassword = ({ onOTPSent, onBackToLogin }) => {
-  const [identity, setIdentity] = useState("");
+  const [contact, setContact] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -13,12 +13,12 @@ const ForgetPassword = ({ onOTPSent, onBackToLogin }) => {
     setError("");
     setSuccessMessage("");
 
-    const result = await forgetPasswordAPI(identity);
+    const result = await forgetPasswordAPI(contact);
 
     if (result.success) {
       setSuccessMessage(result.message);
       setTimeout(() => {
-        onOTPSent(identity);
+        onOTPSent(contact);
       }, 2000);
     } else {
       setError(result.message);
@@ -39,8 +39,8 @@ const ForgetPassword = ({ onOTPSent, onBackToLogin }) => {
           <input
             type="text"
             placeholder="Email or Phone number"
-            value={identity}
-            onChange={(e) => setIdentity(e.target.value)}
+            value={contact}
+            onChange={(e) => setContact(e.target.value)}
             required
             className={error ? "error" : ""}
             disabled={isLoading}

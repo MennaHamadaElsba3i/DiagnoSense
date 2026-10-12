@@ -26,7 +26,6 @@ body {
     z-index: 0;
 }
 
-
 /* Premium Decision Support Card */
 .decision-support-card {
     background: linear-gradient(135deg, #2A66FF 0%, #467DFF 100%);
@@ -258,13 +257,10 @@ body {
 }
 
 @keyframes statusPulse {
-
-    0%,
-    100% {
+    0%, 100% {
         opacity: 1;
         box-shadow: 0 0 0 0 rgba(0, 193, 135, 0.4);
     }
-
     50% {
         opacity: 0.6;
         box-shadow: 0 0 0 6px rgba(0, 193, 135, 0);
@@ -301,8 +297,6 @@ body {
     stroke-linecap: round;
     stroke-linejoin: round;
 }
-
-
 
 .user-avatar {
     width: 40px;
@@ -359,13 +353,8 @@ body {
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .modal-content {
@@ -385,7 +374,6 @@ body {
         transform: translateY(20px);
         opacity: 0;
     }
-
     to {
         transform: translateY(0);
         opacity: 1;
@@ -529,7 +517,6 @@ body {
 .modal-button-secondary:hover {
     background: #E6EAF2;
 }
-
 
 /* Main Content */
 .main-content {
@@ -685,10 +672,8 @@ body {
     align-items: flex-start;
     gap: 16px;
     margin-bottom: 20px;
-    /* Force identical header height across all cards (enough for 2 lines of text) */
-    min-height: 72px;
+    min-height: 72px; /* Force identical header height across all cards (enough for 2 lines of text) */
 }
-
 
 /* Natural centered alignment for 1-line name against the 57px avatar */
 .patient-info.name-single-line {
@@ -734,27 +719,21 @@ body {
     font-weight: 600;
     color: var(--dm-text-primary);
     margin-bottom: 4px;
-
-    /* Lock to 2 lines maximum */
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-
-    /* Ensure long names wrap and break correctly */
     line-height: 24px;
     word-break: break-word;
 }
 
 .patient-meta-row {
     display: flex;
-    /* justify-content: center; */
     align-items: center;
     flex-wrap: nowrap;
     gap: 12px;
-    /* margin-bottom: 12px; */
 }
 
 .patient-meta {
@@ -801,8 +780,7 @@ body {
     margin-bottom: 20px;
     display: flex;
     flex-direction: column;
-    height: 100px;
-    /* Fixed height for 3 lines + "View more" */
+    height: 100px; /* Fixed height for 3 lines + "View more" */
 }
 
 .ai-insight p {
@@ -865,7 +843,6 @@ body {
     justify-content: center;
     gap: 12px;
     width: 80%;
-
 }
 
 .btn {
@@ -952,67 +929,46 @@ body {
     }
 }
 
-@media (max-width: 1024px) {
-    .sidebar {
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
-    }
-
-    .top-navbar {
-        left: 0;
-    }
-
-    .main-content {
-        margin-left: 0;
-    }
-}
+/* Sidebar layout above 768px is handled by JS toggle state (.collapsed class).
+   No forced sidebar-hide needed at 1024px. */
 
 @media (max-width: 768px) {
     .patient-grid {
         grid-template-columns: 1fr;
     }
-
     .top-navbar {
         padding: 0 16px;
         height: 60px;
     }
-
     .main-content {
         margin-top: 60px;
         padding: 20px;
     }
-
     .patients-top-row {
         flex-direction: column;
         align-items: stretch;
     }
-
     .page-search-container {
         max-width: 100%;
         flex: none;
     }
-
     .addbtn {
         width: 100%;
         justify-content: center;
     }
-
     .filter-chips {
         gap: 10px;
         justify-content: flex-start;
         overflow-x: auto;
         padding-bottom: 8px;
     }
-
     .chip {
         white-space: nowrap;
     }
-
     .pagination {
         gap: 4px;
         flex-wrap: wrap;
     }
-
     .pagination button {
         padding: 8px 12px;
         font-size: 13px;
@@ -1023,34 +979,27 @@ body {
     .patient-card {
         padding: 20px;
     }
-
     .patient-avatar {
         width: 56px;
         height: 56px;
         font-size: 20px;
     }
-
     .patient-info h3 {
         font-size: 16px;
     }
-
     .patient-meta {
         font-size: 13px;
     }
-
     .modal-content {
         padding: 24px;
         width: 95%;
     }
-
     .modal-title {
         font-size: 20px;
     }
-
     .modal-subtitle {
         font-size: 14px;
     }
-
     .modal-footer {
         flex-direction: column;
     }
@@ -1059,23 +1008,22 @@ body {
         align-items: flex-start;
         margin-top: 13px;
     }
-    
-
 }
+
 @media (min-width: 767px) {
     .patient-meta-row {
         flex-direction: column-reverse;
         align-items: flex-start;
     }
-    
 }
+
 @media (min-width: 1255px) {
     .patient-meta-row {
         flex-direction: row;
         align-items: center;
     }
-    
 }
+
 /* ── Patient card action row ───────────────────────────────────────────── */
 .patient-actions {
     display: flex;
@@ -1106,7 +1054,6 @@ button.patient-card-delete-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Resting state: very soft, unobtrusive */
     border: 1px solid rgba(156, 163, 175, 0.35);
     background: rgba(156, 163, 175, 0.08);
     border-radius: 7px;
@@ -1215,109 +1162,107 @@ button.patient-card-delete-btn.edit-action-btn:hover {
     opacity: 1;
 }
 
-
-
 /* ══════════════════════════════════════════════════════════
    DARK MODE OVERRIDES — Patient List page
    ══════════════════════════════════════════════════════════ */
 
 [data-theme="dark"] .patients-title {
-  color: var(--dm-text-primary);
+    color: var(--dm-text-primary);
 }
 
 [data-theme="dark"] .patient-card {
-  background: var(--dm-bg-card);
-  box-shadow: var(--dm-shadow-card);
-  border: 1px solid var(--dm-border-color);
-  color: var(--dm-text-primary);
+    background: var(--dm-bg-card);
+    box-shadow: var(--dm-shadow-card);
+    border: 1px solid var(--dm-border-color);
+    color: var(--dm-text-primary);
 }
 
 [data-theme="dark"] .patient-card:hover {
-  box-shadow: 0 12px 32px rgba(42, 102, 255, 0.18);
-  border-color: rgba(42, 102, 255, 0.3);
+    box-shadow: 0 12px 32px rgba(42, 102, 255, 0.18);
+    border-color: rgba(42, 102, 255, 0.3);
 }
 
 [data-theme="dark"] .patient-info h3 {
-  color: var(--dm-text-primary);
+    color: var(--dm-text-primary);
 }
 
 [data-theme="dark"] .patient-meta {
-  color: var(--dm-text-secondary);
+    color: var(--dm-text-secondary);
 }
 
 [data-theme="dark"] .detail-row {
-  border-bottom-color: var(--dm-border-subtle);
+    border-bottom-color: var(--dm-border-subtle);
 }
 
 [data-theme="dark"] .detail-label {
-  color: var(--dm-text-secondary);
+    color: var(--dm-text-secondary);
 }
 
 [data-theme="dark"] .detail-value {
-  color: var(--dm-text-primary);
+    color: var(--dm-text-primary);
 }
 
 [data-theme="dark"] .ai-insight {
-  background: rgba(42, 102, 255, 0.07) !important;
-  border-left-color: rgba(42, 102, 255, 0.5) !important;
+    background: rgba(42, 102, 255, 0.07) !important;
+    border-left-color: rgba(42, 102, 255, 0.5) !important;
 }
 
 [data-theme="dark"] .ai-insight p,
 [data-theme="dark"] .ai-insight p strong,
 [data-theme="dark"] .ai-insight .ai-insight-text {
-  color: var(--dm-text-primary) !important;
+    color: var(--dm-text-primary) !important;
 }
 
 [data-theme="dark"] .chip {
-  background: #1a2640;
-  border-color: var(--dm-border-color);
-  color: var(--dm-text-primary);
+    background: #1a2640;
+    border-color: var(--dm-border-color);
+    color: var(--dm-text-primary);
 }
 
 [data-theme="dark"] .chip:hover {
-  background: rgba(42, 102, 255, 0.12);
-  border-color: rgba(42, 102, 255, 0.4);
-  color: #7ca3ff;
+    background: rgba(42, 102, 255, 0.12);
+    border-color: rgba(42, 102, 255, 0.4);
+    color: #7ca3ff;
 }
 
 [data-theme="dark"] .page-search {
-  background: var(--dm-bg-input);
-  border-color: var(--dm-border-color);
-  color: var(--dm-text-primary);
+    background: var(--dm-bg-input);
+    border-color: var(--dm-border-color);
+    color: var(--dm-text-primary);
 }
 
 [data-theme="dark"] .page-search:focus {
-  border-color: rgba(42, 102, 255, 0.5);
-  box-shadow: 0 0 4px rgba(42, 102, 255, 0.15);
-  background: #253352;
+    border-color: rgba(42, 102, 255, 0.5);
+    box-shadow: 0 0 4px rgba(42, 102, 255, 0.15);
+    background: #253352;
 }
 
 [data-theme="dark"] .pagination button {
-  background: #1a2640;
-  border-color: var(--dm-border-color);
-  color: var(--dm-text-primary);
+    background: #1a2640;
+    border-color: var(--dm-border-color);
+    color: var(--dm-text-primary);
 }
 
 [data-theme="dark"] .pagination button:hover:not(:disabled) {
-  background: rgba(42, 102, 255, 0.12);
-  border-color: rgba(42, 102, 255, 0.4);
-  color: #7ca3ff;
+    background: rgba(42, 102, 255, 0.12);
+    border-color: rgba(42, 102, 255, 0.4);
+    color: #7ca3ff;
 }
 
 [data-theme="dark"] .ai-summary-btn {
-  background: rgba(42, 102, 255, 0.12);
-  color: #7ca3ff;
+    background: rgba(42, 102, 255, 0.12);
+    color: #7ca3ff;
 }
 
 [data-theme="dark"] .ai-summary-btn:hover {
-  background: #2A66FF;
-  color: #FFFFFF;
+    background: #2A66FF;
+    color: #FFFFFF;
 }
 
 /* Fix: Harmonize card header background in dark mode */
 [data-theme="dark"] .patient-card .patient-header {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
